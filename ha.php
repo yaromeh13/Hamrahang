@@ -966,17 +966,17 @@ img, svg {
 /* ---- player in-shell panel (settings / sources / queue) ---- */
 .player-panel {
     position: absolute;
-    left: 0; right: 0; top: 0; bottom: 0;
-    height: 100%;
-    max-height: none;
+    left: 0; right: 0; bottom: 0;
+    height: auto;
+    max-height: 70%;
     z-index: 30;
     background: rgba(18, 18, 22, 0.98);
-    border-radius: 0;
+    border-radius: 16px 16px 0 0;
     padding: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: none;
+    box-shadow: 0 -8px 28px rgba(0,0,0,0.45);
     transform: translateY(110%);
     transition: transform 0.25s ease;
 }
@@ -1008,14 +1008,47 @@ img, svg {
     flex-shrink: 0;
     background: rgba(18, 18, 22, 0.98);
     z-index: 2;
-    position: sticky;
-    top: 0;
 }
 #player-panel-body {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
-    padding: 4px 14px 24px;
+    padding: 4px 14px 20px;
+    /* scrollbar — WebKit */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.28) transparent;
+}
+#player-panel-body::-webkit-scrollbar {
+    width: 6px;
+}
+#player-panel-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+#player-panel-body::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.22);
+    border-radius: 999px;
+}
+#player-panel-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(215, 6, 71, 0.7);
+}
+/* scrollbar عمومی پنل‌های مشابه داخل پلیر */
+.player-panel * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.28) transparent;
+}
+.player-panel *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.player-panel *::-webkit-scrollbar-track {
+    background: transparent;
+}
+.player-panel *::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.22);
+    border-radius: 999px;
+}
+.player-panel *::-webkit-scrollbar-thumb:hover {
+    background: rgba(215, 6, 71, 0.7);
 }
 .player-queue-list {
     display: flex;
