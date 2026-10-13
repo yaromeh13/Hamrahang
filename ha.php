@@ -900,8 +900,21 @@ img, svg {
 .player-box .player-progress,
 .player-box .player-panel,
 .player-box #BackToHome,
-.player-box .btn {
+.player-box .btn,
+.player-box .seekbar,
+.player-box .form-range,
+.player-box input[type="range"] {
     pointer-events: auto;
+}
+.player-box .player-progress,
+.player-box .seekbar {
+    position: relative;
+    z-index: 12;
+}
+.player-box input[type="range"].form-range {
+    pointer-events: auto !important;
+    touch-action: none;
+    cursor: pointer;
 }
 .player {
     display: flex;
@@ -12412,16 +12425,20 @@ const PROFILE_KEY = 'ha_profile';
     function UpdateAllProgress() {
         const media = GetActiveMediaElement();
         if (!media) return;
+        const P = ensurePlayer();
         const current = media.currentTime || 0;
         const duration = media.duration || 0;
         const percent = duration > 0 ? (current / duration) * 100 : 0;
     
-        document.querySelectorAll('.video-inline-seek, .form-range').forEach((el) => {
-            if (el === document.activeElement) return;
-            el.value = percent;
-            if (el.max != 100) el.max = 100;
-        });
-        if (MinSkb) MinSkb.style.width = percent + '%';
+        // موقع درگ seekbar مقدار را بازنویسی نکن (مخصوصاً موبایل)
+        if (!P._seeking) {
+            document.querySelectorAll('.video-inline-seek, .form-range').forEach((el) => {
+                if (el === document.activeElement || el._haSeeking) return;
+                el.value = percent;
+                if (el.max != 100) el.max = 100;
+            });
+        }
+        if (MinSkb && !P._seeking) MinSkb.style.width = percent + '%';
         if (MaxTim && MaxTim.length >= 1) MaxTim[0].innerHTML = FormatTime(current);
         if (MaxTim && MaxTim.length >= 2) MaxTim[1].innerHTML = FormatTime(duration);
         document.querySelectorAll('.video-inline-times .t-cur').forEach((el) => { el.innerHTML = FormatTime(current); });
@@ -13339,30 +13356,56 @@ const PROFILE_KEY = 'ha_profile';
     
         if (!document._haSeekInput) {
             document._haSeekInput = true;
-            document.addEventListener('input', (ev) => {
+
+            const isSeekEl = (t) =>
+                t &&
+                t.classList &&
+                (t.classList.contains('video-inline-seek') || t.classList.contains('form-range'));
+
+            const beginSeek = (ev) => {
                 const t = ev.target;
-                if (!t || !t.classList) return;
-                if (
-                    !t.classList.contains('video-inline-seek') &&
-                    !t.classList.contains('form-range')
-                ) {
-                    return;
-                }
-        
+                if (!isSeekEl(t)) return;
+                const P = ensurePlayer();
+                P._seeking = true;
+                t._haSeeking = true;
+                revealPlayerControls();
+            };
+            const endSeek = (ev) => {
+                const t = ev.target;
+                if (!isSeekEl(t) && !(ensurePlayer()._seeking)) return;
+                const P = ensurePlayer();
+                P._seeking = false;
+                if (t && t.classList) t._haSeeking = false;
+                document.querySelectorAll('.video-inline-seek, .form-range').forEach((el) => {
+                    el._haSeeking = false;
+                });
+            };
+            const applySeek = (ev) => {
+                const t = ev.target;
+                if (!isSeekEl(t)) return;
                 const media = GetActiveMediaElement();
                 if (!media || !media.duration || media.error) return;
                 if (!(media.currentSrc || media.getAttribute('src'))) return;
-        
-                const P = ensurePlayer();
-                if (P.nowPlaying) {
-                    P.nowPlaying.isBuffering = true;
-                    UpdateAllPlayButtons();
-                }
-        
                 const ratio = parseFloat(t.value);
                 if (!Number.isFinite(ratio)) return;
-                media.currentTime = (ratio / 100) * media.duration;
-            });
+                try {
+                    media.currentTime = (ratio / 100) * media.duration;
+                } catch (e) {}
+                // نمایش زمان در حین درگ
+                document.querySelectorAll('.current-time').forEach((el) => {
+                    el.innerHTML = FormatTime(media.currentTime || 0);
+                });
+                if (MinSkb) MinSkb.style.width = ratio + '%';
+            };
+
+            document.addEventListener('pointerdown', beginSeek, true);
+            document.addEventListener('touchstart', beginSeek, { capture: true, passive: true });
+            document.addEventListener('mousedown', beginSeek, true);
+            document.addEventListener('pointerup', endSeek, true);
+            document.addEventListener('touchend', endSeek, true);
+            document.addEventListener('mouseup', endSeek, true);
+            document.addEventListener('input', applySeek);
+            document.addEventListener('change', applySeek);
         }
     
         if (MinArt) wireOnce(MinArt, 'click', openMaxFromMini);
