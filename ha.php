@@ -892,6 +892,16 @@ img, svg {
     width: 100%;
     top: 0;
     left: 0;
+    z-index: 10;
+    pointer-events: none; /* فقط کنترل‌ها رویداد می‌گیرند تا تاچ به stage برسد */
+}
+.player-box .player-head,
+.player-box .player-footer,
+.player-box .player-progress,
+.player-box .player-panel,
+.player-box #BackToHome,
+.player-box .btn {
+    pointer-events: auto;
 }
 .player {
     display: flex;
@@ -926,6 +936,17 @@ img, svg {
     position: fixed;
     top: 1rem;
     left: 1rem;
+    z-index: 40;
+    pointer-events: auto;
+}
+#BackToHome {
+    z-index: 41;
+    pointer-events: auto !important;
+    position: relative;
+}
+#player-box.controls-hidden #BackToHome {
+    opacity: 1;
+    pointer-events: auto !important;
 }
 
 .player-footer {
@@ -962,6 +983,78 @@ img, svg {
    width: 100%;
 }
 
+
+/* ---- app-wide thin scrollbar ---- */
+html, body, .main-container, .main-content, .ln,
+.bottom-sheet-wrapper, .track-line-queue-container,
+.section-carousel-container, .carousel-container,
+.setting-content, .maximum-player-wrapper,
+.maximum-player-scroll-area, .maximum-player-queue {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.28) transparent;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+.main-container::-webkit-scrollbar,
+.main-content::-webkit-scrollbar,
+.ln::-webkit-scrollbar,
+.bottom-sheet-wrapper::-webkit-scrollbar,
+.track-line-queue-container::-webkit-scrollbar,
+.section-carousel-container::-webkit-scrollbar,
+.carousel-container::-webkit-scrollbar,
+.setting-content::-webkit-scrollbar,
+.maximum-player-wrapper::-webkit-scrollbar,
+.maximum-player-scroll-area::-webkit-scrollbar,
+.maximum-player-queue::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+.main-container::-webkit-scrollbar-track,
+.main-content::-webkit-scrollbar-track,
+.ln::-webkit-scrollbar-track,
+.bottom-sheet-wrapper::-webkit-scrollbar-track,
+.track-line-queue-container::-webkit-scrollbar-track,
+.section-carousel-container::-webkit-scrollbar-track,
+.carousel-container::-webkit-scrollbar-track,
+.setting-content::-webkit-scrollbar-track,
+.maximum-player-wrapper::-webkit-scrollbar-track,
+.maximum-player-scroll-area::-webkit-scrollbar-track,
+.maximum-player-queue::-webkit-scrollbar-track {
+    background: transparent;
+}
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+.main-container::-webkit-scrollbar-thumb,
+.main-content::-webkit-scrollbar-thumb,
+.ln::-webkit-scrollbar-thumb,
+.bottom-sheet-wrapper::-webkit-scrollbar-thumb,
+.track-line-queue-container::-webkit-scrollbar-thumb,
+.section-carousel-container::-webkit-scrollbar-thumb,
+.carousel-container::-webkit-scrollbar-thumb,
+.setting-content::-webkit-scrollbar-thumb,
+.maximum-player-wrapper::-webkit-scrollbar-thumb,
+.maximum-player-scroll-area::-webkit-scrollbar-thumb,
+.maximum-player-queue::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.22);
+    border-radius: 999px;
+}
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+.main-container::-webkit-scrollbar-thumb:hover,
+.main-content::-webkit-scrollbar-thumb:hover,
+.ln::-webkit-scrollbar-thumb:hover,
+.bottom-sheet-wrapper::-webkit-scrollbar-thumb:hover,
+.track-line-queue-container::-webkit-scrollbar-thumb:hover,
+.section-carousel-container::-webkit-scrollbar-thumb:hover,
+.carousel-container::-webkit-scrollbar-thumb:hover,
+.setting-content::-webkit-scrollbar-thumb:hover,
+.maximum-player-wrapper::-webkit-scrollbar-thumb:hover,
+.maximum-player-scroll-area::-webkit-scrollbar-thumb:hover,
+.maximum-player-queue::-webkit-scrollbar-thumb:hover {
+    background: rgba(215, 6, 71, 0.7);
+}
 
 /* ---- player in-shell panel (settings / sources / queue) ---- */
 .player-panel {
@@ -1302,6 +1395,12 @@ img, svg {
     pointer-events: none;
     transition: opacity 0.35s ease;
 }
+/* دکمه بک حتی با مخفی بودن کنترلر قابل کلیک بماند */
+#player-box.controls-hidden .player-head #BackToHome,
+#player-box.controls-hidden .head-left {
+    opacity: 1;
+    pointer-events: auto;
+}
 #player-box .player-footer,
 #player-box .player-progress,
 #player-box .player-head {
@@ -1530,8 +1629,13 @@ img, svg {
 }
  
 .media-stage{
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
+    z-index: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
 }
 .media-stage .stage-bg{
     position: absolute;
@@ -8694,13 +8798,17 @@ const PROFILE_KEY = 'ha_profile';
         tabSrc.addEventListener('click', () => openPlayerPanel('sources'));
         btnQueue.addEventListener('click', () => openPlayerPanel('queue'));
 
-        // controls auto-hide / reveal
-        box.addEventListener('click', (ev) => {
-            if (ev.target.closest('#player-panel')) return;
-            revealPlayerControls();
-        });
-        box.addEventListener('mousemove', () => revealPlayerControls());
-        box.addEventListener('touchstart', () => revealPlayerControls(), { passive: true });
+        // controls auto-hide / reveal — روی کل #player (ویدیو + media-stage + شل)
+        if (!playerRoot._haControlsReveal) {
+            playerRoot._haControlsReveal = true;
+            const onReveal = (ev) => {
+                if (ev && ev.target && ev.target.closest && ev.target.closest('#player-panel')) return;
+                revealPlayerControls();
+            };
+            playerRoot.addEventListener('click', onReveal);
+            playerRoot.addEventListener('mousemove', onReveal);
+            playerRoot.addEventListener('touchstart', onReveal, { passive: true });
+        }
 
         // apply saved UI prefs
         applyMediaStageSpin(!!GetSetting('rotatingHeader'));
