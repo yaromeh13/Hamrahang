@@ -195,13 +195,21 @@ require_once __DIR__ . '/int/h_api.php';
     flex-direction: row;
 }
 
+.artists-list .list .thumbail {
+    width: 60px;
+    height: 60px;
+    border-radius: 50% !important;
+    background-color: transparent !important;
+    color: transparent !important;
+    box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.3);
+}
 .artists-list .list img {
     width: 60px;
     height: 60px;
-    border-radius: 10px;
+    border-radius: 50% !important;
     background-color: transparent !important;
     color: transparent !important;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+
 }
 
 .artists-list .list span {
@@ -1445,18 +1453,20 @@ body::-webkit-scrollbar-thumb:hover,
 
 #player-box .fullscreen,
 #player-box .back {
-    height: 4rem;
-    width: 4rem;
+    height: 3rem;
+    width: 3rem;
     padding: 0.5rem;
+    text-align: -webkit-center;
+    align-content: center;
 }
 
 .player-progress {
     position: absolute;
     display: grid;
     grid-template-columns: auto 1fr auto;
-    left: 40px;
+    left: 20px;
     right: 20px;
-    bottom: 64px;
+    bottom: 70px;
     height: 30px;
     align-content: center;
     grid-auto-flow: column;
@@ -1543,9 +1553,29 @@ body::-webkit-scrollbar-thumb:hover,
 }
 
 #media-stage h1 {
-    padding: 6px 10px 0;
+    font-size: calc(2rem + 1.5vw);
     margin: 0;
 }
+
+#media-stage h1:after {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    bottom: 24px;
+    left: 0;
+    z-index: -1;
+    transform: scaleY(-1);
+    transform-origin: bottom;
+    content: attr(data-content);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 30%, rgba(94, 94, 94, .5) 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#media-stage .page-detail-header-container .thumbail {
+    justify-self: center;
+}
+
 .media-stage-title-wrap {
     position: relative;
     z-index: 1;
@@ -1553,57 +1583,23 @@ body::-webkit-scrollbar-thumb:hover,
     text-align: center;
 }
 .media-stage-header {
-    display: grid;
-    grid-template-columns: auto 1fr 1fr;
-    grid-template-areas: "artwork artists about";
-    align-items: center;
-    column-gap: 1rem;
-    width: 100%;
-    padding: 0 12px;
-    box-sizing: border-box;
-}
-.media-stage-header .thumbail {
-    grid-area: artwork;
+    justify-content: center;
 }
 .media-stage-artists {
-    grid-area: artists;
     display: flex;
-    align-items: center;
-    min-width: 0;
-    padding: 0 8px;
-    position: relative;
-    z-index: 1;
+    padding: 8px 12px 0;
+    flex-direction: column;
 }
 .media-stage-artists .artists-list {
-    justify-content: flex-start;
-    margin: 0;
+    justify-content: center;
 }
 .media-stage-about {
-    grid-area: about;
     position: relative;
     z-index: 1;
-    padding: 0 8px;
-    max-height: 28vh;
-    overflow: auto;
-    min-width: 0;
 }
 .media-stage-about .about-container .text1 {
     opacity: 0.7;
     font-size: 12px;
-}
-@media (max-width: 700px) {
-    .media-stage-header {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            "artwork"
-            "artists"
-            "about";
-        justify-items: center;
-        row-gap: 0.5rem;
-    }
-    .media-stage-artists .artists-list {
-        justify-content: center;
-    }
 }
 .media-stage-lyric {
     position: relative;
@@ -1836,7 +1832,7 @@ body::-webkit-scrollbar-thumb:hover,
         <div class="button"><svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M18.4,57V7l39.3,25L18.4,57z"></path></svg><i class="wlap"></i></div>
         <div class="button"><svg style="width:14px;height:14px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div>
         <div class="button" title="Close"><svg style="width:18px;height:18px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg></div>
-    
+
     </div> 
         <div class="maximum-player-wrapper">
             <div class="maximum-player-scroll-area">
@@ -2340,6 +2336,7 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_rdo = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 26px; height: 26px;"><path d="M12 12l0 .01"></path><path d="M14.828 9.172a4 4 0 0 1 0 5.656"></path><path d="M17.657 6.343a8 8 0 0 1 0 11.314"></path><path d="M9.168 14.828a4 4 0 0 1 0 -5.656"></path><path d="M6.337 17.657a8 8 0 0 1 0 -11.314"></path></svg>';
     var svg_ply = '<svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width:22px;height:22px"><path d="M18.4,57V7l39.3,25L18.4,57z"></path></svg>';
     var svg_pus = '<svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 20px; height: 20px;"><path d="M39.1,57V7h14.3v50H39.1z M10.6,57V7h14.3v50H10.6z"></path></svg>';
+    var svg_dsk = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg>';
     var svg_sng = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 100px; height: 100px;"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg>';
     var svg_sfb = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M5 12l14 0"></path><path d="M13 18l6 -6"></path><path d="M13 6l6 6"></path></svg>';
     var svg_src = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>';
@@ -2391,7 +2388,7 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_usr = '<svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path></svg>';
     var svg_vdo = '<svg fill="currentColor" width="800px" height="800px" viewBox="0 0 1920 1920" ><path d="M0 240v1440h1500.536v-438.89L1920 1574.062V346.051L1500.536 678.89V240H0Zm109.779 109.779h1280.979v556.348l177.995-141.29 241.468-191.66v773.646l-241.468-191.549-177.995-141.29v556.236H109.778V349.78Z" fill-rule="evenodd"/></svg>';
     var svg_ado = '<svg fill="currentColor" width="800px" height="800px" viewBox="0 0 1920 1920 "><path d="M1129.432 113v1694.148H936.638l-451.773-451.773h-315.45C76.01 1355.375 0 1279.365 0 1185.96V734.187c0-93.404 76.01-169.414 169.415-169.414h315.45L936.638 113h192.794Zm-112.943 112.943h-33.093l-418.68 418.68v630.901l418.68 418.68h33.093V225.944Zm655.488 135.114C1831.904 521.097 1920 733.77 1920 960.107c0 226.226-88.096 438.898-248.023 598.938l-79.851-79.85c138.694-138.695 214.93-323.018 214.93-519.087 0-196.183-76.236-380.506-214.93-519.2Zm-239.112 239.745c95.663 97.018 148.294 224.644 148.294 359.272s-52.631 262.254-148.294 359.272l-80.529-79.286c74.769-75.785 115.88-175.175 115.88-279.986 0-104.811-41.111-204.201-115.88-279.986Zm-981.092 76.914H169.415c-31.06 0-56.472 25.3-56.472 56.471v451.773c0 31.172 25.412 56.472 56.472 56.472h282.358V677.716Z" fill-rule="evenodd"/>';
-    var svg_pls = '<svg fill="currentColor" version="1.1" id="Layer_1" width="800px" height="800px" viewBox="0 0 70 70" enable-background="new 0 0 70 70" xml:space="preserve"><g><path d="M61.917,3.583h-53c-1.104,0-2.334,1.289-2.334,2.394v26c0,1.104,0.896,2,2,2s2-0.896,2-2V7.583h49v49H34.917		c-1.104,0-2,0.896-2,2s0.896,2,2,2h27c1.104,0,1.666-0.502,1.666-1.606v-53C63.583,4.872,63.021,3.583,61.917,3.583z"/>	<path d="M29.917,17.583h22c0.553,0,1-0.447,1-1s-0.447-1-1-1h-22c-0.553,0-1,0.447-1,1S29.364,17.583,29.917,17.583z"/>	<path d="M17.917,17.583h4c0.553,0,1-0.447,1-1s-0.447-1-1-1h-4c-0.553,0-1,0.447-1,1S17.364,17.583,17.917,17.583z"/>	<path d="M29.917,27.583h22c0.553,0,1-0.447,1-1s-0.447-1-1-1h-22c-0.553,0-1,0.447-1,1S29.364,27.583,29.917,27.583z"/>	<path d="M17.917,27.583h4c0.553,0,1-0.447,1-1s-0.447-1-1-1h-4c-0.553,0-1,0.447-1,1S17.364,27.583,17.917,27.583z"/>	<path d="M29.917,37.583h22c0.553,0,1-0.447,1-1s-0.447-1-1-1h-22c-0.553,0-1,0.447-1,1S29.364,37.583,29.917,37.583z"/>	<path d="M17.917,37.583h4c0.553,0,1-0.447,1-1s-0.447-1-1-1h-4c-0.553,0-1,0.447-1,1S17.364,37.583,17.917,37.583z"/>	<path d="M51.917,45.583h-17c-0.553,0-1,0.447-1,1s0.447,1,1,1h17c0.553,0,1-0.447,1-1S52.47,45.583,51.917,45.583z"/>	<path d="M30.865,50.583L9.813,38.458c-0.619-0.357-1.443-0.357-2.063,0s-1.167,1.018-1.167,1.732v24.25		c0,0.715,0.548,1.375,1.167,1.732c0.31,0.179,0.842,0.268,1.188,0.268s0.674-0.089,0.983-0.268l20.988-12.125		c0.619-0.357,0.984-1.018,0.984-1.732S31.484,50.94,30.865,50.583z M10.583,60.977V43.654l15,8.661L10.583,60.977z"/>	<path d="M20.934,53.147c0.171,0.113,0.363,0.168,0.554,0.168c0.323,0,0.641-0.156,0.833-0.445c0.307-0.46,0.183-1.08-0.277-1.387		l-6-4c-0.461-0.306-1.081-0.183-1.387,0.277c-0.307,0.46-0.183,1.08,0.277,1.387L20.934,53.147z"/></g></svg>';
+    var svg_pls = '<svg fill="currentColor" version="1.1" id="Layer_1" width="22px" height="22px" viewBox="0 0 70 70" enable-background="new 0 0 70 70" xml:space="preserve"><g><path d="M61.917,3.583h-53c-1.104,0-2.334,1.289-2.334,2.394v26c0,1.104,0.896,2,2,2s2-0.896,2-2V7.583h49v49H34.917		c-1.104,0-2,0.896-2,2s0.896,2,2,2h27c1.104,0,1.666-0.502,1.666-1.606v-53C63.583,4.872,63.021,3.583,61.917,3.583z"/>	<path d="M29.917,17.583h22c0.553,0,1-0.447,1-1s-0.447-1-1-1h-22c-0.553,0-1,0.447-1,1S29.364,17.583,29.917,17.583z"/>	<path d="M17.917,17.583h4c0.553,0,1-0.447,1-1s-0.447-1-1-1h-4c-0.553,0-1,0.447-1,1S17.364,17.583,17.917,17.583z"/>	<path d="M29.917,27.583h22c0.553,0,1-0.447,1-1s-0.447-1-1-1h-22c-0.553,0-1,0.447-1,1S29.364,27.583,29.917,27.583z"/>	<path d="M17.917,27.583h4c0.553,0,1-0.447,1-1s-0.447-1-1-1h-4c-0.553,0-1,0.447-1,1S17.364,27.583,17.917,27.583z"/>	<path d="M29.917,37.583h22c0.553,0,1-0.447,1-1s-0.447-1-1-1h-22c-0.553,0-1,0.447-1,1S29.364,37.583,29.917,37.583z"/>	<path d="M17.917,37.583h4c0.553,0,1-0.447,1-1s-0.447-1-1-1h-4c-0.553,0-1,0.447-1,1S17.364,37.583,17.917,37.583z"/>	<path d="M51.917,45.583h-17c-0.553,0-1,0.447-1,1s0.447,1,1,1h17c0.553,0,1-0.447,1-1S52.47,45.583,51.917,45.583z"/>	<path d="M30.865,50.583L9.813,38.458c-0.619-0.357-1.443-0.357-2.063,0s-1.167,1.018-1.167,1.732v24.25		c0,0.715,0.548,1.375,1.167,1.732c0.31,0.179,0.842,0.268,1.188,0.268s0.674-0.089,0.983-0.268l20.988-12.125		c0.619-0.357,0.984-1.018,0.984-1.732S31.484,50.94,30.865,50.583z M10.583,60.977V43.654l15,8.661L10.583,60.977z"/>	<path d="M20.934,53.147c0.171,0.113,0.363,0.168,0.554,0.168c0.323,0,0.641-0.156,0.833-0.445c0.307-0.46,0.183-1.08-0.277-1.387		l-6-4c-0.461-0.306-1.081-0.183-1.387,0.277c-0.307,0.46-0.183,1.08,0.277,1.387L20.934,53.147z"/></g></svg>';
     
     var svg_str = '<svg version="1.1" width="22" height="22" viewBox="0 0 60 60" fill="#ffffff" stroke-width="3" stroke="currentColor" ><path d="M55.818 21.578a1.002 1.002 0 00-.808-.681l-18.09-2.629-8.09-16.392a.998.998 0 00-1.792 0l-8.091 16.393-18.09 2.629a1.002 1.002 0 00-.555 1.705l13.091 12.76-3.091 18.018c-.064.375.09.754.397.978a.992.992 0 001.053.076l16.182-8.506 16.18 8.506a1 1 0 001.451-1.054l-3.09-18.017 13.091-12.761c.272-.267.37-.664.252-1.025z"></path></svg>';
     var svg_st2 = '<svg version="1.1" width="22" height="22" viewBox="0 0 60 60" fill="none" stroke-width="3" stroke="currentColor" ><path d="M55.818 21.578a1.002 1.002 0 00-.808-.681l-18.09-2.629-8.09-16.392a.998.998 0 00-1.792 0l-8.091 16.393-18.09 2.629a1.002 1.002 0 00-.555 1.705l13.091 12.76-3.091 18.018c-.064.375.09.754.397.978a.992.992 0 001.053.076l16.182-8.506 16.18 8.506a1 1 0 001.451-1.054l-3.09-18.017 13.091-12.761c.272-.267.37-.664.252-1.025z"></path></svg>';
@@ -8660,7 +8657,6 @@ const PROFILE_KEY = 'ha_profile';
             });
             const stageBg = OA(document.createElement('div'), { id: 'stage-bg', className: 'stage-bg' });
             const det = OA(document.createElement('div'), { id: 'detailes-container' });
-            // عنوان بالاتر — فضای لیریک پایین‌تر آزاد بماند
             const texts = OA(document.createElement('div'), { className: 'texts media-stage-title-wrap' });
             texts.append(OA(document.createElement('h1'), {
                 id: 'media-stage-title',
@@ -8677,14 +8673,14 @@ const PROFILE_KEY = 'ha_profile';
                 alt: ''
             });
             thumbWrap.append(stageThumb);
-            // سه بخش header: تامب | هنرمندها | about
+            
             const artistBox = OA(document.createElement('div'), {
                 id: 'media-stage-artists',
-                className: 'media-stage-artists content'
+                className: 'media-stage-artists'
             });
             const aboutBox = OA(document.createElement('div'), {
                 id: 'media-stage-about',
-                className: 'media-stage-about content'
+                className: 'media-stage-about'
             });
             hdr.append(thumbWrap, artistBox, aboutBox);
             det.append(texts, hdr);
@@ -8734,16 +8730,19 @@ const PROFILE_KEY = 'ha_profile';
 
         // left settings: queue / subtitle / lyric
         const setLeft = OA(document.createElement('div'), { className: 'player-setting' });
+        const btnStg = OA(document.createElement('div'), {
+            id: 'player-settings-btn', className: 'btn', title: 'Settings', innerHTML: svg_stg
+        });
         const btnQueue = OA(document.createElement('div'), {
-            id: 'playlist', className: 'g-30 btn', title: 'Queue', innerHTML: svg_que
+            id: 'playlist', className: 'g-30 btn', title: 'Queue', innerHTML: svg_pls
         });
         const btnSub = OA(document.createElement('div'), {
             id: 'subtitle', className: 'g-31 btn vis-none', title: 'Subtitle', innerHTML: svg_sub
         });
         const btnLyr = OA(document.createElement('div'), {
-            id: 'lyric', className: 'g-31 btn vis-none', title: 'Lyrics', innerHTML: svg_lyr
+            id: 'lyric', className: 'g-31 btn vis-none', title: 'Lyrics', innerHTML: svg_lrc
         });
-        setLeft.append(btnQueue, btnSub, btnLyr);
+        setLeft.append(btnStg,btnQueue, btnSub, btnLyr);
 
         // center controls
         const control = OA(document.createElement('div'), { className: 'player-control' });
@@ -8774,12 +8773,9 @@ const PROFILE_KEY = 'ha_profile';
             id: 'shuffle', className: 'btn btn-shuffle', title: 'Shuffle', innerHTML: svg_shfo
         });
         const btnSrc = OA(document.createElement('div'), {
-            id: 'player-sources-btn', className: 'btn', title: 'Sources', innerHTML: svg_que
+            id: 'player-sources-btn', className: 'btn', title: 'Sources', innerHTML: svg_dsk
         });
-        const btnStg = OA(document.createElement('div'), {
-            id: 'player-settings-btn', className: 'btn', title: 'Settings', innerHTML: svg_stg
-        });
-        setRight.append(btnRep, btnShuf, btnSrc, btnStg);
+        setRight.append(btnRep, btnShuf, btnSrc);
 
         footer.append(setLeft, control, setRight);
 
@@ -9452,10 +9448,12 @@ const PROFILE_KEY = 'ha_profile';
     
             var artistDiv = OA(document.createElement("div"), {className: "list"});
             art.appendChild(artistDiv);
-    
+            
+            var dtm = OA(document.createElement("div"), {className: "thumbail rounded-circle"});
             var artistThumb = artist.meta && artist.meta.tmb ? artist.meta.tmb : "undefined";
-            var artistImg = OA(document.createElement("img"), {className: "thumbail rounded-circle", src: UT + artistThumb + ".jpg"});
-            artistDiv.appendChild(artistImg);
+            var artistImg = OA(document.createElement("img"), {className: "rounded-circle", src: UT + artistThumb + ".jpg"});
+            dtm.appendChild(artistImg);
+            artistDiv.appendChild(dtm);
     
             var artistLink = OA(document.createElement("a"), {href: HA + artist.id + "/" + artist.url});
             var artistName = OA(document.createElement("span"), {innerHTML: artist.name});
@@ -12533,7 +12531,10 @@ const PROFILE_KEY = 'ha_profile';
             }
         }
         const stageTitle = document.getElementById('media-stage-title');
-        if (stageTitle) stageTitle.innerHTML = name;
+        if (stageTitle){ 
+            stageTitle.innerHTML = name;
+            stageTitle.setAttribute('data-content',name);                 
+        }
 
         const stageArtists = document.getElementById('media-stage-artists');
         if (stageArtists) {

@@ -3640,7 +3640,7 @@ div: nth-of-type(2) {
 }
 
 .track-line .more:hover {
-    color: hsla(0,0%,100%,.5)
+    color: hsla(0,0%,100%,.5);
 }
 
 .track-line-queue-container {
@@ -4141,7 +4141,8 @@ div: nth-of-type(2) {
     grid-area: artwork;
     width: 260px;
     height: 260px;
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.3)
+    border-radius: 10px;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.3);
 }
 
 .page-detail-header-container .thumbail .placeholder {
@@ -4156,12 +4157,14 @@ div: nth-of-type(2) {
     z-index: -1;
     background-color: hsla(0,0%,100%,.1);
     font-size: 140px;
-    color: hsla(0,0%,100%,.2)
+    color: hsla(0,0%,100%,.2);
+    border-radius: 10px;
 }
 
 .page-detail-header-container .thumbail img {
     width: 260px;
-    height: 260px;
+    height: 260px;    
+    border-radius: 10px;
     background-color: transparent!important;
     color: transparent!important
 }
@@ -5259,6 +5262,16 @@ transition: 0.2s
     
 }
 
+@media (min-width: 640px) {
+    .page-detail-header-container {
+        grid-template-areas: "artwork headings";
+        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-rows: 1fr auto;
+        justify-items: start
+    }
+    
+}
+
 @media (min-width: 992px) {
     
 :root {
@@ -5278,12 +5291,7 @@ transition: 0.2s
         grid-template-columns: 1fr 1fr 1fr
     }
 
-.page-detail-header-container {
-        grid-template-areas: "artwork headings";
-        grid-template-columns: auto 1fr 1fr;
-        grid-template-rows: 1fr auto;
-        justify-items: start
-    }
+
 
 .page-detail-header-container .content {
         align-items: flex-start;
