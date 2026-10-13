@@ -1612,7 +1612,7 @@ body::-webkit-scrollbar-thumb:hover,
 }
 .ha-lrc-line {
     opacity: 0.38;
-    transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.25s ease, color 0.25s ease, transform 0.25s ease;
     line-height: 1.55;
     padding: 2px 8px;
     cursor: pointer;
@@ -1639,17 +1639,116 @@ body::-webkit-scrollbar-thumb:hover,
     padding: 1rem;
     font-size: 13px;
 }
+/* حالت خطی — فقط خط فعلی با فید نرم */
+.ha-lrc.ha-lrc--line {
+    display: block;
+    min-height: 3.2em;
+    position: relative;
+    overflow: hidden;
+    padding: 12px 8px;
+}
+.ha-lrc-line-stage {
+    position: relative;
+    min-height: 2.4em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ha-lrc-fade {
+    position: absolute;
+    left: 0; right: 0;
+    text-align: center;
+    line-height: 1.5;
+    padding: 4px 10px;
+    font-weight: 600;
+    color: #fff;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+}
+.ha-lrc-fade.is-in {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    position: relative;
+}
+.ha-lrc-fade.is-out {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+/* حالت فوکوس — قبلی / فعلی / بعدی */
+.ha-lrc.ha-lrc--focus {
+    gap: 0.35rem;
+    padding: 8px 4px;
+}
+.ha-lrc.ha-lrc--focus .ha-lrc-line {
+    opacity: 0;
+    max-height: 0;
+    padding: 0 8px;
+    overflow: hidden;
+    transform: scale(0.96);
+    transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.35s ease, padding 0.35s ease;
+}
+.ha-lrc.ha-lrc--focus .ha-lrc-line.is-near {
+    opacity: 0.4;
+    max-height: 4em;
+    padding: 4px 8px;
+    transform: scale(0.96);
+}
+.ha-lrc.ha-lrc--focus .ha-lrc-line.active {
+    opacity: 1;
+    max-height: 5em;
+    padding: 6px 8px;
+    transform: scale(1.06);
+    font-weight: 700;
+}
+/* حالت کارت — فقط فعلی داخل باکس نرم */
+.ha-lrc.ha-lrc--card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 4.5em;
+    padding: 12px;
+}
+.ha-lrc-card-box {
+    width: 100%;
+    max-width: 520px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+    min-height: 2.8em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ha-lrc-card-box .ha-lrc-fade {
+    position: relative;
+    left: auto; right: auto;
+}
 .media-stage-lyric .ha-lrc {
     max-height: 42vh;
     overflow: auto;
     scroll-behavior: smooth;
     padding: 8px 4px 24px;
 }
+.media-stage-lyric .ha-lrc.ha-lrc--line,
+.media-stage-lyric .ha-lrc.ha-lrc--card {
+    max-height: none;
+    overflow: visible;
+}
 .page-detail-header-container .lyric .ha-lrc {
     text-align: center;
     max-height: 40vh;
     overflow: auto;
     padding: 0.5rem 0.75rem 1rem;
+}
+.page-detail-header-container .lyric .ha-lrc.ha-lrc--line,
+.page-detail-header-container .lyric .ha-lrc.ha-lrc--card {
+    max-height: none;
+    overflow: visible;
 }
 .media-stage-lyric.is-hidden,
 #media-stage-lyric.is-hidden {
@@ -5218,6 +5317,7 @@ if (!empty($_SESSION['loggedin'])) {
             showImages: false,
             keepControllerVisible: false,
             lyricFontSize: 'md',
+            lyricDisplayMode: 'normal',
             sleepTimer: 0,
             repeatMode: 'off',
             shuffleMode: false
@@ -9119,6 +9219,31 @@ const PROFILE_KEY = 'ha_profile';
         secL.append(fsWrap);
         body.append(secL);
 
+        // ---- Lyrics display mode ----
+        const secLM = OA(document.createElement('div'), { className: 'player-panel-section' });
+        secLM.append(OA(document.createElement('div'), { className: 'sec-title', innerHTML: 'Lyrics style' }));
+        const lmWrap = OA(document.createElement('div'), { className: 'player-font-size' });
+        const curLm = GetSetting('lyricDisplayMode') || 'normal';
+        [
+            { v: 'normal', l: 'نرمال' },
+            { v: 'line', l: 'خطی' },
+            { v: 'focus', l: 'فوکوس' },
+            { v: 'card', l: 'کارت' }
+        ].forEach((opt) => {
+            const b = OA(document.createElement('div'), {
+                className: 'fs-btn' + (curLm === opt.v ? ' active' : ''),
+                innerHTML: opt.l
+            });
+            b.addEventListener('click', () => {
+                SetSetting('lyricDisplayMode', opt.v);
+                try { LyricsEngine.setDisplayMode(opt.v); } catch (e) {}
+                openPlayerPanel('settings');
+            });
+            lmWrap.append(b);
+        });
+        secLM.append(lmWrap);
+        body.append(secLM);
+
         // ---- More (placeholder) ----
         const secM = OA(document.createElement('div'), { className: 'player-panel-section' });
         secM.append(OA(document.createElement('div'), { className: 'sec-title', innerHTML: 'More' }));
@@ -12544,7 +12669,29 @@ const PROFILE_KEY = 'ha_profile';
         itemType: null,
         lang: 'fa',
         synced: false,
+        displayMode: 'normal', // normal | line | focus | card
         _mounts: [], // { el, mode: 'sync'|'static' }
+        _lineFadeToken: 0,
+
+        getDisplayMode() {
+            try {
+                return GetSetting('lyricDisplayMode') || this.displayMode || 'normal';
+            } catch (e) {
+                return this.displayMode || 'normal';
+            }
+        },
+
+        setDisplayMode(mode) {
+            this.displayMode = mode || 'normal';
+            try { SetSetting('lyricDisplayMode', this.displayMode); } catch (e) {}
+            this.activeIndex = -1; // اجبار به رفرش خط فعال بعد از تعویض استایل
+            this._rerenderAll();
+            try {
+                const media = GetActiveMediaElement();
+                const t = media ? (media.currentTime || 0) : 0;
+                this.sync(t);
+            } catch (e) {}
+        },
 
         parseLrc(text) {
             const out = [];
@@ -12715,8 +12862,35 @@ const PROFILE_KEY = 'ha_profile';
                 }));
                 return;
             }
+            const view = (mode === 'static' || !this.synced) ? 'static' : this.getDisplayMode();
+            // --- خطی / کارت: اسکلت سبک؛ متن در _applyActive ---
+            if (view === 'line' || view === 'card') {
+                const wrap = OA(document.createElement('div'), {
+                    className: 'ha-lrc ha-lrc--' + view
+                });
+                if (view === 'card') {
+                    const box = OA(document.createElement('div'), { className: 'ha-lrc-card-box' });
+                    const stage = OA(document.createElement('div'), { className: 'ha-lrc-line-stage' });
+                    stage.append(OA(document.createElement('div'), {
+                        className: 'ha-lrc-fade is-in',
+                        innerHTML: ''
+                    }));
+                    box.append(stage);
+                    wrap.append(box);
+                } else {
+                    const stage = OA(document.createElement('div'), { className: 'ha-lrc-line-stage' });
+                    stage.append(OA(document.createElement('div'), {
+                        className: 'ha-lrc-fade is-in',
+                        innerHTML: ''
+                    }));
+                    wrap.append(stage);
+                }
+                el.append(wrap);
+                return;
+            }
+            // --- نرمال / فوکوس: همه خطوط ---
             const wrap = OA(document.createElement('div'), {
-                className: 'ha-lrc' + (mode === 'static' || !this.synced ? ' static' : '')
+                className: 'ha-lrc' + (view === 'focus' ? ' ha-lrc--focus' : '') + (view === 'static' ? ' static' : '')
             });
             this.lines.forEach((ln, i) => {
                 const row = OA(document.createElement('div'), {
@@ -12730,11 +12904,9 @@ const PROFILE_KEY = 'ha_profile';
                         ev.stopPropagation();
                         const media = GetActiveMediaElement();
                         if (!media || !Number.isFinite(media.duration)) return;
-                        try {
-                            media.currentTime = Math.max(0, ln.t);
-                        } catch (e) {}
+                        try { media.currentTime = Math.max(0, ln.t); } catch (e) {}
                         this.sync(ln.t + 0.01);
-                        revealPlayerControls();
+                        try { revealPlayerControls(); } catch (e) {}
                     });
                 }
                 wrap.append(row);
@@ -12744,17 +12916,60 @@ const PROFILE_KEY = 'ha_profile';
 
         _applyActive() {
             const idx = this.activeIndex;
+            const view = this.getDisplayMode();
             this._mounts.forEach((m) => {
                 if (!m.el || !m.el.isConnected) return;
                 if (m.mode === 'static' || !this.synced) return;
+
+                // حالت خطی / کارت — فید نرم بین خطوط
+                if (view === 'line' || view === 'card') {
+                    const stage = m.el.querySelector('.ha-lrc-line-stage');
+                    if (!stage) return;
+                    const text = (idx >= 0 && this.lines[idx]) ? this.lines[idx].text : '';
+                    const cur = stage.querySelector('.ha-lrc-fade.is-in');
+                    const curText = cur ? (cur.textContent || '') : '';
+                    if (cur && curText === text) return;
+
+                    this._lineFadeToken = (this._lineFadeToken || 0) + 1;
+                    const token = this._lineFadeToken;
+
+                    // خروج خط قبلی
+                    if (cur) {
+                        cur.classList.remove('is-in');
+                        cur.classList.add('is-out');
+                        setTimeout(() => {
+                            if (token !== this._lineFadeToken) return;
+                            if (cur.parentNode) cur.parentNode.removeChild(cur);
+                        }, 360);
+                    }
+                    // ورود خط جدید
+                    const next = OA(document.createElement('div'), {
+                        className: 'ha-lrc-fade',
+                        innerHTML: text
+                    });
+                    stage.append(next);
+                    // force reflow برای انیمیشن
+                    void next.offsetWidth;
+                    next.classList.add('is-in');
+                    return;
+                }
+
+                // نرمال / فوکوس
                 const rows = m.el.querySelectorAll('.ha-lrc-line');
                 let activeEl = null;
                 rows.forEach((row, i) => {
-                    row.classList.toggle('active', i === idx);
-                    row.classList.toggle('past', idx >= 0 && i < idx);
-                    if (i === idx) activeEl = row;
+                    const isActive = i === idx;
+                    const isNear = view === 'focus' && idx >= 0 && (i === idx - 1 || i === idx + 1);
+                    row.classList.toggle('active', isActive);
+                    row.classList.toggle('past', view === 'normal' && idx >= 0 && i < idx);
+                    row.classList.toggle('is-near', isNear);
+                    if (isActive) activeEl = row;
                 });
-                if (activeEl) {
+                if (activeEl && view === 'normal') {
+                    try {
+                        activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    } catch (e) {}
+                } else if (activeEl && view === 'focus') {
                     try {
                         activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
                     } catch (e) {}
@@ -12762,6 +12977,7 @@ const PROFILE_KEY = 'ha_profile';
             });
         }
     };
+
 
     function UpdateAllProgress() {
         const media = GetActiveMediaElement();
