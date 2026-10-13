@@ -1602,6 +1602,96 @@ body::-webkit-scrollbar-thumb:hover,
     font-size: 12px;
 }
 
+
+/* ---- mini-lyric + max lyrics panel ---- */
+.mini-lyric {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 6px 12px 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+    min-height: 4.5rem;
+    max-height: 7.5rem;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
+}
+.mini-lyric .ha-lrc {
+    max-height: 6.5rem;
+    overflow: hidden;
+    pointer-events: none;
+}
+.mini-lyric .ha-lrc.ha-lrc--focus {
+    padding: 0;
+}
+.mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.is-near {
+    opacity: 0.35;
+    font-size: 0.85em;
+}
+.mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.active {
+    font-size: 1em;
+}
+.maximum-player-lyrics {
+    display: none;
+    flex-direction: column;
+    flex-grow: 1;
+    width: 100%;
+    padding: 0 var(--main-padding-x, 1rem);
+    height: min-content;
+    position: relative;
+    z-index: 5;
+    background: var(--bs-body-bg, #121216);
+}
+.maximum-player-lyrics.is-open {
+    display: flex;
+}
+.maximum-player-lyrics .header {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+    background-color: var(--bs-body-bg, #121216);
+    z-index: 10;
+}
+.maximum-player-lyrics .header .title {
+    font-size: .95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 48px);
+}
+.maximum-player-lyrics .header .buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+}
+.maximum-player-lyrics .header .buttons .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+    color: #000;
+    cursor: pointer;
+}
+.maximum-player-lyrics .max-lyrics-body {
+    padding: 4px 0 80px;
+    max-height: 60vh;
+    overflow: auto;
+}
+.maximum-player-lyrics .max-lyrics-body .ha-lrc {
+    max-height: none;
+}
+
 /* ---- Lyrics engine (LRC) ---- */
 .ha-lrc {
     display: flex;
@@ -2013,10 +2103,20 @@ body::-webkit-scrollbar-thumb:hover,
                             
                         <div class="buttons m-top-1"><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path><path d="M9 12h6"></path><path d="M12 9v6"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7,7c0,2.2,1.8,4,4,4s4-1.8,4-4s-1.8-4-4-4S7,4.8,7,7"></path><path d="M5,21v-2c0-2.2,1.8-4,4-4h3"></path><path d="M14.8,18.5c0,1.4,1.2,2.6,2.6,2.6c1.4,0,2.6-1.2,2.6-2.6c0-1.4-1.2-2.6-2.6-2.6C16,15.9,14.8,17.1,14.8,18.5"></path><path d="M20,18.5V12"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><path d="M7 11l5 5l5 -5"></path><path d="M12 4l0 12"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M8.7 10.7l6.6 -3.4"></path><path d="M8.7 13.3l6.6 3.4"></path></svg></div></div></div>
                         
+                        <div id="mini-lyric" class="mini-lyric vis-none" title="Lyrics"></div>
                         <div class="maximum-player-queue">
                             <div class="header"><div class="title">Next Playing (0)</div><div class="buttons">
                             <div class="button" title="Minimize"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path></svg></div></div></div>
                             <div class="track-line-queue-container"></div>
+                        </div>
+                        <div id="maximum-player-lyrics" class="maximum-player-lyrics vis-none">
+                            <div class="header">
+                                <div class="title" id="max-lyrics-title"></div>
+                                <div class="buttons">
+                                    <div class="button" id="max-lyrics-minimize" title="Minimize"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path></svg></div>
+                                </div>
+                            </div>
+                            <div class="max-lyrics-body" id="max-lyrics-body"></div>
                         </div>
                 </div>
           
@@ -12811,18 +12911,19 @@ const PROFILE_KEY = 'ha_profile';
             this._applyActive();
         },
 
-        /** ثبت container برای نمایش — mode: sync|static */
-        mount(el, mode) {
+        /** ثبت container — mode: sync|static ، viewOverride: normal|line|focus|card|null */
+        mount(el, mode, viewOverride) {
             if (!el) return;
             mode = mode || (this.synced ? 'sync' : 'static');
-            // اگر قبلاً mount شده فقط refresh
+            const view = (viewOverride != null && viewOverride !== '') ? viewOverride : null;
             const exists = this._mounts.find((m) => m.el === el);
             if (exists) {
                 exists.mode = mode;
+                exists.view = view;
             } else {
-                this._mounts.push({ el, mode });
+                this._mounts.push({ el, mode, view });
             }
-            this._renderInto(el, mode);
+            this._renderInto(el, mode, view);
             this._applyActive();
         },
 
@@ -12848,11 +12949,17 @@ const PROFILE_KEY = 'ha_profile';
 
         _rerenderAll() {
             this._mounts = this._mounts.filter((m) => m.el && m.el.isConnected);
-            this._mounts.forEach((m) => this._renderInto(m.el, m.mode));
+            this._mounts.forEach((m) => this._renderInto(m.el, m.mode, m.view));
             this._applyActive();
         },
 
-        _renderInto(el, mode) {
+        _viewFor(mode, viewOverride) {
+            if (mode === 'static' || !this.synced) return 'static';
+            if (viewOverride) return viewOverride;
+            return this.getDisplayMode();
+        },
+
+        _renderInto(el, mode, viewOverride) {
             if (!el) return;
             el.innerHTML = '';
             if (!this.lines.length) {
@@ -12862,7 +12969,7 @@ const PROFILE_KEY = 'ha_profile';
                 }));
                 return;
             }
-            const view = (mode === 'static' || !this.synced) ? 'static' : this.getDisplayMode();
+            const view = this._viewFor(mode, viewOverride);
             // --- خطی / کارت: اسکلت سبک؛ متن در _applyActive ---
             if (view === 'line' || view === 'card') {
                 const wrap = OA(document.createElement('div'), {
@@ -12916,10 +13023,10 @@ const PROFILE_KEY = 'ha_profile';
 
         _applyActive() {
             const idx = this.activeIndex;
-            const view = this.getDisplayMode();
             this._mounts.forEach((m) => {
                 if (!m.el || !m.el.isConnected) return;
                 if (m.mode === 'static' || !this.synced) return;
+                const view = this._viewFor(m.mode, m.view);
 
                 // حالت خطی / کارت — فید نرم بین خطوط
                 if (view === 'line' || view === 'card') {
@@ -13096,9 +13203,10 @@ const PROFILE_KEY = 'ha_profile';
             }
         }
     
-        // لیریک برای stage + اهداف ثبت‌شده
+        // لیریک برای stage + اهداف ثبت‌شده + mini-lyric
         try {
             LyricsEngine.mountDefaults(item);
+            CRML(item);
             const stageLyr = document.getElementById('media-stage-lyric');
             if (stageLyr && LyricsEngine.lines.length) {
                 // پیش‌فرض مخفی نباشد اگر کاربر قبلاً باز کرده
@@ -13866,6 +13974,72 @@ const PROFILE_KEY = 'ha_profile';
         e.classList.remove('translate-to-down', 'vis-none');
         e.classList.add('translate-to-up');
     }
+
+    /**
+     * CRML — ساخت / به‌روزرسانی mini-lyric کنار maximum-player-mobile
+     * فقط اگر آیتم lyrics داشته باشد نمایش داده می‌شود
+     */
+    function CRML(item) {
+        const box = document.getElementById('mini-lyric');
+        if (!box) return;
+        item = item || (ensurePlayer().nowPlaying && ensurePlayer().nowPlaying.item);
+        if (!item || !LyricsEngine.hasLyrics(item)) {
+            box.classList.add('vis-none');
+            box.innerHTML = '';
+            try { LyricsEngine.unmount(box); } catch (e) {}
+            return;
+        }
+        LyricsEngine.loadFromItem(item);
+        // فوکوس برای مینی — حتی اگر سینک نباشد لیست فشرده
+        const mode = LyricsEngine.synced ? 'sync' : 'static';
+        const view = LyricsEngine.synced ? 'focus' : 'static';
+        box.classList.remove('vis-none');
+        LyricsEngine.mount(box, mode, view);
+        if (!box._haLyrClick) {
+            box._haLyrClick = true;
+            box.addEventListener('click', () => openMaxLyricsPanel());
+        }
+        // عنوان پنل بزرگ
+        const titleEl = document.getElementById('max-lyrics-title');
+        if (titleEl) titleEl.innerHTML = item.name || '';
+        // body پنل بزرگ را هم آماده کن (بدون باز کردن)
+        const body = document.getElementById('max-lyrics-body');
+        if (body) {
+            LyricsEngine.mount(body, mode, LyricsEngine.synced ? 'normal' : 'static');
+        }
+    }
+
+    function openMaxLyricsPanel() {
+        const P = ensurePlayer();
+        const item = P.nowPlaying && P.nowPlaying.item;
+        if (!item || !LyricsEngine.hasLyrics(item)) return;
+        CRML(item);
+        const panel = document.getElementById('maximum-player-lyrics');
+        if (!panel) return;
+        panel.classList.remove('vis-none');
+        panel.classList.add('is-open');
+        const titleEl = document.getElementById('max-lyrics-title');
+        if (titleEl) titleEl.innerHTML = item.name || '';
+        const body = document.getElementById('max-lyrics-body');
+        if (body) {
+            const mode = LyricsEngine.synced ? 'sync' : 'static';
+            LyricsEngine.mount(body, mode, LyricsEngine.synced ? 'normal' : 'static');
+            try {
+                const media = GetActiveMediaElement();
+                LyricsEngine.sync(media ? (media.currentTime || 0) : 0);
+            } catch (e) {}
+        }
+        // اگر max player بسته است بازش کن
+        try { openMaxFromMini(); } catch (e) {}
+    }
+
+    function closeMaxLyricsPanel() {
+        const panel = document.getElementById('maximum-player-lyrics');
+        if (!panel) return;
+        panel.classList.remove('is-open');
+        panel.classList.add('vis-none');
+    }
+
     function minimizeMaxToMini() {
         MinMiz(MaxPly);
         MaxMiz(MinPly);
@@ -13874,6 +14048,10 @@ const PROFILE_KEY = 'ha_profile';
         MaxMiz(MaxPly);
         MinMiz(MinPly);
         CRQT();
+        try {
+            const item = ensurePlayer().nowPlaying && ensurePlayer().nowPlaying.item;
+            if (item) CRML(item);
+        } catch (e) {}
     }
     function closePlaybackChrome() {
         if (MinPly) {
@@ -13998,6 +14176,27 @@ const PROFILE_KEY = 'ha_profile';
         if (MaxQueHdrBtns && MaxQueHdrBtns.length >= 1) {
             wireOnce(MaxQueHdrBtns[0], 'click', () => minimizeMaxToMini());
         }
+
+        // پنل لیریک بزرگ — minimize
+        const maxLyrMin = document.getElementById('max-lyrics-minimize');
+        if (maxLyrMin) wireOnce(maxLyrMin, 'click', () => closeMaxLyricsPanel());
+
+        // دسکتاپ: دکمه Lyrics (دومین دکمه details)
+        if (MaxDeskDtls && MaxDeskDtls.length >= 2) {
+            wireOnce(MaxDeskDtls[1], 'click', () => openMaxLyricsPanel());
+        }
+
+        // موبایل: ردیف دوم buttons.m-top-1 — دکمه وسط/سوم
+        if (MaxMobPly) {
+            const rows = MaxMobPly.querySelectorAll('.buttons.m-top-1');
+            if (rows.length >= 2) {
+                const btns = rows[1].querySelectorAll('.button');
+                // سوم (ایندکس 2) و در صورت نبود، دوم
+                const lyrBtn = btns[2] || btns[1];
+                if (lyrBtn) wireOnce(lyrBtn, 'click', () => openMaxLyricsPanel());
+            }
+        }
+
         if (MaxDeskBtns && MaxDeskBtns.length >= 5) {
             wireOnce(MaxDeskBtns[0], 'click', () => cycleRepeatMode());
             wireOnce(MaxDeskBtns[1], 'click', () => PlayPrevious());
