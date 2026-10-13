@@ -1601,6 +1601,61 @@ body::-webkit-scrollbar-thumb:hover,
     opacity: 0.7;
     font-size: 12px;
 }
+
+/* ---- Lyrics engine (LRC) ---- */
+.ha-lrc {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    text-align: center;
+    direction: rtl;
+}
+.ha-lrc-line {
+    opacity: 0.38;
+    transition: opacity 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    line-height: 1.55;
+    padding: 2px 8px;
+    cursor: pointer;
+    user-select: none;
+}
+.ha-lrc-line.active {
+    opacity: 1;
+    color: #fff;
+    font-weight: 600;
+    transform: scale(1.04);
+}
+.ha-lrc-line.past {
+    opacity: 0.55;
+}
+.ha-lrc.static .ha-lrc-line {
+    opacity: 0.9;
+    cursor: default;
+    transform: none;
+    font-weight: normal;
+}
+.ha-lrc-empty {
+    opacity: 0.5;
+    text-align: center;
+    padding: 1rem;
+    font-size: 13px;
+}
+.media-stage-lyric .ha-lrc {
+    max-height: 42vh;
+    overflow: auto;
+    scroll-behavior: smooth;
+    padding: 8px 4px 24px;
+}
+.page-detail-header-container .lyric .ha-lrc {
+    text-align: center;
+    max-height: 40vh;
+    overflow: auto;
+    padding: 0.5rem 0.75rem 1rem;
+}
+.media-stage-lyric.is-hidden,
+#media-stage-lyric.is-hidden {
+    display: none !important;
+}
+
 .media-stage-lyric {
     position: relative;
     z-index: 1;
@@ -5953,10 +6008,18 @@ if (!empty($_SESSION['loggedin'])) {
         
         dct.append(tlt, art, dtl);
         
-        const dlc = OA(document.createElement('div'), { className: 'lyric' });        
+        const dlc = OA(document.createElement('div'), { className: 'lyric' });
+        dlc.setAttribute('data-ha-lrc', '1');
         
         dhc.append(dtn, dct, dlc );
         MCNT.append(dhc);
+        // لیریک صفحه جزئیات (خروجی موتور مشترک)
+        try {
+            if (LyricsEngine.hasLyrics(e)) {
+                LyricsEngine.loadFromItem(e);
+                LyricsEngine.mount(dlc, LyricsEngine.synced ? 'sync' : 'static');
+            }
+        } catch (err) {}
 
         // ---- دکمه‌های اکشن ----
         const dac = OA(document.createElement('div'), { className: 'page-detail-actions' });
@@ -8833,6 +8896,26 @@ const PROFILE_KEY = 'ha_profile';
         tabQue.addEventListener('click', () => openPlayerPanel('queue'));
         tabSrc.addEventListener('click', () => openPlayerPanel('sources'));
         btnQueue.addEventListener('click', () => openPlayerPanel('queue'));
+        btnLyr.addEventListener('click', () => {
+            const stageLyr = document.getElementById('media-stage-lyric');
+            if (!stageLyr) return;
+            const open = stageLyr.dataset.open === '1';
+            if (open) {
+                stageLyr.classList.add('is-hidden');
+                stageLyr.dataset.open = '0';
+                btnLyr.classList.remove('active');
+            } else {
+                stageLyr.classList.remove('is-hidden');
+                stageLyr.dataset.open = '1';
+                btnLyr.classList.add('active');
+                // اگر هنوز mount نشده
+                const P = ensurePlayer();
+                const item = P.nowPlaying && P.nowPlaying.item;
+                if (item) LyricsEngine.mountDefaults(item);
+                LyricsEngine.sync((GetActiveMediaElement() && GetActiveMediaElement().currentTime) || 0);
+            }
+            revealPlayerControls();
+        });
 
         // controls auto-hide / reveal — روی کل #player (ویدیو + media-stage + شل)
         if (!playerRoot._haControlsReveal) {
@@ -12447,6 +12530,239 @@ const PROFILE_KEY = 'ha_profile';
         setArtSpinning(playing && !waiting && !buffering);
     }
     
+
+    /**
+     * LyricsEngine — موتور مشترک LRC / متن ثابت
+     * داده از item.lyrics[]: { lng, knd, fmt, src, body }
+     * خروجی: mount روی چند container با کلاس .ha-lrc
+     */
+    const LyricsEngine = {
+        lines: [],
+        activeIndex: -1,
+        offsetMs: 0,
+        itemId: null,
+        itemType: null,
+        lang: 'fa',
+        synced: false,
+        _mounts: [], // { el, mode: 'sync'|'static' }
+
+        parseLrc(text) {
+            const out = [];
+            if (!text) return out;
+            const re = /^\[(\d{1,2}):(\d{2})(?:[\.:](\d{1,3}))?\]\s*(.*)$/;
+            String(text).split(/\r?\n/).forEach((raw) => {
+                const line = raw.trim();
+                if (!line) return;
+                // meta tags [ti:] [ar:] [offset:] ...
+                const meta = line.match(/^\[([a-zA-Z]+):(.*)\]$/);
+                if (meta && !/^\d/.test(meta[1])) {
+                    if (meta[1].toLowerCase() === 'offset') {
+                        const n = parseInt(meta[2], 10);
+                        if (Number.isFinite(n)) this.offsetMs = n;
+                    }
+                    return;
+                }
+                const m = line.match(re);
+                if (!m) {
+                    // خط بدون زمان → متن ثابت (t = -1 نگه می‌داریم در parsePlain)
+                    return;
+                }
+                const min = parseInt(m[1], 10) || 0;
+                const sec = parseInt(m[2], 10) || 0;
+                let frac = 0;
+                if (m[3]) {
+                    const f = m[3];
+                    frac = parseInt(f, 10) / (f.length >= 3 ? 1000 : 100);
+                }
+                const t = min * 60 + sec + frac;
+                const txt = (m[4] || '').trim();
+                if (txt) out.push({ t, text: txt });
+            });
+            out.sort((a, b) => a.t - b.t);
+            return out;
+        },
+
+        parsePlain(text) {
+            return String(text || '')
+                .split(/\r?\n/)
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .map((txt) => ({ t: -1, text: txt }));
+        },
+
+        /** انتخاب بهترین lyrics entry از item */
+        pickEntry(item, preferredLng) {
+            if (!item) return null;
+            const arr = Array.isArray(item.lyrics) ? item.lyrics : [];
+            if (!arr.length) return null;
+            const lng = preferredLng || this.lang || 'fa';
+            let hit = arr.find((x) => x && x.body && (x.lng === lng || (x.lng || '').startsWith(lng)));
+            if (!hit) hit = arr.find((x) => x && x.body);
+            return hit || null;
+        },
+
+        hasLyrics(item) {
+            return !!this.pickEntry(item);
+        },
+
+        loadFromItem(item, preferredLng) {
+            this.lines = [];
+            this.activeIndex = -1;
+            this.offsetMs = 0;
+            this.synced = false;
+            this.itemId = item && item.id != null ? item.id : null;
+            this.itemType = (item && item.meta && item.meta.type) || null;
+            const entry = this.pickEntry(item, preferredLng);
+            if (!entry || !entry.body) {
+                this._rerenderAll();
+                return false;
+            }
+            const knd = String(entry.knd || '').toLowerCase();
+            const body = entry.body;
+            if (knd === 'lrc' || /^\s*\[\d{1,2}:\d{2}/.test(body)) {
+                this.lines = this.parseLrc(body);
+                this.synced = this.lines.length > 0 && this.lines[0].t >= 0;
+            } else {
+                this.lines = this.parsePlain(body);
+                this.synced = false;
+            }
+            if (entry.lng) this.lang = entry.lng;
+            this._rerenderAll();
+            return this.lines.length > 0;
+        },
+
+        clear() {
+            this.lines = [];
+            this.activeIndex = -1;
+            this.synced = false;
+            this.itemId = null;
+            this._rerenderAll();
+        },
+
+        findIndex(timeSec) {
+            if (!this.synced || !this.lines.length) return -1;
+            const t = timeSec + (this.offsetMs / 1000);
+            // آخرین خطی که t_line <= t
+            let lo = 0, hi = this.lines.length - 1, ans = -1;
+            while (lo <= hi) {
+                const mid = (lo + hi) >> 1;
+                if (this.lines[mid].t <= t) {
+                    ans = mid;
+                    lo = mid + 1;
+                } else {
+                    hi = mid - 1;
+                }
+            }
+            return ans;
+        },
+
+        sync(timeSec) {
+            if (!this.synced) return;
+            const idx = this.findIndex(timeSec);
+            if (idx === this.activeIndex) return;
+            this.activeIndex = idx;
+            this._applyActive();
+        },
+
+        /** ثبت container برای نمایش — mode: sync|static */
+        mount(el, mode) {
+            if (!el) return;
+            mode = mode || (this.synced ? 'sync' : 'static');
+            // اگر قبلاً mount شده فقط refresh
+            const exists = this._mounts.find((m) => m.el === el);
+            if (exists) {
+                exists.mode = mode;
+            } else {
+                this._mounts.push({ el, mode });
+            }
+            this._renderInto(el, mode);
+            this._applyActive();
+        },
+
+        unmount(el) {
+            this._mounts = this._mounts.filter((m) => m.el !== el);
+        },
+
+        /** همهٔ .lyric و #media-stage-lyric صفحه را پیدا و mount کن */
+        mountDefaults(item) {
+            if (item) this.loadFromItem(item);
+            const stage = document.getElementById('media-stage-lyric');
+            if (stage) this.mount(stage, this.synced ? 'sync' : 'static');
+            document.querySelectorAll('.page-detail-header-container .lyric, .lyric[data-ha-lrc]').forEach((el) => {
+                this.mount(el, this.synced ? 'sync' : 'static');
+            });
+            // دکمه lyric
+            const btn = document.getElementById('lyric');
+            if (btn) {
+                if (this.lines.length) btn.classList.remove('vis-none');
+                else btn.classList.add('vis-none');
+            }
+        },
+
+        _rerenderAll() {
+            this._mounts = this._mounts.filter((m) => m.el && m.el.isConnected);
+            this._mounts.forEach((m) => this._renderInto(m.el, m.mode));
+            this._applyActive();
+        },
+
+        _renderInto(el, mode) {
+            if (!el) return;
+            el.innerHTML = '';
+            if (!this.lines.length) {
+                el.append(OA(document.createElement('div'), {
+                    className: 'ha-lrc-empty',
+                    innerHTML: 'No lyrics'
+                }));
+                return;
+            }
+            const wrap = OA(document.createElement('div'), {
+                className: 'ha-lrc' + (mode === 'static' || !this.synced ? ' static' : '')
+            });
+            this.lines.forEach((ln, i) => {
+                const row = OA(document.createElement('div'), {
+                    className: 'ha-lrc-line',
+                    innerHTML: ln.text
+                });
+                row.setAttribute('data-i', String(i));
+                if (ln.t >= 0) row.setAttribute('data-t', String(ln.t));
+                if (this.synced && ln.t >= 0) {
+                    row.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        const media = GetActiveMediaElement();
+                        if (!media || !Number.isFinite(media.duration)) return;
+                        try {
+                            media.currentTime = Math.max(0, ln.t);
+                        } catch (e) {}
+                        this.sync(ln.t + 0.01);
+                        revealPlayerControls();
+                    });
+                }
+                wrap.append(row);
+            });
+            el.append(wrap);
+        },
+
+        _applyActive() {
+            const idx = this.activeIndex;
+            this._mounts.forEach((m) => {
+                if (!m.el || !m.el.isConnected) return;
+                if (m.mode === 'static' || !this.synced) return;
+                const rows = m.el.querySelectorAll('.ha-lrc-line');
+                let activeEl = null;
+                rows.forEach((row, i) => {
+                    row.classList.toggle('active', i === idx);
+                    row.classList.toggle('past', idx >= 0 && i < idx);
+                    if (i === idx) activeEl = row;
+                });
+                if (activeEl) {
+                    try {
+                        activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    } catch (e) {}
+                }
+            });
+        }
+    };
+
     function UpdateAllProgress() {
         const media = GetActiveMediaElement();
         if (!media) return;
@@ -12470,6 +12786,8 @@ const PROFILE_KEY = 'ha_profile';
         document.querySelectorAll('.video-inline-times .t-dur').forEach((el) => { el.innerHTML = FormatTime(duration); });
         document.querySelectorAll('.current-time').forEach((el) => { el.innerHTML = FormatTime(current); });
         document.querySelectorAll('.final-time').forEach((el) => { el.innerHTML = FormatTime(duration); });
+        // سینک لیریک با زمان پخش
+        try { LyricsEngine.sync(current); } catch (e) {}
     }
     
     function setArtworkEl(container, thumbUrl) {
@@ -12562,6 +12880,19 @@ const PROFILE_KEY = 'ha_profile';
             }
         }
     
+        // لیریک برای stage + اهداف ثبت‌شده
+        try {
+            LyricsEngine.mountDefaults(item);
+            const stageLyr = document.getElementById('media-stage-lyric');
+            if (stageLyr && LyricsEngine.lines.length) {
+                // پیش‌فرض مخفی نباشد اگر کاربر قبلاً باز کرده
+                if (typeof stageLyr.dataset.open === 'undefined') {
+                    stageLyr.classList.remove('is-hidden');
+                    stageLyr.dataset.open = '1';
+                }
+            }
+        } catch (e) {}
+
         showPlayerChrome();
     }
     
