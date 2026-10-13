@@ -2756,13 +2756,14 @@ progress {
 }
 
 .maximum-player-queue .header {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     height: 60px;
-    position: unset;
-    top: unset;
     background-color: var(--bs-body-bg);
     z-index: 10
 }
@@ -3646,7 +3647,7 @@ div: nth-of-type(2) {
     display: grid;
     grid-row-gap: 10px;
     row-gap: 10px;
-    padding-bottom: 42px
+    padding-bottom: 110px
 }
 
 .track-line-queue-container .playing {
@@ -3779,7 +3780,8 @@ div: nth-of-type(2) {
 
 .main-content .search-container{
     display: block;
-    width: 100%;
+    padding: 0 1rem;
+    min-width: 100%;
 }
 
 .search-container .content .clear,.search-container .content .icon {
@@ -4318,18 +4320,19 @@ div: nth-of-type(2) {
     display: inline-block
 }
 
-.artist-about-container {
+.about-container {
     display: flex;
     flex-direction: column;
-    padding: var(--main-padding-x)
+    padding: 0 1rem;
 }
 
-.artist-about-container .text1 {
+
+.about-container .text1 {
     font-weight: 400;
     opacity: .5
 }
 
-.artist-about-container .text2 {
+.about-container .text2 {
     font-weight: 500
 }
 
@@ -5131,25 +5134,24 @@ transition: 0.2s
 
 @media (min-width: 768px) {
     
-:root {
---grid-columns-count: 4;
---grid-columns-count-video: 3;
-}
+    :root {
+    --grid-columns-count: 4;
+    --grid-columns-count-video: 3;
+    }
     
-
-.sidebar-container {
+    .sidebar-container {
         display: block
     }
-
-.logo-container-m {
+    
+    .logo-container-m {
         display: none
     }
-
-.main-footer,.navbar-m {
+    
+    .main-footer,.navbar-m {
         display: none
     }
-
-.topbar-container .search-container{
+    
+    .topbar-container .search-container{
         display: block
     }
     .desktop-navigation, .topbar-container {
@@ -5166,87 +5168,82 @@ transition: 0.2s
     .search-container .content {
         max-width: 600px;
     }
-
-.carousel-slider-container {
+    
+    .carousel-slider-container {
         grid-auto-columns: calc((100% - (var(--grid-slider-columns-count) - 1) * var(--grid-columns-gap)) / var(--grid-slider-columns-count))
     }
-
-.carousel-button-container {
+    
+    .carousel-button-container {
         display: flex
     }
-
-.genremood-grid-container {
+    
+    .genremood-grid-container {
         grid-template-columns: 1fr 1fr
     }
-
-.grid-container {
+    
+    .grid-container {
         grid-template-columns: 1fr 1fr 1fr
     }
-.musicvideo-grid-container {
+    .musicvideo-grid-container {
         grid-template-columns: 1fr 1fr
     }
-
-.topbar-container {
+    
+    .topbar-container {
         height: 70px
     }
-
-.main-tabs {
-        top: 70px
+    
+    .main-tabs {
+        top: 70px;
+        padding: 0 1rem;
     }
     
     .main-tabs,.main-tabs .item {
         justify-content: normal
     }
 
-.main-tabs .item {
+    .main-tabs .item {
         margin: 0 30px 0 0
     }
-    
+        
     .page-detail-actions {
         justify-content: start
     }
-
-.minimize-player-wrapper {
+    
+    .minimize-player-wrapper {
          display: none
     }
-
-.maximum-player-container {
+    
+    .maximum-player-container {
         flex-direction: row;
         align-items: flex-start
     }
 
-.player-container-desktop{
-         display: none
+    .player-container-desktop{
+        display: none
         
     }
-
-.maximum-player-desktop {
+    
+    .maximum-player-desktop {
         display: grid;
         grid-template-columns: 2fr 4fr 1fr
     }
-
-.maximum-player-mobile {
+    
+    .maximum-player-mobile {
         display: none
     }
-
-.maximum-player-queue {
-        max-width: none;
-        min-width: none
-    }
-
-.maximum-player-queue .header {
-        position: -webkit-sticky;
-        position: sticky;
-        top: 0
-    }
-
-.maximum-player-queue .header .buttons {
-        display: flex
-    }
-
-.lyrics-dialog {
-        bottom: 100px
-    }
+    
+    .maximum-player-queue {
+            max-width: none;
+            min-width: none
+        }
+    
+    .maximum-player-queue .header .buttons {
+            display: flex
+        }
+    
+    .lyrics-dialog {
+            bottom: 100px
+        }
     
     .editor-container label{
     display: block;

@@ -908,7 +908,6 @@ img, svg {
 }
 .player-box .player-progress,
 .player-box .seekbar {
-    position: relative;
     z-index: 12;
 }
 .player-box input[type="range"].form-range {
@@ -949,7 +948,7 @@ img, svg {
     position: fixed;
     top: 1rem;
     left: 1rem;
-    z-index: 40;
+    z-index: 2;
     pointer-events: auto;
 }
 #BackToHome {
@@ -1000,7 +999,7 @@ img, svg {
 /* ---- app-wide thin scrollbar ---- */
 html, body, .main-container, .main-content, .ln,
 .bottom-sheet-wrapper, .track-line-queue-container,
-.section-carousel-container, .carousel-container,
+.section-carousel-container,
 .setting-content, .maximum-player-wrapper,
 .maximum-player-scroll-area, .maximum-player-queue {
     scrollbar-width: thin;
@@ -1074,7 +1073,7 @@ body::-webkit-scrollbar-thumb:hover,
     position: absolute;
     left: 0; right: 0; bottom: 0;
     height: auto;
-    max-height: 70%;
+    max-height: 100%;
     z-index: 30;
     background: rgba(18, 18, 22, 0.98);
     border-radius: 16px 16px 0 0;
@@ -1554,26 +1553,57 @@ body::-webkit-scrollbar-thumb:hover,
     text-align: center;
 }
 .media-stage-header {
-    justify-content: center;
+    display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    grid-template-areas: "artwork artists about";
+    align-items: center;
+    column-gap: 1rem;
+    width: 100%;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+.media-stage-header .thumbail {
+    grid-area: artwork;
 }
 .media-stage-artists {
+    grid-area: artists;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: 0 8px;
     position: relative;
     z-index: 1;
-    padding: 8px 12px 0;
 }
 .media-stage-artists .artists-list {
-    justify-content: center;
+    justify-content: flex-start;
+    margin: 0;
 }
 .media-stage-about {
+    grid-area: about;
     position: relative;
     z-index: 1;
-    padding: 4px 16px 12px;
+    padding: 0 8px;
     max-height: 28vh;
     overflow: auto;
+    min-width: 0;
 }
 .media-stage-about .about-container .text1 {
     opacity: 0.7;
     font-size: 12px;
+}
+@media (max-width: 700px) {
+    .media-stage-header {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "artwork"
+            "artists"
+            "about";
+        justify-items: center;
+        row-gap: 0.5rem;
+    }
+    .media-stage-artists .artists-list {
+        justify-content: center;
+    }
 }
 .media-stage-lyric {
     position: relative;
@@ -1647,8 +1677,6 @@ body::-webkit-scrollbar-thumb:hover,
     width: 100%;
     height: 100%;
     z-index: 1;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
 }
 .media-stage .stage-bg{
     position: absolute;
@@ -8649,18 +8677,17 @@ const PROFILE_KEY = 'ha_profile';
                 alt: ''
             });
             thumbWrap.append(stageThumb);
-            hdr.append(thumbWrap);
-            // هنرمندها (CRAL) زیر تامب
+            // سه بخش header: تامب | هنرمندها | about
             const artistBox = OA(document.createElement('div'), {
                 id: 'media-stage-artists',
-                className: 'media-stage-artists'
+                className: 'media-stage-artists content'
             });
-            // about meta (CRAB بدون تیتر)
             const aboutBox = OA(document.createElement('div'), {
                 id: 'media-stage-about',
-                className: 'media-stage-about'
+                className: 'media-stage-about content'
             });
-            det.append(texts, hdr, artistBox, aboutBox);
+            hdr.append(thumbWrap, artistBox, aboutBox);
+            det.append(texts, hdr);
             const plBox = OA(document.createElement('div'), {
                 id: 'media-stage-lyric',
                 className: 'playlist-container media-stage-lyric'
