@@ -1620,80 +1620,6 @@ body::-webkit-scrollbar-thumb:hover,
     font-size: 12px;
 }
 
-
-/* ---- mini-lyric + max lyrics panel ---- */
-/* سایز باکس: --ha-lyric-box-size اولویت دارد؛ وگرنه --ha-lyric-size سراسری */
-.mini-lyric {
-    --ha-lyric-box-size: 1.28rem;
-    width: 100%;
-    margin: 0 auto;
-    padding: 6px 12px 10px;
-    box-sizing: border-box;
-    cursor: pointer;
-    min-height: 10rem;
-    max-height: 11.5rem;
-    overflow: hidden;
-    overscroll-behavior: contain;
-    touch-action: manipulation;
-    position: relative;
-    z-index: 2;
-    font-size: var(--ha-lyric-box-size, var(--ha-lyric-size, 16px));
-    font-family: var(--ha-lyric-font, inherit);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-}
-.mini-lyric .mini-lyric-head {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    flex-shrink: 0;
-    padding: 0 2px 4px;
-    font-size: 12px;
-    line-height: 1.2;
-    opacity: 0.85;
-    pointer-events: none;
-}
-.mini-lyric .mini-lyric-head .ml-title {
-    font-weight: 600;
-    letter-spacing: 0.02em;
-}
-.mini-lyric .mini-lyric-head .ml-lang {
-    opacity: 0.9;
-    font-weight: 500;
-}
-.mini-lyric .mini-lyric-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    overflow: hidden;
-}
-.mini-lyric .ha-lrc {
-    max-height: 10rem;
-    overflow: hidden;
-    overscroll-behavior: contain;
-    pointer-events: none;
-    width: 100%;
-}
-.mini-lyric .ha-lrc.ha-lrc--focus {
-    padding: 0;
-    gap: 0.25rem;
-    justify-content: center;
-}
-.mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.is-near {
-    opacity: 0.4;
-    font-size: 0.88em;
-    line-height: 1.35;
-}
-.mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.active {
-    font-size: 1.05em;
-    font-weight: 700;
-    line-height: 1.4;
-}
 .maximum-player-container {
     position: relative;
     display: flex;
@@ -1990,9 +1916,18 @@ body::-webkit-scrollbar-thumb:hover,
 }
 .media-stage-lyric .ha-lrc {
     max-height: 24vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     scroll-behavior: smooth;
+    overscroll-behavior: contain;
     padding: 8px 4px 24px;
+    scrollbar-width: none;          /* Firefox */
+    -ms-overflow-style: none;       /* legacy Edge */
+}
+.media-stage-lyric .ha-lrc::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;                  /* Chrome/Safari */
 }
 .media-stage-lyric .ha-lrc.ha-lrc--line,
 .media-stage-lyric .ha-lrc.ha-lrc--card {
@@ -2002,8 +1937,18 @@ body::-webkit-scrollbar-thumb:hover,
 .page-detail-header-container .lyric .ha-lrc {
     text-align: center;
     max-height: 40vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    overscroll-behavior: contain;
     padding: 0.5rem 0.75rem 1rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.page-detail-header-container .lyric .ha-lrc::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
 }
 .page-detail-header-container .lyric .ha-lrc.ha-lrc--line,
 .page-detail-header-container .lyric .ha-lrc.ha-lrc--card {
@@ -6399,6 +6344,9 @@ if (!empty($_SESSION['loggedin'])) {
         
         const dlc = OA(document.createElement('div'), { className: 'lyric' });
         dlc.setAttribute('data-ha-lrc', '1');
+        dlc.style.setProperty('--ha-lyric-box-size', '18px');
+        // و در صورت نیاز:
+        //dlc.classList.add('ha-lyric-skin');
         
         dhc.append(dtn, dct, dlc );
         MCNT.append(dhc);
@@ -14550,7 +14498,7 @@ const PROFILE_KEY = 'ha_profile';
     }
 
     /**
-     * CRML — ساخت / به‌روزرسانی mini-lyric کنار maximum-player-mobile
+     * CRML — maximum-player-mobile
      * فقط اگر آیتم lyrics داشته باشد نمایش داده می‌شود
      */
     function CRML(item) {
