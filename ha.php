@@ -6363,7 +6363,8 @@ if (!empty($_SESSION['loggedin'])) {
                 LyricsEngine.mount(
                     dlc,
                     LyricsEngine.synced ? 'sync' : 'static',
-                    LyricsEngine.synced ? 'normal' : 'static'
+                    LyricsEngine.synced ? 'normal' : 'static',
+                    e
                 );
             }
         } catch (err) {}
@@ -6468,7 +6469,8 @@ if (!empty($_SESSION['loggedin'])) {
                     LyricsEngine.mount(
                         dlr,
                         LyricsEngine.synced ? 'sync' : 'static',
-                        LyricsEngine.synced ? 'normal' : 'static'
+                        LyricsEngine.synced ? 'normal' : 'static',
+                        e
                     );
                 }
             } catch (err) {}
@@ -13359,6 +13361,36 @@ const PROFILE_KEY = 'ha_profile';
             return !!this.pickEntry(item);
         },
 
+        /** اسنپ‌شات لیریک برای bind به یک آیتم صفحه (مستقل از پلیر) */
+        _snapshotFromItem(item, preferredLng) {
+            if (!item) return null;
+            const entry = this.pickEntry(item, preferredLng);
+            const snap = {
+                itemId: item.id != null ? item.id : null,
+                lines: [],
+                synced: false,
+                offsetMs: 0,
+                lang: null
+            };
+            if (!entry || !entry.body) return snap;
+            const knd = String(entry.knd || '').toLowerCase();
+            const body = entry.body;
+            if (knd === 'lrc' || /^\s*\[\d{1,2}:\d{2}/.test(body)) {
+                // parseLrc از this.offsetMs هم می‌نویسد — موقتاً جدا نگه می‌داریم
+                const prevOff = this.offsetMs;
+                this.offsetMs = 0;
+                snap.lines = this.parseLrc(body);
+                snap.offsetMs = this.offsetMs || 0;
+                this.offsetMs = prevOff;
+                snap.synced = snap.lines.length > 0 && snap.lines[0].t >= 0;
+            } else {
+                snap.lines = this.parsePlain(body);
+                snap.synced = false;
+            }
+            if (entry.lng) snap.lang = entry.lng;
+            return snap;
+        },
+
         loadFromItem(item, preferredLng) {
             this.lines = [];
             this.activeIndex = -1;
@@ -13368,7 +13400,7 @@ const PROFILE_KEY = 'ha_profile';
             this.itemType = (item && item.meta && item.meta.type) || null;
             const entry = this.pickEntry(item, preferredLng);
             if (!entry || !entry.body) {
-                this._rerenderAll();
+                this._rerenderPlayerMounts();
                 return false;
             }
             const knd = String(entry.knd || '').toLowerCase();
@@ -13381,7 +13413,19 @@ const PROFILE_KEY = 'ha_profile';
                 this.synced = false;
             }
             if (entry.lng) this.lang = entry.lng;
-            this._rerenderAll();
+            // فقط mountهای پلیر + boundهای همان آیتم — نه صفحهٔ آهنگ دیگر
+            this._mounts = this._mounts.filter((m) => m.el && m.el.isConnected);
+            this._mounts.forEach((m) => {
+                if (m.bound) {
+                    if (item && String(m.bound.itemId) === String(item.id)) {
+                        m.bound = this._snapshotFromItem(item, preferredLng);
+                        this._renderInto(m);
+                    }
+                    return;
+                }
+                this._renderInto(m);
+            });
+            this._applyActive();
             return this.lines.length > 0;
         },
 
@@ -13390,13 +13434,12 @@ const PROFILE_KEY = 'ha_profile';
             this.activeIndex = -1;
             this.synced = false;
             this.itemId = null;
-            this._rerenderAll();
+            this._rerenderPlayerMounts();
         },
 
         findIndex(timeSec) {
             if (!this.synced || !this.lines.length) return -1;
             const t = timeSec + (this.offsetMs / 1000);
-            // آخرین خطی که t_line <= t
             let lo = 0, hi = this.lines.length - 1, ans = -1;
             while (lo <= hi) {
                 const mid = (lo + hi) >> 1;
@@ -13418,19 +13461,27 @@ const PROFILE_KEY = 'ha_profile';
             this._applyActive();
         },
 
-        /** ثبت container — mode: sync|static ، viewOverride: normal|line|focus|card|null */
-        mount(el, mode, viewOverride) {
+        /**
+         * ثبت container
+         * bindItem: اگر داده شود لیریک همان آیتم قفل می‌شود و با عوض شدن پلیر عوض نمی‌شود
+         */
+        mount(el, mode, viewOverride, bindItem) {
             if (!el) return;
             mode = mode || (this.synced ? 'sync' : 'static');
             const view = (viewOverride != null && viewOverride !== '') ? viewOverride : null;
+            const bound = bindItem ? this._snapshotFromItem(bindItem) : null;
+            if (bound && bound.synced) mode = 'sync';
+            else if (bound && !bound.synced) mode = 'static';
             const exists = this._mounts.find((m) => m.el === el);
             if (exists) {
                 exists.mode = mode;
                 exists.view = view;
+                if (bindItem) exists.bound = bound;
             } else {
-                this._mounts.push({ el, mode, view });
+                this._mounts.push({ el, mode, view, bound });
             }
-            this._renderInto(el, mode, view);
+            const m = this._mounts.find((x) => x.el === el);
+            this._renderInto(m);
             this._applyActive();
         },
 
@@ -13438,17 +13489,11 @@ const PROFILE_KEY = 'ha_profile';
             this._mounts = this._mounts.filter((m) => m.el !== el);
         },
 
-        /** همهٔ .lyric و #media-stage-lyric صفحه را پیدا و mount کن */
+        /** فقط stage پلیر — باکس‌های صفحه سانگ اینجا mount نمی‌شوند */
         mountDefaults(item) {
             if (item) this.loadFromItem(item);
             const stage = document.getElementById('media-stage-lyric');
-            // stage از تنظیم پلیر پیروی می‌کند (بدون viewOverride)
             if (stage) this.mount(stage, this.synced ? 'sync' : 'static', null);
-            // صفحه سانگ/جزئیات: همیشه نرمال — مستقل از lyricDisplayMode پلیر
-            document.querySelectorAll('.page-detail-header-container .lyric, .lyric[data-ha-lrc]').forEach((el) => {
-                this.mount(el, this.synced ? 'sync' : 'static', this.synced ? 'normal' : 'static');
-            });
-            // دکمه lyric
             const btn = document.getElementById('lyric');
             if (btn) {
                 if (this.lines.length) btn.classList.remove('vis-none');
@@ -13456,30 +13501,59 @@ const PROFILE_KEY = 'ha_profile';
             }
         },
 
-        _rerenderAll() {
+        _rerenderPlayerMounts() {
             this._mounts = this._mounts.filter((m) => m.el && m.el.isConnected);
-            this._mounts.forEach((m) => this._renderInto(m.el, m.mode, m.view));
+            this._mounts.forEach((m) => {
+                if (m.bound) return;
+                this._renderInto(m);
+            });
             this._applyActive();
         },
 
-        _viewFor(mode, viewOverride) {
-            if (mode === 'static' || !this.synced) return 'static';
+        _rerenderAll() {
+            this._mounts = this._mounts.filter((m) => m.el && m.el.isConnected);
+            this._mounts.forEach((m) => this._renderInto(m));
+            this._applyActive();
+        },
+
+        _viewFor(m) {
+            const mode = m.mode;
+            const viewOverride = m.view;
+            const synced = m.bound ? !!m.bound.synced : this.synced;
+            if (mode === 'static' || !synced) return 'static';
             if (viewOverride) return viewOverride;
             return this.getDisplayMode();
         },
 
-        _renderInto(el, mode, viewOverride) {
-            if (!el) return;
+        _linesOf(m) {
+            return (m && m.bound && Array.isArray(m.bound.lines)) ? m.bound.lines : this.lines;
+        },
+
+        _activeIndexOf(m) {
+            if (m && m.bound) {
+                // فقط اگر همان ترک در حال پخش است هایلایت/سینک کن
+                if (this.itemId != null && String(m.bound.itemId) === String(this.itemId) && this.synced) {
+                    return this.activeIndex;
+                }
+                return -1;
+            }
+            return this.activeIndex;
+        },
+
+        _renderInto(m) {
+            if (!m || !m.el) return;
+            const el = m.el;
+            const lines = this._linesOf(m);
+            const synced = m.bound ? !!m.bound.synced : this.synced;
             el.innerHTML = '';
-            if (!this.lines.length) {
+            if (!lines.length) {
                 el.append(OA(document.createElement('div'), {
                     className: 'ha-lrc-empty',
                     innerHTML: 'No lyrics'
                 }));
                 return;
             }
-            const view = this._viewFor(mode, viewOverride);
-            // --- خطی / کارت: اسکلت سبک؛ متن در _applyActive ---
+            const view = this._viewFor(m);
             if (view === 'line' || view === 'card') {
                 const wrap = OA(document.createElement('div'), {
                     className: 'ha-lrc ha-lrc--' + view
@@ -13504,24 +13578,27 @@ const PROFILE_KEY = 'ha_profile';
                 el.append(wrap);
                 return;
             }
-            // --- نرمال / فوکوس: همه خطوط ---
             const wrap = OA(document.createElement('div'), {
                 className: 'ha-lrc' + (view === 'focus' ? ' ha-lrc--focus' : '') + (view === 'static' ? ' static' : '')
             });
-            this.lines.forEach((ln, i) => {
+            const self = this;
+            const boundId = m.bound ? m.bound.itemId : null;
+            lines.forEach((ln, i) => {
                 const row = OA(document.createElement('div'), {
                     className: 'ha-lrc-line',
                     innerHTML: ln.text
                 });
                 row.setAttribute('data-i', String(i));
                 if (ln.t >= 0) row.setAttribute('data-t', String(ln.t));
-                if (this.synced && ln.t >= 0) {
+                if (synced && ln.t >= 0) {
                     row.addEventListener('click', (ev) => {
                         ev.stopPropagation();
+                        // seek فقط اگر این باکس مال ترک در حال پخش باشد
+                        if (boundId != null && String(boundId) !== String(self.itemId)) return;
                         const media = GetActiveMediaElement();
                         if (!media || !Number.isFinite(media.duration)) return;
                         try { media.currentTime = Math.max(0, ln.t); } catch (e) {}
-                        this.sync(ln.t + 0.01);
+                        self.sync(ln.t + 0.01);
                         try { revealPlayerControls(); } catch (e) {}
                     });
                 }
@@ -13531,17 +13608,18 @@ const PROFILE_KEY = 'ha_profile';
         },
 
         _applyActive() {
-            const idx = this.activeIndex;
             this._mounts.forEach((m) => {
                 if (!m.el || !m.el.isConnected) return;
-                if (m.mode === 'static' || !this.synced) return;
-                const view = this._viewFor(m.mode, m.view);
+                const lines = this._linesOf(m);
+                const synced = m.bound ? !!m.bound.synced : this.synced;
+                if (m.mode === 'static' || !synced) return;
+                const view = this._viewFor(m);
+                const idx = this._activeIndexOf(m);
 
-                // حالت خطی / کارت — فید نرم بین خطوط
                 if (view === 'line' || view === 'card') {
                     const stage = m.el.querySelector('.ha-lrc-line-stage');
                     if (!stage) return;
-                    const text = (idx >= 0 && this.lines[idx]) ? this.lines[idx].text : '';
+                    const text = (idx >= 0 && lines[idx]) ? lines[idx].text : '';
                     const cur = stage.querySelector('.ha-lrc-fade.is-in');
                     const curText = cur ? (cur.textContent || '') : '';
                     if (cur && curText === text) return;
@@ -13549,7 +13627,6 @@ const PROFILE_KEY = 'ha_profile';
                     this._lineFadeToken = (this._lineFadeToken || 0) + 1;
                     const token = this._lineFadeToken;
 
-                    // خروج خط قبلی
                     if (cur) {
                         cur.classList.remove('is-in');
                         cur.classList.add('is-out');
@@ -13558,19 +13635,16 @@ const PROFILE_KEY = 'ha_profile';
                             if (cur.parentNode) cur.parentNode.removeChild(cur);
                         }, 360);
                     }
-                    // ورود خط جدید
                     const next = OA(document.createElement('div'), {
                         className: 'ha-lrc-fade',
                         innerHTML: text
                     });
                     stage.append(next);
-                    // force reflow برای انیمیشن
                     void next.offsetWidth;
                     next.classList.add('is-in');
                     return;
                 }
 
-                // نرمال / فوکوس
                 const rows = m.el.querySelectorAll('.ha-lrc-line');
                 let activeEl = null;
                 rows.forEach((row, i) => {
@@ -13581,7 +13655,6 @@ const PROFILE_KEY = 'ha_profile';
                     row.classList.toggle('is-near', isNear);
                     if (isActive) activeEl = row;
                 });
-                // اسکرول فقط داخل باکس — نه کل صفحه (scrollIntoView ممنوع)
                 if (activeEl && (view === 'normal' || view === 'focus')) {
                     try {
                         LyricsEngine._scrollLineIntoBox(m.el, activeEl);
