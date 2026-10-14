@@ -1652,6 +1652,14 @@ body::-webkit-scrollbar-thumb:hover,
 .maximum-player-lyrics.is-open {
     display: flex;
 }
+/* وقتی فقط لیریک باز است، کیو/موبایل پشت صحنه دیده/لانچ نشوند */
+.maximum-player-wrapper.ha-lyrics-only .maximum-player-queue {
+    display: none !important;
+}
+.maximum-player-wrapper.ha-lyrics-only .maximum-player-mobile,
+.maximum-player-wrapper.ha-lyrics-only .mini-lyric {
+    display: none !important;
+}
 .maximum-player-lyrics .header {
     flex-shrink: 0;
     display: flex;
@@ -14033,14 +14041,15 @@ const PROFILE_KEY = 'ha_profile';
         return !!(panel && panel.classList.contains('is-open'));
     }
 
-    /** فقط پنل لیریک — به کیو/مینیمایز max کاری ندارد */
+    /** فقط پنل لیریک — CRQT صدا زده نمی‌شود؛ کیو با کلاس ha-lyrics-only مخفی می‌ماند */
     function openMaxLyricsPanel() {
         const P = ensurePlayer();
         const item = P.nowPlaying && P.nowPlaying.item;
         if (!item || !LyricsEngine.hasLyrics(item)) return;
         CRML(item);
-        // اگر max بسته است فقط برای دیده شدن بازش کن؛ کیو را دست نزن
         try {
+            // شل max برای میزبانی پنل لازم است، ولی حالت lyrics-only = بدون نمایش کیو
+            if (MaxPly) MaxPly.classList.add('ha-lyrics-only');
             MaxMiz(MaxPly);
             MinMiz(MinPly);
         } catch (e) {}
@@ -14063,11 +14072,12 @@ const PROFILE_KEY = 'ha_profile';
 
     /**
      * PlayList: فقط کیو را لانچ کن.
-     * تنها ارتباط: اگر لیریک باز است اول فقط لیریک مینیمایز شود.
+     * اگر لیریک باز است اول فقط لیریک مینیمایز شود، بعد کیو دیده شود.
      */
     function openMaxQueuePanel() {
         if (isMaxLyricsOpen()) closeMaxLyricsPanel();
         try {
+            if (MaxPly) MaxPly.classList.remove('ha-lyrics-only');
             MaxMiz(MaxPly);
             MinMiz(MinPly);
             CRQT();
@@ -14076,21 +14086,25 @@ const PROFILE_KEY = 'ha_profile';
         } catch (e) {}
     }
 
-    /** مینیمایز فقط لیریک */
+    /** مینیمایز فقط لیریک — کیو را باز/بسته نمی‌کند */
     function closeMaxLyricsPanel() {
         const panel = document.getElementById('maximum-player-lyrics');
         if (!panel) return;
         panel.classList.remove('is-open');
         panel.classList.add('vis-none');
+        if (MaxPly) MaxPly.classList.remove('ha-lyrics-only');
     }
 
-    /** مینیمایز فقط خود maximum (کیو داخلش) — لیریک را لمس نکن */
+    /** مینیمایز فقط خود maximum (کیو داخلش) — پنل لیریک را عمداً نمی‌بندد */
     function minimizeMaxToMini() {
+        if (MaxPly) MaxPly.classList.remove('ha-lyrics-only');
         MinMiz(MaxPly);
         MaxMiz(MinPly);
     }
 
     function openMaxFromMini() {
+        if (MaxPly) MaxPly.classList.remove('ha-lyrics-only');
+        closeMaxLyricsPanel();
         MaxMiz(MaxPly);
         MinMiz(MinPly);
         CRQT();
