@@ -1613,7 +1613,7 @@ body::-webkit-scrollbar-thumb:hover,
     box-sizing: border-box;
     cursor: pointer;
     min-height: 10rem;
-    max-height: 10rem;
+    max-height: 11.5rem;
     overflow: hidden;
     overscroll-behavior: contain;
     touch-action: manipulation;
@@ -1623,7 +1623,36 @@ body::-webkit-scrollbar-thumb:hover,
     font-family: var(--ha-lyric-font, inherit);
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
+}
+.mini-lyric .mini-lyric-head {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 0 2px 4px;
+    font-size: 12px;
+    line-height: 1.2;
+    opacity: 0.85;
+    pointer-events: none;
+}
+.mini-lyric .mini-lyric-head .ml-title {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.mini-lyric .mini-lyric-head .ml-lang {
+    opacity: 0.9;
+    font-weight: 500;
+}
+.mini-lyric .mini-lyric-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
+    overflow: hidden;
 }
 .mini-lyric .ha-lrc {
     max-height: 10rem;
@@ -5558,6 +5587,8 @@ if (!empty($_SESSION['loggedin'])) {
             lyricFontSizePx: 16,
             lyricFontFamily: '',
             lyricDisplayMode: 'normal',
+            lyricLang: '',
+            playerShowLyrics: true,
             sleepTimer: 0,
             repeatMode: 'off',
             shuffleMode: false
@@ -9220,12 +9251,17 @@ const PROFILE_KEY = 'ha_profile';
             innerHTML: 'Playlist'
         });
         tabQue.setAttribute('data-mode', 'queue');
+        const tabLyr = OA(document.createElement('div'), {
+            className: 'tab',
+            innerHTML: 'Lyrics'
+        });
+        tabLyr.setAttribute('data-mode', 'lyrics');
         const tabSrc = OA(document.createElement('div'), {
             className: 'tab',
             innerHTML: 'Sources'
         });
         tabSrc.setAttribute('data-mode', 'sources');
-        panelTabs.append(tabSet, tabQue, tabSrc);
+        panelTabs.append(tabSet, tabQue, tabLyr, tabSrc);
         const panelBody = OA(document.createElement('div'), { id: 'player-panel-body' });
         panel.append(panelHead, panelTabs, panelBody);
 
@@ -9240,26 +9276,11 @@ const PROFILE_KEY = 'ha_profile';
         panelClose.addEventListener('click', () => closePlayerPanel());
         tabSet.addEventListener('click', () => openPlayerPanel('settings'));
         tabQue.addEventListener('click', () => openPlayerPanel('queue'));
+        tabLyr.addEventListener('click', () => openPlayerPanel('lyrics'));
         tabSrc.addEventListener('click', () => openPlayerPanel('sources'));
         btnQueue.addEventListener('click', () => openPlayerPanel('queue'));
         btnLyr.addEventListener('click', () => {
-            const stageLyr = document.getElementById('media-stage-lyric');
-            if (!stageLyr) return;
-            const open = stageLyr.dataset.open === '1';
-            if (open) {
-                stageLyr.classList.add('is-hidden');
-                stageLyr.dataset.open = '0';
-                btnLyr.classList.remove('active');
-            } else {
-                stageLyr.classList.remove('is-hidden');
-                stageLyr.dataset.open = '1';
-                btnLyr.classList.add('active');
-                // اگر هنوز mount نشده
-                const P = ensurePlayer();
-                const item = P.nowPlaying && P.nowPlaying.item;
-                if (item) LyricsEngine.mountDefaults(item);
-                LyricsEngine.sync((GetActiveMediaElement() && GetActiveMediaElement().currentTime) || 0);
-            }
+            openPlayerPanel('lyrics');
             revealPlayerControls();
         });
 
@@ -9279,6 +9300,7 @@ const PROFILE_KEY = 'ha_profile';
         applyMediaStageSpin(!!GetSetting('rotatingHeader'));
         applyLyricSkin();
         wireMaxLyricsTools();
+        applyPlayerLyricsVisibility();
         armPlayerControlsHide();
     }
 
@@ -9333,6 +9355,9 @@ const PROFILE_KEY = 'ha_profile';
             const n = (P.queue || []).length;
             if (title) title.innerHTML = 'Next Playing (' + n + ')';
             renderPlayerQueuePanel(body);
+        } else if (mode === 'lyrics') {
+            if (title) title.innerHTML = 'Lyrics';
+            renderPlayerLyricsPanel(body);
         } else {
             if (title) title.innerHTML = 'Player settings';
             renderPlayerSettingsPanel(body);
@@ -9348,6 +9373,40 @@ const PROFILE_KEY = 'ha_profile';
         const list = OA(document.createElement('div'), { className: 'player-queue-list' });
         body.append(list);
         renderQueueItems(list, { compact: true });
+    }
+
+    function renderPlayerLyricsPanel(body) {
+        const P = ensurePlayer();
+        const item = P.nowPlaying && P.nowPlaying.item;
+        const list = getItemLyricEntries(item).slice().sort((a, b) =>
+            String(a.lng || '').toLowerCase().localeCompare(String(b.lng || '').toLowerCase())
+        );
+        if (!list.length) {
+            body.append(OA(document.createElement('div'), {
+                className: 'text2',
+                innerHTML: 'No lyrics for this track'
+            }));
+            return;
+        }
+        let cur = '';
+        try { cur = String(GetSetting('lyricLang') || LyricsEngine.lang || '').toLowerCase(); } catch (e) {}
+        const wrap = OA(document.createElement('div'), { className: 'player-quality-list' });
+        list.forEach((entry) => {
+            const code = String(entry.lng || '').toLowerCase();
+            const row = OA(document.createElement('div'), {
+                className: 'player-quality-row' + (code && code === cur ? ' active' : '')
+            });
+            row.append(
+                OA(document.createElement('span'), { className: 'text1', innerHTML: langLabel(code, 'short') }),
+                OA(document.createElement('span'), { className: 'text2', innerHTML: langLabel(code, 'native') })
+            );
+            row.addEventListener('click', () => {
+                selectLyricLang(code);
+                openPlayerPanel('lyrics');
+            });
+            wrap.append(row);
+        });
+        body.append(wrap);
     }
 
     function makeToggleRow(label, key, onChange) {
@@ -9440,6 +9499,14 @@ const PROFILE_KEY = 'ha_profile';
         }
         secQ.append(qList);
         body.append(secQ);
+
+        // ---- نمایش لیریک روی خود پلیر (فقط stage) ----
+        const secLyrOn = OA(document.createElement('div'), { className: 'player-panel-section' });
+        secLyrOn.append(OA(document.createElement('div'), { className: 'sec-title', innerHTML: 'Lyrics on player' }));
+        secLyrOn.append(makeToggleRow('Show lyrics', 'playerShowLyrics', () => {
+            applyPlayerLyricsVisibility();
+        }));
+        body.append(secLyrOn);
 
         // ---- Lyric font size (پیوسته) + presets + family ----
         const secL = OA(document.createElement('div'), { className: 'player-panel-section' });
@@ -11872,7 +11939,47 @@ const PROFILE_KEY = 'ha_profile';
         });
     }
     
+    function renderLyricPickerBW(dbs, e, id, T, closeFn) {
+        const list = getItemLyricEntries(e).slice().sort((a, b) => {
+            const la = String(a.lng || '').toLowerCase();
+            const lb = String(b.lng || '').toLowerCase();
+            return la.localeCompare(lb);
+        });
+        if (!list.length) {
+            dbs.append(OA(document.createElement('div'), {
+                className: 'item text2',
+                innerHTML: 'No lyrics'
+            }));
+            return;
+        }
+        let cur = '';
+        try { cur = String(GetSetting('lyricLang') || LyricsEngine.lang || '').toLowerCase(); } catch (err) {}
+        list.forEach((entry) => {
+            const code = String(entry.lng || '').toLowerCase();
+            const row = OA(document.createElement('div'), { className: 'item' });
+            if (code && code === cur) row.classList.add('active');
+            const icon = OA(document.createElement('span'), { innerHTML: svg_lrc });
+            const short = OA(document.createElement('span'), {
+                className: 'text1',
+                style: 'margin-inline-start:10px;min-width:2.2em',
+                innerHTML: langLabel(code, 'short')
+            });
+            const full = OA(document.createElement('span'), {
+                className: 'text2',
+                style: 'margin-inline-start:8px',
+                innerHTML: langLabel(code, 'native')
+            });
+            row.append(icon, short, full);
+            row.addEventListener('click', () => {
+                selectLyricLang(code);
+                if (typeof closeFn === 'function') closeFn();
+            });
+            dbs.append(row);
+        });
+    }
+
     function CRBW(id, T, c, ctx) {
+
         ctx = ctx || {};
         c = c || null;
         
@@ -11883,6 +11990,7 @@ const PROFILE_KEY = 'ha_profile';
         c === 'msg' ||
         c === 'art' ||
         c === 'don' ||
+        c === 'lyr' ||
         c === 'pls' ||
         c === 'rmpls' ||
         !c;
@@ -11976,6 +12084,12 @@ const PROFILE_KEY = 'ha_profile';
         if (c === 'don') {
             dbs.innerHTML = '';
             renderDownloadSources(dbs, e, id, T, closeBottomSheet);
+            return;
+        }
+
+        if (c === 'lyr') {
+            dbs.innerHTML = '';
+            renderLyricPickerBW(dbs, e, id, T, closeBottomSheet);
             return;
         }
     
@@ -13069,6 +13183,79 @@ const PROFILE_KEY = 'ha_profile';
      * داده از item.lyrics[]: { lng, knd, fmt, src, body }
      * خروجی: mount روی چند container با کلاس .ha-lrc
      */
+
+    /**
+     * برچسب زبان برای UI
+     * mode: 'short' => Fa | 'full' => Fa - فارسی | 'native' => فارسی
+     */
+    function langLabel(code, mode) {
+        mode = mode || 'short';
+        const raw = String(code || '').trim();
+        if (!raw) return mode === 'full' ? '—' : '';
+        const low = raw.toLowerCase().replace(/_/g, '-');
+        const primary = low.split('-')[0];
+        const MAP = {
+            fa: { short: 'Fa', native: 'فارسی' },
+            en: { short: 'En', native: 'English' },
+            ar: { short: 'Ar', native: 'العربية' },
+            tr: { short: 'Tr', native: 'Türkçe' },
+            ku: { short: 'Ku', native: 'کوردی' },
+            ckb: { short: 'Ku', native: 'کوردی' },
+            de: { short: 'De', native: 'Deutsch' },
+            fr: { short: 'Fr', native: 'Français' },
+            es: { short: 'Es', native: 'Español' },
+            ru: { short: 'Ru', native: 'Русский' },
+            hi: { short: 'Hi', native: 'हिन्दी' },
+            ur: { short: 'Ur', native: 'اردو' },
+            az: { short: 'Az', native: 'Azərbaycan' },
+            ps: { short: 'Ps', native: 'پښتو' }
+        };
+        const hit = MAP[primary] || {
+            short: primary.charAt(0).toUpperCase() + primary.slice(1, 2).toLowerCase(),
+            native: raw
+        };
+        if (mode === 'native') return hit.native;
+        if (mode === 'full') return hit.short + ' - ' + hit.native;
+        return hit.short;
+    }
+
+    function getItemLyricEntries(item) {
+        if (!item || !Array.isArray(item.lyrics)) return [];
+        return item.lyrics.filter((x) => x && x.body);
+    }
+
+    function selectLyricLang(lng) {
+        const code = String(lng || '').trim();
+        try { SetSetting('lyricLang', code); } catch (e) {}
+        try { LyricsEngine.lang = code || LyricsEngine.lang || 'fa'; } catch (e) {}
+        const P = ensurePlayer();
+        const item = P.nowPlaying && P.nowPlaying.item;
+        if (!item) return;
+        try {
+            LyricsEngine.loadFromItem(item, code || null);
+            LyricsEngine.mountDefaults(item);
+            CRML(item);
+            const media = GetActiveMediaElement();
+            LyricsEngine.sync(media ? (media.currentTime || 0) : 0);
+        } catch (e) {}
+    }
+
+    function applyPlayerLyricsVisibility() {
+        const on = GetSetting('playerShowLyrics');
+        const show = on === true || on === 1 || on === '1' || on === undefined || on === null;
+        const stage = document.getElementById('media-stage-lyric');
+        if (!stage) return;
+        if (show) {
+            stage.classList.remove('is-hidden');
+            stage.dataset.open = '1';
+        } else {
+            stage.classList.add('is-hidden');
+            stage.dataset.open = '0';
+        }
+        const btn = document.getElementById('lyric');
+        if (btn) btn.classList.toggle('active', !!show);
+    }
+
     const LyricsEngine = {
         lines: [],
         activeIndex: -1,
@@ -13150,8 +13337,14 @@ const PROFILE_KEY = 'ha_profile';
             if (!item) return null;
             const arr = Array.isArray(item.lyrics) ? item.lyrics : [];
             if (!arr.length) return null;
-            const lng = preferredLng || this.lang || 'fa';
-            let hit = arr.find((x) => x && x.body && (x.lng === lng || (x.lng || '').startsWith(lng)));
+            let pref = preferredLng;
+            if (pref == null || pref === '') {
+                try { pref = GetSetting('lyricLang') || ''; } catch (e) { pref = ''; }
+            }
+            if (!pref) pref = this.lang || 'fa';
+            const lng = String(pref).toLowerCase();
+            let hit = arr.find((x) => x && x.body && String(x.lng || '').toLowerCase() === lng);
+            if (!hit) hit = arr.find((x) => x && x.body && String(x.lng || '').toLowerCase().startsWith(lng.split('-')[0]));
             if (!hit) hit = arr.find((x) => x && x.body);
             return hit || null;
         },
@@ -13565,6 +13758,7 @@ const PROFILE_KEY = 'ha_profile';
         try {
             LyricsEngine.mountDefaults(item);
             CRML(item);
+            applyPlayerLyricsVisibility();
             const stageLyr = document.getElementById('media-stage-lyric');
             if (stageLyr && LyricsEngine.lines.length) {
                 // پیش‌فرض مخفی نباشد اگر کاربر قبلاً باز کرده
@@ -14344,26 +14538,40 @@ const PROFILE_KEY = 'ha_profile';
         if (!item || !LyricsEngine.hasLyrics(item)) {
             box.classList.add('vis-none');
             box.innerHTML = '';
-            try { LyricsEngine.unmount(box); } catch (e) {}
+            try {
+                const prev = box.querySelector('.mini-lyric-body');
+                if (prev) LyricsEngine.unmount(prev);
+            } catch (e) {}
             return;
         }
         LyricsEngine.loadFromItem(item);
-        // فوکوس برای مینی — حتی اگر سینک نباشد لیست فشرده
         const mode = LyricsEngine.synced ? 'sync' : 'static';
         const view = LyricsEngine.synced ? 'focus' : 'static';
         box.classList.remove('vis-none');
-        LyricsEngine.mount(box, mode, view);
+        let head = box.querySelector('.mini-lyric-head');
+        let bodyEl = box.querySelector('.mini-lyric-body');
+        if (!head || !bodyEl) {
+            box.innerHTML = '';
+            head = OA(document.createElement('div'), { className: 'mini-lyric-head' });
+            head.append(
+                OA(document.createElement('span'), { className: 'ml-title', innerHTML: 'Lyric' }),
+                OA(document.createElement('span'), { className: 'ml-lang', innerHTML: '' })
+            );
+            bodyEl = OA(document.createElement('div'), { className: 'mini-lyric-body' });
+            box.append(head, bodyEl);
+        }
+        const langEl = head.querySelector('.ml-lang');
+        if (langEl) langEl.innerHTML = langLabel(LyricsEngine.lang || 'fa', 'short');
+        LyricsEngine.mount(bodyEl, mode, view);
         if (!box._haLyrClick) {
             box._haLyrClick = true;
             box.addEventListener('click', () => openMaxLyricsPanel());
         }
-        // عنوان پنل بزرگ
         const titleEl = document.getElementById('max-lyrics-title');
         if (titleEl) titleEl.innerHTML = item.name || '';
-        // body پنل بزرگ را هم آماده کن (بدون باز کردن)
-        const body = document.getElementById('max-lyrics-body');
-        if (body) {
-            LyricsEngine.mount(body, mode, LyricsEngine.synced ? 'normal' : 'static');
+        const maxBody = document.getElementById('max-lyrics-body');
+        if (maxBody) {
+            LyricsEngine.mount(maxBody, mode, LyricsEngine.synced ? 'normal' : 'static');
         }
     }
 
@@ -14617,13 +14825,29 @@ const PROFILE_KEY = 'ha_profile';
         const maxLyrMin = document.getElementById('max-lyrics-minimize');
         if (maxLyrMin) wireOnce(maxLyrMin, 'click', () => closeMaxLyricsPanel());
 
-        // موبایل: ردیف دوم buttons.m-top-1 — دکمه وسط/سوم → فقط لیریک
+        // موبایل ردیف دوم: [1] هنرمندان CRBW art | [2] مولتی‌لیریک CRBW lyr
         if (MaxMobPly) {
             const rows = MaxMobPly.querySelectorAll('.buttons.m-top-1');
             if (rows.length >= 2) {
                 const btns = rows[1].querySelectorAll('.button');
-                const lyrBtn = btns[2] || btns[1];
-                if (lyrBtn) wireOnce(lyrBtn, 'click', () => openMaxLyricsPanel());
+                const artBtn = btns[1];
+                const lyrBtn = btns[2];
+                if (artBtn) {
+                    wireOnce(artBtn, 'click', () => {
+                        const np = ensurePlayer().nowPlaying;
+                        if (!np || !np.item || np.item.id == null) return;
+                        const typ = (np.item.meta && np.item.meta.type) || np.type || 'song';
+                        CRBW(np.item.id, typ, 'art', { fresh: true });
+                    });
+                }
+                if (lyrBtn) {
+                    wireOnce(lyrBtn, 'click', () => {
+                        const np = ensurePlayer().nowPlaying;
+                        if (!np || !np.item || np.item.id == null) return;
+                        const typ = (np.item.meta && np.item.meta.type) || np.type || 'song';
+                        CRBW(np.item.id, typ, 'lyr', { fresh: true });
+                    });
+                }
             }
         }
 
