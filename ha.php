@@ -1479,7 +1479,7 @@ body::-webkit-scrollbar-thumb:hover,
     width: 45px;
 }
 
-.player-progress .final-time {
+.player-progress .duration {
     font-size: 24px;
     width: 45px;
 }
@@ -1831,8 +1831,8 @@ body::-webkit-scrollbar-thumb:hover,
     left: auto; right: auto;
 }
 .media-stage-lyric .ha-lrc {
-    max-height: 42vh;
-    overflow: auto;
+    max-height: 24vh;
+    overflow: hidden;
     scroll-behavior: smooth;
     padding: 8px 4px 24px;
 }
@@ -1844,7 +1844,7 @@ body::-webkit-scrollbar-thumb:hover,
 .page-detail-header-container .lyric .ha-lrc {
     text-align: center;
     max-height: 40vh;
-    overflow: auto;
+    overflow: hidden;
     padding: 0.5rem 0.75rem 1rem;
 }
 .page-detail-header-container .lyric .ha-lrc.ha-lrc--line,
@@ -2156,7 +2156,7 @@ body::-webkit-scrollbar-thumb:hover,
                                 <div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div>
                                 <div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4l3 3l-3 3"></path><path d="M18 20l3 -3l-3 -3"></path><path d="M3 7h15"></path><path d="M3 17h15"></path></svg></span>
                             </div>
-                            <div><span class="final-time">00:00</span></div></div></div>
+                            <div><span class="duration">00:00</span></div></div></div>
                     <div class="details">
                         <div class="buttons">
                             <div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg> PlayList</div>
@@ -9002,7 +9002,7 @@ const PROFILE_KEY = 'ha_profile';
                 id: 'main-progress',
                 innerHTML: '<input type="range" class="form-range" min="0" max="100" step="0.1">'
             }),
-            OA(document.createElement('span'), { className: 'final-time', innerHTML: '00:00' })
+            OA(document.createElement('span'), { className: 'duration', innerHTML: '00:00' })
         );
 
         // footer
@@ -13127,7 +13127,7 @@ const PROFILE_KEY = 'ha_profile';
         document.querySelectorAll('.video-inline-times .t-cur').forEach((el) => { el.innerHTML = FormatTime(current); });
         document.querySelectorAll('.video-inline-times .t-dur').forEach((el) => { el.innerHTML = FormatTime(duration); });
         document.querySelectorAll('.current-time').forEach((el) => { el.innerHTML = FormatTime(current); });
-        document.querySelectorAll('.final-time').forEach((el) => { el.innerHTML = FormatTime(duration); });
+        document.querySelectorAll('.duration').forEach((el) => { el.innerHTML = FormatTime(duration); });
         // سینک لیریک با زمان پخش
         try { LyricsEngine.sync(current); } catch (e) {}
     }
@@ -14028,17 +14028,21 @@ const PROFILE_KEY = 'ha_profile';
         }
     }
 
+    function isMaxLyricsOpen() {
+        const panel = document.getElementById('maximum-player-lyrics');
+        return !!(panel && panel.classList.contains('is-open'));
+    }
+
+    /** فقط پنل لیریک — به کیو/مینیمایز max کاری ندارد */
     function openMaxLyricsPanel() {
         const P = ensurePlayer();
         const item = P.nowPlaying && P.nowPlaying.item;
         if (!item || !LyricsEngine.hasLyrics(item)) return;
         CRML(item);
-        // اول max را باز کن (بدون دست زدن به پنل لیریک)
+        // اگر max بسته است فقط برای دیده شدن بازش کن؛ کیو را دست نزن
         try {
             MaxMiz(MaxPly);
             MinMiz(MinPly);
-            CRQT();
-            CRML(item);
         } catch (e) {}
         const panel = document.getElementById('maximum-player-lyrics');
         if (!panel) return;
@@ -14049,7 +14053,6 @@ const PROFILE_KEY = 'ha_profile';
         const body = document.getElementById('max-lyrics-body');
         if (body) {
             const mode = LyricsEngine.synced ? 'sync' : 'static';
-            // پنل کامل: همیشه نرمال (مستقل از تنظیم پلیر)
             LyricsEngine.mount(body, mode, LyricsEngine.synced ? 'normal' : 'static');
             try {
                 const media = GetActiveMediaElement();
@@ -14058,9 +14061,12 @@ const PROFILE_KEY = 'ha_profile';
         }
     }
 
-    /** فقط پلی‌لیست/کیو — لیریک بسته بماند */
+    /**
+     * PlayList: فقط کیو را لانچ کن.
+     * تنها ارتباط: اگر لیریک باز است اول فقط لیریک مینیمایز شود.
+     */
     function openMaxQueuePanel() {
-        closeMaxLyricsPanel();
+        if (isMaxLyricsOpen()) closeMaxLyricsPanel();
         try {
             MaxMiz(MaxPly);
             MinMiz(MinPly);
@@ -14070,6 +14076,7 @@ const PROFILE_KEY = 'ha_profile';
         } catch (e) {}
     }
 
+    /** مینیمایز فقط لیریک */
     function closeMaxLyricsPanel() {
         const panel = document.getElementById('maximum-player-lyrics');
         if (!panel) return;
@@ -14077,15 +14084,13 @@ const PROFILE_KEY = 'ha_profile';
         panel.classList.add('vis-none');
     }
 
+    /** مینیمایز فقط خود maximum (کیو داخلش) — لیریک را لمس نکن */
     function minimizeMaxToMini() {
-        // مثل کیو: اول پنل لیریک را ببند، بعد کل max را پایین بفرست
-        closeMaxLyricsPanel();
         MinMiz(MaxPly);
         MaxMiz(MinPly);
     }
+
     function openMaxFromMini() {
-        // باز شدن کلی max (از مینی) — لیریک را اجباری باز نکن
-        closeMaxLyricsPanel();
         MaxMiz(MaxPly);
         MinMiz(MinPly);
         CRQT();
@@ -14214,13 +14219,14 @@ const PROFILE_KEY = 'ha_profile';
             wireOnce(MinPlyBtn[2], 'click', () => PlayNext(false));
             wireOnce(MinPlyBtn[3], 'click', () => closePlaybackChrome());
         }
+        // مینیمایز هدر کیو → فقط max/queue (لیریک را نمی‌بندد)
         if (MaxQueHdrBtns && MaxQueHdrBtns.length >= 1) {
             wireOnce(MaxQueHdrBtns[0], 'click', () => minimizeMaxToMini());
         }
 
-        // پنل لیریک — minimize مثل کیو (بستن پنل + پایین فرستادن max)
+        // مینیمایز هدر لیریک → فقط خود پنل لیریک
         const maxLyrMin = document.getElementById('max-lyrics-minimize');
-        if (maxLyrMin) wireOnce(maxLyrMin, 'click', () => minimizeMaxToMini());
+        if (maxLyrMin) wireOnce(maxLyrMin, 'click', () => closeMaxLyricsPanel());
 
         // موبایل: ردیف دوم buttons.m-top-1 — دکمه وسط/سوم → فقط لیریک
         if (MaxMobPly) {
@@ -14239,8 +14245,7 @@ const PROFILE_KEY = 'ha_profile';
             wireOnce(MaxDeskBtns[4], 'click', () => toggleShuffle());
         }
 
-        // دسکتاپ details:
-        // [0] PlayList → فقط کیو | [1] Lyrics → فقط لیریک | [2] Full SC | [3] Close
+        // دسکتاپ details — مستقل؛ PlayList فقط اگر لیریک باز باشد اول آن را می‌بندد
         if (MaxDeskDtls && MaxDeskDtls.length >= 1) {
             wireOnce(MaxDeskDtls[0], 'click', () => openMaxQueuePanel());
             if (MaxDeskDtls[1]) wireOnce(MaxDeskDtls[1], 'click', () => openMaxLyricsPanel());
