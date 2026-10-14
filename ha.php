@@ -1632,30 +1632,35 @@ body::-webkit-scrollbar-thumb:hover,
 .mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.active {
     font-size: 1em;
 }
+.maximum-player-container {
+    position: relative;
+}
 .maximum-player-lyrics {
     display: none;
+    position: absolute;
+    inset: 0;
+    left: 0; right: 0; top: 0; bottom: 0;
     flex-direction: column;
-    flex-grow: 1;
     width: 100%;
+    height: 100%;
     padding: 0 var(--main-padding-x, 1rem);
-    height: min-content;
-    position: relative;
-    z-index: 5;
+    box-sizing: border-box;
+    z-index: 12;
     background: var(--bs-body-bg, #121216);
+    overflow: hidden;
 }
 .maximum-player-lyrics.is-open {
     display: flex;
 }
 .maximum-player-lyrics .header {
-    position: sticky;
-    top: 0;
+    flex-shrink: 0;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     height: 60px;
     background-color: var(--bs-body-bg, #121216);
-    z-index: 10;
+    z-index: 2;
 }
 .maximum-player-lyrics .header .title {
     font-size: .95rem;
@@ -1671,6 +1676,7 @@ body::-webkit-scrollbar-thumb:hover,
     justify-content: flex-end;
     align-items: center;
     gap: 6px;
+    flex-shrink: 0;
 }
 .maximum-player-lyrics .header .buttons .button {
     display: flex;
@@ -1683,10 +1689,16 @@ body::-webkit-scrollbar-thumb:hover,
     color: #000;
     cursor: pointer;
 }
+/* لایه اسکرول‌پذیر محتوا */
 .maximum-player-lyrics .max-lyrics-body {
-    padding: 4px 0 80px;
-    max-height: 60vh;
-    overflow: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0 24px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.28) transparent;
 }
 .maximum-player-lyrics .max-lyrics-body .ha-lrc {
     max-height: none;
@@ -6217,7 +6229,12 @@ if (!empty($_SESSION['loggedin'])) {
         try {
             if (LyricsEngine.hasLyrics(e)) {
                 LyricsEngine.loadFromItem(e);
-                LyricsEngine.mount(dlc, LyricsEngine.synced ? 'sync' : 'static');
+                // صفحه سانگ: فقط نرمال — ستینگ پلیر اعمال نشود
+                LyricsEngine.mount(
+                    dlc,
+                    LyricsEngine.synced ? 'sync' : 'static',
+                    LyricsEngine.synced ? 'normal' : 'static'
+                );
             }
         } catch (err) {}
 
@@ -12935,9 +12952,11 @@ const PROFILE_KEY = 'ha_profile';
         mountDefaults(item) {
             if (item) this.loadFromItem(item);
             const stage = document.getElementById('media-stage-lyric');
-            if (stage) this.mount(stage, this.synced ? 'sync' : 'static');
+            // stage از تنظیم پلیر پیروی می‌کند (بدون viewOverride)
+            if (stage) this.mount(stage, this.synced ? 'sync' : 'static', null);
+            // صفحه سانگ/جزئیات: همیشه نرمال — مستقل از lyricDisplayMode پلیر
             document.querySelectorAll('.page-detail-header-container .lyric, .lyric[data-ha-lrc]').forEach((el) => {
-                this.mount(el, this.synced ? 'sync' : 'static');
+                this.mount(el, this.synced ? 'sync' : 'static', this.synced ? 'normal' : 'static');
             });
             // دکمه lyric
             const btn = document.getElementById('lyric');
@@ -14014,6 +14033,13 @@ const PROFILE_KEY = 'ha_profile';
         const item = P.nowPlaying && P.nowPlaying.item;
         if (!item || !LyricsEngine.hasLyrics(item)) return;
         CRML(item);
+        // اول max را باز کن (بدون دست زدن به پنل لیریک)
+        try {
+            MaxMiz(MaxPly);
+            MinMiz(MinPly);
+            CRQT();
+            CRML(item);
+        } catch (e) {}
         const panel = document.getElementById('maximum-player-lyrics');
         if (!panel) return;
         panel.classList.remove('vis-none');
@@ -14023,14 +14049,25 @@ const PROFILE_KEY = 'ha_profile';
         const body = document.getElementById('max-lyrics-body');
         if (body) {
             const mode = LyricsEngine.synced ? 'sync' : 'static';
+            // پنل کامل: همیشه نرمال (مستقل از تنظیم پلیر)
             LyricsEngine.mount(body, mode, LyricsEngine.synced ? 'normal' : 'static');
             try {
                 const media = GetActiveMediaElement();
                 LyricsEngine.sync(media ? (media.currentTime || 0) : 0);
             } catch (e) {}
         }
-        // اگر max player بسته است بازش کن
-        try { openMaxFromMini(); } catch (e) {}
+    }
+
+    /** فقط پلی‌لیست/کیو — لیریک بسته بماند */
+    function openMaxQueuePanel() {
+        closeMaxLyricsPanel();
+        try {
+            MaxMiz(MaxPly);
+            MinMiz(MinPly);
+            CRQT();
+            const item = ensurePlayer().nowPlaying && ensurePlayer().nowPlaying.item;
+            if (item) CRML(item);
+        } catch (e) {}
     }
 
     function closeMaxLyricsPanel() {
@@ -14041,10 +14078,14 @@ const PROFILE_KEY = 'ha_profile';
     }
 
     function minimizeMaxToMini() {
+        // مثل کیو: اول پنل لیریک را ببند، بعد کل max را پایین بفرست
+        closeMaxLyricsPanel();
         MinMiz(MaxPly);
         MaxMiz(MinPly);
     }
     function openMaxFromMini() {
+        // باز شدن کلی max (از مینی) — لیریک را اجباری باز نکن
+        closeMaxLyricsPanel();
         MaxMiz(MaxPly);
         MinMiz(MinPly);
         CRQT();
@@ -14177,21 +14218,15 @@ const PROFILE_KEY = 'ha_profile';
             wireOnce(MaxQueHdrBtns[0], 'click', () => minimizeMaxToMini());
         }
 
-        // پنل لیریک بزرگ — minimize
+        // پنل لیریک — minimize مثل کیو (بستن پنل + پایین فرستادن max)
         const maxLyrMin = document.getElementById('max-lyrics-minimize');
-        if (maxLyrMin) wireOnce(maxLyrMin, 'click', () => closeMaxLyricsPanel());
+        if (maxLyrMin) wireOnce(maxLyrMin, 'click', () => minimizeMaxToMini());
 
-        // دسکتاپ: دکمه Lyrics (دومین دکمه details)
-        if (MaxDeskDtls && MaxDeskDtls.length >= 2) {
-            wireOnce(MaxDeskDtls[1], 'click', () => openMaxLyricsPanel());
-        }
-
-        // موبایل: ردیف دوم buttons.m-top-1 — دکمه وسط/سوم
+        // موبایل: ردیف دوم buttons.m-top-1 — دکمه وسط/سوم → فقط لیریک
         if (MaxMobPly) {
             const rows = MaxMobPly.querySelectorAll('.buttons.m-top-1');
             if (rows.length >= 2) {
                 const btns = rows[1].querySelectorAll('.button');
-                // سوم (ایندکس 2) و در صورت نبود، دوم
                 const lyrBtn = btns[2] || btns[1];
                 if (lyrBtn) wireOnce(lyrBtn, 'click', () => openMaxLyricsPanel());
             }
@@ -14204,9 +14239,11 @@ const PROFILE_KEY = 'ha_profile';
             wireOnce(MaxDeskBtns[4], 'click', () => toggleShuffle());
         }
 
-        
+        // دسکتاپ details:
+        // [0] PlayList → فقط کیو | [1] Lyrics → فقط لیریک | [2] Full SC | [3] Close
         if (MaxDeskDtls && MaxDeskDtls.length >= 1) {
-            wireOnce(MaxDeskDtls[0], 'click', openMaxFromMini);
+            wireOnce(MaxDeskDtls[0], 'click', () => openMaxQueuePanel());
+            if (MaxDeskDtls[1]) wireOnce(MaxDeskDtls[1], 'click', () => openMaxLyricsPanel());
             if (MaxDeskDtls[2]) wireOnce(MaxDeskDtls[2], 'click', () => openPlayerShell());
             if (MaxDeskDtls[3]) wireOnce(MaxDeskDtls[3], 'click', () => closePlaybackChrome());
         }

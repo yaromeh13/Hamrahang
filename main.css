@@ -5235,6 +5235,10 @@ transition: 0.2s
         display: none
     }
     
+    .maximum-player-mobile, .mini-lyric {
+        display: none
+    }
+    
     .maximum-player-queue {
             max-width: none;
             min-width: none
