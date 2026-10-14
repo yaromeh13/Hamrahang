@@ -1393,6 +1393,24 @@ body::-webkit-scrollbar-thumb:hover,
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.player-source-row .ps-num svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    margin: 0 auto;
+}
+.player-source-row .ps-code {
+    min-width: 2.4em;
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.92;
+    text-align: start;
+}
+.player-source-row .ps-meta .ps-native {
+    opacity: 0.75;
+    font-weight: 400;
+}
 .player-font-size {
     display: flex;
     gap: 8px;
@@ -9375,36 +9393,53 @@ const PROFILE_KEY = 'ha_profile';
         renderQueueItems(list, { compact: true });
     }
 
+    /** ردیف لیریک هم‌سبک سورس‌ها: شماره|آیکون · کد دوحرفی · نام کامل */
+    function buildLyricLangRow(entry, index, curCode, onClick) {
+        const code = String((entry && entry.lng) || '').toLowerCase();
+        const active = !!(code && code === String(curCode || '').toLowerCase());
+        const row = OA(document.createElement('div'), {
+            className: 'player-source-row' + (active ? ' active' : '')
+        });
+        const num = OA(document.createElement('div'), { className: 'ps-num' });
+        num.innerHTML = active ? svg_lrc : String(index + 1);
+        const codeEl = OA(document.createElement('div'), {
+            className: 'ps-code',
+            innerHTML: langLabel(code, 'short')
+        });
+        const meta = OA(document.createElement('div'), { className: 'ps-meta' });
+        meta.append(OA(document.createElement('span'), {
+            className: 'ps-native',
+            innerHTML: langLabel(code, 'native')
+        }));
+        row.append(num, codeEl, meta);
+        if (typeof onClick === 'function') {
+            row.addEventListener('click', () => onClick(code, entry, index));
+        }
+        return row;
+    }
+
     function renderPlayerLyricsPanel(body) {
         const P = ensurePlayer();
         const item = P.nowPlaying && P.nowPlaying.item;
         const list = getItemLyricEntries(item).slice().sort((a, b) =>
             String(a.lng || '').toLowerCase().localeCompare(String(b.lng || '').toLowerCase())
         );
+        const wrap = OA(document.createElement('div'), { className: 'player-source-list' });
         if (!list.length) {
-            body.append(OA(document.createElement('div'), {
+            wrap.append(OA(document.createElement('div'), {
                 className: 'text2',
                 innerHTML: 'No lyrics for this track'
             }));
+            body.append(wrap);
             return;
         }
         let cur = '';
         try { cur = String(GetSetting('lyricLang') || LyricsEngine.lang || '').toLowerCase(); } catch (e) {}
-        const wrap = OA(document.createElement('div'), { className: 'player-quality-list' });
-        list.forEach((entry) => {
-            const code = String(entry.lng || '').toLowerCase();
-            const row = OA(document.createElement('div'), {
-                className: 'player-quality-row' + (code && code === cur ? ' active' : '')
-            });
-            row.append(
-                OA(document.createElement('span'), { className: 'text1', innerHTML: langLabel(code, 'short') }),
-                OA(document.createElement('span'), { className: 'text2', innerHTML: langLabel(code, 'native') })
-            );
-            row.addEventListener('click', () => {
+        list.forEach((entry, i) => {
+            wrap.append(buildLyricLangRow(entry, i, cur, (code) => {
                 selectLyricLang(code);
                 openPlayerPanel('lyrics');
-            });
-            wrap.append(row);
+            }));
         });
         body.append(wrap);
     }
@@ -11945,37 +11980,24 @@ const PROFILE_KEY = 'ha_profile';
             const lb = String(b.lng || '').toLowerCase();
             return la.localeCompare(lb);
         });
+        const wrap = OA(document.createElement('div'), { className: 'player-source-list' });
         if (!list.length) {
-            dbs.append(OA(document.createElement('div'), {
-                className: 'item text2',
+            wrap.append(OA(document.createElement('div'), {
+                className: 'text2',
                 innerHTML: 'No lyrics'
             }));
+            dbs.append(wrap);
             return;
         }
         let cur = '';
         try { cur = String(GetSetting('lyricLang') || LyricsEngine.lang || '').toLowerCase(); } catch (err) {}
-        list.forEach((entry) => {
-            const code = String(entry.lng || '').toLowerCase();
-            const row = OA(document.createElement('div'), { className: 'item' });
-            if (code && code === cur) row.classList.add('active');
-            const icon = OA(document.createElement('span'), { innerHTML: svg_lrc });
-            const short = OA(document.createElement('span'), {
-                className: 'text1',
-                style: 'margin-inline-start:10px;min-width:2.2em',
-                innerHTML: langLabel(code, 'short')
-            });
-            const full = OA(document.createElement('span'), {
-                className: 'text2',
-                style: 'margin-inline-start:8px',
-                innerHTML: langLabel(code, 'native')
-            });
-            row.append(icon, short, full);
-            row.addEventListener('click', () => {
+        list.forEach((entry, i) => {
+            wrap.append(buildLyricLangRow(entry, i, cur, (code) => {
                 selectLyricLang(code);
                 if (typeof closeFn === 'function') closeFn();
-            });
-            dbs.append(row);
+            }));
         });
+        dbs.append(wrap);
     }
 
     function CRBW(id, T, c, ctx) {
