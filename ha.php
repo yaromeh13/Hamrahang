@@ -1634,7 +1634,7 @@ body::-webkit-scrollbar-thumb:hover,
 }
 .mini-lyric .ha-lrc.ha-lrc--focus {
     padding: 0;
-    gap: 0.35rem;
+    gap: 0.25rem;
     justify-content: center;
 }
 .mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.is-near {
