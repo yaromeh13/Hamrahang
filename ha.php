@@ -6355,17 +6355,10 @@ if (!empty($_SESSION['loggedin'])) {
         
         dhc.append(dtn, dct, dlc );
         MCNT.append(dhc);
-        // لیریک صفحه جزئیات (خروجی موتور مشترک)
+        // لیریک صفحه — فقط bind به آیتم صفحه؛ loadFromItem نزن (state پلیر خراب نشود)
         try {
             if (LyricsEngine.hasLyrics(e)) {
-                LyricsEngine.loadFromItem(e);
-                // صفحه سانگ: فقط نرمال — ستینگ پلیر اعمال نشود
-                LyricsEngine.mount(
-                    dlc,
-                    LyricsEngine.synced ? 'sync' : 'static',
-                    LyricsEngine.synced ? 'normal' : 'static',
-                    e
-                );
+                LyricsEngine.mount(dlc, null, 'normal', e);
             }
         } catch (err) {}
 
@@ -6385,6 +6378,7 @@ if (!empty($_SESSION['loggedin'])) {
             });
         } else {
             dbp.className = 'play-pause';
+            dbp.setAttribute('data-item-id', String(e.id));
             dbp.innerHTML = svg_plys;
             dbp.addEventListener('click', (ev) => {
                 ev.preventDefault();
@@ -6465,13 +6459,7 @@ if (!empty($_SESSION['loggedin'])) {
             
             try {
                 if (LyricsEngine.hasLyrics(e)) {
-                    LyricsEngine.loadFromItem(e);
-                    LyricsEngine.mount(
-                        dlr,
-                        LyricsEngine.synced ? 'sync' : 'static',
-                        LyricsEngine.synced ? 'normal' : 'static',
-                        e
-                    );
+                    LyricsEngine.mount(dlr, null, 'normal', e);
                 }
             } catch (err) {}
             dpl.append(shl2,dlr);
@@ -6833,6 +6821,7 @@ if (!empty($_SESSION['loggedin'])) {
             className: 'play-pause',
             innerHTML: svg_plys
         });
+        dbp.setAttribute('data-item-id', String(e.id));
         
         dbp.addEventListener('click', (ev) => {
             ev.preventDefault();
@@ -13162,6 +13151,7 @@ const PROFILE_KEY = 'ha_profile';
         const waiting = !!P.waiting;
         const buffering = !!(np && np.isBuffering);
         const playing = !!(np && np.isPlaying && !waiting);
+        const npId = np && np.id != null ? Number(np.id) : null;
     
         const base = playing ? svg_paus : svg_plys;
         const baseMini = playing ? svg_pus : svg_ply;
@@ -13171,6 +13161,16 @@ const PROFILE_KEY = 'ha_profile';
         const iconMini = showSpin ? baseMini + '<i class="wlap"></i>' : baseMini;
     
         document.querySelectorAll('.play-pause').forEach((btn) => {
+            // دکمهٔ صفحه/کارت با data-item-id فقط وقتی با nowPlaying یکی است آپدیت می‌شود
+            const scoped = btn.getAttribute('data-item-id');
+            if (scoped != null && scoped !== '') {
+                const same = npId != null && Number(scoped) === npId;
+                if (!same) {
+                    btn.innerHTML = svg_plys;
+                    btn.classList.remove('loading', 'is-playing');
+                    return;
+                }
+            }
             btn.innerHTML = icon;
             btn.classList.toggle('loading', showSpin || buffering);
             btn.classList.toggle('is-playing', playing);
@@ -13467,18 +13467,23 @@ const PROFILE_KEY = 'ha_profile';
          */
         mount(el, mode, viewOverride, bindItem) {
             if (!el) return;
-            mode = mode || (this.synced ? 'sync' : 'static');
-            const view = (viewOverride != null && viewOverride !== '') ? viewOverride : null;
             const bound = bindItem ? this._snapshotFromItem(bindItem) : null;
-            if (bound && bound.synced) mode = 'sync';
-            else if (bound && !bound.synced) mode = 'static';
+            if (bound) {
+                mode = bound.synced ? 'sync' : 'static';
+            } else if (!mode) {
+                mode = this.synced ? 'sync' : 'static';
+            }
+            const view = (viewOverride != null && viewOverride !== '') ? viewOverride : null;
             const exists = this._mounts.find((m) => m.el === el);
             if (exists) {
                 exists.mode = mode;
                 exists.view = view;
                 if (bindItem) exists.bound = bound;
+                else if (bound === null && bindItem === null) {
+                    /* keep existing bound if any */
+                }
             } else {
-                this._mounts.push({ el, mode, view, bound });
+                this._mounts.push({ el, mode, view, bound: bound || null });
             }
             const m = this._mounts.find((x) => x.el === el);
             this._renderInto(m);
