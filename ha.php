@@ -1604,33 +1604,48 @@ body::-webkit-scrollbar-thumb:hover,
 
 
 /* ---- mini-lyric + max lyrics panel ---- */
+/* سایز باکس: --ha-lyric-box-size اولویت دارد؛ وگرنه --ha-lyric-size سراسری */
 .mini-lyric {
+    --ha-lyric-box-size: 1.28rem;
     width: 100%;
-    max-width: 400px;
     margin: 0 auto;
     padding: 6px 12px 10px;
     box-sizing: border-box;
     cursor: pointer;
-    min-height: 4.5rem;
-    max-height: 7.5rem;
+    min-height: 10rem;
+    max-height: 10rem;
     overflow: hidden;
+    overscroll-behavior: contain;
+    touch-action: manipulation;
     position: relative;
     z-index: 2;
+    font-size: var(--ha-lyric-box-size, var(--ha-lyric-size, 16px));
+    font-family: var(--ha-lyric-font, inherit);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 .mini-lyric .ha-lrc {
-    max-height: 6.5rem;
+    max-height: 10rem;
     overflow: hidden;
+    overscroll-behavior: contain;
     pointer-events: none;
+    width: 100%;
 }
 .mini-lyric .ha-lrc.ha-lrc--focus {
     padding: 0;
+    gap: 0.35rem;
+    justify-content: center;
 }
 .mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.is-near {
-    opacity: 0.35;
-    font-size: 0.85em;
+    opacity: 0.4;
+    font-size: 0.88em;
+    line-height: 1.35;
 }
 .mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.active {
-    font-size: 1em;
+    font-size: 1.05em;
+    font-weight: 700;
+    line-height: 1.4;
 }
 .maximum-player-container {
     position: relative;
@@ -1768,10 +1783,11 @@ body::-webkit-scrollbar-thumb:hover,
 .lyric-font-keys .fs-btn.active {
     background: rgba(215, 6, 71, 0.85);
 }
-/* اسکین لیریک فقط روی باکس‌های opt-in */
+/* اسکین لیریک فقط روی باکس‌های opt-in
+   اولویت: --ha-lyric-box-size (per-box) → --ha-lyric-size (سراسری از ستینگ) */
 .ha-lyric-skin,
 [data-ha-lyric-skin] {
-    font-size: var(--ha-lyric-size, 16px);
+    font-size: var(--ha-lyric-box-size, var(--ha-lyric-size, 16px));
     font-family: var(--ha-lyric-font, inherit);
 }
 .ha-lyric-skin .ha-lrc-line,
@@ -9686,9 +9702,15 @@ const PROFILE_KEY = 'ha_profile';
             px = clampLyricPx(pxOrKey);
         }
         const css = px + 'px';
+        // فقط متغیر سراسری — باکس با --ha-lyric-box-size سایز خودش را نگه می‌دارد
         document.documentElement.style.setProperty('--ha-lyric-size', css);
         document.querySelectorAll('.ha-lyric-skin, [data-ha-lyric-skin]').forEach((el) => {
-            el.style.fontSize = css;
+            // اگر باکس سایز اختصاصی دارد، inline ننویس
+            if (el.style.getPropertyValue('--ha-lyric-box-size') || el.classList.contains('mini-lyric')) {
+                el.style.fontSize = '';
+                return;
+            }
+            el.style.fontSize = '';
         });
         syncLyricSizeControls(px);
     }
@@ -13360,16 +13382,64 @@ const PROFILE_KEY = 'ha_profile';
                     row.classList.toggle('is-near', isNear);
                     if (isActive) activeEl = row;
                 });
-                if (activeEl && view === 'normal') {
+                // اسکرول فقط داخل باکس — نه کل صفحه (scrollIntoView ممنوع)
+                if (activeEl && (view === 'normal' || view === 'focus')) {
                     try {
-                        activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                    } catch (e) {}
-                } else if (activeEl && view === 'focus') {
-                    try {
-                        activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        LyricsEngine._scrollLineIntoBox(m.el, activeEl);
                     } catch (e) {}
                 }
             });
+        },
+
+        /** اسکرول محلی خط فعال داخل container؛ از اسکرول صفحه جلوگیری می‌کند */
+        _scrollLineIntoBox(box, lineEl) {
+            if (!box || !lineEl) return;
+            // مینی‌لیریک / overflow:hidden → اسکرول لازم نیست (فوکوس با show/hide کار می‌کند)
+            if (box.classList.contains('mini-lyric') || (box.id === 'mini-lyric')) return;
+            if (box.closest && box.closest('.mini-lyric')) return;
+
+            let scroller = null;
+            const candidates = [box, box.querySelector('.ha-lrc'), box.querySelector('.max-lyrics-body')];
+            for (let i = 0; i < candidates.length; i++) {
+                const el = candidates[i];
+                if (!el) continue;
+                const st = window.getComputedStyle(el);
+                const oy = st.overflowY || st.overflow;
+                if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 2) {
+                    scroller = el;
+                    break;
+                }
+            }
+            if (!scroller) {
+                // بالا برو تا یک والد اسکرول‌پذیر داخل mount پیدا شود
+                let p = lineEl.parentElement;
+                while (p && p !== box.parentElement) {
+                    const st = window.getComputedStyle(p);
+                    const oy = st.overflowY || st.overflow;
+                    if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight + 2) {
+                        scroller = p;
+                        break;
+                    }
+                    if (p === box) break;
+                    p = p.parentElement;
+                }
+            }
+            if (!scroller) return;
+
+            const boxRect = scroller.getBoundingClientRect();
+            const lineRect = lineEl.getBoundingClientRect();
+            const offset =
+                (lineRect.top - boxRect.top) -
+                (scroller.clientHeight / 2 - lineEl.offsetHeight / 2) +
+                scroller.scrollTop;
+            const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+            const next = Math.max(0, Math.min(max, offset));
+            if (Math.abs(scroller.scrollTop - next) < 2) return;
+            try {
+                scroller.scrollTo({ top: next, behavior: 'smooth' });
+            } catch (e) {
+                scroller.scrollTop = next;
+            }
         }
     };
 
