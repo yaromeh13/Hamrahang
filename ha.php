@@ -2227,7 +2227,7 @@ body::-webkit-scrollbar-thumb:hover,
                                 <div class="header-row header-row-tools">
                                     <div class="lyric-size-slider" title="Font size">
                                         <span class="lz-lab">S</span>
-                                        <input type="range" id="max-lyrics-size" min="0" max="3" step="1" value="1">
+                                        <input type="range" id="max-lyrics-size" min="12" max="32" step="1" value="16">
                                         <span class="lz-lab">XL</span>
                                     </div>
                                     <div class="lyric-font-keys" id="max-lyrics-fonts">
@@ -5539,6 +5539,7 @@ if (!empty($_SESSION['loggedin'])) {
             showImages: false,
             keepControllerVisible: false,
             lyricFontSize: 'md',
+            lyricFontSizePx: 16,
             lyricFontFamily: '',
             lyricDisplayMode: 'normal',
             sleepTimer: 0,
@@ -9424,26 +9425,50 @@ const PROFILE_KEY = 'ha_profile';
         secQ.append(qList);
         body.append(secQ);
 
-        // ---- Lyric font size + family (همگام با پنل max-lyrics) ----
+        // ---- Lyric font size (پیوسته) + presets + family ----
         const secL = OA(document.createElement('div'), { className: 'player-panel-section' });
         secL.append(OA(document.createElement('div'), { className: 'sec-title', innerHTML: 'Lyrics size' }));
         const fsWrap = OA(document.createElement('div'), { className: 'lyric-size-slider', style: 'max-width:100%' });
-        const curFs = GetSetting('lyricFontSize') || 'md';
+        const curPx = getLyricFontPx();
         const range = OA(document.createElement('input'), {
-            type: 'range', min: '0', max: '3', step: '1',
-            value: String(lyricSizeToIndex(curFs))
+            type: 'range',
+            id: 'player-lyric-size',
+            min: String(LYRIC_SIZE_MIN),
+            max: String(LYRIC_SIZE_MAX),
+            step: '1',
+            value: String(curPx)
         });
-        range.addEventListener('input', () => {
-            const size = LYRIC_SIZE_STEPS[parseInt(range.value, 10)] || 'md';
-            SetSetting('lyricFontSize', size);
-            applyLyricFontSize(size);
-        });
+        range.addEventListener('input', () => setLyricFontPx(range.value));
         fsWrap.append(
             OA(document.createElement('span'), { className: 'lz-lab', innerHTML: 'S' }),
             range,
             OA(document.createElement('span'), { className: 'lz-lab', innerHTML: 'XL' })
         );
         secL.append(fsWrap);
+        // S M L XL — کلیک = پرش دقیق اسلایدر به همان سایز
+        const presetWrap = OA(document.createElement('div'), {
+            className: 'player-font-size lyric-size-presets',
+            style: 'margin-top:10px'
+        });
+        const activePreset = lyricPresetForPx(curPx);
+        [
+            { v: 'sm', l: 'S' },
+            { v: 'md', l: 'M' },
+            { v: 'lg', l: 'L' },
+            { v: 'xl', l: 'XL' }
+        ].forEach((opt) => {
+            const b = OA(document.createElement('div'), {
+                className: 'fs-btn' + (activePreset === opt.v ? ' active' : ''),
+                innerHTML: opt.l
+            });
+            b.setAttribute('data-size', opt.v);
+            b.addEventListener('click', () => {
+                const px = LYRIC_SIZE_PRESETS[opt.v] || 16;
+                setLyricFontPx(px, opt.v);
+            });
+            presetWrap.append(b);
+        });
+        secL.append(presetWrap);
         const ffWrap = OA(document.createElement('div'), { className: 'lyric-font-keys', style: 'margin-top:10px' });
         const curFf = GetSetting('lyricFontFamily') || '';
         ['f1', 'f2', 'f3', 'f4'].forEach((k) => {
@@ -9457,7 +9482,6 @@ const PROFILE_KEY = 'ha_profile';
                 if ((GetSetting('lyricFontFamily') || '') === k) next = '';
                 SetSetting('lyricFontFamily', next);
                 applyLyricFontFamily(next);
-                openPlayerPanel('settings');
             });
             ffWrap.append(b);
         });
@@ -9600,8 +9624,9 @@ const PROFILE_KEY = 'ha_profile';
         }
     }
 
-    const LYRIC_SIZE_STEPS = ['sm', 'md', 'lg', 'xl'];
-    const LYRIC_SIZE_PX = { sm: '13px', md: '16px', lg: '20px', xl: '24px' };
+    const LYRIC_SIZE_MIN = 12;
+    const LYRIC_SIZE_MAX = 32;
+    const LYRIC_SIZE_PRESETS = { sm: 13, md: 16, lg: 20, xl: 24 };
     const LYRIC_FONT_MAP = {
         f1: '"Vazirmatn", "Tahoma", "Segoe UI", sans-serif',
         f2: 'Georgia, "Times New Roman", serif',
@@ -9609,21 +9634,70 @@ const PROFILE_KEY = 'ha_profile';
         f4: '"Courier New", Consolas, monospace'
     };
 
-    function lyricSizeToIndex(size) {
-        const i = LYRIC_SIZE_STEPS.indexOf(size);
-        return i >= 0 ? i : 1;
+    function clampLyricPx(n) {
+        n = Math.round(Number(n));
+        if (!Number.isFinite(n)) n = 16;
+        return Math.max(LYRIC_SIZE_MIN, Math.min(LYRIC_SIZE_MAX, n));
     }
 
-    function applyLyricFontSize(size) {
-        size = size || GetSetting('lyricFontSize') || 'md';
-        const px = LYRIC_SIZE_PX[size] || LYRIC_SIZE_PX.md;
-        document.documentElement.style.setProperty('--ha-lyric-size', px);
-        // فقط باکس‌های opt-in — نه کل صفحه
-        document.querySelectorAll('.ha-lyric-skin, [data-ha-lyric-skin]').forEach((el) => {
-            el.style.fontSize = px;
+    function getLyricFontPx() {
+        const raw = GetSetting('lyricFontSizePx');
+        if (raw != null && raw !== '' && Number.isFinite(Number(raw))) {
+            return clampLyricPx(raw);
+        }
+        // مهاجرت از sm/md/lg/xl
+        const key = GetSetting('lyricFontSize') || 'md';
+        return clampLyricPx(LYRIC_SIZE_PRESETS[key] || 16);
+    }
+
+    /** نزدیک‌ترین رنج دکمه‌ای برای هایلایت فعال */
+    function lyricPresetForPx(px) {
+        px = clampLyricPx(px);
+        const mids = [
+            (LYRIC_SIZE_PRESETS.sm + LYRIC_SIZE_PRESETS.md) / 2,
+            (LYRIC_SIZE_PRESETS.md + LYRIC_SIZE_PRESETS.lg) / 2,
+            (LYRIC_SIZE_PRESETS.lg + LYRIC_SIZE_PRESETS.xl) / 2
+        ];
+        if (px < mids[0]) return 'sm';
+        if (px < mids[1]) return 'md';
+        if (px < mids[2]) return 'lg';
+        return 'xl';
+    }
+
+    function syncLyricSizeControls(px) {
+        px = clampLyricPx(px);
+        const preset = lyricPresetForPx(px);
+        document.querySelectorAll('#max-lyrics-size, #player-lyric-size').forEach((el) => {
+            el.value = String(px);
         });
-        const slider = document.getElementById('max-lyrics-size');
-        if (slider) slider.value = String(lyricSizeToIndex(size));
+        document.querySelectorAll('.lyric-size-presets .fs-btn').forEach((b) => {
+            const k = b.getAttribute('data-size') || '';
+            b.classList.toggle('active', k === preset);
+        });
+    }
+
+    function applyLyricFontSize(pxOrKey) {
+        let px;
+        if (typeof pxOrKey === 'string' && LYRIC_SIZE_PRESETS[pxOrKey] != null) {
+            px = LYRIC_SIZE_PRESETS[pxOrKey];
+        } else if (pxOrKey == null || pxOrKey === '') {
+            px = getLyricFontPx();
+        } else {
+            px = clampLyricPx(pxOrKey);
+        }
+        const css = px + 'px';
+        document.documentElement.style.setProperty('--ha-lyric-size', css);
+        document.querySelectorAll('.ha-lyric-skin, [data-ha-lyric-skin]').forEach((el) => {
+            el.style.fontSize = css;
+        });
+        syncLyricSizeControls(px);
+    }
+
+    function setLyricFontPx(px, fromPresetKey) {
+        px = clampLyricPx(px);
+        SetSetting('lyricFontSizePx', px);
+        SetSetting('lyricFontSize', fromPresetKey || lyricPresetForPx(px));
+        applyLyricFontSize(px);
     }
 
     function applyLyricFontFamily(key) {
@@ -9638,14 +9712,14 @@ const PROFILE_KEY = 'ha_profile';
             if (stack) el.style.fontFamily = stack;
             else el.style.fontFamily = '';
         });
-        document.querySelectorAll('.lyric-font-keys .fs-btn, #player-panel .lyric-font-keys .fs-btn').forEach((b) => {
+        document.querySelectorAll('.lyric-font-keys .fs-btn').forEach((b) => {
             const k = b.getAttribute('data-font') || '';
             b.classList.toggle('active', !!key && k === key);
         });
     }
 
     function applyLyricSkin() {
-        applyLyricFontSize(GetSetting('lyricFontSize') || 'md');
+        applyLyricFontSize(getLyricFontPx());
         applyLyricFontFamily(GetSetting('lyricFontFamily') || '');
     }
 
@@ -9653,13 +9727,11 @@ const PROFILE_KEY = 'ha_profile';
         const slider = document.getElementById('max-lyrics-size');
         if (slider && !slider._haWired) {
             slider._haWired = true;
-            slider.value = String(lyricSizeToIndex(GetSetting('lyricFontSize') || 'md'));
-            const onSize = () => {
-                const idx = Math.max(0, Math.min(3, parseInt(slider.value, 10) || 1));
-                const size = LYRIC_SIZE_STEPS[idx] || 'md';
-                SetSetting('lyricFontSize', size);
-                applyLyricFontSize(size);
-            };
+            slider.min = String(LYRIC_SIZE_MIN);
+            slider.max = String(LYRIC_SIZE_MAX);
+            slider.step = '1';
+            slider.value = String(getLyricFontPx());
+            const onSize = () => setLyricFontPx(slider.value);
             slider.addEventListener('input', onSize);
             slider.addEventListener('change', onSize);
         }
@@ -9671,7 +9743,6 @@ const PROFILE_KEY = 'ha_profile';
                 if (!btn || !keys.contains(btn)) return;
                 let key = btn.getAttribute('data-font') || '';
                 const cur = GetSetting('lyricFontFamily') || '';
-                // دوبار کلیک همان فونت = برگشت به پیش‌فرض
                 if (cur === key) key = '';
                 SetSetting('lyricFontFamily', key);
                 applyLyricFontFamily(key);
