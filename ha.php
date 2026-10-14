@@ -1633,6 +1633,7 @@ body::-webkit-scrollbar-thumb:hover,
     flex: 1 1 auto;
     min-height: 0;
     padding: 0 var(--main-padding-x, 1rem);
+    padding-bottom: 100px;
     box-sizing: border-box;
     z-index: 12;
     background: var(--bs-body-bg, #121216);
@@ -1776,8 +1777,7 @@ body::-webkit-scrollbar-thumb:hover,
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     padding: 4px 0 24px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.28) transparent;
+    scrollbar-width: none;
 }
 .maximum-player-lyrics .max-lyrics-body .ha-lrc {
     max-height: none;
@@ -1934,7 +1934,8 @@ body::-webkit-scrollbar-thumb:hover,
     max-height: none;
     overflow: visible;
 }
-.page-detail-header-container .lyric .ha-lrc {
+.page-detail-header-container .lyric .ha-lrc,
+.page-lyric-box .lyric .ha-lrc{
     text-align: center;
     max-height: 40vh;
     overflow-x: hidden;
@@ -1945,12 +1946,14 @@ body::-webkit-scrollbar-thumb:hover,
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
-.page-detail-header-container .lyric .ha-lrc::-webkit-scrollbar {
+.page-detail-header-container .lyric .ha-lrc::-webkit-scrollbar,
+.page-lyric-box .lyric .ha-lrc::-webkit-scrollbar{
     width: 0;
     height: 0;
     display: none;
 }
 .page-detail-header-container .lyric .ha-lrc.ha-lrc--line,
+.page-lyric-box .lyric .ha-lrc.ha-lrc--line,
 .page-detail-header-container .lyric .ha-lrc.ha-lrc--card {
     max-height: none;
     overflow: visible;
@@ -2146,6 +2149,9 @@ body::-webkit-scrollbar-thumb:hover,
 .bit-badge.bit-v-720  { background: #ec489933; color: #f9a8d4; border-color: #ec489955; }
 .bit-badge.bit-v-480  { background: #f9731633; color: #fdba74; border-color: #f9731655; }
 .bit-badge.bit-muted  { background: #64748b33; color: #94a3b8; border-color: #64748b44; }
+
+
+
 </style>    
 
 </head>
@@ -6344,9 +6350,8 @@ if (!empty($_SESSION['loggedin'])) {
         
         const dlc = OA(document.createElement('div'), { className: 'lyric' });
         dlc.setAttribute('data-ha-lrc', '1');
-        dlc.style.setProperty('--ha-lyric-box-size', '18px');
-        // و در صورت نیاز:
-        //dlc.classList.add('ha-lyric-skin');
+        dlc.style.setProperty('--ha-lyric-box-size', '20px');
+        dlc.classList.add('ha-lyric-skin');
         
         dhc.append(dtn, dct, dlc );
         MCNT.append(dhc);
@@ -6445,6 +6450,32 @@ if (!empty($_SESSION['loggedin'])) {
         dac.append(dbp, dbf, showDon ? dbd : '', dbs, mor);
         MCNT.append(dac);
         
+        if (e.lyrics){
+            const dpl = OA(document.createElement('div'), { className: 'page-lyric-box' });
+            const shl2 = OA(document.createElement("div"), {
+                className: "section-header m-top-3",
+                innerHTML: '<h2 class="title">Lyric</h2>'
+            });
+            
+            const dlr = OA(document.createElement('div'), { className: 'lyric m-top-2' });
+            dlr.setAttribute('data-ha-lrc', '1');
+            dlr.style.setProperty('--ha-lyric-box-size', '20px');
+            dlr.classList.add('ha-lyric-skin');
+            
+            try {
+                if (LyricsEngine.hasLyrics(e)) {
+                    LyricsEngine.loadFromItem(e);
+                    LyricsEngine.mount(
+                        dlr,
+                        LyricsEngine.synced ? 'sync' : 'static',
+                        LyricsEngine.synced ? 'normal' : 'static'
+                    );
+                }
+            } catch (err) {}
+            dpl.append(shl2,dlr);
+            MCNT.appendChild(dpl);
+        }
+        
         if (e.songs) {
 
             const shd2 = OA(document.createElement("div"), {
@@ -6469,7 +6500,7 @@ if (!empty($_SESSION['loggedin'])) {
             if (relMv.length) CRSC(relMv, 'musicvideo');
             if (relV.length) CRSC(relV, 'video');
         }
-    
+        
         if (e.artists){
             const dal = OA(document.createElement('div'), { className: 'page-artists-list' });
             const shd2 = OA(document.createElement("div"), {
@@ -6945,6 +6976,7 @@ if (!empty($_SESSION['loggedin'])) {
         // در صورت نیاز player-box را هم نشان بده
         const box = document.getElementById('player-box');
         if (box) box.classList.remove('vis-none');
+        try { applyMediaStageSpin(!!GetSetting('rotatingHeader')); } catch (e) {}
         rehomeVideoToPlayer();
         
         const fsRoot = Player; // یا box اگر می‌خواهی کل player-box
@@ -9560,10 +9592,10 @@ const PROFILE_KEY = 'ha_profile';
         const lmWrap = OA(document.createElement('div'), { className: 'player-font-size' });
         const curLm = GetSetting('lyricDisplayMode') || 'normal';
         [
-            { v: 'normal', l: 'نرمال' },
-            { v: 'line', l: 'خطی' },
-            { v: 'focus', l: 'فوکوس' },
-            { v: 'card', l: 'کارت' }
+            { v: 'normal', l: 'Normal' },
+            { v: 'line', l: 'Line' },
+            { v: 'focus', l: 'Focus' },
+            { v: 'card', l: 'Card' }
         ].forEach((opt) => {
             const b = OA(document.createElement('div'), {
                 className: 'fs-btn' + (curLm === opt.v ? ' active' : ''),
@@ -9681,9 +9713,12 @@ const PROFILE_KEY = 'ha_profile';
         if (!thumbWrap) return;
         if (on) {
             thumbWrap.classList.add('player-art-spin');
-            const P = ensurePlayer();
-            if (P.nowPlaying && P.nowPlaying.isPlaying) {
-                thumbWrap.classList.add('is-playing');
+            try {
+                const P = ensurePlayer();
+                const playing = !!(P.nowPlaying && P.nowPlaying.isPlaying && !P.waiting);
+                thumbWrap.classList.toggle('is-playing', playing);
+            } catch (e) {
+                thumbWrap.classList.remove('is-playing');
             }
         } else {
             thumbWrap.classList.remove('player-art-spin', 'is-playing');
@@ -13222,8 +13257,9 @@ const PROFILE_KEY = 'ha_profile';
             stage.classList.add('is-hidden');
             stage.dataset.open = '0';
         }
+        // دکمه #lyric فقط تب لیریک را باز می‌کند — کلاس active نمی‌گیرد
         const btn = document.getElementById('lyric');
-        if (btn) btn.classList.toggle('active', !!show);
+        if (btn) btn.classList.remove('active');
     }
 
     const LyricsEngine = {
@@ -14322,7 +14358,10 @@ const PROFILE_KEY = 'ha_profile';
             if (!el) return;
             el.classList.toggle('is-playing', !!playing);
         });
-        // media-stage header spin (اگر setting فعال باشد)
+        // همیشه کلاس spin را از ستینگ هم‌خوان کن تا بعد از رفرش بدون toggle کار کند
+        try {
+            applyMediaStageSpin(!!GetSetting('rotatingHeader'));
+        } catch (e) {}
         const stageThumbWrap = document.querySelector('#media-stage .thumbail');
         if (stageThumbWrap && stageThumbWrap.classList.contains('player-art-spin')) {
             stageThumbWrap.classList.toggle('is-playing', !!playing);
@@ -14795,13 +14834,16 @@ const PROFILE_KEY = 'ha_profile';
         const maxLyrMin = document.getElementById('max-lyrics-minimize');
         if (maxLyrMin) wireOnce(maxLyrMin, 'click', () => closeMaxLyricsPanel());
 
-        // موبایل ردیف دوم: [1] هنرمندان CRBW art | [2] مولتی‌لیریک CRBW lyr
+        // موبایل ردیف دوم:
+        // [1] هنرمندان | [2] مولتی‌لیریک | [3] دانلود CRBW | [4] فول‌اسکرین پلیر
         if (MaxMobPly) {
             const rows = MaxMobPly.querySelectorAll('.buttons.m-top-1');
             if (rows.length >= 2) {
                 const btns = rows[1].querySelectorAll('.button');
                 const artBtn = btns[1];
                 const lyrBtn = btns[2];
+                const donBtn = btns[3];
+                const fsBtn = btns[4];
                 if (artBtn) {
                     wireOnce(artBtn, 'click', () => {
                         const np = ensurePlayer().nowPlaying;
@@ -14817,6 +14859,17 @@ const PROFILE_KEY = 'ha_profile';
                         const typ = (np.item.meta && np.item.meta.type) || np.type || 'song';
                         CRBW(np.item.id, typ, 'lyr', { fresh: true });
                     });
+                }
+                if (donBtn) {
+                    wireOnce(donBtn, 'click', () => {
+                        const np = ensurePlayer().nowPlaying;
+                        if (!np || !np.item || np.item.id == null) return;
+                        const typ = (np.item.meta && np.item.meta.type) || np.type || 'song';
+                        CRBW(np.item.id, typ, 'don', { fresh: true });
+                    });
+                }
+                if (fsBtn) {
+                    wireOnce(fsBtn, 'click', () => openPlayerShell());
                 }
             }
         }
