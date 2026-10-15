@@ -2165,11 +2165,8 @@ body::-webkit-scrollbar-thumb:hover,
     <div class="main-container">
            
         <div class="topbar-container">
-            <div class="desktop-navigation">
-                <div class="back" title="Back"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M5 12l6 6"></path><path d="M5 12l6 -6"></path></svg></div>
-                <a class="logo-container-m" aria-label="Hamrahang Web Player" ><svg fill="currentColor" version="1.1" viewBox="0 0 302.45 104.79"><defs><style>.cls-1,.cls-3{fill:#fff;}.cls-1{fill-rule:evenodd;}.cls-2{fill:#1a1b1c;}</style></defs><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><g id="radio"><polygon class="cls-1" points="30.55 0 61.09 30.55 259.22 30.55 302.45 73.75 271.91 104.29 241.36 73.75 43.22 73.75 0 30.55 30.55 0 30.55 0"/><path class="cls-2" d="M82.18,66.67H74.67V53.47H64.49v13.2H57V36.86h7.51V47.77H74.67V36.86h7.51V66.67Zm163.29,0H238V53.47H227.79v13.2h-7.51V36.86h7.51V47.77H238V36.86h7.51V66.67ZM104,59.37V53.51c-1.47.15-2.66.28-3.56.39a11.3,11.3,0,0,0-2.67.64A3.7,3.7,0,0,0,96,55.75a3.42,3.42,0,0,0-.63,2.16,3.09,3.09,0,0,0,1,2.71,5.32,5.32,0,0,0,3.1.74,5.68,5.68,0,0,0,2.32-.52A7.39,7.39,0,0,0,104,59.37Zm0,4.33c-.6.5-1.14,1-1.6,1.35a10.44,10.44,0,0,1-1.91,1.19,12.67,12.67,0,0,1-2.27.89,12.31,12.31,0,0,1-3.09.3A8.19,8.19,0,0,1,89,64.93a8.6,8.6,0,0,1-2.45-6.29,9.22,9.22,0,0,1,1.24-5,8.6,8.6,0,0,1,3.57-3.05A19,19,0,0,1,97,49q3.29-.44,7.06-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.45,11.45,0,0,0-5.1-.89,14.09,14.09,0,0,0-3.6.56,30.51,30.51,0,0,0-4,1.43h-.74V39.25c.86-.25,2.25-.55,4.18-.89a33.51,33.51,0,0,1,5.83-.51q7.23,0,10.52,2.41c2.21,1.61,3.3,4.05,3.3,7.35V66.67H104v-3Zm48.62,3v-14c0-1.38,0-2.54-.07-3.48a7.06,7.06,0,0,0-.45-2.32,2.55,2.55,0,0,0-1.17-1.31,4.93,4.93,0,0,0-2.21-.4,4.81,4.81,0,0,0-2,.43,14.45,14.45,0,0,0-2.13,1.23V66.67h-8.73v-14c0-1.36,0-2.51-.08-3.47a7.29,7.29,0,0,0-.47-2.33,2.55,2.55,0,0,0-1.17-1.31,4.82,4.82,0,0,0-2.18-.4,4.73,4.73,0,0,0-2.1.5,14.51,14.51,0,0,0-2,1.16V66.67h-8.73V38.72h8.73v3.09a23.44,23.44,0,0,1,4-2.83,8.88,8.88,0,0,1,4.26-1,8.32,8.32,0,0,1,4.51,1.21,7.68,7.68,0,0,1,3,3.64,25.3,25.3,0,0,1,4.75-3.6,9.3,9.3,0,0,1,8-.63A6.55,6.55,0,0,1,159,40.45a8.61,8.61,0,0,1,1.76,3.19,16.48,16.48,0,0,1,.58,4.84V66.67Zm34-19.69h-.73a6.15,6.15,0,0,0-1.45-.27c-.63-.06-1.34-.08-2.1-.08a11.58,11.58,0,0,0-2.89.39,28,28,0,0,0-2.94.95v18.7h-8.73V38.72h8.73v4c.4-.36.95-.82,1.67-1.37A15.21,15.21,0,0,1,180.15,40a11.41,11.41,0,0,1,2.22-1,7.51,7.51,0,0,1,2.39-.41l.94,0,1,.08V47Zm18.71,12.39V53.51c-1.46.15-2.65.28-3.55.39a11.49,11.49,0,0,0-2.68.64,3.79,3.79,0,0,0-1.77,1.21,3.48,3.48,0,0,0-.62,2.16,3.08,3.08,0,0,0,1,2.71,5.37,5.37,0,0,0,3.11.74,5.68,5.68,0,0,0,2.32-.52,7.22,7.22,0,0,0,2.15-1.47Zm0,4.33-1.6,1.35a10,10,0,0,1-1.9,1.19,13,13,0,0,1-2.27.89,12.41,12.41,0,0,1-3.09.3,8.23,8.23,0,0,1-6.15-2.5,8.6,8.6,0,0,1-2.45-6.29,9.13,9.13,0,0,1,1.25-5,8.47,8.47,0,0,1,3.57-3.05,18.78,18.78,0,0,1,5.64-1.6q3.28-.44,7-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.38,11.38,0,0,0-5.09-.89,14.09,14.09,0,0,0-3.6.56A30.65,30.65,0,0,0,191,46h-.74V39.25c.87-.25,2.26-.55,4.19-.89a33.43,33.43,0,0,1,5.83-.51q7.22,0,10.52,2.41c2.2,1.61,3.3,4.05,3.3,7.35V66.67h-8.73v-3Z"/><path class="cls-3" d="M109.91,104.29h-5.83l-1.52-4.85h-8.1l-1.53,4.85H87.24l8.09-24h6.5ZM101.2,95l-2.69-8.59L95.81,95Z"/><path class="cls-3" d="M132.69,104.29H127V93.72h-8.33v10.57h-5.65v-24h5.65v8.78H127V80.3h5.65Z"/><path class="cls-3" d="M158.51,104.29h-5.84l-1.52-4.85h-8.1l-1.53,4.85h-5.69l8.09-24h6.5ZM149.79,95l-2.69-8.59L144.41,95Z"/><path class="cls-3" d="M181.56,104.29h-5.44l-9.29-16.46v16.46h-5.18v-24h6.75l8,13.75V80.3h5.18Z"/><path class="cls-3" d="M206.51,102.92a27,27,0,0,1-3.9,1.25,19.13,19.13,0,0,1-4.84.62q-5.58,0-8.74-3.32t-3.16-9.2a12.67,12.67,0,0,1,3.19-9q3.18-3.42,8.89-3.43a19.57,19.57,0,0,1,4.12.43,17.6,17.6,0,0,1,4.35,1.7v5.62h-.63l-1.21-1a13.73,13.73,0,0,0-1.53-1.06,9.93,9.93,0,0,0-2-.89,8,8,0,0,0-2.42-.37,7.2,7.2,0,0,0-2.72.49,6.2,6.2,0,0,0-2.19,1.48,6.76,6.76,0,0,0-1.46,2.46,10.06,10.06,0,0,0-.54,3.44,8.71,8.71,0,0,0,1.93,6.09,7.34,7.34,0,0,0,5.69,2.11l.71,0c.26,0,.5,0,.71,0v-4.7h-4.36V91.08h10.1Z"/></g></g></g></svg></a>
-            <div class="forward" title="Forward"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M13 18l6 -6"></path><path d="M13 6l6 6"></path></svg></div></div>
-            <div class="search-container"><div class="content"><div class="icon"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg></div><form><input class="input" placeholder="Search songs, artists, albums ..." maxlength="100" spellcheck="false" autocorrect="off" autocapitalize="off" type="text" name="search"></form><button type="button" class="clear btn btn-model-2"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M5 12l14 0"></path><path d="M13 18l6 -6"></path><path d="M13 6l6 6"></path></svg></button></div></div>
+            <div class="desktop-navigation"><!-- CRTB --></div>
+            <!-- search built by CRTB -->
         </div>
         <div class="main-content" >
             <div class="gradient-color-container vis-none"><div class="ratio ratio-21x9" style="background-image: radial-gradient(ellipse at center, #e4f5fc 0%,#bfe8f9 50%,#2ab0ed 100%);;"></div></div>
@@ -2762,6 +2759,8 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_sub = '<svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9h8"></path><path d="M8 13h6"></path><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2"></path></svg>';
     var svg_lyr = '<svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18v-12l10 2v10"></path><path d="M9 15a3 3 0 1 1 -3 3"></path><path d="M19 17a3 3 0 1 1 -3 3"></path></svg>';
     var svg_bak = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M5 12l6 6"></path><path d="M5 12l6 -6"></path></svg>';
+    var svg_fwd = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M13 18l6 -6"></path><path d="M13 6l6 6"></path></svg>';
+    var svg_srh2 = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>';
     
     var svg_rpt = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>';
     var svg_rpt1= '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path><path d="M10.5 9.5l1.5 -1.5v8"></path></svg>';
@@ -9068,6 +9067,80 @@ const PROFILE_KEY = 'ha_profile';
      */
 
     /** CRSB — ساخت سایدبار (زودتر از پلیر؛ فقط DOM لازم دارد) */
+
+    /** CRTB — topbar: back/logo/forward + search */
+    function CRTB() {
+        const top = document.querySelector('.topbar-container');
+        if (!top || top._haBuilt) return;
+        top._haBuilt = true;
+
+        let nav = top.querySelector('.desktop-navigation');
+        if (!nav) {
+            nav = OA(document.createElement('div'), { className: 'desktop-navigation' });
+            top.append(nav);
+        }
+        nav.innerHTML = '';
+
+        const back = OA(document.createElement('div'), {
+            className: 'back',
+            title: 'Back',
+            innerHTML: typeof svg_bak !== 'undefined' ? svg_bak : ''
+        });
+        const logo = OA(document.createElement('a'), {
+            className: 'logo-container-m',
+            href: '/',
+            innerHTML: typeof svg_logo !== 'undefined' ? svg_logo : ''
+        });
+        logo.setAttribute('aria-label', 'Hamrahang Web Player');
+        const forward = OA(document.createElement('div'), {
+            className: 'forward',
+            title: 'Forward',
+            innerHTML: typeof svg_fwd !== 'undefined' ? svg_fwd : ''
+        });
+        nav.append(back, logo, forward);
+
+        // search
+        let oldSearch = top.querySelector('.search-container');
+        if (oldSearch) oldSearch.remove();
+        const sc = OA(document.createElement('div'), { className: 'search-container' });
+        const content = OA(document.createElement('div'), { className: 'content' });
+        const icon = OA(document.createElement('div'), {
+            className: 'icon',
+            innerHTML: typeof svg_srh2 !== 'undefined' ? svg_srh2 : (typeof svg_srh !== 'undefined' ? svg_srh : '')
+        });
+        const form = document.createElement('form');
+        const input = OA(document.createElement('input'), {
+            className: 'input',
+            type: 'text',
+            name: 'search',
+            placeholder: 'Search songs, artists, albums ...',
+            maxLength: 100,
+            spellcheck: false
+        });
+        input.setAttribute('autocorrect', 'off');
+        input.setAttribute('autocapitalize', 'off');
+        form.append(input);
+        const clearBtn = OA(document.createElement('button'), {
+            type: 'button',
+            className: 'clear btn btn-model-2',
+            innerHTML: typeof svg_fwd !== 'undefined' ? svg_fwd : ''
+        });
+        content.append(icon, form, clearBtn);
+        sc.append(content);
+        top.append(sc);
+
+        // history buttons (جایگزین اسکریپت زودرس که قبل از build null بود)
+        back.addEventListener('click', function () { window.history.back(); });
+        forward.addEventListener('click', function () { window.history.forward(); });
+        try {
+            if (typeof BTNback !== 'undefined') BTNback = back;
+            if (typeof BTNforward !== 'undefined') BTNforward = forward;
+        } catch (e) {}
+
+        // bind search
+        try { if (typeof FSRC === 'function') FSRC(); } catch (e) {}
+    }
+
     function CRSB() {
         const root = document.querySelector('.sidebar-content');
         if (!root || root._haBuilt) return;
@@ -15066,6 +15139,7 @@ const PROFILE_KEY = 'ha_profile';
     }
     
     CRSB();
+    CRTB();
     CRPL();
     InitMediaPlayers();
 
