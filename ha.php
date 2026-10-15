@@ -2180,13 +2180,6 @@ body::-webkit-scrollbar-thumb:hover,
         
     </div>
     <div class="navbar-m"><!-- CRNB --></div>
-    <div id="pair-container vis-none">
-        <div id="pair-code-input-section" style="display:none;">
-            <input type="text" id="pair-code-input" placeholder="کد ۶ رقمی را وارد کنید" maxlength="6">
-            <button id="pair-submit-btn">تأیید اتصال</button>
-        </div>
-        <div id="pair-status"></div>
-    </div>
 </main>
 <div id="player" class="player vis-none">
     <!-- media in HTML: video reparents between page stage and fullscreen shell -->
@@ -5335,85 +5328,6 @@ if (!empty($_SESSION['loggedin'])) {
         return container;
     }
 
-    // در صفحه‌ی hamrahang.ir/pair/{code} (سمت وب‌سایت اصلی)
-    function ConfirmPairing(code) {
-    
-        if (!SN.user || !SN.user.loggedIn) {
-            ShowLoginForm(function () {
-                ConfirmPairing(code);   // بعد از لاگین موفق، دوباره امتحان کن
-            });
-            return;
-        }
-    
-        gjl({ a: 'confirm_device', code: code }, function (success, j) {
-    
-            if (success && j.ok) {
-                ShowMessage("دستگاه با موفقیت متصل شد ✅");
-            } else {
-                ShowMessage("کد نامعتبر یا منقضی شده است");
-            }
-        });
-    }
-
-    function InitPairPage() {
-    
-        var pathParts = window.location.pathname.split('/');
-        // فرض: مسیر به فرم /pair/{code} یا فقط /pair هست
-        var codeFromUrl = (pathParts[2] && /^\d{6}$/.test(pathParts[2])) ? pathParts[2] : null;
-    
-        var statusEl = document.getElementById('pair-status');
-        var inputSection = document.getElementById('pair-code-input-section');
-    
-        if (codeFromUrl) {
-    
-            // کد از QR اومده → مستقیم برو سراغ تأیید (بعد از چک لاگین)
-            HandlePairing(codeFromUrl, statusEl);
-    
-        } else {
-    
-            // کد در URL نبود → فرم ورود دستی نشون بده
-            inputSection.style.display = 'block';
-    
-            document.getElementById('pair-submit-btn').addEventListener('click', function () {
-    
-                var manualCode = document.getElementById('pair-code-input').value.trim();
-    
-                if (!/^\d{6}$/.test(manualCode)) {
-                    statusEl.innerHTML = "کد باید ۶ رقم باشد";
-                    return;
-                }
-    
-                HandlePairing(manualCode, statusEl);
-            });
-        }
-    }
-    
-    function HandlePairing(code, statusEl) {
-    
-        if (!SN.user || !SN.user.loggedIn) {
-    
-            statusEl.innerHTML = "لطفاً ابتدا وارد حساب کاربری خود شوید";
-            ShowLoginForm(function () {
-                ConfirmPairing(code, statusEl);
-            });
-            return;
-        }
-    
-        ConfirmPairing(code, statusEl);
-    }
-    
-    function ConfirmPairing(code, statusEl) {
-    
-        gjl({ a: 'confirm_device', code: code }, function (success, j) {
-    
-            if (success && j && j.ok) {
-                statusEl.innerHTML = "دستگاه با موفقیت متصل شد ✅";
-            } else {
-                statusEl.innerHTML = "کد نامعتبر یا منقضی شده است";
-            }
-        });
-    }
-    
     if (window.addEventListener){
         window.addEventListener("popstate", function(){ chp(); });
     }
