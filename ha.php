@@ -2174,65 +2174,7 @@ body::-webkit-scrollbar-thumb:hover,
   
         <div class="minimize-player-wrapper"><!-- CRMP --></div>
 
-        <div class="maximum-player-wrapper">
-            <div class="maximum-player-scroll-area">
-                <div style="width:100%;overflow: hidden !important;display: flex;align-items: stretch !important;flex-direction: row !important;flex-wrap: nowrap !important;scroll-behavior: auto !important;position: relative; overflow-y: scroll !important;overflow-x: hidden !important; scrollbar-width: none !important; " >
-    
-                <div class="maximum-player-container">
-                    <div class="maximum-player-mobile">
-                        <div class="minimize-close"><div class="minimize" title="Minimize"><svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" transform="rotate(90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></div></div>
-                        <div class="artwork ratio ratio-1x1 player-art-spin">
-                            <span class="placeholder">
-                                <svg style="width:150px;height:150px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg></span>
-                        </div>
-                                <div class="plays-texts-likes">
-                                    <div class="plays"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3,12c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S3,7,3,12"></path><path d="M10.5,15l5-3l-5-3V15z"></path></svg></span><span class="plays-count"></span></div>
-                            <div class="texts"><span class="text1"></span><span class="text2"><small></small></span></div>
-                            <div class="likes"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"></path></svg></span><span class="likes-count">6</span></div></div><div class="seekbar"><input type="range" class="form-range" min="0" max="100" step="0.1"></div><div class="times"><span></span><span></span></div>
-                        <div class="buttons m-top-1">
-                            <div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg></span></div>
-                            <div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M14.7,55.1V8.9H7v46.2H14.7z M57,55.1V8.9L22.4,32L57,55.1z"></path></svg></div>
-                            <div class="button play-pause"><span><svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 20px; height: 20px;"><path d="M18.4,57V7l39.3,25L18.4,57z"></path></svg></span><i class="wlap"></i></div>
-                            <div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div>
-                            <div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4l3 3l-3 3"></path><path d="M18 20l3 -3l-3 -3"></path><path d="M3 7h15"></path><path d="M3 17h15"></path></svg></span></div>
-                            </div>
-                            
-                        <div class="buttons m-top-1"><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path><path d="M9 12h6"></path><path d="M12 9v6"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7,7c0,2.2,1.8,4,4,4s4-1.8,4-4s-1.8-4-4-4S7,4.8,7,7"></path><path d="M5,21v-2c0-2.2,1.8-4,4-4h3"></path><path d="M14.8,18.5c0,1.4,1.2,2.6,2.6,2.6c1.4,0,2.6-1.2,2.6-2.6c0-1.4-1.2-2.6-2.6-2.6C16,15.9,14.8,17.1,14.8,18.5"></path><path d="M20,18.5V12"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><path d="M7 11l5 5l5 -5"></path><path d="M12 4l0 12"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M8.7 10.7l6.6 -3.4"></path><path d="M8.7 13.3l6.6 3.4"></path></svg></div></div></div>
-                        
-                        <div id="mini-lyric" class="mini-lyric vis-none" title="Lyrics"></div>
-                        <div class="maximum-player-queue">
-                            <div class="header"><div class="title">Next Playing (0)</div><div class="buttons">
-                            <div class="button" title="Minimize"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path></svg></div></div></div>
-                            <div class="track-line-queue-container"></div>
-                        </div>
-                        <div id="maximum-player-lyrics" class="maximum-player-lyrics vis-none">
-                            <div class="header">
-                                <div class="header-row header-row-main">
-                                    <div class="title" id="max-lyrics-title"></div>
-                                    <div class="buttons">
-                                        <div class="button" id="max-lyrics-minimize" title="Minimize"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path></svg></div>
-                                    </div>
-                                </div>
-                                <div class="header-row header-row-tools">
-                                    <div class="lyric-size-slider" title="Font size">
-                                        <span class="lz-lab">S</span>
-                                        <input type="range" id="max-lyrics-size" min="12" max="32" step="1" value="16">
-                                        <span class="lz-lab">XL</span>
-                                    </div>
-                                    <div class="lyric-font-keys" id="max-lyrics-fonts">
-                                        <div class="fs-btn" data-font="f1" title="Font 1">F1</div>
-                                        <div class="fs-btn" data-font="f2" title="Font 2">F2</div>
-                                        <div class="fs-btn" data-font="f3" title="Font 3">F3</div>
-                                        <div class="fs-btn" data-font="f4" title="Font 4">F4</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="max-lyrics-body ha-lyric-skin" id="max-lyrics-body" data-ha-lyric-skin="1"></div>
-                        </div>
-                </div>
-          
-                
-                </div></div></div>
+        <div class="maximum-player-wrapper"><!-- CRMX --></div>
         <div class="maximum-player-desktop vis-none">
                         <div class="playing-track"><div class="artwork player-art-spin">
                             <span class="placeholder"><svg style="width:24px;height:24px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg></span></div>
@@ -2749,6 +2691,16 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_lyr = '<svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18v-12l10 2v10"></path><path d="M9 15a3 3 0 1 1 -3 3"></path><path d="M19 17a3 3 0 1 1 -3 3"></path></svg>';
     var svg_bak = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M5 12l6 6"></path><path d="M5 12l6 -6"></path></svg>';
     var svg_fwd = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M13 18l6 -6"></path><path d="M13 6l6 6"></path></svg>';    var svg_cls = '<svg style="width:18px;height:18px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg>';
+    var svg_minz = '<svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" transform="rotate(90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>';
+    var svg_dash = '<svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path></svg>';
+    var svg_playc = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3,12c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S3,7,3,12"></path><path d="M10.5,15l5-3l-5-3V15z"></path></svg>';
+    var svg_heart = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"></path></svg>';
+    var svg_shf = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>';
+    var svg_rpti = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4l3 3l-3 3"></path><path d="M18 20l3 -3l-3 -3"></path><path d="M3 7h15"></path><path d="M3 17h15"></path></svg>';
+    var svg_plus = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path><path d="M9 12h6"></path><path d="M12 9v6"></path></svg>';
+    var svg_userp = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7,7c0,2.2,1.8,4,4,4s4-1.8,4-4s-1.8-4-4-4S7,4.8,7,7"></path><path d="M5,21v-2c0-2.2,1.8-4,4-4h3"></path><path d="M14.8,18.5c0,1.4,1.2,2.6,2.6,2.6c1.4,0,2.6-1.2,2.6-2.6c0-1.4-1.2-2.6-2.6-2.6C16,15.9,14.8,17.1,14.8,18.5"></path><path d="M20,18.5V12"></path></svg>';
+    var svg_list = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg>';
+    var svg_share2 = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M8.7 10.7l6.6 -3.4"></path><path d="M8.7 13.3l6.6 3.4"></path></svg>';
 
     var svg_srh2 = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>';
     
@@ -9061,6 +9013,204 @@ const PROFILE_KEY = 'ha_profile';
     /** CRTB — topbar: back/logo/forward + search */
 
     /** CRMP — minimize player bar (بدون id روی دکمه‌ها؛ artwork فقط placeholder تا تامب باشد) */
+
+    /** CRMX — maximum-player-wrapper (موبایل + کیو + لیریک؛ بدون id اضافی روی دکمه‌ها) */
+    function CRMX() {
+        const root = document.querySelector('.maximum-player-wrapper');
+        if (!root || root._haBuilt) return;
+        root._haBuilt = true;
+        root.innerHTML = '';
+
+        const S = function (name, fallback) {
+            try {
+                if (typeof window[name] !== 'undefined') return window[name];
+            } catch (e) {}
+            // svg_* are local vars in IIFE — use eval-free map via arguments.callee scope: pass as direct refs
+            return fallback || '';
+        };
+        // در اسکوپ IIFE مستقیم از varها استفاده می‌کنیم:
+        const ico = {
+            minz: typeof svg_minz !== 'undefined' ? svg_minz : '',
+            sng: typeof svg_sng !== 'undefined' ? svg_sng : '',
+            playc: typeof svg_playc !== 'undefined' ? svg_playc : '',
+            heart: typeof svg_heart !== 'undefined' ? svg_heart : '',
+            shf: typeof svg_shf !== 'undefined' ? svg_shf : '',
+            prv: typeof svg_prv !== 'undefined' ? svg_prv : '',
+            ply: typeof svg_ply !== 'undefined' ? svg_ply : '',
+            nxt: typeof svg_nxt !== 'undefined' ? svg_nxt : '',
+            rpti: typeof svg_rpti !== 'undefined' ? svg_rpti : '',
+            plus: typeof svg_plus !== 'undefined' ? svg_plus : '',
+            userp: typeof svg_userp !== 'undefined' ? svg_userp : '',
+            list: typeof svg_list !== 'undefined' ? svg_list : '',
+            dons: typeof svg_dons !== 'undefined' ? svg_dons : '',
+            share2: typeof svg_share2 !== 'undefined' ? svg_share2 : '',
+            dash: typeof svg_dash !== 'undefined' ? svg_dash : ''
+        };
+
+        const scrollArea = OA(document.createElement('div'), { className: 'maximum-player-scroll-area' });
+        const scrollInner = document.createElement('div');
+        scrollInner.setAttribute('style', 'width:100%;overflow: hidden !important;display: flex;align-items: stretch !important;flex-direction: row !important;flex-wrap: nowrap !important;scroll-behavior: auto !important;position: relative; overflow-y: scroll !important;overflow-x: hidden !important; scrollbar-width: none !important;');
+
+        const container = OA(document.createElement('div'), { className: 'maximum-player-container' });
+
+        // ---- mobile ----
+        const mobile = OA(document.createElement('div'), { className: 'maximum-player-mobile' });
+        const minClose = OA(document.createElement('div'), { className: 'minimize-close' });
+        const minBtn = OA(document.createElement('div'), {
+            className: 'minimize',
+            title: 'Minimize',
+            innerHTML: ico.minz
+        });
+        minClose.append(minBtn);
+
+        const art = OA(document.createElement('div'), { className: 'artwork ratio ratio-1x1 player-art-spin' });
+        art.append(OA(document.createElement('span'), {
+            className: 'placeholder',
+            innerHTML: ico.sng
+        }));
+        // بدون img خالی — setArtworkEl اضافه می‌کند
+
+        const ptl = OA(document.createElement('div'), { className: 'plays-texts-likes' });
+        const plays = OA(document.createElement('div'), { className: 'plays' });
+        plays.append(
+            OA(document.createElement('span'), { innerHTML: ico.playc }),
+            OA(document.createElement('span'), { className: 'plays-count' })
+        );
+        const texts = OA(document.createElement('div'), { className: 'texts' });
+        const t1 = OA(document.createElement('span'), { className: 'text1' });
+        const t2 = OA(document.createElement('span'), { className: 'text2' });
+        t2.append(document.createElement('small'));
+        texts.append(t1, t2);
+        const likes = OA(document.createElement('div'), { className: 'likes' });
+        likes.append(
+            OA(document.createElement('span'), { innerHTML: ico.heart }),
+            OA(document.createElement('span'), { className: 'likes-count' })
+        );
+        ptl.append(plays, texts, likes);
+
+        const seek = OA(document.createElement('div'), { className: 'seekbar' });
+        const range = OA(document.createElement('input'), {
+            type: 'range',
+            className: 'form-range',
+            min: '0',
+            max: '100',
+            step: '0.1'
+        });
+        seek.append(range);
+
+        const times = OA(document.createElement('div'), { className: 'times' });
+        times.append(document.createElement('span'), document.createElement('span'));
+
+        // ردیف ۱: repeat | prev | play | next | shuffle  (بدون id)
+        const row1 = OA(document.createElement('div'), { className: 'buttons m-top-1' });
+        const bRep = OA(document.createElement('div'), { className: 'button' });
+        bRep.append(OA(document.createElement('span'), { innerHTML: ico.shf }));
+        const bPrv = OA(document.createElement('div'), { className: 'button', innerHTML: ico.prv });
+        const bPlay = OA(document.createElement('div'), { className: 'button play-pause' });
+        bPlay.append(
+            OA(document.createElement('span'), { innerHTML: ico.ply }),
+            OA(document.createElement('i'), { className: 'wlap' })
+        );
+        const bNxt = OA(document.createElement('div'), { className: 'button', innerHTML: ico.nxt });
+        const bShuf = OA(document.createElement('div'), { className: 'button' });
+        bShuf.append(OA(document.createElement('span'), { innerHTML: ico.rpti }));
+        row1.append(bRep, bPrv, bPlay, bNxt, bShuf);
+
+        // ردیف ۲: plus | artist | lyrics | download | share
+        const row2 = OA(document.createElement('div'), { className: 'buttons m-top-1' });
+        [
+            ico.plus,
+            ico.userp,
+            ico.list,
+            ico.dons,
+            ico.share2
+        ].forEach(function (svg) {
+            row2.append(OA(document.createElement('div'), { className: 'button', innerHTML: svg }));
+        });
+
+        mobile.append(minClose, art, ptl, seek, times, row1, row2);
+
+        // ---- mini-lyric ----
+        const miniLyc = OA(document.createElement('div'), {
+            id: 'mini-lyric',
+            className: 'mini-lyric vis-none',
+            title: 'Lyrics'
+        });
+
+        // ---- queue ----
+        const queue = OA(document.createElement('div'), { className: 'maximum-player-queue' });
+        const qHead = OA(document.createElement('div'), { className: 'header' });
+        const qTitle = OA(document.createElement('div'), { className: 'title', innerHTML: 'Next Playing (0)' });
+        const qBtns = OA(document.createElement('div'), { className: 'buttons' });
+        qBtns.append(OA(document.createElement('div'), {
+            className: 'button',
+            title: 'Minimize',
+            innerHTML: ico.dash
+        }));
+        qHead.append(qTitle, qBtns);
+        const qList = OA(document.createElement('div'), { className: 'track-line-queue-container' });
+        queue.append(qHead, qList);
+
+        // ---- lyrics panel ----
+        const lyr = OA(document.createElement('div'), {
+            id: 'maximum-player-lyrics',
+            className: 'maximum-player-lyrics vis-none'
+        });
+        const lyrHead = OA(document.createElement('div'), { className: 'header' });
+        const rowMain = OA(document.createElement('div'), { className: 'header-row header-row-main' });
+        rowMain.append(
+            OA(document.createElement('div'), { id: 'max-lyrics-title', className: 'title' }),
+            (function () {
+                const btns = OA(document.createElement('div'), { className: 'buttons' });
+                btns.append(OA(document.createElement('div'), {
+                    id: 'max-lyrics-minimize',
+                    className: 'button',
+                    title: 'Minimize',
+                    innerHTML: ico.dash
+                }));
+                return btns;
+            })()
+        );
+        const rowTools = OA(document.createElement('div'), { className: 'header-row header-row-tools' });
+        const slider = OA(document.createElement('div'), { className: 'lyric-size-slider', title: 'Font size' });
+        const sizeInp = OA(document.createElement('input'), {
+            type: 'range',
+            id: 'max-lyrics-size',
+            min: '12',
+            max: '32',
+            step: '1',
+            value: '16'
+        });
+        slider.append(
+            OA(document.createElement('span'), { className: 'lz-lab', innerHTML: 'S' }),
+            sizeInp,
+            OA(document.createElement('span'), { className: 'lz-lab', innerHTML: 'XL' })
+        );
+        const fonts = OA(document.createElement('div'), { id: 'max-lyrics-fonts', className: 'lyric-font-keys' });
+        ['f1', 'f2', 'f3', 'f4'].forEach(function (f, i) {
+            const fb = OA(document.createElement('div'), {
+                className: 'fs-btn',
+                innerHTML: 'F' + (i + 1)
+            });
+            fb.setAttribute('data-font', f);
+            fb.setAttribute('title', 'Font ' + (i + 1));
+            fonts.append(fb);
+        });
+        rowTools.append(slider, fonts);
+        lyrHead.append(rowMain, rowTools);
+        const lyrBody = OA(document.createElement('div'), {
+            id: 'max-lyrics-body',
+            className: 'max-lyrics-body ha-lyric-skin'
+        });
+        lyrBody.setAttribute('data-ha-lyric-skin', '1');
+        lyr.append(lyrHead, lyrBody);
+
+        container.append(mobile, miniLyc, queue, lyr);
+        scrollInner.append(container);
+        scrollArea.append(scrollInner);
+        root.append(scrollArea);
+    }
+
     function CRMP() {
         const root = document.querySelector('.minimize-player-wrapper');
         if (!root || root._haBuilt) return;
@@ -12828,8 +12978,9 @@ const PROFILE_KEY = 'ha_profile';
     
     // ===================== PLAYERS =====================
     
-    // DOM مینی‌پلیر باید قبل از رفرنس‌ها ساخته شود
+    // DOM مینی/مکس پلیر قبل از رفرنس‌ها
     try { CRMP(); } catch (e) {}
+    try { CRMX(); } catch (e) {}
     const MinPly = document.querySelector('.minimize-player-wrapper');
     const MinPlyBtn = MinPly ? MinPly.querySelectorAll('.button') : [];
     const MinArt = MinPly ? MinPly.querySelector('.artwork') : null;
