@@ -2175,58 +2175,11 @@ body::-webkit-scrollbar-thumb:hover,
         <div class="minimize-player-wrapper"><!-- CRMP --></div>
 
         <div class="maximum-player-wrapper"><!-- CRMX --></div>
-        <div class="maximum-player-desktop vis-none">
-                        <div class="playing-track"><div class="artwork player-art-spin">
-                            <span class="placeholder"><svg style="width:24px;height:24px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg></span></div>
-                            <div class="details">
-                                <div class="text1"></div>
-                                <div class="text2"></div>
-                                <div class="plays-likes">
-                                    <div class="plays"><span><svg style="width:18px;height:18px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3,12c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S3,7,3,12"></path><path d="M10.5,15l5-3l-5-3V15z"></path></svg></span><span class="plays-count"></span></div>
-                                    <div class="likes"><span><svg style="width:18px;height:18px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"></path></svg></span><span class="likes-count">6</span></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="controll">
-                            <div class="seekbar"><input type="range" class="form-range" min="0" max="100" step="0.1"></div>
-                            <div class="buttons">
-                                <div><span class="current-time">00:00</span></div>
-                                <div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg></span></div>
-                                <div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M14.7,55.1V8.9H7v46.2H14.7z M57,55.1V8.9L22.4,32L57,55.1z"></path></svg></div>
-                                <div class="button play-pause"><span><svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 45px; height: 45px;"><path d="M25.8,43.2L43.2,32L25.8,20.8V43.2z M32,57c-3.5,0-6.7-0.7-9.8-2s-5.7-3.1-7.9-5.3s-4-4.9-5.3-7.9c-1.3-3-2-6.3-2-9.8    s0.7-6.7,2-9.8s3.1-5.7,5.3-7.9s4.9-4,7.9-5.3s6.3-2,9.8-2s6.7,0.7,9.8,2s5.7,3.1,7.9,5.3s4,4.9,5.3,7.9s2,6.3,2,9.8s-0.7,6.7-2,9.8    c-1.3,3-3.1,5.7-5.3,7.9s-4.9,4-7.9,5.3S35.5,57,32,57z"></path></svg></span><i class="wlap"></i></div>
-                                <div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div>
-                                <div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4l3 3l-3 3"></path><path d="M18 20l3 -3l-3 -3"></path><path d="M3 7h15"></path><path d="M3 17h15"></path></svg></span>
-                            </div>
-                            <div><span class="duration">00:00</span></div></div></div>
-                    <div class="details">
-                        <div class="buttons">
-                            <div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg> PlayList</div>
-                            <div class="button"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16.5 19c.246 0 .45.183.492.412L17 19.5a.5.5 0 01-.5.5h-14a.5.5 0 010-1h14zm3-5c.245 0 .45.183.492.412L20 14.5c0 .276-.228.5-.5.5h-17a.505.505 0 01-.5-.5c0-.276.228-.5.5-.5h17zm2.006-5c.242 0 .444.183.486.412L22 9.5a.5.5 0 01-.494.5H2.494a.5.5 0 010-1h19.012zM19.5 4c.245 0 .45.183.492.412L20 4.5c0 .276-.228.5-.5.5h-17a.505.505 0 01-.5-.5c0-.276.228-.5.5-.5h17z"></path></svg> Lyrics</div>
-                        </div>
-                        <div class="buttons">
-                            <div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg> Full SC</div>
-                            <div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg> Close</div>
-                            </div>
-                            </div></div>
-        <footer class="main-footer">
-            <div class="social-media">
-            <a href="tg://HamrahangBot/Play" target="_blank" rel="noopener noreferrer" aria-label="Telegram"><svg width="22" height="22" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg" fill="none" style="width:22px;height:22px" stroke="currentColor" stroke-linejoin="round" stroke-width="12"><path d="M23.073 88.132s65.458-26.782 88.16-36.212c8.702-3.772 38.215-15.843 38.215-15.843s13.621-5.28 12.486 7.544c-.379 5.281-3.406 23.764-6.433 43.756-4.54 28.291-9.459 59.221-9.459 59.221s-.756 8.676-7.188 10.185c-6.433 1.509-17.027-5.281-18.919-6.79-1.513-1.132-28.377-18.106-38.214-26.404-2.649-2.263-5.676-6.79.378-12.071 13.621-12.447 29.891-27.913 39.728-37.72 4.54-4.527 9.081-15.089-9.837-2.264-26.864 18.483-53.35 35.835-53.35 35.835s-6.053 3.772-17.404.377c-11.351-3.395-24.594-7.921-24.594-7.921s-9.08-5.659 6.433-11.693Z"></path></svg></a>
-            <a href="https://instagram.com/hamrahang" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 8a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z"></path><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path><path d="M16.5 7.5v.01"></path></svg></a>
-            </div>
-            <div class="links"><a href="https://hamrahang.ir/app" target="_blank" rel="noopener noreferrer">Download App</a><a href="https://hamrahang.ir/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a><a href="https://hamrahang.ir/terms-of-use" target="_blank" rel="noopener noreferrer">Terms of Use</a><a href="https://hamrahang.ir/help" target="_blank" rel="noopener noreferrer">Help</a>
-            <a href="https://hamrahang.ir/contact" target="_blank" rel="noopener noreferrer">Contact</a></div><div class="owner"><span>@ 2024 <a href="/">Hamrahang</a>, Moments Music Service.</span></div>
-        </footer>
+        <div class="maximum-player-desktop vis-none"><!-- CRDX --></div>
+        <footer class="main-footer"><!-- CRFT --></footer>
         
     </div>
-    <div class="navbar-m">
-        <nav class="menu">
-            <a class="item" href="/"><span><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px;"><path d="M11.3,3.6l-8,7.1C3.1,10.9,3,11.2,3,11.4V21h6v-5c0-1.7,1.3-3,3-3l0,0c1.7,0,3,1.3,3,3v5h6v-9.6    c0-0.3-0.1-0.6-0.3-0.7l-8-7.1C12.3,3.3,11.7,3.3,11.3,3.6z"></path></svg></span><span class="label">Home</span></a>
-            <a class="item" href="/song/top"><span><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px;"><path d="M6,21c-1.7,0-3-1.3-3-3V6c0-1.7,1.3-3,3-3h12c1.7,0,3,1.3,3,3v12c0,1.7-1.3,3-3,3H6z"></path><path d="M9,13.8c0,1.7,1.3,3,3,3s3-1.3,3-3s-1.3-3-3-3S9,12.2,9,13.8"></path><path d="M15,13.8V7.3"></path></svg></span><span class="label">Song</span></a>
-            <a class="item" href="/search"><span><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px;"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg></span><span class="label">Search</span></a>
-            <a class="item" href="/library"><svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path></svg><span>Library</span></a>
-            <a class="item" href="/setting/account"><span><svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22"  height="22" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><title><span>Account Settings</span></title><path d="M9.6,3.32a3.86,3.86,0,1,0,3.86,3.85A3.85,3.85,0,0,0,9.6,3.32M16.35,11a.26.26,0,0,0-.25.21l-.18,1.27a4.63,4.63,0,0,0-.82.45l-1.2-.48a.3.3,0,0,0-.3.13l-1,1.66a.24.24,0,0,0,.06.31l1,.79a3.94,3.94,0,0,0,0,1l-1,.79a.23.23,0,0,0-.06.3l1,1.67c.06.13.19.13.3.13l1.2-.49a3.85,3.85,0,0,0,.82.46l.18,1.27a.24.24,0,0,0,.25.2h1.93a.24.24,0,0,0,.23-.2l.18-1.27a5,5,0,0,0,.81-.46l1.19.49c.12,0,.25,0,.32-.13l1-1.67a.23.23,0,0,0-.06-.3l-1-.79a4,4,0,0,0,0-.49,2.67,2.67,0,0,0,0-.48l1-.79a.25.25,0,0,0,.06-.31l-1-1.66c-.06-.13-.19-.13-.31-.13L19.5,13a4.07,4.07,0,0,0-.82-.45l-.18-1.27a.23.23,0,0,0-.22-.21H16.46M9.71,13C5.45,13,2,14.7,2,16.83v1.92h9.33a6.65,6.65,0,0,1,0-5.69A13.56,13.56,0,0,0,9.71,13m7.6,1.43a1.45,1.45,0,1,1,0,2.89,1.45,1.45,0,0,1,0-2.89Z"></path></g></svg></span><span class="label">Account</span></a>
-        </nav>
-    </div>
+    <div class="navbar-m"><!-- CRNB --></div>
     <div id="pair-container vis-none">
         <div id="pair-code-input-section" style="display:none;">
             <input type="text" id="pair-code-input" placeholder="کد ۶ رقمی را وارد کنید" maxlength="6">
@@ -2701,6 +2654,8 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_userp = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7,7c0,2.2,1.8,4,4,4s4-1.8,4-4s-1.8-4-4-4S7,4.8,7,7"></path><path d="M5,21v-2c0-2.2,1.8-4,4-4h3"></path><path d="M14.8,18.5c0,1.4,1.2,2.6,2.6,2.6c1.4,0,2.6-1.2,2.6-2.6c0-1.4-1.2-2.6-2.6-2.6C16,15.9,14.8,17.1,14.8,18.5"></path><path d="M20,18.5V12"></path></svg>';
     var svg_list = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg>';
     var svg_share2 = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M8.7 10.7l6.6 -3.4"></path><path d="M8.7 13.3l6.6 3.4"></path></svg>';
+    var svg_tg = '<svg width="22" height="22" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg" fill="none" style="width:22px;height:22px" stroke="currentColor" stroke-linejoin="round" stroke-width="12"><path d="M23.073 88.132s65.458-26.782 88.16-36.212c8.702-3.772 38.215-15.843 38.215-15.843s13.621-5.28 12.486 7.544c-.379 5.281-3.406 23.764-6.433 43.756-4.54 28.291-9.459 59.221-9.459 59.221s-.756 8.676-7.188 10.185c-6.433 1.509-17.027-5.281-18.919-6.79-1.513-1.132-28.377-18.106-38.214-26.404-2.649-2.263-5.676-6.79.378-12.071 13.621-12.447 29.891-27.913 39.728-37.72 4.54-4.527 9.081-15.089-9.837-2.264-26.864 18.483-53.35 35.835-53.35 35.835s-6.053 3.772-17.404.377c-11.351-3.395-24.594-7.921-24.594-7.921s-9.08-5.659 6.433-11.693Z"></path></svg>';
+    var svg_ig = '<svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 8a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z"></path><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path><path d="M16.5 7.5v.01"></path></svg>';
 
     var svg_srh2 = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>';
     
@@ -5611,6 +5566,8 @@ if (!empty($_SESSION['loggedin'])) {
         return null;
     }
     
+    try { CRNB(); } catch (e) {}
+    try { CRFT(); } catch (e) {}
     SPA();
     
     function CRNF(){
@@ -9015,6 +8972,171 @@ const PROFILE_KEY = 'ha_profile';
     /** CRMP — minimize player bar (بدون id روی دکمه‌ها؛ artwork فقط placeholder تا تامب باشد) */
 
     /** CRMX — maximum-player-wrapper (موبایل + کیو + لیریک؛ بدون id اضافی روی دکمه‌ها) */
+
+    /** CRDX — maximum-player-desktop */
+    function CRDX() {
+        const root = document.querySelector('.maximum-player-desktop');
+        if (!root || root._haBuilt) return;
+        root._haBuilt = true;
+        root.innerHTML = '';
+        if (!root.classList.contains('vis-none')) root.classList.add('vis-none');
+
+        const ico = {
+            sng: typeof svg_sng !== 'undefined' ? svg_sng : '',
+            playc: typeof svg_playc !== 'undefined' ? svg_playc : '',
+            heart: typeof svg_heart !== 'undefined' ? svg_heart : '',
+            shf: typeof svg_shf !== 'undefined' ? svg_shf : '',
+            prv: typeof svg_prv !== 'undefined' ? svg_prv : '',
+            ply: typeof svg_ply !== 'undefined' ? svg_ply : '',
+            nxt: typeof svg_nxt !== 'undefined' ? svg_nxt : '',
+            rpti: typeof svg_rpti !== 'undefined' ? svg_rpti : '',
+            list: typeof svg_list !== 'undefined' ? svg_list : '',
+            lrc: typeof svg_lrc !== 'undefined' ? svg_lrc : ''
+        };
+
+        // playing-track
+        const pt = OA(document.createElement('div'), { className: 'playing-track' });
+        const art = OA(document.createElement('div'), { className: 'artwork player-art-spin' });
+        art.append(OA(document.createElement('span'), { className: 'placeholder', innerHTML: ico.sng }));
+        const det1 = OA(document.createElement('div'), { className: 'details' });
+        det1.append(
+            OA(document.createElement('div'), { className: 'text1' }),
+            OA(document.createElement('div'), { className: 'text2' })
+        );
+        const pl = OA(document.createElement('div'), { className: 'plays-likes' });
+        const plays = OA(document.createElement('div'), { className: 'plays' });
+        plays.append(
+            OA(document.createElement('span'), { innerHTML: ico.playc }),
+            OA(document.createElement('span'), { className: 'plays-count' })
+        );
+        const likes = OA(document.createElement('div'), { className: 'likes' });
+        likes.append(
+            OA(document.createElement('span'), { innerHTML: ico.heart }),
+            OA(document.createElement('span'), { className: 'likes-count' })
+        );
+        pl.append(plays, likes);
+        det1.append(pl);
+        pt.append(art, det1);
+
+        // controll
+        const ctrl = OA(document.createElement('div'), { className: 'controll' });
+        const seek = OA(document.createElement('div'), { className: 'seekbar' });
+        seek.append(OA(document.createElement('input'), {
+            type: 'range', className: 'form-range', min: '0', max: '100', step: '0.1'
+        }));
+        const btns = OA(document.createElement('div'), { className: 'buttons' });
+        const curWrap = document.createElement('div');
+        curWrap.append(OA(document.createElement('span'), { className: 'current-time', innerHTML: '00:00' }));
+        const b0 = OA(document.createElement('div'), { className: 'button' });
+        b0.append(OA(document.createElement('span'), { innerHTML: ico.shf }));
+        const b1 = OA(document.createElement('div'), { className: 'button', innerHTML: ico.prv });
+        const b2 = OA(document.createElement('div'), { className: 'button play-pause' });
+        b2.append(
+            OA(document.createElement('span'), { innerHTML: ico.ply }),
+            OA(document.createElement('i'), { className: 'wlap' })
+        );
+        const b3 = OA(document.createElement('div'), { className: 'button', innerHTML: ico.nxt });
+        const b4 = OA(document.createElement('div'), { className: 'button' });
+        b4.append(OA(document.createElement('span'), { innerHTML: ico.rpti }));
+        const durWrap = document.createElement('div');
+        durWrap.append(OA(document.createElement('span'), { className: 'duration', innerHTML: '00:00' }));
+        btns.append(curWrap, b0, b1, b2, b3, b4, durWrap);
+        ctrl.append(seek, btns);
+
+        // details actions
+        const det2 = OA(document.createElement('div'), { className: 'details' });
+        const rowA = OA(document.createElement('div'), { className: 'buttons' });
+        rowA.append(
+            OA(document.createElement('div'), { className: 'button', innerHTML: ico.list + ' PlayList' }),
+            OA(document.createElement('div'), { className: 'button', innerHTML: ico.lrc + ' Lyrics' })
+        );
+        const rowB = OA(document.createElement('div'), { className: 'buttons' });
+        rowB.append(
+            OA(document.createElement('div'), { className: 'button', innerHTML: ico.list + ' Full SC' }),
+            OA(document.createElement('div'), { className: 'button', innerHTML: ico.list + ' Close' })
+        );
+        det2.append(rowA, rowB);
+
+        root.append(pt, ctrl, det2);
+    }
+
+    /** CRFT — main footer */
+    function CRFT() {
+        const root = document.querySelector('footer.main-footer') || document.querySelector('.main-footer');
+        if (!root || root._haBuilt) return;
+        root._haBuilt = true;
+        root.innerHTML = '';
+        const social = OA(document.createElement('div'), { className: 'social-media' });
+        social.append(
+            OA(document.createElement('a'), {
+                href: 'tg://HamrahangBot/Play',
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                innerHTML: typeof svg_tg !== 'undefined' ? svg_tg : ''
+            }),
+            OA(document.createElement('a'), {
+                href: 'https://instagram.com/hamrahang',
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                innerHTML: typeof svg_ig !== 'undefined' ? svg_ig : ''
+            })
+        );
+        social.children[0].setAttribute('aria-label', 'Telegram');
+        social.children[1].setAttribute('aria-label', 'Instagram');
+        const links = OA(document.createElement('div'), { className: 'links' });
+        [
+            ['https://hamrahang.ir/app', 'Download App'],
+            ['https://hamrahang.ir/privacy-policy', 'Privacy Policy'],
+            ['https://hamrahang.ir/terms-of-use', 'Terms of Use'],
+            ['https://hamrahang.ir/help', 'Help'],
+            ['https://hamrahang.ir/contact', 'Contact']
+        ].forEach(function (pair) {
+            links.append(OA(document.createElement('a'), {
+                href: pair[0],
+                target: '_blank',
+                rel: 'noopener noreferrer',
+                innerHTML: pair[1]
+            }));
+        });
+        const owner = OA(document.createElement('div'), { className: 'owner' });
+        owner.append(OA(document.createElement('span'), {
+            innerHTML: '@ 2024 <a href="/">Hamrahang</a>, Moments Music Service.'
+        }));
+        root.append(social, links, owner);
+    }
+
+    /** CRNB — mobile bottom navbar */
+    function CRNB() {
+        const root = document.querySelector('.navbar-m');
+        if (!root || root._haBuilt) return;
+        root._haBuilt = true;
+        root.innerHTML = '';
+        const nav = OA(document.createElement('nav'), { className: 'menu' });
+        const items = [
+            { href: '/', label: 'Home', icon: typeof svg_home !== 'undefined' ? svg_home : '', labeled: true },
+            { href: '/song/top', label: 'Song', icon: typeof svg_trd !== 'undefined' ? svg_trd : '', labeled: true },
+            { href: '/search', label: 'Search', icon: typeof svg_srh !== 'undefined' ? svg_srh : '', labeled: true },
+            { href: '/library', label: 'Library', icon: typeof svg_lib !== 'undefined' ? svg_lib : '', labeled: false },
+            { href: '/setting/account', label: 'Account', icon: typeof svg_acc !== 'undefined' ? svg_acc : '', labeled: true }
+        ];
+        const path = (location.pathname || '/').replace(/\/+$/, '') || '/';
+        items.forEach(function (it) {
+            const a = OA(document.createElement('a'), { className: 'item', href: it.href });
+            if (it.labeled) {
+                a.append(
+                    OA(document.createElement('span'), { innerHTML: it.icon || '' }),
+                    OA(document.createElement('span'), { className: 'label', innerHTML: it.label })
+                );
+            } else {
+                a.innerHTML = (it.icon || '') + '<span>' + it.label + '</span>';
+            }
+            const ih = (it.href || '/').replace(/\/+$/, '') || '/';
+            if (ih === path || (ih !== '/' && path.indexOf(ih) === 0)) a.classList.add('active');
+            nav.append(a);
+        });
+        root.append(nav);
+    }
+
     function CRMX() {
         const root = document.querySelector('.maximum-player-wrapper');
         if (!root || root._haBuilt) return;
@@ -12981,6 +13103,7 @@ const PROFILE_KEY = 'ha_profile';
     // DOM مینی/مکس پلیر قبل از رفرنس‌ها
     try { CRMP(); } catch (e) {}
     try { CRMX(); } catch (e) {}
+    try { CRDX(); } catch (e) {}
     const MinPly = document.querySelector('.minimize-player-wrapper');
     const MinPlyBtn = MinPly ? MinPly.querySelectorAll('.button') : [];
     const MinArt = MinPly ? MinPly.querySelector('.artwork') : null;
@@ -15328,6 +15451,8 @@ const PROFILE_KEY = 'ha_profile';
     
     CRSB();
     CRTB();
+    try { CRNB(); } catch (e) {}
+    try { CRFT(); } catch (e) {}
     CRPL();
     InitMediaPlayers();
 
