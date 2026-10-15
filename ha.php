@@ -2172,19 +2172,8 @@ body::-webkit-scrollbar-thumb:hover,
             <div class="gradient-color-container vis-none"><div class="ratio ratio-21x9" style="background-image: radial-gradient(ellipse at center, #e4f5fc 0%,#bfe8f9 50%,#2ab0ed 100%);;"></div></div>
         </div>
   
-        <div class="minimize-player-wrapper">
-        <div class="seekbar"></div>
-        <div class="artwork player-art-spin">
-            <span class="placeholder"><svg style="width:24px;height:24px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg></span>
-            <img alt="" src="">
-        </div>
-        <div class="texts"><div class="text1"></div><div class="text2"></div></div>
-        <div class="button"><svg style="width:14px;height:14px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M14.7,55.1V8.9H7v46.2H14.7z M57,55.1V8.9L22.4,32L57,55.1z"></path></svg></div>
-        <div class="button"><svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M18.4,57V7l39.3,25L18.4,57z"></path></svg><i class="wlap"></i></div>
-        <div class="button"><svg style="width:14px;height:14px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div>
-        <div class="button" title="Close"><svg style="width:18px;height:18px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg></div>
+        <div class="minimize-player-wrapper"><!-- CRMP --></div>
 
-    </div> 
         <div class="maximum-player-wrapper">
             <div class="maximum-player-scroll-area">
                 <div style="width:100%;overflow: hidden !important;display: flex;align-items: stretch !important;flex-direction: row !important;flex-wrap: nowrap !important;scroll-behavior: auto !important;position: relative; overflow-y: scroll !important;overflow-x: hidden !important; scrollbar-width: none !important; " >
@@ -2759,7 +2748,8 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_sub = '<svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9h8"></path><path d="M8 13h6"></path><path d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2"></path></svg>';
     var svg_lyr = '<svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18v-12l10 2v10"></path><path d="M9 15a3 3 0 1 1 -3 3"></path><path d="M19 17a3 3 0 1 1 -3 3"></path></svg>';
     var svg_bak = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M5 12l6 6"></path><path d="M5 12l6 -6"></path></svg>';
-    var svg_fwd = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M13 18l6 -6"></path><path d="M13 6l6 6"></path></svg>';
+    var svg_fwd = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M13 18l6 -6"></path><path d="M13 6l6 6"></path></svg>';    var svg_cls = '<svg style="width:18px;height:18px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg>';
+
     var svg_srh2 = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>';
     
     var svg_rpt = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>';
@@ -9069,6 +9059,51 @@ const PROFILE_KEY = 'ha_profile';
     /** CRSB — ساخت سایدبار (زودتر از پلیر؛ فقط DOM لازم دارد) */
 
     /** CRTB — topbar: back/logo/forward + search */
+
+    /** CRMP — minimize player bar (بدون id روی دکمه‌ها؛ artwork فقط placeholder تا تامب باشد) */
+    function CRMP() {
+        const root = document.querySelector('.minimize-player-wrapper');
+        if (!root || root._haBuilt) return;
+        root._haBuilt = true;
+        root.innerHTML = '';
+
+        const seek = OA(document.createElement('div'), { className: 'seekbar' });
+
+        // artwork: فقط placeholder — img را setArtworkEl وقتی تامب هست اضافه می‌کند
+        const art = OA(document.createElement('div'), { className: 'artwork player-art-spin' });
+        art.append(OA(document.createElement('span'), {
+            className: 'placeholder',
+            innerHTML: typeof svg_sng !== 'undefined' ? svg_sng : ''
+        }));
+
+        const texts = OA(document.createElement('div'), { className: 'texts' });
+        texts.append(
+            OA(document.createElement('div'), { className: 'text1' }),
+            OA(document.createElement('div'), { className: 'text2' })
+        );
+
+        // دکمه‌ها بدون id — ترتیب ثابت: prev | play | next | close
+        const bPrev = OA(document.createElement('div'), {
+            className: 'button',
+            innerHTML: typeof svg_prv !== 'undefined' ? svg_prv : ''
+        });
+        const bPlay = OA(document.createElement('div'), {
+            className: 'button',
+            innerHTML: (typeof svg_ply !== 'undefined' ? svg_ply : '') + '<i class="wlap"></i>'
+        });
+        const bNext = OA(document.createElement('div'), {
+            className: 'button',
+            innerHTML: typeof svg_nxt !== 'undefined' ? svg_nxt : ''
+        });
+        const bClose = OA(document.createElement('div'), {
+            className: 'button',
+            title: 'Close',
+            innerHTML: typeof svg_cls !== 'undefined' ? svg_cls : ''
+        });
+
+        root.append(seek, art, texts, bPrev, bPlay, bNext, bClose);
+    }
+
     function CRTB() {
         const top = document.querySelector('.topbar-container');
         if (!top || top._haBuilt) return;
@@ -12793,6 +12828,8 @@ const PROFILE_KEY = 'ha_profile';
     
     // ===================== PLAYERS =====================
     
+    // DOM مینی‌پلیر باید قبل از رفرنس‌ها ساخته شود
+    try { CRMP(); } catch (e) {}
     const MinPly = document.querySelector('.minimize-player-wrapper');
     const MinPlyBtn = MinPly ? MinPly.querySelectorAll('.button') : [];
     const MinArt = MinPly ? MinPly.querySelector('.artwork') : null;
