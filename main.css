@@ -1558,28 +1558,57 @@ div.itm-controls{
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
-    transition: opacity .35s ease, background .35s ease;
+    transition: opacity .35s ease;
 }
 .gradient-color-container.vis-none {
     opacity: 0;
     visibility: hidden;
 }
-.gradient-color-container .page-backdrop-layer,
-.gradient-color-container .ratio {
+/* فقط گرادیان رنگ — نه ratio-21x9 */
+.gradient-color-container .page-gradient-layer {
     width: 100%;
-    min-height: 42vh;
-    max-height: 520px;
+    display: block;
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center top;
-    transition: background-image .35s ease, opacity .35s ease;
+    transition: background-image .35s ease;
 }
-/* art: تصویر + فید به پایین مثل اسپاتیفای */
-.gradient-color-container.is-art .page-backdrop-layer {
-    filter: none;
+.gradient-color-container .page-gradient-layer::before {
+    content: "";
+    display: block;
+    /* موبایل: مربع‌تر / بلندتر */
+    padding-top: 100%;
 }
-/* محتوا بالای بک‌دراپ */
+@media (min-width: 768px) {
+    .gradient-color-container .page-gradient-layer::before {
+        padding-top: 40%;
+    }
+}
 .main-content > *:not(.gradient-color-container) {
+    position: relative;
+    z-index: 1;
+}
+
+/* art داخل هدر — ارتفاع دقیقاً برابر مادر، خارج از فلو گرید */
+.page-detail-header-container {
+    position: relative;
+    isolation: isolate;
+}
+.page-detail-header-container > .page-header-art {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center top;
+    border-radius: inherit;
+}
+.page-detail-header-container.has-header-art > .thumbail,
+.page-detail-header-container.has-header-art > .content,
+.page-detail-header-container.has-header-art > .lyric,
+.page-detail-header-container.has-header-art > .video-stage,
+.page-detail-header-container.has-header-art > .plays-texts-likes {
     position: relative;
     z-index: 1;
 }

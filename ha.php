@@ -2169,7 +2169,7 @@ body::-webkit-scrollbar-thumb:hover,
             <!-- search built by CRTB -->
         </div>
         <div class="main-content" >
-            <div class="gradient-color-container vis-none"><div class="ratio ratio-21x9 page-backdrop-layer"></div></div>
+            <div class="gradient-color-container vis-none"><div class="page-gradient-layer"></div></div>
         </div>
   
         <div class="minimize-player-wrapper"><!-- CRMP --></div>
@@ -5952,8 +5952,6 @@ if (!empty($_SESSION['loggedin'])) {
         const e = await UART(['artist', q]);
         if (!e) return;
 
-        applyPageBackdrop(e);
-
         var au = e.url;
 
 
@@ -5990,6 +5988,7 @@ if (!empty($_SESSION['loggedin'])) {
         dct.append(tlt, dtl);
         dhc.append(dtn, dct);
         MCNT.append(dhc);
+        applyPageBackdrop(e, dhc);
 
 
         const dac = OA(document.createElement("div"), {
@@ -6167,6 +6166,7 @@ if (!empty($_SESSION['loggedin'])) {
         dlc.classList.add('ha-lyric-skin');
         
         dhc.append(dtn, dct, dlc );
+        applyPageBackdrop(e, dhc);
         MCNT.append(dhc);
         // لیریک صفحه — فقط bind به آیتم صفحه؛ loadFromItem نزن (state پلیر خراب نشود)
         try {
@@ -6626,6 +6626,7 @@ if (!empty($_SESSION['loggedin'])) {
         dct.append(tlt, art, dtl);
 
         dhc.append(dct);
+        applyPageBackdrop(e, dhc);
         MCNT.append(dhc);
     
         const dac = OA(document.createElement('div'), {
@@ -6755,16 +6756,35 @@ if (!empty($_SESSION['loggedin'])) {
             box = document.createElement('div');
             box.className = 'gradient-color-container vis-none';
             var layer = document.createElement('div');
-            layer.className = 'ratio ratio-21x9 page-backdrop-layer';
+            layer.className = 'page-gradient-layer';
             box.appendChild(layer);
             if (MCNT.firstChild) MCNT.insertBefore(box, MCNT.firstChild);
             else MCNT.appendChild(box);
+        } else {
+            // مهاجرت از کلاس قدیمی ratio-21x9
+            var oldL = box.querySelector('.page-backdrop-layer, .ratio.ratio-21x9');
+            if (oldL && !oldL.classList.contains('page-gradient-layer')) {
+                oldL.className = 'page-gradient-layer';
+            }
+            if (!box.querySelector('.page-gradient-layer')) {
+                var layer2 = document.createElement('div');
+                layer2.className = 'page-gradient-layer';
+                box.appendChild(layer2);
+            }
         }
         return box;
     }
 
+    function clearHeaderArt() {
+        var arts = document.querySelectorAll('.page-header-art');
+        for (var i = 0; i < arts.length; i++) arts[i].remove();
+        var headers = document.querySelectorAll('.page-detail-header-container.has-header-art');
+        for (var j = 0; j < headers.length; j++) headers[j].classList.remove('has-header-art');
+    }
+
     function clearPageBackdrop() {
         _pageBackdropToken++;
+        clearHeaderArt();
         if (!MCNT) return;
         var box = null;
         for (var i = 0; i < MCNT.children.length; i++) {
@@ -6776,19 +6796,17 @@ if (!empty($_SESSION['loggedin'])) {
         if (!box) return;
         box.classList.add('vis-none');
         box.classList.remove('is-art', 'is-color');
-        var layer = box.querySelector('.page-backdrop-layer') || box.querySelector('.ratio');
+        var layer = box.querySelector('.page-gradient-layer');
         if (layer) {
             layer.style.backgroundImage = '';
             layer.style.backgroundColor = '';
-            layer.style.filter = '';
         }
     }
 
-    /** پاک کردن محتوای صفحه بدون نابود کردن شل بک‌دراپ */
+    /** پاک کردن محتوای صفحه بدون نابود کردن شل گرادیان */
     function clearMainContent() {
         if (!MCNT) return;
         clearPageBackdrop();
-        var keep = [];
         var kids = Array.prototype.slice.call(MCNT.children);
         for (var i = 0; i < kids.length; i++) {
             if (kids[i].classList && kids[i].classList.contains('gradient-color-container')) continue;
@@ -6823,7 +6841,6 @@ if (!empty($_SESSION['loggedin'])) {
                 r = Math.round(r / n);
                 g = Math.round(g / n);
                 b = Math.round(b / n);
-                // کمی نرم/تاریک برای خوانایی متن
                 r = Math.round(r * 0.72);
                 g = Math.round(g * 0.72);
                 b = Math.round(b * 0.72);
@@ -6836,46 +6853,58 @@ if (!empty($_SESSION['loggedin'])) {
         img.src = url;
     }
 
+    /** art فقط داخل هدر — ارتفاع = مادر؛ گرید را به هم نمی‌زند */
+    function applyHeaderArt(headerEl, artUrl) {
+        if (!headerEl || !artUrl) return;
+        headerEl.classList.add('has-header-art');
+        var layer = headerEl.querySelector(':scope > .page-header-art');
+        if (!layer) {
+            layer = document.createElement('div');
+            layer.className = 'page-header-art';
+            headerEl.insertBefore(layer, headerEl.firstChild);
+        }
+        layer.style.backgroundImage =
+            'linear-gradient(to bottom,' +
+            ' rgba(18,18,18,0.1) 0%,' +
+            ' rgba(18,18,18,0.35) 45%,' +
+            ' rgba(18,18,18,0.85) 78%,' +
+            ' rgba(18,18,18,0.98) 100%),' +
+            ' url("' + artUrl + '")';
+        layer.style.backgroundSize = 'cover, cover';
+        layer.style.backgroundPosition = 'center top, center top';
+    }
+
     /**
-     * بک‌دراپ صفحه جزئیات:
-     * - اگر meta.art → تصویر art با فید بالا→پایین (اسپاتیفای)
-     * - وگرنه فقط پالت رنگ از tmb/tmv (نه خود تصویر تامب)
+     * گرادیان رنگ → فقط .gradient-color-container در main-content
+     * تصویر art → فقط داخل headerEl (.page-detail-header-container)
      */
-    function applyPageBackdrop(item) {
+    function applyPageBackdrop(item, headerEl) {
         var token = ++_pageBackdropToken;
+        clearHeaderArt();
         if (!item || !item.meta) {
             clearPageBackdrop();
             return;
         }
-        var box = ensureBackdropShell();
-        if (!box) return;
-        var layer = box.querySelector('.page-backdrop-layer') || box.querySelector('.ratio');
-        if (!layer) return;
 
         var artKey = item.meta.art || null;
         var colorKey = item.meta.tmb || item.meta.tmv || null;
 
-        if (artKey) {
-            var artUrl = UT + artKey + '.jpg';
-            box.classList.remove('vis-none', 'is-color');
-            box.classList.add('is-art');
-            // فید تیره از بالا به پایین روی تصویر
-            layer.style.backgroundImage =
-                'linear-gradient(to bottom,' +
-                ' rgba(18,18,18,0.05) 0%,' +
-                ' rgba(18,18,18,0.35) 35%,' +
-                ' rgba(18,18,18,0.82) 72%,' +
-                ' rgba(18,18,18,1) 100%),' +
-                ' url("' + artUrl + '")';
-            layer.style.backgroundSize = 'cover, cover';
-            layer.style.backgroundPosition = 'center top, center top';
-            layer.style.backgroundColor = '';
-            layer.style.filter = '';
-            return;
+        // 1) art روی هدر
+        if (artKey && headerEl) {
+            applyHeaderArt(headerEl, UT + artKey + '.jpg');
         }
 
+        // 2) گرادیان رنگ در main-content (از تامب — نه خود تصویر تامب)
+        var box = ensureBackdropShell();
+        if (!box) return;
+        var layer = box.querySelector('.page-gradient-layer');
+        if (!layer) return;
+
         if (!colorKey) {
-            clearPageBackdrop();
+            // بدون تامب: اگر art داریم گرادیان را خاموش نگه می‌داریم
+            box.classList.add('vis-none');
+            box.classList.remove('is-color', 'is-art');
+            layer.style.backgroundImage = '';
             return;
         }
 
@@ -6883,7 +6912,7 @@ if (!empty($_SESSION['loggedin'])) {
         extractDominantColor(tmbUrl, function (rgb) {
             if (token !== _pageBackdropToken) return;
             if (!rgb) {
-                clearPageBackdrop();
+                box.classList.add('vis-none');
                 return;
             }
             var top = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.95)';
@@ -6894,8 +6923,6 @@ if (!empty($_SESSION['loggedin'])) {
                 'linear-gradient(to bottom, ' + top + ' 0%, ' + mid + ' 42%, rgba(18,18,18,0) 100%)';
             layer.style.backgroundSize = 'cover';
             layer.style.backgroundPosition = 'center top';
-            layer.style.backgroundColor = '';
-            layer.style.filter = '';
         });
     }
 
