@@ -6922,12 +6922,28 @@ if (!empty($_SESSION['loggedin'])) {
         });
     }
 
+    /** منوی سایدبار: حالت row (هیرو) را ببند و محتوای #hero را خالی کن */
+    function clearHeroMenu() {
+        try {
+            if (!MENU || !MENU.isConnected) {
+                MENU = document.querySelector('.sidebar-content nav.menu') || document.querySelector('nav.menu');
+            }
+            if (!HERO || !HERO.isConnected) {
+                HERO = document.querySelector('#hero');
+            }
+            if (MENU) MENU.classList.remove('row');
+            if (HERO) HERO.innerHTML = '';
+        } catch (err) {}
+    }
+
     function beforePageClear() {
         const P = ensurePlayer();
         // ویدیو را از slot صفحه بکش بیرون تا با innerHTML از بین نرود
         rehomeVideoToPlayer();
         if (P.inlineVideo) P.inlineVideo = null;
         clearPageBackdrop();
+        // با هر ناوبری (از جمله آیتم‌های خود منو) هیرو بسته شود
+        clearHeroMenu();
     }
 
     function leaveInlineVideoStage() {
