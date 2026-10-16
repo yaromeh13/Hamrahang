@@ -6109,8 +6109,6 @@ if (!empty($_SESSION['loggedin'])) {
         if (T == 'podcast') {e = await USNG(['podcast', q]); url = HS; }
 
         if (!e) return;
-
-        applyPageBackdrop(e);
     
         //AudLst[0] = e;
     
@@ -6510,8 +6508,6 @@ if (!empty($_SESSION['loggedin'])) {
     async function CRVP(q) {
         const e = await resolveVideoItem(q);
         if (!e) return;
-
-        applyPageBackdrop(e);
     
         const actualType = (e.meta && e.meta.type === 'video') ? 'video' : 'musicvideo';
         const dhc = OA(document.createElement('div'), {className: 'page-detail-header-container video-page-header'});
