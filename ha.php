@@ -6044,62 +6044,54 @@ if (!empty($_SESSION['loggedin'])) {
         MCNT.append(dac);
 
 
-        if (e.songs) {
-
+        // آرایهٔ خالی در JS truthy است — فقط وقتی آیتم دارد سکشن بساز
+        if (Array.isArray(e.songs) && e.songs.length) {
             var shd = OA(document.createElement("div"), {
                 className: "section-header m-top-3",
                 innerHTML: '<h2 class="title">Latest Songs</h2>'
             });
-
             MCNT.append(shd);
-
             CRSC(e.songs, 'song');
         }
 
-        if (e.musicvideos) {
-
-            var shd = OA(document.createElement("div"), {
+        if (Array.isArray(e.musicvideos) && e.musicvideos.length) {
+            var shdMv = OA(document.createElement("div"), {
                 className: "section-header m-top-3",
                 innerHTML: '<h2 class="title">Latest Music videos</h2>'
             });
-
-            MCNT.append(shd);
-
+            MCNT.append(shdMv);
             CRSC(e.musicvideos, 'musicvideo');
-        }   
+        }
 
-        if (e.songs) {
-
+        if (Array.isArray(e.songs) && e.songs.length) {
             var shd2 = OA(document.createElement("div"), {
                 className: "section-header m-top-3",
                 innerHTML: '<h2 class="title">Songs</h2>'
             });
-
             MCNT.append(shd2);
-
             CRGL(e.songs, 'song');
         }
 
-
-        if (e.albums) {
-
+        if (Array.isArray(e.albums) && e.albums.length) {
             var shd3 = OA(document.createElement("div"), {
                 className: "section-header m-top-3",
                 innerHTML: '<h2 class="title">Albums</h2>'
             });
-
             MCNT.append(shd3);
-
             CRSC(e.albums, 'album');
         }
 
-        if (e.meta && (e.meta.bd || e.meta.tlg || e.meta.ins || e.meta.cc || e.meta.nat )) {
-            const sabt = OA(document.createElement("div"), {className: "section-header m-top-3",
-                innerHTML: '<h2 class="title">About Artist</h2>'
-            });
+        if (e.meta) {
             const abt = CRAB(e.meta);
-            MCNT.appendChild(sabt);
-            MCNT.appendChild(abt);
+            // فقط اگر CRAB واقعاً محتوا ساخت (نه هدر خالی About)
+            if (abt && abt.childNodes && abt.childNodes.length) {
+                const sabt = OA(document.createElement("div"), {
+                    className: "section-header m-top-3",
+                    innerHTML: '<h2 class="title">About Artist</h2>'
+                });
+                MCNT.appendChild(sabt);
+                MCNT.appendChild(abt);
+            }
         }
         
         ADE();
