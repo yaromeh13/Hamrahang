@@ -5112,7 +5112,8 @@ if (!empty($_SESSION['loggedin'])) {
             hed.append(ht);
             container.append(hed);
     
-            sec.render(ids);
+            const node = sec.render(ids);
+            if (node) container.append(node);
         }
     
         MCNT = oldMCNT;
@@ -5610,13 +5611,15 @@ if (!empty($_SESSION['loggedin'])) {
     
             // محتوا
             if (route.type === 'video' || route.type === 'musicvideo') {
-                CRGC(ar, route.type);
+                const grid = CRGC(ar, route.type);
+                if (grid) MCNT.appendChild(grid);
             }
             if (route.type === 'song' || route.type === 'podcast' || route.type === 'album' || route.type === 'playlist') {
                 CRGL(ar, route.type);
             }
             if (route.type === 'artist') {
-                CRGC(ar, route.type);
+                const grid = CRGC(ar, route.type);
+                if (grid) MCNT.appendChild(grid);
             }
 
             ADE();
@@ -5882,7 +5885,8 @@ if (!empty($_SESSION['loggedin'])) {
             if (route.listMode === 'line') {
                 CRGL(readyIds, route.itemType);
             } else if (route.listMode === 'grid') {
-                CRGC(readyIds, route.itemType);
+                const grid = CRGC(readyIds, route.itemType);
+                if (grid) MCNT.appendChild(grid);
             } else {
                 CRSC(readyIds, route.itemType);
             }
@@ -6294,15 +6298,17 @@ if (!empty($_SESSION['loggedin'])) {
             if (relV.length) CRSC(relV, 'video');
         }
         
-        if (e.artists){
-            const dal = OA(document.createElement('div'), { className: 'page-artists-list' });
-            const shd2 = OA(document.createElement("div"), {
-                className: "section-header m-top-3",
-                innerHTML: '<h2 class="title">Artists</h2>'
-            });
-            const artist = CRAL(e.artists);
-            dal.append(shd2,artist);
-            MCNT.appendChild(dal);
+        if (Array.isArray(e.artists) && e.artists.length) {
+            const grid = CRGC(e.artists, 'artist');
+            if (grid) {
+                const dal = OA(document.createElement('div'), { className: 'page-artists-list' });
+                const shd2 = OA(document.createElement("div"), {
+                    className: "section-header m-top-3",
+                    innerHTML: '<h2 class="title">Artists</h2>'
+                });
+                dal.append(shd2, grid);
+                MCNT.appendChild(dal);
+            }
         }
 
         if (e.meta && (e.meta.des || e.meta.rls || e.meta.ncp != null || e.meta.dur != null)) {
@@ -6686,15 +6692,17 @@ if (!empty($_SESSION['loggedin'])) {
             CRGL(relSongs, 'song');
         }
 
-        if (e.artists){
-            const dal = OA(document.createElement('div'), { className: 'page-artists-list' });
-            const shd2 = OA(document.createElement("div"), {
-                className: "section-header m-top-3",
-                innerHTML: '<h2 class="title">Artists</h2>'
-            });
-            const artist = CRAL(e.artists);
-            dal.append(shd2,artist);
-            MCNT.appendChild(dal);
+        if (Array.isArray(e.artists) && e.artists.length) {
+            const grid = CRGC(e.artists, 'artist');
+            if (grid) {
+                const dal = OA(document.createElement('div'), { className: 'page-artists-list' });
+                const shd2 = OA(document.createElement("div"), {
+                    className: "section-header m-top-3",
+                    innerHTML: '<h2 class="title">Artists</h2>'
+                });
+                dal.append(shd2, grid);
+                MCNT.appendChild(dal);
+            }
         }
     
         function startThisVideo() {
@@ -8509,14 +8517,14 @@ const PROFILE_KEY = 'ha_profile';
                     tabKey: 'musicvideos',
                     label: 'Music Videos',
                     renderResult: () => CRSC(SN.search.musicvideos, 'musicvideo'),
-                    renderAll: () => CRGC(SN.search.musicvideos, 'musicvideo')
+                    renderAll: () => { const n = CRGC(SN.search.musicvideos, 'musicvideo'); if (n) MCNT.appendChild(n); }
                 },
                 {
                     key: 'artists',
                     tabKey: 'artists',
                     label: 'Artists',
                     renderResult: () => CRSC(SN.search.artists, 'artist'),
-                    renderAll: () => CRGC(SN.search.artists, 'artist')
+                    renderAll: () => { const n = CRGC(SN.search.artists, 'artist'); if (n) MCNT.appendChild(n); }
                 },
                 {
                     key: 'podcasts',
@@ -8530,21 +8538,21 @@ const PROFILE_KEY = 'ha_profile';
                     tabKey: 'albums',
                     label: 'Albums',
                     renderResult: () => CRSC(SN.search.albums, 'album'),
-                    renderAll: () => CRGC(SN.search.albums, 'album')
+                    renderAll: () => { const n = CRGC(SN.search.albums, 'album'); if (n) MCNT.appendChild(n); }
                 },
                 {
                     key: 'playlists',
                     tabKey: 'playlists',
                     label: 'Playlists',
                     renderResult: () => CRSC(SN.search.playlists, 'playlist'),
-                    renderAll: () => CRGC(SN.search.playlists, 'playlist')
+                    renderAll: () => { const n = CRGC(SN.search.playlists, 'playlist'); if (n) MCNT.appendChild(n); }
                 },
                 {
                     key: 'videos',
                     tabKey: 'videos',
                     label: 'Videos',
                     renderResult: () => CRSC(SN.search.videos, 'video'),
-                    renderAll: () => CRGC(SN.search.videos, 'video')
+                    renderAll: () => { const n = CRGC(SN.search.videos, 'video'); if (n) MCNT.appendChild(n); }
                 }
             ];
     
@@ -10548,11 +10556,15 @@ const PROFILE_KEY = 'ha_profile';
     }
 
     function CRGC(ar,T,ART){
+        if (!ar || !ar.length) return null;
 
         const sec = OA(document.createElement("section"), {className: "section-container m-top-1"});
-        const sec_div  = OA(document.createElement("div"), {className: "grid-container " + (T === "musicvideo" ? "musicvideo-grid-container" : "")});
+        const isVideoish = (T === "musicvideo" || T === "video");
+        const sec_div  = OA(document.createElement("div"), {className: "grid-container " + (isVideoish ? "musicvideo-grid-container" : "")});
 
         ar.forEach((id) => {
+            // id ممکن است object باشد (مثلاً از e.artists)
+            if (id && typeof id === 'object' && id.id != null) id = id.id;
             
             let e = null;
             let url = HS;
@@ -10563,6 +10575,8 @@ const PROFILE_KEY = 'ha_profile';
             if (T == 'artist') {e = SN.artist ? SN.artist[id] : null; url = HA; }
             if (T == 'playlist') {e = SN.playlist ? SN.playlist[id] : null; url = HPL; TPS = svg_pls;}
             if (T == 'musicvideo') {e = SN.musicvideo ? SN.musicvideo[id] : null; url = HV; }
+            if (T == 'video') {e = SN.video ? SN.video[id] : null; url = HV; }
+            if (T == 'podcast') {e = SN.podcast ? SN.podcast[id] : null; url = HS; }
             
             if (!e) {
                 console.log('CRGC: ' + T + ' not found:', id);
@@ -10605,7 +10619,7 @@ const PROFILE_KEY = 'ha_profile';
 
             const ela = OA(document.createElement("a"), {href: url + e.id + '/' + (T !== "artist" ? primaryArtistUrl + "-" : "") + e.url});
             const art = OA(document.createElement("div"), {
-                    className: "artwork ratio " + (T === "musicvideo" ? "ratio-16x9" : "ratio-1x1")
+                    className: "artwork ratio " + (isVideoish ? "ratio-16x9" : "ratio-1x1")
                 });
             const sep = OA(document.createElement("span"), {className: "placeholder " + (T === "artist" ? "rounded-circle" : ""), innerHTML: TPS});
             art.append(sep);
@@ -10666,8 +10680,7 @@ const PROFILE_KEY = 'ha_profile';
         }); 
 
         sec.append(sec_div);
-        MCNT.append(sec);
-        
+        return sec;
     }
     
     function CRAL(artists) {
