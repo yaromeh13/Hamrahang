@@ -2169,7 +2169,7 @@ body::-webkit-scrollbar-thumb:hover,
             <!-- search built by CRTB -->
         </div>
         <div class="main-content" >
-            <div class="gradient-color-container vis-none"><div class="ratio ratio-21x9" style="background-image: radial-gradient(ellipse at center, #e4f5fc 0%,#bfe8f9 50%,#2ab0ed 100%);;"></div></div>
+            <div class="gradient-color-container vis-none"><div class="ratio ratio-21x9 page-backdrop-layer"></div></div>
         </div>
   
         <div class="minimize-player-wrapper"><!-- CRMP --></div>
@@ -3768,8 +3768,8 @@ if (!empty($_SESSION['loggedin'])) {
         // ویدیو را از stage صفحه جدا کن، بعد محتوا را پاک کن
         beforePageClear();
         
-        // Clear main content
-        MCNT.innerHTML = '';
+        // Clear main content (بک‌دراپ شل می‌ماند)
+        clearMainContent();
     
         const CHHD = (q, id) => {
     
@@ -5952,6 +5952,8 @@ if (!empty($_SESSION['loggedin'])) {
         const e = await UART(['artist', q]);
         if (!e) return;
 
+        applyPageBackdrop(e);
+
         var au = e.url;
 
 
@@ -6116,6 +6118,8 @@ if (!empty($_SESSION['loggedin'])) {
         if (T == 'podcast') {e = await USNG(['podcast', q]); url = HS; }
 
         if (!e) return;
+
+        applyPageBackdrop(e);
     
         //AudLst[0] = e;
     
@@ -6514,6 +6518,8 @@ if (!empty($_SESSION['loggedin'])) {
     async function CRVP(q) {
         const e = await resolveVideoItem(q);
         if (!e) return;
+
+        applyPageBackdrop(e);
     
         const actualType = (e.meta && e.meta.type === 'video') ? 'video' : 'musicvideo';
         const dhc = OA(document.createElement('div'), {className: 'page-detail-header-container video-page-header'});
@@ -6733,11 +6739,172 @@ if (!empty($_SESSION['loggedin'])) {
         ADE();
     }
     
+
+    var _pageBackdropToken = 0;
+
+    function ensureBackdropShell() {
+        if (!MCNT) return null;
+        var box = null;
+        for (var i = 0; i < MCNT.children.length; i++) {
+            if (MCNT.children[i].classList && MCNT.children[i].classList.contains('gradient-color-container')) {
+                box = MCNT.children[i];
+                break;
+            }
+        }
+        if (!box) {
+            box = document.createElement('div');
+            box.className = 'gradient-color-container vis-none';
+            var layer = document.createElement('div');
+            layer.className = 'ratio ratio-21x9 page-backdrop-layer';
+            box.appendChild(layer);
+            if (MCNT.firstChild) MCNT.insertBefore(box, MCNT.firstChild);
+            else MCNT.appendChild(box);
+        }
+        return box;
+    }
+
+    function clearPageBackdrop() {
+        _pageBackdropToken++;
+        if (!MCNT) return;
+        var box = null;
+        for (var i = 0; i < MCNT.children.length; i++) {
+            if (MCNT.children[i].classList && MCNT.children[i].classList.contains('gradient-color-container')) {
+                box = MCNT.children[i];
+                break;
+            }
+        }
+        if (!box) return;
+        box.classList.add('vis-none');
+        box.classList.remove('is-art', 'is-color');
+        var layer = box.querySelector('.page-backdrop-layer') || box.querySelector('.ratio');
+        if (layer) {
+            layer.style.backgroundImage = '';
+            layer.style.backgroundColor = '';
+            layer.style.filter = '';
+        }
+    }
+
+    /** پاک کردن محتوای صفحه بدون نابود کردن شل بک‌دراپ */
+    function clearMainContent() {
+        if (!MCNT) return;
+        clearPageBackdrop();
+        var keep = [];
+        var kids = Array.prototype.slice.call(MCNT.children);
+        for (var i = 0; i < kids.length; i++) {
+            if (kids[i].classList && kids[i].classList.contains('gradient-color-container')) continue;
+            kids[i].remove();
+        }
+        ensureBackdropShell();
+    }
+
+    function extractDominantColor(url, cb) {
+        if (!url) { cb(null); return; }
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function () {
+            try {
+                var c = document.createElement('canvas');
+                var w = 32, h = 32;
+                c.width = w;
+                c.height = h;
+                var ctx = c.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(img, 0, 0, w, h);
+                var data = ctx.getImageData(0, 0, w, h).data;
+                var r = 0, g = 0, b = 0, n = 0;
+                for (var i = 0; i < data.length; i += 16) {
+                    var a = data[i + 3];
+                    if (a < 32) continue;
+                    r += data[i];
+                    g += data[i + 1];
+                    b += data[i + 2];
+                    n++;
+                }
+                if (!n) { cb(null); return; }
+                r = Math.round(r / n);
+                g = Math.round(g / n);
+                b = Math.round(b / n);
+                // کمی نرم/تاریک برای خوانایی متن
+                r = Math.round(r * 0.72);
+                g = Math.round(g * 0.72);
+                b = Math.round(b * 0.72);
+                cb({ r: r, g: g, b: b });
+            } catch (err) {
+                cb(null);
+            }
+        };
+        img.onerror = function () { cb(null); };
+        img.src = url;
+    }
+
+    /**
+     * بک‌دراپ صفحه جزئیات:
+     * - اگر meta.art → تصویر art با فید بالا→پایین (اسپاتیفای)
+     * - وگرنه فقط پالت رنگ از tmb/tmv (نه خود تصویر تامب)
+     */
+    function applyPageBackdrop(item) {
+        var token = ++_pageBackdropToken;
+        if (!item || !item.meta) {
+            clearPageBackdrop();
+            return;
+        }
+        var box = ensureBackdropShell();
+        if (!box) return;
+        var layer = box.querySelector('.page-backdrop-layer') || box.querySelector('.ratio');
+        if (!layer) return;
+
+        var artKey = item.meta.art || null;
+        var colorKey = item.meta.tmb || item.meta.tmv || null;
+
+        if (artKey) {
+            var artUrl = UT + artKey + '.jpg';
+            box.classList.remove('vis-none', 'is-color');
+            box.classList.add('is-art');
+            // فید تیره از بالا به پایین روی تصویر
+            layer.style.backgroundImage =
+                'linear-gradient(to bottom,' +
+                ' rgba(18,18,18,0.05) 0%,' +
+                ' rgba(18,18,18,0.35) 35%,' +
+                ' rgba(18,18,18,0.82) 72%,' +
+                ' rgba(18,18,18,1) 100%),' +
+                ' url("' + artUrl + '")';
+            layer.style.backgroundSize = 'cover, cover';
+            layer.style.backgroundPosition = 'center top, center top';
+            layer.style.backgroundColor = '';
+            layer.style.filter = '';
+            return;
+        }
+
+        if (!colorKey) {
+            clearPageBackdrop();
+            return;
+        }
+
+        var tmbUrl = UT + colorKey + '.jpg';
+        extractDominantColor(tmbUrl, function (rgb) {
+            if (token !== _pageBackdropToken) return;
+            if (!rgb) {
+                clearPageBackdrop();
+                return;
+            }
+            var top = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.95)';
+            var mid = 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.45)';
+            box.classList.remove('vis-none', 'is-art');
+            box.classList.add('is-color');
+            layer.style.backgroundImage =
+                'linear-gradient(to bottom, ' + top + ' 0%, ' + mid + ' 42%, rgba(18,18,18,0) 100%)';
+            layer.style.backgroundSize = 'cover';
+            layer.style.backgroundPosition = 'center top';
+            layer.style.backgroundColor = '';
+            layer.style.filter = '';
+        });
+    }
+
     function beforePageClear() {
         const P = ensurePlayer();
         // ویدیو را از slot صفحه بکش بیرون تا با innerHTML از بین نرود
         rehomeVideoToPlayer();
         if (P.inlineVideo) P.inlineVideo = null;
+        clearPageBackdrop();
     }
 
     function leaveInlineVideoStage() {

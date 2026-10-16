@@ -1529,6 +1529,10 @@ div.itm-controls{
     margin-top: 1.5rem
 }
 
+.m-top-2{
+    margin-top: 2rem
+}
+
 .m-top-3 {
     margin-top: 3rem
 }
@@ -1551,9 +1555,35 @@ div.itm-controls{
     top: 0;
     left: 0;
     right: 0;
-    z-index: -100;
-    transition: all .3s ease
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    transition: opacity .35s ease, background .35s ease;
 }
+.gradient-color-container.vis-none {
+    opacity: 0;
+    visibility: hidden;
+}
+.gradient-color-container .page-backdrop-layer,
+.gradient-color-container .ratio {
+    width: 100%;
+    min-height: 42vh;
+    max-height: 520px;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center top;
+    transition: background-image .35s ease, opacity .35s ease;
+}
+/* art: تصویر + فید به پایین مثل اسپاتیفای */
+.gradient-color-container.is-art .page-backdrop-layer {
+    filter: none;
+}
+/* محتوا بالای بک‌دراپ */
+.main-content > *:not(.gradient-color-container) {
+    position: relative;
+    z-index: 1;
+}
+
 
 .menu-m{
    
@@ -1593,6 +1623,10 @@ div.itm-controls{
 }
 
 .page-detail-header-container .content .detailes .artists-list {
+    display: none;
+}
+
+.page-detail-header-container .lyric {
     display: none;
 }
 
@@ -1698,6 +1732,9 @@ right: 0 !important;
 
 .page-detail-header-container .content .artists {
         display: none
+    }
+.page-detail-header-container .lyric {
+        display: block
     }
 }
 
@@ -2770,7 +2807,8 @@ progress {
 
 .maximum-player-queue .header .title {
     font-size: .9rem;
-    font-weight: 600
+    font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
 .maximum-player-queue .header .buttons {
@@ -2998,6 +3036,84 @@ progress {
     color: #000;
     border-radius: 50%
 }
+
+/* ---- mini-lyric + max lyrics panel ---- */
+/* سایز باکس: --ha-lyric-box-size اولویت دارد؛ وگرنه --ha-lyric-size سراسری */
+.mini-lyric {
+    --ha-lyric-box-size: 1.28rem;
+    width: 100%;
+    margin: 0 auto;
+    padding: 6px 12px 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+    min-height: 10rem;
+    max-height: 11.5rem;
+    overflow: hidden;
+    overscroll-behavior: contain;
+    touch-action: manipulation;
+    position: relative;
+    z-index: 2;
+    font-size: var(--ha-lyric-box-size, var(--ha-lyric-size, 16px));
+    font-family: var(--ha-lyric-font, inherit);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+.mini-lyric .mini-lyric-head {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 0 2px 4px;
+    font-size: 12px;
+    line-height: 1.2;
+    opacity: 0.85;
+    pointer-events: none;
+}
+.mini-lyric .mini-lyric-head .ml-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.mini-lyric .mini-lyric-head .ml-lang {
+    opacity: 0.9;
+    font-weight: 500;
+}
+.mini-lyric .mini-lyric-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+.mini-lyric .ha-lrc {
+    max-height: 10rem;
+    overflow: hidden;
+    overscroll-behavior: contain;
+    pointer-events: none;
+    width: 100%;
+}
+.mini-lyric .ha-lrc.ha-lrc--focus {
+    padding: 0;
+    gap: 0.25rem;
+    justify-content: center;
+}
+.mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.is-near {
+    opacity: 0.4;
+    font-size: 0.88em;
+    line-height: 1.35;
+}
+.mini-lyric .ha-lrc.ha-lrc--focus .ha-lrc-line.active {
+    font-size: 1.05em;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+
+
 
 .genremood-grid-container {
     display: grid;
@@ -5314,7 +5430,15 @@ transition: 0.2s
     display: flex;
 }
 
+.page-detail-header-container .lyric {
+    display: block;
+}
+
 .page-artists-list {
+    display: none;
+}
+
+.page-lyric-box {
     display: none;
 }
 
