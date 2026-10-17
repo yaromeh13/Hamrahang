@@ -453,6 +453,21 @@
                 echo json_encode(['error' => 'invalid_credentials']);
                 exit();
             }
+
+            // act=0 → ایمیل تأیید نشده
+            if ((int)$row['act'] === 0) {
+                echo json_encode([
+                    'error' => 'email_not_verified',
+                    'email' => $row['u_email']
+                ]);
+                exit();
+            }
+
+            // مسدود
+            if ((int)$row['act'] === 9) {
+                echo json_encode(['error' => 'account_disabled']);
+                exit();
+            }
         
             $session = IssueSessionForDevice($conn, $row['id_user'], $deviceToken, $deviceType);
         
@@ -492,6 +507,216 @@
                 'meta'          => json_decode($row['user_data']),
                 'devices'       => $devicesList
             ]);
+            exit();
+        }
+
+        // ---- ثبت‌نام با ایمیل ----
+        if ($ACT == 'register_email') {
+            require_once __DIR__ . '/ha_mail.php';
+
+            $email    = isset($JSD->email) ? strtolower(trim((string)$JSD->email)) : '';
+            $password = isset($JSD->password) ? (string)$JSD->password : '';
+            $u_name   = isset($JSD->username) ? trim((string)$JSD->username) : '';
+
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['error' => 'invalid_email']);
+                exit();
+            }
+            if (strlen($password) < 6) {
+                echo json_encode(['error' => 'password_too_short']);
+                exit();
+            }
+            if ($u_name === '') {
+                $u_name = preg_replace('/[^a-zA-Z0-9_\.\-]/', '', strstr($email, '@', true) ?: 'user');
+                if ($u_name === '') $u_name = 'user' . substr(md5($email), 0, 6);
+            }
+            if (strlen($u_name) < 3) {
+                echo json_encode(['error' => 'invalid_username']);
+                exit();
+            }
+
+            // ایمیل تکراری
+            $chk = $conn->prepare('SELECT id_user, act, u_data FROM user WHERE u_email = ? LIMIT 1');
+            $chk->bind_param('s', $email);
+            $chk->execute();
+            $exist = $chk->get_result()->fetch_assoc();
+            if ($exist) {
+                if ((int)$exist['act'] === 0) {
+                    // حساب تأییدنشده → توکن جدید + ارسال دوباره
+                    $token = bin2hex(random_bytes(24));
+                    $data = [];
+                    if (!empty($exist['u_data'])) {
+                        $decoded = json_decode($exist['u_data'], true);
+                        if (is_array($decoded)) $data = $decoded;
+                    }
+                    $data['ev_token'] = hash('sha256', $token);
+                    $data['ev_exp']   = time() + 86400;
+                    $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                    $upd = $conn->prepare('UPDATE user SET u_data = ?, u_pass = ? WHERE id_user = ?');
+                    $hash = password_hash($password, PASSWORD_DEFAULT);
+                    $uid = (int)$exist['id_user'];
+                    $upd->bind_param('ssi', $json, $hash, $uid);
+                    $upd->execute();
+                    $mailOk = HA_SendVerifyEmail($email, $token);
+                    echo json_encode([
+                        'ok' => true,
+                        'pending_verify' => true,
+                        'resent' => true,
+                        'mail_sent' => $mailOk
+                    ]);
+                    exit();
+                }
+                echo json_encode(['error' => 'email_taken']);
+                exit();
+            }
+
+            // یوزرنیم تکراری → پسوند عددی
+            $baseName = $u_name;
+            $try = 0;
+            while ($try < 20) {
+                $cand = $try === 0 ? $baseName : ($baseName . $try);
+                $chk2 = $conn->prepare('SELECT id_user FROM user WHERE u_name = ? LIMIT 1');
+                $chk2->bind_param('s', $cand);
+                $chk2->execute();
+                if (!$chk2->get_result()->fetch_assoc()) {
+                    $u_name = $cand;
+                    break;
+                }
+                $try++;
+            }
+
+            $token = bin2hex(random_bytes(24));
+            $hash  = password_hash($password, PASSWORD_DEFAULT);
+            $join  = time();
+            $u_data = json_encode([
+                'join'     => $join,
+                'ev_token' => hash('sha256', $token),
+                'ev_exp'   => $join + 86400
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $act = 0; // تأییدنشده
+            $id_tlg = 0;
+            $f_name = '';
+            $l_name = '';
+            $u_ref  = '';
+
+            $ins = $conn->prepare(
+                'INSERT INTO user (id_tlg, u_name, u_pass, f_name, l_name, u_email, u_data, u_ref, act)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            if (!$ins) {
+                echo json_encode(['error' => 'db_error', 'detail' => $conn->error]);
+                exit();
+            }
+            $ins->bind_param(
+                'isssssssi',
+                $id_tlg, $u_name, $hash, $f_name, $l_name, $email, $u_data, $u_ref, $act
+            );
+            if (!$ins->execute()) {
+                echo json_encode(['error' => 'create_failed', 'detail' => $ins->error]);
+                exit();
+            }
+
+            $mailOk = HA_SendVerifyEmail($email, $token);
+            echo json_encode([
+                'ok' => true,
+                'pending_verify' => true,
+                'mail_sent' => $mailOk,
+                'user_name' => $u_name
+            ]);
+            exit();
+        }
+
+        // ---- تأیید ایمیل ----
+        if ($ACT == 'verify_email') {
+            $token = isset($JSD->token) ? trim((string)$JSD->token) : '';
+            if ($token === '' || strlen($token) < 16) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+            $tokenHash = hash('sha256', $token);
+
+            // توکن هش‌شده داخل u_data ذخیره شده
+            $like = '%' . $conn->real_escape_string($tokenHash) . '%';
+            $sql = "SELECT id_user, act, u_data, u_email FROM user WHERE act = 0 AND u_data LIKE '{$like}' LIMIT 5";
+            $res = $conn->query($sql);
+            $found = null;
+            $data = null;
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $decoded = json_decode($row['u_data'] ?? '', true);
+                    if (!is_array($decoded)) continue;
+                    if (empty($decoded['ev_token']) || !hash_equals((string)$decoded['ev_token'], $tokenHash)) continue;
+                    if (empty($decoded['ev_exp']) || (int)$decoded['ev_exp'] < time()) {
+                        echo json_encode(['error' => 'token_expired']);
+                        exit();
+                    }
+                    $found = $row;
+                    $data = $decoded;
+                    break;
+                }
+            }
+
+            if (!$found || !$data) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+
+            unset($data['ev_token'], $data['ev_exp']);
+            $data['email_verified_at'] = time();
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $uid = (int)$found['id_user'];
+            $act = 1;
+            $upd = $conn->prepare('UPDATE user SET act = ?, u_data = ? WHERE id_user = ?');
+            $upd->bind_param('isi', $act, $json, $uid);
+            $upd->execute();
+
+            echo json_encode([
+                'ok' => true,
+                'email' => $found['u_email']
+            ]);
+            exit();
+        }
+
+        // ---- ارسال دوباره ایمیل تأیید ----
+        if ($ACT == 'resend_verify_email') {
+            require_once __DIR__ . '/ha_mail.php';
+
+            $email = isset($JSD->email) ? strtolower(trim((string)$JSD->email)) : '';
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['error' => 'invalid_email']);
+                exit();
+            }
+
+            $stmt = $conn->prepare('SELECT id_user, act, u_data FROM user WHERE u_email = ? LIMIT 1');
+            $stmt->bind_param('s', $email);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+            if (!$row) {
+                // برای جلوگیری از enumeration همیشه ok بده
+                echo json_encode(['ok' => true, 'mail_sent' => true]);
+                exit();
+            }
+            if ((int)$row['act'] !== 0) {
+                echo json_encode(['ok' => true, 'already_verified' => true]);
+                exit();
+            }
+
+            $token = bin2hex(random_bytes(24));
+            $data = [];
+            if (!empty($row['u_data'])) {
+                $decoded = json_decode($row['u_data'], true);
+                if (is_array($decoded)) $data = $decoded;
+            }
+            $data['ev_token'] = hash('sha256', $token);
+            $data['ev_exp']   = time() + 86400;
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $uid = (int)$row['id_user'];
+            $upd = $conn->prepare('UPDATE user SET u_data = ? WHERE id_user = ?');
+            $upd->bind_param('si', $json, $uid);
+            $upd->execute();
+
+            $mailOk = HA_SendVerifyEmail($email, $token);
+            echo json_encode(['ok' => true, 'mail_sent' => $mailOk]);
             exit();
         }
         

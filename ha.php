@@ -3869,6 +3869,15 @@ if (!empty($_SESSION['loggedin'])) {
                 }
                 if (done) done();
                 break;
+
+            case 'verify':
+                try {
+                    await CRVerify(LPS[2] || '');
+                } catch (e) {
+                    console.error(e);
+                }
+                if (done) done();
+                break;
     
             case 'search':
                 CRSR(LPS[2], LPS[3], done);
@@ -4318,6 +4327,10 @@ if (!empty($_SESSION['loggedin'])) {
             className: 'login-error',
             style: 'display:none'
         });
+        const okEl = OA(document.createElement('div'), {
+            className: 'login-ok',
+            style: 'display:none;color:#6d6;margin-bottom:8px;font-size:13px'
+        });
     
         const userIn = OA(document.createElement('input'), {
             className: 'input focusable',
@@ -4325,13 +4338,26 @@ if (!empty($_SESSION['loggedin'])) {
             placeholder: 'Username or Email',
             maxlength: 100
         });
+        const emailIn = OA(document.createElement('input'), {
+            className: 'input focusable',
+            type: 'email',
+            placeholder: 'Email',
+            maxlength: 120,
+            style: 'display:none'
+        });
+        const nameIn = OA(document.createElement('input'), {
+            className: 'input focusable',
+            type: 'text',
+            placeholder: 'Username (optional)',
+            maxlength: 40,
+            style: 'display:none'
+        });
         const passIn = OA(document.createElement('input'), {
             className: 'input focusable',
             type: 'password',
             placeholder: 'Password',
             maxlength: 100
         });
-        // برای register بعداً email / name هم اضافه کن
         const pass2 = OA(document.createElement('input'), {
             className: 'input focusable',
             type: 'password',
@@ -4342,55 +4368,225 @@ if (!empty($_SESSION['loggedin'])) {
     
         const submit = OA(document.createElement('div'), {
             className: 'btn btn-model-1',
-            innerHTML: 'ورود'
+            innerHTML: 'Log in'
         });
         const switchBtn = OA(document.createElement('div'), {
             className: 'btn btn-model-3',
-            innerHTML: 'ساخت حساب'
+            innerHTML: 'Create account',
+            style: 'margin-top:8px'
+        });
+        const resendLink = OA(document.createElement('div'), {
+            className: 'auth-link',
+            innerHTML: 'Resend verification email',
+            style: 'display:none;margin-top:10px;font-size:13px;opacity:.75;cursor:pointer;text-align:center'
         });
     
         function applyMode() {
+            errorEl.style.display = 'none';
+            okEl.style.display = 'none';
             if (mode === 'login') {
+                userIn.style.display = '';
+                emailIn.style.display = 'none';
+                nameIn.style.display = 'none';
                 pass2.style.display = 'none';
-                submit.innerHTML = 'ورود';
-                switchBtn.innerHTML = 'ساخت حساب';
+                submit.innerHTML = 'Log in';
+                switchBtn.innerHTML = 'Create account';
+                resendLink.style.display = 'none';
             } else {
+                userIn.style.display = 'none';
+                emailIn.style.display = '';
+                nameIn.style.display = '';
                 pass2.style.display = '';
-                submit.innerHTML = 'ثبت‌نام';
-                switchBtn.innerHTML = 'قبلاً حساب دارم';
+                submit.innerHTML = 'Sign up';
+                switchBtn.innerHTML = 'Already have an account?';
+                resendLink.style.display = '';
             }
         }
     
         switchBtn.addEventListener('click', () => {
             mode = mode === 'login' ? 'register' : 'login';
-            errorEl.style.display = 'none';
             applyMode();
             if (opts.onModeChange) opts.onModeChange(mode);
+        });
+
+        resendLink.addEventListener('click', async () => {
+            errorEl.style.display = 'none';
+            okEl.style.display = 'none';
+            const email = (mode === 'register' ? emailIn.value : userIn.value).trim().toLowerCase();
+            if (!email || email.indexOf('@') < 0) {
+                errorEl.innerHTML = 'Enter a valid email first';
+                errorEl.style.display = 'block';
+                return;
+            }
+            resendLink.style.opacity = '0.4';
+            await AttemptResendVerify(email, errorEl, okEl);
+            resendLink.style.opacity = '0.75';
         });
     
         submit.addEventListener('click', async () => {
             errorEl.style.display = 'none';
+            okEl.style.display = 'none';
             if (mode === 'login') {
                 await AttemptPasswordLogin(
                     userIn.value.trim(),
                     passIn.value,
                     errorEl,
                     null,
-                    opts.onSuccess
+                    opts.onSuccess,
+                    okEl
                 );
             } else {
-                errorEl.innerHTML = 'ثبت‌نام به‌زودی';
-                errorEl.style.display = 'block';
-                // بعداً AttemptRegister
-               //  await AttemptRegister(/* ... */, errorEl, async () => {
-               //     if (opts.onSuccess) await opts.onSuccess();
-               // });
+                await AttemptRegister(
+                    emailIn.value.trim(),
+                    passIn.value,
+                    pass2.value,
+                    nameIn.value.trim(),
+                    errorEl,
+                    okEl
+                );
             }
         });
     
         applyMode();
-        root.append(errorEl, userIn, passIn, pass2, submit, switchBtn);
+        root.append(errorEl, okEl, userIn, emailIn, nameIn, passIn, pass2, submit, switchBtn, resendLink);
         host.append(root);
+    }
+
+    async function CRVerify(token) {
+        clearMainContent();
+        const box = OA(document.createElement('div'), {
+            className: 'page-header m-top-3',
+            style: 'max-width:420px;margin:2rem auto;padding:0 1rem'
+        });
+        const title = OA(document.createElement('h1'), {
+            className: 'title',
+            innerHTML: 'Email verification'
+        });
+        const msg = OA(document.createElement('div'), {
+            className: 'text2 m-top-1',
+            innerHTML: 'Verifying…'
+        });
+        const formHost = OA(document.createElement('div'), { className: 'm-top-2' });
+        box.append(title, msg, formHost);
+        MCNT.appendChild(box);
+
+        if (!token) {
+            msg.innerHTML = 'Missing verification token.';
+            RenderAuthForm(formHost, { mode: 'login' });
+            ADE();
+            return;
+        }
+
+        await new Promise(function (resolve) {
+            gjl({ a: 'verify_email', token: token }, function (success, j) {
+                if (success && j && j.ok) {
+                    msg.innerHTML = 'Email verified successfully. You can log in now.';
+                    if (j.email) {
+                        // پیش‌پر کردن با ایمیل تأییدشده
+                        RenderAuthForm(formHost, { mode: 'login' });
+                        const inp = formHost.querySelector('input[type="text"], input.input');
+                        if (inp) inp.value = j.email;
+                    } else {
+                        RenderAuthForm(formHost, { mode: 'login' });
+                    }
+                } else {
+                    const err = (j && j.error) || 'invalid_token';
+                    if (err === 'token_expired') {
+                        msg.innerHTML = 'This link has expired. Log in area → Resend verification email.';
+                    } else {
+                        msg.innerHTML = 'Invalid or already used verification link.';
+                    }
+                    RenderAuthForm(formHost, { mode: 'login' });
+                }
+                resolve();
+            });
+        });
+        ADE();
+    }
+
+    function AttemptResendVerify(email, errorEl, okEl) {
+        return new Promise(function (resolve) {
+            gjl({ a: 'resend_verify_email', email: email }, function (success, j) {
+                if (!success || !j) {
+                    if (errorEl) {
+                        errorEl.innerHTML = 'Server error';
+                        errorEl.style.display = 'block';
+                    }
+                    resolve(false);
+                    return;
+                }
+                if (j.error) {
+                    if (errorEl) {
+                        errorEl.innerHTML = j.error === 'invalid_email' ? 'Invalid email' : String(j.error);
+                        errorEl.style.display = 'block';
+                    }
+                    resolve(false);
+                    return;
+                }
+                if (okEl) {
+                    okEl.innerHTML = j.already_verified
+                        ? 'This email is already verified — you can log in.'
+                        : 'Verification email sent. Check your inbox.';
+                    okEl.style.display = 'block';
+                }
+                resolve(true);
+            });
+        });
+    }
+
+    function AttemptRegister(email, password, password2, username, errorEl, okEl) {
+        return new Promise(function (resolve) {
+            email = (email || '').trim().toLowerCase();
+            if (!email || email.indexOf('@') < 1) {
+                errorEl.innerHTML = 'Enter a valid email';
+                errorEl.style.display = 'block';
+                resolve(false);
+                return;
+            }
+            if (!password || password.length < 6) {
+                errorEl.innerHTML = 'Password must be at least 6 characters';
+                errorEl.style.display = 'block';
+                resolve(false);
+                return;
+            }
+            if (password !== password2) {
+                errorEl.innerHTML = 'Passwords do not match';
+                errorEl.style.display = 'block';
+                resolve(false);
+                return;
+            }
+            gjl({
+                a: 'register_email',
+                email: email,
+                password: password,
+                username: username || ''
+            }, function (success, j) {
+                if (!success || !j) {
+                    errorEl.innerHTML = 'Server error';
+                    errorEl.style.display = 'block';
+                    resolve(false);
+                    return;
+                }
+                if (j.error) {
+                    var msg = j.error;
+                    if (j.error === 'email_taken') msg = 'This email is already registered';
+                    else if (j.error === 'invalid_email') msg = 'Invalid email';
+                    else if (j.error === 'password_too_short') msg = 'Password must be at least 6 characters';
+                    else if (j.error === 'invalid_username') msg = 'Invalid username';
+                    errorEl.innerHTML = msg;
+                    errorEl.style.display = 'block';
+                    resolve(false);
+                    return;
+                }
+                if (okEl) {
+                    okEl.innerHTML = j.mail_sent === false
+                        ? 'Account created, but email could not be sent. Use «Resend verification email».'
+                        : 'Account created. Check your email for the verification link.';
+                    okEl.style.display = 'block';
+                }
+                resolve(true);
+            });
+        });
     }
     
     function buildPairCodeInput(initialCode) {
@@ -4930,8 +5126,9 @@ if (!empty($_SESSION['loggedin'])) {
         });
     }
     
-    async function AttemptPasswordLogin(username, password, errorEl, pane, onSuccess) {
+    async function AttemptPasswordLogin(username, password, errorEl, pane, onSuccess, okEl) {
         errorEl.style.display = 'none';
+        if (okEl) okEl.style.display = 'none';
     
         const did = GetOrCreateDeviceId();
     
@@ -4939,19 +5136,38 @@ if (!empty($_SESSION['loggedin'])) {
             { a: 'login_password', username, password, did, device_type: 'webapp' },
             async function (success, j) {
                 if (!success || !j) {
-                    errorEl.innerHTML = 'خطا در ارتباط با سرور';
+                    // ممکن است gjl با error JSON هم success=false بدهد
+                    if (j && j.error === 'email_not_verified') {
+                        errorEl.innerHTML = 'Email not verified. Check your inbox or resend the link.';
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+                    if (j && j.error === 'account_disabled') {
+                        errorEl.innerHTML = 'Your account is disabled. Contact support.';
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+                    errorEl.innerHTML = (j && j.error === 'invalid_credentials')
+                        ? 'Wrong username or password'
+                        : 'Server connection error';
                     errorEl.style.display = 'block';
                     return;
                 }
     
                 if (j.error == 'account_disabled') {
-                    errorEl.innerHTML = 'دسترسی شما مسدود گردید، لطفا با پشتیبانی تماس بگیرید';
+                    errorEl.innerHTML = 'Your account is disabled. Contact support.';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                if (j.error == 'email_not_verified') {
+                    errorEl.innerHTML = 'Email not verified. Check your inbox or resend the link.';
                     errorEl.style.display = 'block';
                     return;
                 }
     
                 if (!j.access_token) {
-                    errorEl.innerHTML = 'نام کاربری یا رمز عبور اشتباه است';
+                    errorEl.innerHTML = 'Wrong username or password';
                     errorEl.style.display = 'block';
                     return;
                 }
