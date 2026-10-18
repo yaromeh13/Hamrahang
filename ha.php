@@ -468,6 +468,99 @@ require_once __DIR__ . '/int/h_api.php';
     background: #a70007;
 }
 
+/* ---- auth form (login / register) ---- */
+.login-section.login-password-section {
+    max-width: 380px;
+    margin: 0 auto;
+    padding: 0.5rem 0 1rem;
+}
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+.auth-form .input,
+.auth-form input.input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 13px 16px;
+    font-size: 15px;
+    line-height: 1.35;
+    color: #f2f2f2;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.auth-form .input::placeholder,
+.auth-form input.input::placeholder {
+    color: rgba(255, 255, 255, 0.38);
+}
+.auth-form .input:hover,
+.auth-form input.input:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+.auth-form .input:focus,
+.auth-form input.input:focus {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(46, 183, 237, 0.65);
+    box-shadow: 0 0 0 3px rgba(46, 183, 237, 0.18);
+}
+.auth-form .btn {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    text-align: center;
+    min-height: 44px;
+    border-radius: 12px;
+}
+.auth-form .btn-model-1 {
+    margin-top: 4px;
+}
+.auth-form .btn-model-3 {
+    margin-top: 0;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.auth-form .login-error {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 59, 48, 0.12);
+    border: 1px solid rgba(255, 59, 48, 0.28);
+    color: #ff8a80;
+    font-size: 13px;
+    line-height: 1.4;
+}
+.auth-form .login-ok {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(52, 199, 89, 0.12);
+    border: 1px solid rgba(52, 199, 89, 0.28);
+    color: #8de4a2;
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 0 !important;
+}
+.auth-form .auth-link {
+    margin-top: 4px !important;
+    padding: 6px 0;
+    color: rgba(255, 255, 255, 0.55);
+    text-align: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: color .15s ease;
+}
+.auth-form .auth-link:hover {
+    color: rgba(46, 183, 237, 0.95);
+}
+
 .setting-toggle {
     position: absolute;
     right: 10px;
