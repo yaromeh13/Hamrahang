@@ -522,19 +522,13 @@
                 exit();
             }
 
-            // act فقط وقتی صریحاً 0 است = ایمیل تأییدنشده (NULL/خالی را 0 نگیر)
+            // act: 0=ایمیل تأییدنشده، 1=عادی، 7/9=ادمین — act=9 سوپرادمین است نه مسدود
             $actRaw = $row['act'] ?? null;
             if ($actRaw !== null && $actRaw !== '' && (int)$actRaw === 0) {
                 echo json_encode([
                     'error' => 'email_not_verified',
                     'email' => $row['u_email'] ?? ''
                 ]);
-                exit();
-            }
-
-            // مسدود
-            if ($actRaw !== null && $actRaw !== '' && (int)$actRaw === 9) {
-                echo json_encode(['error' => 'account_disabled']);
                 exit();
             }
         
