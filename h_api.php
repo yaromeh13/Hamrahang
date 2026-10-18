@@ -494,23 +494,46 @@
             }
         
             $row = $result->fetch_assoc();
-        
-            if (!password_verify($password, $row['u_pass'])) {
+
+            $passHash = isset($row['u_pass']) ? (string)$row['u_pass'] : '';
+            $passOk = false;
+            if ($passHash !== '') {
+                // هش مدرن bcrypt/argon
+                if (password_verify($password, $passHash)) {
+                    $passOk = true;
+                }
+                // پسورد قدیمی plaintext (قبل از password_hash)
+                elseif ($passHash[0] !== '$' && hash_equals($passHash, $password)) {
+                    $passOk = true;
+                    // ارتقا به هش
+                    $newHash = password_hash($password, PASSWORD_DEFAULT);
+                    if ($newHash) {
+                        $up = $conn->prepare('UPDATE user SET u_pass = ? WHERE id_user = ?');
+                        if ($up) {
+                            $uid = (int)$row['id_user'];
+                            $up->bind_param('si', $newHash, $uid);
+                            $up->execute();
+                        }
+                    }
+                }
+            }
+            if (!$passOk) {
                 echo json_encode(['error' => 'invalid_credentials']);
                 exit();
             }
 
-            // act=0 → ایمیل تأیید نشده
-            if ((int)$row['act'] === 0) {
+            // act فقط وقتی صریحاً 0 است = ایمیل تأییدنشده (NULL/خالی را 0 نگیر)
+            $actRaw = $row['act'] ?? null;
+            if ($actRaw !== null && $actRaw !== '' && (int)$actRaw === 0) {
                 echo json_encode([
                     'error' => 'email_not_verified',
-                    'email' => $row['u_email']
+                    'email' => $row['u_email'] ?? ''
                 ]);
                 exit();
             }
 
             // مسدود
-            if ((int)$row['act'] === 9) {
+            if ($actRaw !== null && $actRaw !== '' && (int)$actRaw === 9) {
                 echo json_encode(['error' => 'account_disabled']);
                 exit();
             }
@@ -540,6 +563,13 @@
                     'is_current'   => ($d['device_token'] === $deviceToken)
                 ];
             }
+
+            // ستون متا در جدول: u_data (نه user_data)
+            $metaRaw = $row['u_data'] ?? ($row['user_data'] ?? null);
+            $meta = null;
+            if (is_string($metaRaw) && $metaRaw !== '') {
+                $meta = json_decode($metaRaw);
+            }
         
             echo json_encode([
                 'access_token'  => $session['access_token'],
@@ -549,8 +579,8 @@
                 'first_name'    => $row['f_name'],
                 'last_name'     => $row['l_name'],
                 'email'         => $row['u_email'],
-                'act'           => (int)$row['act'],
-                'meta'          => json_decode($row['user_data']),
+                'act'           => (int)($actRaw !== null && $actRaw !== '' ? $actRaw : 1),
+                'meta'          => $meta,
                 'devices'       => $devicesList
             ]);
             exit();
