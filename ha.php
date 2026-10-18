@@ -499,9 +499,17 @@ require_once __DIR__ . '/int/h_api.php';
     max-width: 100%;
     box-sizing: border-box;
 }
-.user-content .page-detail .auth-form input.input,
-.auth-form input.input,
-.auth-form .input {
+.auth-form .is-hidden,
+.auth-form input.is-hidden,
+.auth-form .btn.is-hidden,
+.auth-form .auth-link.is-hidden,
+.auth-form .login-error.is-hidden,
+.auth-form .login-ok.is-hidden {
+    display: none !important;
+}
+.user-content .page-detail .auth-form input.input:not(.is-hidden),
+.auth-form input.input:not(.is-hidden),
+.auth-form .input:not(.is-hidden) {
     display: block !important;
     float: none !important;
     width: 100% !important;
@@ -4428,18 +4436,16 @@ if (!empty($_SESSION['loggedin'])) {
             maxlength: 100
         });
         const emailIn = OA(document.createElement('input'), {
-            className: 'input focusable',
+            className: 'input focusable is-hidden',
             type: 'email',
             placeholder: 'Email',
-            maxlength: 120,
-            style: 'display:none'
+            maxlength: 120
         });
         const nameIn = OA(document.createElement('input'), {
-            className: 'input focusable',
+            className: 'input focusable is-hidden',
             type: 'text',
             placeholder: 'Username (optional)',
-            maxlength: 40,
-            style: 'display:none'
+            maxlength: 40
         });
         const passIn = OA(document.createElement('input'), {
             className: 'input focusable',
@@ -4448,11 +4454,10 @@ if (!empty($_SESSION['loggedin'])) {
             maxlength: 100
         });
         const pass2 = OA(document.createElement('input'), {
-            className: 'input focusable',
+            className: 'input focusable is-hidden',
             type: 'password',
             placeholder: 'Confirm password',
-            maxlength: 100,
-            style: 'display:none'
+            maxlength: 100
         });
     
         const submit = OA(document.createElement('div'), {
@@ -4461,34 +4466,44 @@ if (!empty($_SESSION['loggedin'])) {
         });
         const switchBtn = OA(document.createElement('div'), {
             className: 'btn btn-model-3',
-            innerHTML: 'Create account',
-            style: 'margin-top:8px'
+            innerHTML: 'Create account'
         });
         const resendLink = OA(document.createElement('div'), {
-            className: 'auth-link',
-            innerHTML: 'Resend verification email',
-            style: 'display:none;margin-top:10px;font-size:13px;opacity:.75;cursor:pointer;text-align:center'
+            className: 'auth-link is-hidden',
+            innerHTML: 'Resend verification email'
         });
+
+        function setHidden(el, hide) {
+            if (!el) return;
+            if (hide) el.classList.add('is-hidden');
+            else el.classList.remove('is-hidden');
+        }
     
         function applyMode() {
             errorEl.style.display = 'none';
             okEl.style.display = 'none';
             if (mode === 'login') {
-                userIn.style.display = '';
-                emailIn.style.display = 'none';
-                nameIn.style.display = 'none';
-                pass2.style.display = 'none';
+                // فقط لاگین: یوزرنیم/ایمیل + رمز
+                setHidden(userIn, false);
+                setHidden(emailIn, true);
+                setHidden(nameIn, true);
+                setHidden(pass2, true);
+                setHidden(resendLink, true);
                 submit.innerHTML = 'Log in';
                 switchBtn.innerHTML = 'Create account';
-                resendLink.style.display = 'none';
+                root.classList.remove('mode-register');
+                root.classList.add('mode-login');
             } else {
-                userIn.style.display = 'none';
-                emailIn.style.display = '';
-                nameIn.style.display = '';
-                pass2.style.display = '';
+                // فقط ثبت‌نام: ایمیل + یوزرنیم اختیاری + رمز + تکرار
+                setHidden(userIn, true);
+                setHidden(emailIn, false);
+                setHidden(nameIn, false);
+                setHidden(pass2, false);
+                setHidden(resendLink, false);
                 submit.innerHTML = 'Sign up';
                 switchBtn.innerHTML = 'Already have an account?';
-                resendLink.style.display = '';
+                root.classList.remove('mode-login');
+                root.classList.add('mode-register');
             }
         }
     
