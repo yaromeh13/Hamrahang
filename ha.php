@@ -4014,55 +4014,19 @@ if (!empty($_SESSION['loggedin'])) {
         const dtl1 = OA(document.createElement('div'), { className: 'page-detail' });
         dcn.append(dtl1);
     
-        // ========== مهمان: فرم ورود ==========
+        // ========== مهمان: لاگین + ثبت‌نام (RenderAuthForm) ==========
         if (!SN.user || !SN.user.loggedIn) {
             const passSection = OA(document.createElement('div'), {
                 className: 'login-section login-password-section'
             });
-            const ius = OA(document.createElement('input'), {
-                className: 'input focusable',
-                type: 'text',
-                id: 'username',
-                maxlength: 100,
-                placeholder: 'Username or Email',
-                autocorrect: 'off',
-                autocapitalize: 'off',
-                spellcheck: 'false'
-            });
-            const ips = OA(document.createElement('input'), {
-                className: 'input focusable',
-                type: 'password',
-                id: 'password',
-                maxlength: 100,
-                placeholder: 'Password',
-                autocorrect: 'off',
-                autocapitalize: 'off',
-                spellcheck: 'false'
-            });
-            const errorEl = OA(document.createElement('div'), {
-                className: 'login-error',
-                innerHTML: ''
-            });
-            errorEl.style.display = 'none';
-    
-            const submitBtn = OA(document.createElement('div'), {
-                className: 'setting-item focusable',
-                innerHTML: 'ورود'
-            });
-            submitBtn.addEventListener('click', () => {
-                const username = ius.value.trim();
-                const password = ips.value;
-                if (username && password) {
-                    AttemptPasswordLogin(username, password, errorEl, pane);
-                    return;
+            RenderAuthForm(passSection, {
+                mode: 'login',
+                onSuccess: async function () {
+                    RerenderAccountPane(pane);
                 }
-                errorEl.innerHTML = 'لطفاً نام کاربری و رمز عبور را وارد کنید';
-                errorEl.style.display = 'block';
             });
-    
-            passSection.append(ius, ips, errorEl, submitBtn);
             dtl1.append(passSection);
-    
+
             // ریست لوکال — حتی بدون لاگین
             const clearLocalBtn = OA(document.createElement('div'), {
                 className: 'setting-item focusable m-top-2',
