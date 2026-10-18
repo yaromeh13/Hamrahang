@@ -522,13 +522,17 @@
                 exit();
             }
 
-            // act: 0=ایمیل تأییدنشده، 1=عادی، 7/9=ادمین — act=9 سوپرادمین است نه مسدود
+            // act: 0=ایمیل تأییدنشده | 1=عادی | 2–5=تجاری | 6=مسدود | 7–9=ادمین
             $actRaw = $row['act'] ?? null;
             if ($actRaw !== null && $actRaw !== '' && (int)$actRaw === 0) {
                 echo json_encode([
                     'error' => 'email_not_verified',
                     'email' => $row['u_email'] ?? ''
                 ]);
+                exit();
+            }
+            if ($actRaw !== null && $actRaw !== '' && (int)$actRaw === 6) {
+                echo json_encode(['error' => 'account_disabled']);
                 exit();
             }
         
