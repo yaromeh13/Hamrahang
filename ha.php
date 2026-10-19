@@ -603,6 +603,58 @@ require_once __DIR__ . '/int/h_api.php';
     flex-direction: column;
     gap: 10px;
 }
+
+.ha-count-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 8px;
+}
+.ha-count-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: rgba(255,255,255,0.7);
+}
+.ha-count-icon svg {
+    width: 20px !important;
+    height: 20px !important;
+    max-width: 20px;
+    max-height: 20px;
+}
+.ha-count-title {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    font-size: 14px;
+    color: #ececf1;
+}
+.ha-count-num {
+    flex-shrink: 0;
+    font-weight: 700;
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    min-width: 2ch;
+    text-align: right;
+}
+.account-msg-layer {
+    width: 100%;
+}
+.account-msg-layer .login-error,
+.account-msg-layer .login-ok {
+    margin-top: 8px;
+}
+.playlist-tab-list .section-container {
+    margin-top: 0.5rem;
+}
+
 .ha-device-row {
     display: flex;
     align-items: center;
@@ -4489,7 +4541,7 @@ if (!empty($_SESSION['loggedin'])) {
         });
 
         const changePassBtn = OA(document.createElement('div'), {
-            className: 'btn btn-model-1',
+            className: 'btn btn-model-3',
             innerHTML: 'Change password'
         });
         const passMsg = OA(document.createElement('div'), {
@@ -4514,8 +4566,14 @@ if (!empty($_SESSION['loggedin'])) {
             changePassBtn.innerHTML = 'Change password';
         });
 
-        accountActions.append(logoutBtn, changePassBtn, passErr, passMsg);
+        accountActions.append(logoutBtn, changePassBtn);
         dtl1.append(accountActions);
+        // پیام‌ها زیر اکشن‌ها — خارج از account-actions
+        const msgLayer = OA(document.createElement('div'), {
+            className: 'account-msg-layer m-top-1'
+        });
+        msgLayer.append(passErr, passMsg);
+        dtl1.append(msgLayer);
         pane.append(dcn);
     }
 
@@ -5204,7 +5262,7 @@ if (!empty($_SESSION['loggedin'])) {
     function renderFavoriteCounts(container) {
         LoadProfile();
         const rows = countByItemTypes(SN.profile.favorite);
-        renderTypeCountList(container, rows, 'هنوز علاقه‌مندی ندارید');
+        renderTypeCountList(container, rows, 'No favorites yet');
     }
     
     function renderPlaylistCounts(container) {
@@ -5272,31 +5330,57 @@ if (!empty($_SESSION['loggedin'])) {
     }
     
     /** لیست ساده: type + تعداد (فاوریت / هیستوری / …) */
+    function iconForItemType(type) {
+        const t = String(type || '').toLowerCase();
+        if (t === 'song' || t === 'podcast') return typeof svg_sng !== 'undefined' ? svg_sng : '';
+        if (t === 'artist') return typeof svg_usr !== 'undefined' ? svg_usr : '';
+        if (t === 'album') return typeof svg_pls !== 'undefined' ? svg_pls : '';
+        if (t === 'playlist') return typeof svg_pls !== 'undefined' ? svg_pls : '';
+        if (t === 'musicvideo' || t === 'video') return typeof svg_vdo !== 'undefined' ? svg_vdo : '';
+        return typeof svg_sng !== 'undefined' ? svg_sng : '';
+    }
+
+    function labelForItemType(type) {
+        const map = {
+            song: 'Songs',
+            podcast: 'Podcasts',
+            musicvideo: 'Music Videos',
+            video: 'Videos',
+            album: 'Albums',
+            artist: 'Artists',
+            playlist: 'Playlists'
+        };
+        return map[type] || type;
+    }
+
     function renderTypeCountList(container, rows, emptyText) {
         container.innerHTML = '';
         if (!rows || !rows.length) {
             container.append(
                 OA(document.createElement('div'), {
                     className: 'text2',
-                    innerHTML: emptyText || 'موردی نیست'
+                    innerHTML: emptyText || 'Nothing here yet'
                 })
             );
             return;
         }
         rows.forEach(({ type, count }) => {
             const row = OA(document.createElement('div'), {
-                className: 'setting-row type-count-row'
+                className: 'ha-count-row'
             });
-            row.append(
-                OA(document.createElement('span'), {
-                    className: 'type-name',
-                    innerHTML: type
-                }),
-                OA(document.createElement('span'), {
-                    className: 'type-count',
-                    innerHTML: String(count)
-                })
-            );
+            const ico = OA(document.createElement('div'), {
+                className: 'ha-count-icon',
+                innerHTML: iconForItemType(type)
+            });
+            const title = OA(document.createElement('div'), {
+                className: 'ha-count-title',
+                innerHTML: labelForItemType(type)
+            });
+            const cnt = OA(document.createElement('div'), {
+                className: 'ha-count-num',
+                innerHTML: String(count)
+            });
+            row.append(ico, title, cnt);
             container.append(row);
         });
     }
@@ -5804,7 +5888,7 @@ if (!empty($_SESSION['loggedin'])) {
             placeholder: 'Playlist name'
         });
         const createBtn = OA(document.createElement('div'), {
-            className: 'btn btn-model-1',
+            className: 'btn btn-model-3',
             innerHTML: 'Create playlist'
         });
         createBtn.addEventListener('click', () => {
@@ -5817,7 +5901,7 @@ if (!empty($_SESSION['loggedin'])) {
             }
             nameInput.value = '';
             listBox.innerHTML = '';
-            renderPlaylistList(listBox);
+            renderPlaylistReport(listBox);
             createBtn.innerHTML = 'Created';
             setTimeout(() => { createBtn.innerHTML = 'Create playlist'; }, 800);
         });
@@ -5827,7 +5911,7 @@ if (!empty($_SESSION['loggedin'])) {
         await HydrateProfileItems();
         const listBox = OA(document.createElement('div'), { className: 'playlist-tab-list m-top-1' });
         pane.append(listBox);
-        renderPlaylistList(listBox);
+        renderPlaylistReport(listBox);
 
         const foot = OA(document.createElement('div'), { className: 'ha-settings-foot' });
         if (SN.user && SN.user.loggedIn) {
@@ -5842,7 +5926,7 @@ if (!empty($_SESSION['loggedin'])) {
                 setTimeout(() => {
                     syncBtn.innerHTML = 'Sync with account';
                     listBox.innerHTML = '';
-                    renderPlaylistList(listBox);
+                    renderPlaylistReport(listBox);
                 }, 800);
             });
             foot.append(syncBtn);
@@ -5855,6 +5939,32 @@ if (!empty($_SESSION['loggedin'])) {
             })
         );
         pane.append(foot);
+    }
+
+    /** گزارش پلی‌لیست‌ها با همان رندر لیست (تامب placeholder + img) */
+    function renderPlaylistReport(container) {
+        LoadProfile();
+        container.innerHTML = '';
+        const ids = SN.profile.playlist || [];
+        if (!ids.length) {
+            container.append(
+                OA(document.createElement('div'), {
+                    className: 'text2',
+                    innerHTML: 'No playlists yet'
+                })
+            );
+            return;
+        }
+        // CRSC از قانون تامب عمومی استفاده می‌کند
+        const oldMCNT = MCNT;
+        MCNT = container;
+        try {
+            CRSC(ids, 'playlist');
+        } catch (e) {
+            console.error(e);
+        }
+        MCNT = oldMCNT;
+        ADE();
     }
     
     function renderPlaylistList(container) {
