@@ -468,6 +468,146 @@ require_once __DIR__ . '/int/h_api.php';
     background: #a70007;
 }
 
+
+/* ---- Settings accordion (FAQ-style like index) ---- */
+.ha-settings-acc {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 0 12px 2rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+.ha-settings-details {
+    background: #16181d;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 0 18px;
+    transition: border-color .2s ease, background .2s ease;
+}
+.ha-settings-details[open] {
+    border-color: rgba(29, 185, 84, 0.35);
+    background: #1a1d24;
+}
+.ha-settings-summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 16px 0;
+    font-weight: 700;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #ececf1;
+    user-select: none;
+}
+.ha-settings-summary::-webkit-details-marker { display: none; }
+.ha-settings-summary::after {
+    content: "+";
+    margin-left: auto;
+    font-size: 20px;
+    color: rgba(255,255,255,0.45);
+    transition: transform .2s ease, color .2s ease;
+}
+.ha-settings-details[open] > .ha-settings-summary::after {
+    transform: rotate(45deg);
+    color: #1db954;
+}
+.ha-settings-sum-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+.ha-settings-sum-icon svg {
+    width: 22px;
+    height: 22px;
+    transition: transform .25s ease;
+}
+.ha-settings-summary:hover .ha-settings-sum-icon svg,
+.ha-settings-details[open] > .ha-settings-summary .ha-settings-sum-icon svg {
+    transform: scale(1.45);
+}
+.ha-settings-sum-label { flex: 1; min-width: 0; }
+.ha-settings-body {
+    padding: 0 0 18px;
+    min-width: 0;
+}
+.ha-settings-body .user-content {
+    display: block;
+    width: 100%;
+}
+.ha-settings-body .user-content .page-detail {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+}
+.ha-settings-body .account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-top: 12px;
+}
+.ha-settings-body .account-actions .btn,
+.ha-settings-body .ha-settings-actions .btn,
+.ha-settings-body .setting-row .btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    max-width: 100%;
+    min-height: 44px;
+    margin: 0 !important;
+    border-radius: 12px !important;
+    box-sizing: border-box;
+}
+.ha-settings-body .setting-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+}
+.ha-settings-nested {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+.ha-settings-nested .ha-settings-details {
+    background: #12141a;
+}
+.ha-settings-foot {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ha-settings-foot .btn,
+.ha-settings-foot a.btn {
+    text-decoration: none;
+}
+.ha-settings-body .setting-title {
+    border-bottom: none;
+    padding: 0 0 4px;
+    font-size: 18px;
+}
+.ha-settings-body .setting-subtitle {
+    color: rgba(255,255,255,0.55);
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+/* legacy hooks kept minimal so old class names don't break */
+.setting-tabs { display: none !important; }
+.setting-content { padding: 0; }
+
 /* ---- auth form (login / register) — ستونی مثل index login ---- */
 .user-content .page-detail:has(.auth-form) {
     width: 100%;
@@ -4040,123 +4180,111 @@ if (!empty($_SESSION['loggedin'])) {
     }
 
     function CRSA(q, a, callback) {
-    
-        q = (typeof q !== "undefined" && q !== '') ? q : 'account';
-    
-        
-        var sec = OA(document.createElement("div"), {className: "section-carousel-container m-top-1"});
-        MCNT.appendChild(sec);
-        var tab = OA(document.createElement("div"), {className: "setting-tabs"});
-        sec.appendChild(tab);
-     
-        var tabContent = OA(document.createElement("div"), {className: "setting-content m-top-1"});
-        MCNT.appendChild(tabContent);
-    
-        var tabs = [];
-        var panes = [];
-    
-        var tabTypes = [
-            { key: 'account',  label: 'Profile',   icon:svg_usr, render: RenderAccountTab },
-            { key: 'favorite', label: 'Favorites', icon:svg_fav, render: RenderFavoriteTab },
-            { key: 'playlist', label: 'Playlists', icon:svg_pls, render: RenderPlaylistTab },
-            { key: 'audio',    label: 'Audio',     icon:svg_ado, render: RenderAudioQualityTab },
-            { key: 'video',    label: 'Video',     icon:svg_vdo, render: RenderVideoQualityTab }
+        q = (typeof q !== 'undefined' && q !== '') ? q : 'account';
+        // audio/video map to Settings panel
+        if (q === 'audio' || q === 'video') q = 'options';
+
+        const wrap = OA(document.createElement('div'), { className: 'ha-settings-acc m-top-1' });
+        MCNT.appendChild(wrap);
+
+        const tabTypes = [
+            { key: 'account',  label: 'Profile',   icon: typeof svg_usr !== 'undefined' ? svg_usr : '', render: RenderAccountTab },
+            { key: 'favorite', label: 'Favorites', icon: typeof svg_fav !== 'undefined' ? svg_fav : '', render: RenderFavoriteTab },
+            { key: 'playlist', label: 'Playlists', icon: typeof svg_pls !== 'undefined' ? svg_pls : '', render: RenderPlaylistTab },
+            { key: 'options',  label: 'Settings',  icon: typeof svg_stg !== 'undefined' ? svg_stg : '', render: RenderSettingsBundleTab }
         ];
-    
-        function createTab(type, active) {
-            var item = OA(document.createElement("a"), {
-                className: active ? "item active focusable" : "item focusable",
-                href: "/setting/" + type.key,
+
+        tabTypes.forEach(function (type) {
+            const det = OA(document.createElement('details'), {
+                className: 'ha-settings-details'
             });
-            
-            //var tit = OA(document.createElement("img"), {className: "ratio ratio-1x1", src: thumb ? UT + thumb + ".jpg" : ""});
-            var dci = OA(document.createElement("div"), {className: "icon", innerHTML: type.icon});
-            var tis = OA(document.createElement("span"), {innerHTML: type.label});
-            item.appendChild(dci);
-            item.appendChild(tis);
-            tab.appendChild(item);
-            tabs.push(item);
-            return item;
-        }
+            if (type.key === q) det.open = true;
 
-        function createPane() {
-            var pane = OA(document.createElement("div"), {className: "tab-pane"});
-            pane.style.display = "none";
-            tabContent.appendChild(pane);
-            panes.push(pane);
-            return pane;
-        }
-    
-        function ActivateTab(index) {
-            var j;
-            for (j = 0; j < tabs.length; j++) {
-                tabs[j].className = "item focusable";
-                panes[j].style.display = "none";
+            const sum = document.createElement('summary');
+            sum.className = 'ha-settings-summary';
+            const ico = OA(document.createElement('span'), {
+                className: 'ha-settings-sum-icon',
+                innerHTML: type.icon || ''
+            });
+            const lab = OA(document.createElement('span'), {
+                className: 'ha-settings-sum-label',
+                innerHTML: type.label
+            });
+            sum.appendChild(ico);
+            sum.appendChild(lab);
+
+            const body = OA(document.createElement('div'), { className: 'ha-settings-body' });
+
+            // URL sync when toggled open
+            det.addEventListener('toggle', function () {
+                if (det.open) {
+                    try {
+                        const path = '/setting/' + type.key;
+                        if (location.pathname !== path && typeof history !== 'undefined' && history.replaceState) {
+                            history.replaceState(null, '', path);
+                            if (typeof LPS !== 'undefined') {
+                                // soft update path parts if present
+                            }
+                        }
+                    } catch (e) {}
+                }
+            });
+
+            det.appendChild(sum);
+            det.appendChild(body);
+            wrap.appendChild(det);
+
+            const oldMCNT = MCNT;
+            MCNT = body;
+            try {
+                type.render(body);
+            } catch (err) {
+                console.error('settings render', type.key, err);
             }
-            tabs[index].className = "item active focusable";
-            panes[index].style.display = "block";
-        }
-    
-        var oldMCNT;
-        var i;
-        var activeIndex = 0;
-    
-        for (i = 0; i < tabTypes.length; i++) {
-    
-            var type = tabTypes[i];
-            var isActive = (type.key === q);
-    
-            if (isActive) {
-                activeIndex = tabs.length;
-            }
-    
-            var tabEl = createTab(type, isActive);
-            var paneEl = createPane();
-    
-            if (isActive) {
-                paneEl.style.display = "block";
-            }
-    
-            oldMCNT = MCNT;
-            MCNT = paneEl;
-    
-            type.render(paneEl);
-    
             MCNT = oldMCNT;
-        }
-    
-        // فقط فوکوس/هاور پن رو عوض می‌کنه؛ خودِ ناوبری واقعی (تغییر URL) از طریق href/ADE انجام می‌شه
-        for (var ti = 0; ti < tabs.length; ti++) {
-    
-            (function (index) {
-    
-                tabs[index].addEventListener("focus", function () {
-                    ActivateTab(index);
-                });
-                
-                tabs[index].addEventListener("click", function () {
-                    ActivateTab(index);
-                });
-    
-            })(ti);
-        }
+        });
 
-        CCRL(sec);
         ADE();
-
-        var activeTab = tabs[activeIndex];
-
-    
-        if (callback) { callback(true); }
+        if (callback) callback(true);
     }
-    
+
+    /** Settings tab: Audio + Video as nested accordions */
+    function RenderSettingsBundleTab(pane) {
+        const nest = OA(document.createElement('div'), { className: 'ha-settings-nested' });
+
+        function nestPanel(key, label, icon, renderFn) {
+            const det = OA(document.createElement('details'), { className: 'ha-settings-details' });
+            const sum = document.createElement('summary');
+            sum.className = 'ha-settings-summary';
+            sum.appendChild(OA(document.createElement('span'), {
+                className: 'ha-settings-sum-icon',
+                innerHTML: icon || ''
+            }));
+            sum.appendChild(OA(document.createElement('span'), {
+                className: 'ha-settings-sum-label',
+                innerHTML: label
+            }));
+            const body = OA(document.createElement('div'), { className: 'ha-settings-body' });
+            det.appendChild(sum);
+            det.appendChild(body);
+            nest.appendChild(det);
+            const old = MCNT;
+            MCNT = body;
+            try { renderFn(body); } catch (e) { console.error(e); }
+            MCNT = old;
+        }
+
+        nestPanel('audio', 'Audio', typeof svg_ado !== 'undefined' ? svg_ado : '', RenderAudioQualityTab);
+        nestPanel('video', 'Video', typeof svg_vdo !== 'undefined' ? svg_vdo : '', RenderVideoQualityTab);
+        pane.appendChild(nest);
+    }
+
     async function RenderAccountTab(pane) {
-    
         const dcn = OA(document.createElement('div'), { className: 'user-content' });
         const dtl1 = OA(document.createElement('div'), { className: 'page-detail' });
         dcn.append(dtl1);
-    
-        // ========== مهمان: لاگین + ثبت‌نام (RenderAuthForm) ==========
+
+        // guest: login/register only
         if (!SN.user || !SN.user.loggedIn) {
             const passSection = OA(document.createElement('div'), {
                 className: 'login-section login-password-section'
@@ -4169,34 +4297,31 @@ if (!empty($_SESSION['loggedin'])) {
             });
             dtl1.append(passSection);
 
-            // ریست لوکال — حتی بدون لاگین
             const clearLocalBtn = OA(document.createElement('div'), {
-                className: 'setting-item focusable m-top-2',
-                innerHTML: 'پاک کردن دادهٔ محلی'
+                className: 'btn btn-model-3 m-top-1',
+                innerHTML: 'Clear local data'
             });
             clearLocalBtn.addEventListener('click', () => {
                 ResetLocalProfile();
-                clearLocalBtn.innerHTML = 'پاک شد';
-                setTimeout(() => { clearLocalBtn.innerHTML = 'پاک کردن دادهٔ محلی'; }, 800);
+                clearLocalBtn.innerHTML = 'Cleared';
+                setTimeout(() => { clearLocalBtn.innerHTML = 'Clear local data'; }, 800);
             });
             dtl1.append(clearLocalBtn);
-    
             pane.append(dcn);
             return;
         }
-    
-        // ========== لاگین ==========
+
         LoadProfile();
-    
+
         const displayName =
             [SN.user.first_name, SN.user.last_name].filter(Boolean).join(' ') ||
             SN.user.name ||
             '';
-    
+
         dtl1.append(
             OA(document.createElement('div'), {
                 className: 'setting-title',
-                innerHTML: displayName
+                innerHTML: displayName || 'Account'
             })
         );
         if (SN.user.name) {
@@ -4207,7 +4332,6 @@ if (!empty($_SESSION['loggedin'])) {
                 })
             );
         }
-        
         if (SN.user.email) {
             dtl1.append(
                 OA(document.createElement('div'), {
@@ -4216,210 +4340,105 @@ if (!empty($_SESSION['loggedin'])) {
                 })
             );
         }
-    
-        // ---- ردیف اکشن‌های حساب: خروج | بروزرسانی همه | پاک کردن لوکال ----
+
         const accountActions = OA(document.createElement('div'), {
             className: 'account-actions m-top-1'
         });
-    
+
         const logoutBtn = OA(document.createElement('div'), {
-            className: 'btn btn-sm btn-model-3 m-top-1',
-            innerHTML: 'خروج از حساب'
+            className: 'btn btn-model-3',
+            innerHTML: 'Log out'
         });
         logoutBtn.addEventListener('click', () => {
             LogoutUser();
-            if (pane) {
-                RerenderAccountPane(pane);
-            }
+            if (pane) RerenderAccountPane(pane);
         });
-    
+
         const syncAllBtn = OA(document.createElement('div'), {
-            className: 'btn btn-sm btn-model-3 m-top-1',
-            innerHTML: 'بروزرسانی همه'
+            className: 'btn btn-model-3',
+            innerHTML: 'Sync all'
         });
         syncAllBtn.addEventListener('click', async () => {
             syncAllBtn.innerHTML = '...';
             const ok = await ManualSyncAll();
-            syncAllBtn.innerHTML = ok ? 'انجام شد' : 'خطا';
-            setTimeout(() => {
-                syncAllBtn.innerHTML = 'بروزرسانی همه';
-                renderDevicesList(devicesBox);
-                renderFavoriteCounts(favBox);
-                renderPlaylistCounts(plBox);
-                renderHistoryCounts(histBox);
-            }, 800);
+            syncAllBtn.innerHTML = ok ? 'Done' : 'Error';
+            setTimeout(() => { syncAllBtn.innerHTML = 'Sync all'; }, 800);
         });
-    
+
         const clearLocalBtn = OA(document.createElement('div'), {
-            className: 'btn btn-sm btn-model-3 m-top-1',
-            innerHTML: 'پاک کردن دادهٔ محلی'
+            className: 'btn btn-model-3',
+            innerHTML: 'Clear local data'
         });
         clearLocalBtn.addEventListener('click', () => {
             ResetLocalProfile();
-            renderFavoriteCounts(favBox);
-            renderPlaylistCounts(plBox);
-            clearLocalBtn.innerHTML = 'پاک شد';
-            setTimeout(() => { clearLocalBtn.innerHTML = 'پاک کردن دادهٔ محلی'; }, 800);
+            clearLocalBtn.innerHTML = 'Cleared';
+            setTimeout(() => { clearLocalBtn.innerHTML = 'Clear local data'; }, 800);
         });
-    
-        accountActions.append(logoutBtn, syncAllBtn, clearLocalBtn);
+
+        const changePassBtn = OA(document.createElement('div'), {
+            className: 'btn btn-model-1',
+            innerHTML: 'Change password'
+        });
+        const passMsg = OA(document.createElement('div'), {
+            className: 'login-ok',
+            style: 'display:none'
+        });
+        const passErr = OA(document.createElement('div'), {
+            className: 'login-error',
+            style: 'display:none'
+        });
+        changePassBtn.addEventListener('click', async () => {
+            passMsg.style.display = 'none';
+            passErr.style.display = 'none';
+            const email = (SN.user && SN.user.email) ? String(SN.user.email).trim() : '';
+            if (!email) {
+                passErr.innerHTML = 'No email on this account. Add an email to reset password.';
+                passErr.style.display = 'block';
+                return;
+            }
+            changePassBtn.innerHTML = '...';
+            await AttemptRequestPasswordReset(email, passErr, passMsg);
+            changePassBtn.innerHTML = 'Change password';
+        });
+
+        accountActions.append(logoutBtn, syncAllBtn, clearLocalBtn, changePassBtn, passErr, passMsg);
         dtl1.append(accountActions);
         pane.append(dcn);
-    
-        // ========== سکشن دستگاه‌ها ==========
-        const secDevices = OA(document.createElement('div'), { className: 'section m-top-1' });
+
+        // Devices only (no section-header title — parent accordion is Profile)
+        const secDevices = OA(document.createElement('div'), { className: 'section m-top-2' });
         secDevices.append(
             OA(document.createElement('div'), {
-                className: 'section-header',
-                // title
-            })
-        );
-        const devHeader = OA(document.createElement('div'), { className: 'section-header' });
-        devHeader.append(
-            OA(document.createElement('div'), {
-                className: 'title',
-                innerHTML: 'دستگاه‌های فعال'
+                className: 'setting-subtitle',
+                innerHTML: 'Active devices'
             })
         );
         const devicesBox = OA(document.createElement('div'), { className: 'devices-list content' });
-        secDevices.append(devHeader, devicesBox);
-    
+        secDevices.append(devicesBox);
         renderDevicesList(devicesBox);
         refreshDevicesList(devicesBox);
-        
-        const Brow = OA(document.createElement('div'), {
-            className: 'setting-row'
-        });
-        
+
+        const Brow = OA(document.createElement('div'), { className: 'setting-row' });
         const refreshDevBtn = OA(document.createElement('div'), {
-            className: 'btn btn-sm btn-model-4 m-top-1',
-            innerHTML: 'بروزرسانی دستگاه‌ها'
+            className: 'btn btn-model-3',
+            innerHTML: 'Refresh devices'
         });
         refreshDevBtn.addEventListener('click', () => {
             refreshDevBtn.innerHTML = '...';
             refreshDevicesList(devicesBox, () => {
-                refreshDevBtn.innerHTML = 'بروزرسانی دستگاه‌ها';
+                refreshDevBtn.innerHTML = 'Refresh devices';
             });
         });
-        
         const addDevBtn = OA(document.createElement('a'), {
-            className: 'btn btn-sm btn-model-4 m-top-1',
-            innerHTML: 'Add a Device',
+            className: 'btn btn-model-3',
+            innerHTML: 'Add a device',
             href: '/pair'
         });
-
-        
         Brow.append(refreshDevBtn, addDevBtn);
-        
         secDevices.append(Brow);
         pane.append(secDevices);
-    
-        // ========== سکشن فاوریت (فقط تعداد) ==========
-        await HydrateProfileItems();
-    
-        const secFavorites = OA(document.createElement('div'), { className: 'section m-top-1' });
-        const favHeader = OA(document.createElement('div'), { className: 'section-header' });
-        favHeader.append(
-            OA(document.createElement('div'), { className: 'title', innerHTML: 'Favorites' }),
-            OA(document.createElement('a'), {className: 'see-all', innerHTML: 'See All', href: '/library' })
-        );
-        
-         
-               
-        const favBox = OA(document.createElement('div'), { className: 'counts-list' });
-        secFavorites.append(favHeader, favBox);
-        renderFavoriteCounts(favBox);
-    
-        const syncFavBtn = OA(document.createElement('div'), {
-            className: 'btn btn-sm btn-model-4 m-top-1',
-            innerHTML: 'همگام‌سازی علاقه‌مندی‌ها'
-        });
-        syncFavBtn.addEventListener('click', async () => {
-            syncFavBtn.innerHTML = '...';
-            const ok = await ManualSyncFavorites();
-            syncFavBtn.innerHTML = ok ? 'انجام شد' : 'خطا';
-            setTimeout(() => {
-                syncFavBtn.innerHTML = 'همگام‌سازی علاقه‌مندی‌ها';
-                renderFavoriteCounts(favBox);
-            }, 800);
-        });
-        secFavorites.append(syncFavBtn);
-        pane.append(secFavorites);
-    
-        // ========== سکشن پلی‌لیست (تعداد) ==========
-        const secPlaylists = OA(document.createElement('div'), { className: 'section m-top-1' });
-        const plHeader = OA(document.createElement('div'), { className: 'section-header' });
-        plHeader.append(
-            OA(document.createElement('div'), { className: 'title', innerHTML: 'Playlists' }),
-            OA(document.createElement('a'), {className: 'see-all', innerHTML: 'See All', href: '/library/playlist' })
-        );
-        const plBox = OA(document.createElement('div'), { className: 'counts-list' });
-        secPlaylists.append(plHeader, plBox);
-        renderPlaylistCounts(plBox);
-    
-        const BProw = OA(document.createElement('div'), {
-            className: 'setting-row'
-        });
-        
-        const syncPlBtn = OA(document.createElement('div'), {
-            className: 'btn btn-sm btn-model-4 m-top-1',
-            innerHTML: 'همگام‌سازی پلی‌لیست‌ها'
-        });
-        syncPlBtn.addEventListener('click', async () => {
-            syncPlBtn.innerHTML = '...';
-            const ok = await ManualSyncPlaylists();
-            syncPlBtn.innerHTML = ok ? 'انجام شد' : 'خطا';
-            setTimeout(() => {
-                syncPlBtn.innerHTML = 'همگام‌سازی پلی‌لیست‌ها';
-                renderPlaylistCounts(plBox);
-            }, 800);
-        });
-        
-        const addPlBtn = OA(document.createElement('div'), {
-            className: 'btn btn-sm btn-model-4 m-top-1',
-            innerHTML: 'New Playlist'
-        });
-        addPlBtn.addEventListener('click', () => {
-            CRBW(null, 'playlist', 'add', { fresh: true });
-        });
-        
-        BProw.append(syncPlBtn, addPlBtn);
-        
-        secPlaylists.append(BProw);
-        pane.append(secPlaylists);
-    
-        // ==========شن هیستوری (جای خالی برای بعد) ==========
-        const secHistory = OA(document.createElement('div'), { className: 'section m-top-1' });
-        const histHeader = OA(document.createElement('div'), { className: 'section-header' });
-        histHeader.append(
-            OA(document.createElement('div'), { className: 'title', innerHTML: 'History' }),
-            OA(document.createElement('a'), {
-                className: 'see-all',
-                innerHTML: 'See All',
-                href: '/library' // یا /library و اسکرول؛ تک‌type: /library/history/song
-            })
-        );
-        const histBox = OA(document.createElement('div'), { className: 'counts-list' });
-        secHistory.append(histHeader, histBox);
-        renderHistoryCounts(histBox);
-        
-        const syncHistBtn = OA(document.createElement('div'), {
-            className: 'btn btn-sm btn-model-4 m-top-1',
-            innerHTML: 'همگام‌سازی تاریخچه'
-        });
-        syncHistBtn.addEventListener('click', async () => {
-            syncHistBtn.innerHTML = '...';
-            const ok = await ManualSyncHistory();
-            syncHistBtn.innerHTML = ok ? 'انجام شد' : 'خطا';
-            setTimeout(() => {
-                syncHistBtn.innerHTML = 'همگام‌سازی تاریخچه';
-                renderHistoryCounts(histBox);
-            }, 800);
-        });
-        secHistory.append(syncHistBtn);
-        pane.append(secHistory);
     }
-    
+
     /**
      * @param {HTMLElement} host
      * @param {{ mode?: 'login'|'register', onSuccess?: Function }} opts
@@ -5546,33 +5565,38 @@ if (!empty($_SESSION['loggedin'])) {
     
     async function RenderFavoriteTab(pane) {
         LoadProfile();
-    
-        // ManualSync
-        if (SN.user?.loggedIn) {
+
+        await HydrateProfileItems();
+
+        const listBox = OA(document.createElement('div'), { className: 'favorite-tab-list' });
+        pane.append(listBox);
+        renderFavoriteSections(listBox);
+
+        const foot = OA(document.createElement('div'), { className: 'ha-settings-foot' });
+        if (SN.user && SN.user.loggedIn) {
             const syncBtn = OA(document.createElement('div'), {
-                className: 'setting-item focusable',
-                innerHTML: 'همگام‌سازی با حساب'
+                className: 'btn btn-model-3',
+                innerHTML: 'Sync with account'
             });
-    
             syncBtn.addEventListener('click', async () => {
                 syncBtn.innerHTML = '...';
                 const ok = await ManualSyncFavorites();
-                syncBtn.innerHTML = ok ? 'همگام‌سازی انجام شد' : 'خطا در همگام‌سازی';
+                syncBtn.innerHTML = ok ? 'Synced' : 'Error';
                 setTimeout(() => {
-                    syncBtn.innerHTML = 'همگام‌سازی با حساب';
+                    syncBtn.innerHTML = 'Sync with account';
                     listBox.innerHTML = '';
                     renderFavoriteSections(listBox);
                 }, 800);
             });
-    
-            pane.append(syncBtn);
+            foot.append(syncBtn);
         }
-    
-        await HydrateProfileItems();
-    
-        const listBox = OA(document.createElement('div'), { className: 'favorite-tab-list' });
-        pane.append(listBox);
-        renderFavoriteSections(listBox);
+        const seeAll = OA(document.createElement('a'), {
+            className: 'btn btn-model-1',
+            href: '/library',
+            innerHTML: 'See all'
+        });
+        foot.append(seeAll);
+        pane.append(foot);
     }
     
     function renderFavoriteSections(container) {
@@ -5588,21 +5612,31 @@ if (!empty($_SESSION['loggedin'])) {
             { type: 'playlist',    label: 'Playlists',    render: (ids) => CRGC(ids, 'playlist') },
         ];
     
-        // برای رندر داخل container، موقتاً MCNT را عوض می‌کنیم
         const oldMCNT = MCNT;
         MCNT = container;
     
+        let any = false;
         for (const sec of sections) {
             const ids = SN.profile.favorite[sec.type];
             if (!ids || !ids.length) continue;
-    
-            const hed = OA(document.createElement('div'), { className: 'section-header m-top-3' });
-            const ht = OA(document.createElement('h2'), { className: 'title', innerHTML: sec.label });
-            hed.append(ht);
-            container.append(hed);
-    
+            any = true;
+            // برچسب کوچک — بدون section-header / see-all
+            container.append(
+                OA(document.createElement('div'), {
+                    className: 'setting-subtitle m-top-1',
+                    innerHTML: sec.label
+                })
+            );
             const node = sec.render(ids);
             if (node) container.append(node);
+        }
+        if (!any) {
+            container.append(
+                OA(document.createElement('div'), {
+                    className: 'text2',
+                    innerHTML: 'No favorites yet'
+                })
+            );
         }
     
         MCNT = oldMCNT;
@@ -5670,67 +5704,67 @@ if (!empty($_SESSION['loggedin'])) {
     async function RenderPlaylistTab(pane) {
         LoadProfile();
 
-        // ---- ساخت پلی‌لیست جدید (مهمان یا لاگین؛ فعلاً فقط لوکال) ----
-        const createBox = OA(document.createElement('div'), { className: 'playlist-create m-top-1' });
-    
+        const createBox = OA(document.createElement('div'), {
+            className: 'playlist-create auth-form'
+        });
         const nameInput = OA(document.createElement('input'), {
             className: 'input focusable',
             type: 'text',
             maxlength: 100,
-            placeholder: 'نام پلی‌لیست'
+            placeholder: 'Playlist name'
         });
-    
         const createBtn = OA(document.createElement('div'), {
-            className: 'btn btn-model-1 focusable',
-            innerHTML: 'ساخت پلی‌لیست'
+            className: 'btn btn-model-1',
+            innerHTML: 'Create playlist'
         });
-    
         createBtn.addEventListener('click', () => {
             const name = nameInput.value.trim();
             if (!name) return;
-    
             const pl = createPlaylist(name);
             if (!pl) {
-                createBtn.innerHTML = 'سقف ۹۹ پر است';
+                createBtn.innerHTML = 'Limit reached';
                 return;
             }
-    
             nameInput.value = '';
             listBox.innerHTML = '';
             renderPlaylistList(listBox);
-            createBtn.innerHTML = 'ساخته شد';
-            setTimeout(() => { createBtn.innerHTML = 'ساخت پلی‌لیست'; }, 800);
+            createBtn.innerHTML = 'Created';
+            setTimeout(() => { createBtn.innerHTML = 'Create playlist'; }, 800);
         });
-    
         createBox.append(nameInput, createBtn);
         pane.append(createBox);
-    
-        // ManualSync
-        if (SN.user?.loggedIn) {
+
+        await HydrateProfileItems();
+        const listBox = OA(document.createElement('div'), { className: 'playlist-tab-list m-top-1' });
+        pane.append(listBox);
+        renderPlaylistList(listBox);
+
+        const foot = OA(document.createElement('div'), { className: 'ha-settings-foot' });
+        if (SN.user && SN.user.loggedIn) {
             const syncBtn = OA(document.createElement('div'), {
-                className: 'setting-item focusable',
-                innerHTML: 'همگام‌سازی با حساب'
+                className: 'btn btn-model-3',
+                innerHTML: 'Sync with account'
             });
-        
             syncBtn.addEventListener('click', async () => {
                 syncBtn.innerHTML = '...';
                 const ok = await ManualSyncPlaylists();
-                syncBtn.innerHTML = ok ? 'همگام‌سازی انجام شد' : 'خطا در همگام‌سازی';
+                syncBtn.innerHTML = ok ? 'Synced' : 'Error';
                 setTimeout(() => {
-                    syncBtn.innerHTML = 'همگام‌سازی با حساب';
+                    syncBtn.innerHTML = 'Sync with account';
                     listBox.innerHTML = '';
                     renderPlaylistList(listBox);
                 }, 800);
             });
-        
-            pane.append(syncBtn);
+            foot.append(syncBtn);
         }
-        
-        await HydrateProfileItems();
-        
-        const listBox = OA(document.createElement('div'), { className: 'playlist-tab-list m-top-1' });
-        pane.append(listBox);
-        renderPlaylistList(listBox);
+        foot.append(
+            OA(document.createElement('a'), {
+                className: 'btn btn-model-1',
+                href: '/library/playlist',
+                innerHTML: 'See all'
+            })
+        );
+        pane.append(foot);
     }
     
     function renderPlaylistList(container) {
