@@ -4242,21 +4242,26 @@ if (!empty($_SESSION['loggedin'])) {
             },
             function (success, j) {
     
-                // ناموفق: شبکه، خطا، یا پاسخ بدون access_token
+                // فقط وقتی سرور صریحاً سشن را باطل می‌کند لاگ‌اوت کن (نه خطای شبکه)
+                const fatal = j && (j.error === 'invalid_session' || j.error === 'account_disabled' || j.error === 'missing_fields');
                 if (!success || !j || j.error || !j.access_token) {
-                    SN.user = { loggedIn: false };
-                    SN.accessToken = null;
-    
-                    try {
-                        localStorage.removeItem('ha_rftk');
-                        localStorage.removeItem('ha_user');
-                    } catch (e) {}
-    
+                    if (fatal) {
+                        SN.user = { loggedIn: false };
+                        SN.accessToken = null;
+                        try {
+                            localStorage.removeItem('ha_rftk');
+                            localStorage.removeItem('ha_user');
+                        } catch (e) {}
+                    } else {
+                        // شبکه/۵۰۰: کش لاگین را نگه دار؛ access ممکن است خالی بماند تا درخواست بعدی
+                        console.warn('refresh_session failed', j && j.error ? j.error : 'network');
+                    }
                     if (onUpdate) onUpdate();
                     return;
                 }
     
                 // موفق — پروفایل کامل از سرور (شامل meta.tmb / join)
+                const newRefresh = j.refresh_token || refreshToken;
                 SN.accessToken = j.access_token;
                 PersistUserSession({
                     id: j.id_user || (SN.user && SN.user.id) || (cachedUser && cachedUser.id) || null,
@@ -4268,8 +4273,7 @@ if (!empty($_SESSION['loggedin'])) {
                     meta: j.meta || (SN.user && SN.user.meta) || (cachedUser && cachedUser.meta) || null,
                     photo: j.photo || null,
                     devices: (SN.user && SN.user.devices) || []
-                }, j.access_token, j.refresh_token);
-                
+                }, j.access_token, newRefresh);
 
                 startHistoryFlushTimer();
 
@@ -4278,7 +4282,7 @@ if (!empty($_SESSION['loggedin'])) {
                     SyncPlaylistsAfterLogin(),
                     SoftPullHistory()
                 ]).then(() => {
-                    maybeFlushHistory(true); // لوکال‌های pending از قبل را بفرست
+                    maybeFlushHistory(true);
                     if (onUpdate) onUpdate();
                 }).catch(() => {
                     if (onUpdate) onUpdate();
@@ -4491,8 +4495,18 @@ if (!empty($_SESSION['loggedin'])) {
                 break;
 
             case 'verify':
+            case 'verify-email':
                 try {
                     await CRVerify(LPS[2] || '');
+                } catch (e) {
+                    console.error(e);
+                }
+                if (done) done();
+                break;
+
+            case 'link-email':
+                try {
+                    await CRVerify(LPS[2] || '', 'link');
                 } catch (e) {
                     console.error(e);
                 }
@@ -5391,7 +5405,7 @@ if (!empty($_SESSION['loggedin'])) {
         });
     }
 
-    async function CRVerify(token) {
+    async function CRVerify(token, mode) {
         clearMainContent();
         const box = OA(document.createElement('div'), {
             className: 'page-header m-top-3',
@@ -5399,7 +5413,7 @@ if (!empty($_SESSION['loggedin'])) {
         });
         const title = OA(document.createElement('h1'), {
             className: 'title',
-            innerHTML: 'Email verification'
+            innerHTML: mode === 'link' ? 'Link accounts' : 'Email verification'
         });
         const msg = OA(document.createElement('div'), {
             className: 'text2 m-top-1',
@@ -5416,28 +5430,46 @@ if (!empty($_SESSION['loggedin'])) {
             return;
         }
 
+        function finishOk(j) {
+            if (j && j.merged) {
+                msg.innerHTML = j.message || 'Accounts linked. Please sign in with the email account.';
+            } else {
+                msg.innerHTML = 'Email verified successfully. You can log in now.';
+            }
+            RenderAuthForm(formHost, { mode: 'login' });
+            if (j && j.email) {
+                const inp = formHost.querySelector('input[type="text"], input.input');
+                if (inp) inp.value = j.email;
+            }
+        }
+
+        function finishErr(err) {
+            if (err === 'token_expired') {
+                msg.innerHTML = 'This link has expired. Request a new email from account settings.';
+            } else {
+                msg.innerHTML = 'Invalid or already used verification link.';
+            }
+            RenderAuthForm(formHost, { mode: 'login' });
+        }
+
         await new Promise(function (resolve) {
+            // 1) ثبت‌نام قدیمی: verify_email
             gjl({ a: 'verify_email', token: token }, function (success, j) {
                 if (success && j && j.ok) {
-                    msg.innerHTML = 'Email verified successfully. You can log in now.';
-                    if (j.email) {
-                        // پیش‌پر کردن با ایمیل تأییدشده
-                        RenderAuthForm(formHost, { mode: 'login' });
-                        const inp = formHost.querySelector('input[type="text"], input.input');
-                        if (inp) inp.value = j.email;
-                    } else {
-                        RenderAuthForm(formHost, { mode: 'login' });
-                    }
-                } else {
-                    const err = (j && j.error) || 'invalid_token';
-                    if (err === 'token_expired') {
-                        msg.innerHTML = 'This link has expired. Log in area → Resend verification email.';
-                    } else {
-                        msg.innerHTML = 'Invalid or already used verification link.';
-                    }
-                    RenderAuthForm(formHost, { mode: 'login' });
+                    finishOk(j);
+                    resolve();
+                    return;
                 }
-                resolve();
+                // 2) افزودن/تغییر ایمیل یا لینک مرج
+                gjl({ a: 'confirm_email_token', token: token }, function (success2, j2) {
+                    if (success2 && j2 && j2.ok) {
+                        finishOk(j2);
+                    } else {
+                        const err = (j2 && j2.error) || (j && j.error) || 'invalid_token';
+                        finishErr(err);
+                    }
+                    resolve();
+                });
             });
         });
         ADE();

@@ -218,6 +218,7 @@
     function HA_SendEmailAction($to, $token, $kind = 'verify', $baseUrl = 'https://hamrahang.ir') {
         $baseUrl = rtrim((string)$baseUrl, '/');
         if ($kind === 'link') {
+            // مسیر SPA: /link-email/{token}
             $link = $baseUrl . '/link-email/' . rawurlencode($token);
             $subject = 'Link your Hamrahang accounts';
             $html = '<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#222">'
@@ -230,8 +231,8 @@
             $text = "Link your Hamrahang accounts\n\nOpen:\n{$link}\n\nIf you did not request this, ignore this email.\n";
             return HA_SendMail($to, $subject, $html, $text);
         }
-        // add / change email
-        $link = $baseUrl . '/verify-email/' . rawurlencode($token);
+        // add / change email — همان مسیر /verify که قبلاً در SPA بود (نه verify-email که 404 می‌داد)
+        $link = $baseUrl . '/verify/' . rawurlencode($token);
         $subject = ($kind === 'change') ? 'Confirm your new email — Hamrahang' : 'Confirm your email — Hamrahang';
         $html = '<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#222">'
             . '<p>Hello,</p>'
