@@ -4967,10 +4967,15 @@ if (!empty($_SESSION['loggedin'])) {
             editOk.style.display = 'none';
             showOnly('view');
         });
-        saveEdit.addEventListener('click', () => {
+        saveEdit.addEventListener('click', async () => {
             editErr.style.display = 'none';
             editOk.style.display = 'none';
-            // UI-only: اگر ایمیل تازه وارد شده، پیام سناریوی لینک/مرج
+            const payload = {
+                a: 'update_profile',
+                username: (nameIn.value || '').trim(),
+                first_name: (fnIn.value || '').trim(),
+                last_name: (lnIn.value || '').trim()
+            };
             if (emailIn) {
                 const em = (emailIn.value || '').trim().toLowerCase();
                 if (em && em.indexOf('@') < 1) {
@@ -4978,13 +4983,37 @@ if (!empty($_SESSION['loggedin'])) {
                     editErr.style.display = 'block';
                     return;
                 }
-                if (em) {
-                    editOk.innerHTML = 'Profile fields will save; email needs verification if free, or link/merge if already registered (API next).';
-                    editOk.style.display = 'block';
-                    return;
-                }
+                if (em) payload.email = em;
             }
-            editOk.innerHTML = 'Profile save API is not wired yet — UI only.';
+            saveEdit.innerHTML = '...';
+            const j = await gja(payload);
+            saveEdit.innerHTML = 'Save';
+            if (!j || j.error) {
+                const err = (j && j.error) || 'error';
+                if (err === 'username_taken') editErr.innerHTML = 'Username is taken';
+                else if (err === 'invalid_username') editErr.innerHTML = 'Invalid username';
+                else if (err === 'invalid_email') editErr.innerHTML = 'Invalid email';
+                else if (err === 'unauthorized') editErr.innerHTML = 'Session expired. Log in again.';
+                else if (err === 'rate_limited') editErr.innerHTML = 'Too many attempts. Try later.';
+                else editErr.innerHTML = String(err);
+                editErr.style.display = 'block';
+                return;
+            }
+            if (j.user_name) SN.user.name = j.user_name;
+            if (j.first_name != null) SN.user.first_name = j.first_name;
+            if (j.last_name != null) SN.user.last_name = j.last_name;
+            if (j.email) SN.user.email = j.email;
+            if (j.email_status === 'verification_sent') {
+                editOk.innerHTML = j.message || 'Check your inbox to confirm this email.';
+            } else if (j.email_status === 'claim_sent') {
+                editOk.innerHTML = j.message || 'This email is registered. Check the inbox to link accounts.';
+            } else if (j.email_status === 'unavailable') {
+                editErr.innerHTML = 'This email cannot be used.';
+                editErr.style.display = 'block';
+                return;
+            } else {
+                editOk.innerHTML = 'Profile saved';
+            }
             editOk.style.display = 'block';
         });
         deleteBtn.addEventListener('click', () => {

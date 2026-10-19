@@ -200,6 +200,203 @@
         $text = "Reset your password — Hamrahang\n\nOpen this link (expires in 1 hour):\n{$link}\n\nIf you did not request this, ignore this email.\n";
         return HA_SendMail($to, $subject, $html, $text);
     }
+
+    /*
+     * user.act meanings (keep in sync with client):
+     *   0 = email not verified yet (registration pending)
+     *   1 = normal active user
+     *   2 = commercial tier 1
+     *   3 = commercial tier 2
+     *   4 = commercial tier 3
+     *   5 = recycled / empty pool row (u_name like DlT{id_user}; reusable for new signups)
+     *   6 = blocked / disabled
+     *   7 = admin (limited)
+     *   8 = admin (elevated)
+     *   9 = admin (full)
+     */
+
+    function HA_SendEmailAction($to, $token, $kind = 'verify', $baseUrl = 'https://hamrahang.ir') {
+        $baseUrl = rtrim((string)$baseUrl, '/');
+        if ($kind === 'link') {
+            $link = $baseUrl . '/link-email/' . rawurlencode($token);
+            $subject = 'Link your Hamrahang accounts';
+            $html = '<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#222">'
+                . '<p>Hello,</p>'
+                . '<p>Someone asked to connect another Hamrahang login to this email. If this is you, open the link:</p>'
+                . '<p><a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '">'
+                . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '</a></p>'
+                . '<p style="color:#666;font-size:13px">If you did not request this, ignore this email.</p>'
+                . '<p>Hamrahang</p></div>';
+            $text = "Link your Hamrahang accounts\n\nOpen:\n{$link}\n\nIf you did not request this, ignore this email.\n";
+            return HA_SendMail($to, $subject, $html, $text);
+        }
+        // add / change email
+        $link = $baseUrl . '/verify-email/' . rawurlencode($token);
+        $subject = ($kind === 'change') ? 'Confirm your new email — Hamrahang' : 'Confirm your email — Hamrahang';
+        $html = '<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#222">'
+            . '<p>Hello,</p>'
+            . '<p>Confirm this email for your Hamrahang account:</p>'
+            . '<p><a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '">'
+            . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '</a></p>'
+            . '<p style="color:#666;font-size:13px">Link expires in 24 hours.</p>'
+            . '<p>Hamrahang</p></div>';
+        $text = "Confirm your email — Hamrahang\n\nOpen:\n{$link}\n";
+        return HA_SendMail($to, $subject, $html, $text);
+    }
+
+    /** Decode user.u_data JSON object */
+    function HA_UserDataArray($row) {
+        if (!is_array($row) || empty($row['u_data'])) return [];
+        $d = json_decode((string)$row['u_data'], true);
+        return is_array($d) ? $d : [];
+    }
+
+    /**
+     * Merge belongings from $fromId into $toId (email owner keeps identity).
+     * Call BEFORE recycling $fromId.
+     */
+    function HA_MergeUserBelongings($conn, $fromId, $toId) {
+        $fromId = (int)$fromId;
+        $toId = (int)$toId;
+        if ($fromId <= 0 || $toId <= 0 || $fromId === $toId) return false;
+
+        // favorites
+        @$conn->query(
+            "INSERT IGNORE INTO user_favorites (id_user, item_type, item_id, created_at)
+             SELECT {$toId}, item_type, item_id, created_at FROM user_favorites WHERE id_user = {$fromId}"
+        );
+        $st = $conn->prepare('DELETE FROM user_favorites WHERE id_user = ?');
+        if ($st) { $st->bind_param('i', $fromId); $st->execute(); }
+
+        // history
+        @$conn->query(
+            "INSERT INTO user_history (id_user, item_type, item_id, played_at)
+             SELECT {$toId}, item_type, item_id, played_at FROM user_history WHERE id_user = {$fromId}
+             ON DUPLICATE KEY UPDATE played_at = GREATEST(user_history.played_at, VALUES(played_at))"
+        );
+        $st = $conn->prepare('DELETE FROM user_history WHERE id_user = ?');
+        if ($st) { $st->bind_param('i', $fromId); $st->execute(); }
+
+        // playlists ownership
+        $st = $conn->prepare('UPDATE playlist SET id_user = ? WHERE id_user = ?');
+        if ($st) { $st->bind_param('ii', $toId, $fromId); $st->execute(); }
+
+        // devices → target (ignore conflicts on device_token unique if any)
+        @$conn->query(
+            "UPDATE IGNORE user_devices SET id_user = {$toId} WHERE id_user = {$fromId}"
+        );
+        $st = $conn->prepare('DELETE FROM user_devices WHERE id_user = ?');
+        if ($st) { $st->bind_param('i', $fromId); $st->execute(); }
+
+        // identity fields: telegram id if target empty
+        $st = $conn->prepare('SELECT id_tlg, u_photo FROM user WHERE id_user IN (?, ?)');
+        // simpler: two selects
+        $st = $conn->prepare('SELECT id_tlg, u_photo FROM user WHERE id_user = ? LIMIT 1');
+        $st->bind_param('i', $fromId);
+        $st->execute();
+        $from = $st->get_result()->fetch_assoc();
+        $st->bind_param('i', $toId);
+        $st->execute();
+        $to = $st->get_result()->fetch_assoc();
+        if ($from && $to) {
+            $fromTlg = (int)($from['id_tlg'] ?? 0);
+            $toTlg = (int)($to['id_tlg'] ?? 0);
+            if ($fromTlg > 0 && $toTlg <= 0) {
+                $u = $conn->prepare('UPDATE user SET id_tlg = ? WHERE id_user = ?');
+                if ($u) { $u->bind_param('ii', $fromTlg, $toId); $u->execute(); }
+            }
+            $fromPhoto = trim((string)($from['u_photo'] ?? ''));
+            $toPhoto = trim((string)($to['u_photo'] ?? ''));
+            if ($fromPhoto !== '' && $toPhoto === '') {
+                $u = $conn->prepare('UPDATE user SET u_photo = ? WHERE id_user = ?');
+                if ($u) { $u->bind_param('si', $fromPhoto, $toId); $u->execute(); }
+            }
+        }
+        return true;
+    }
+
+    /** Mark user row as recycled pool (act=5, u_name=DlT{id}) */
+    function HA_RecycleUser($conn, $id_user) {
+        $id_user = (int)$id_user;
+        if ($id_user <= 0) return false;
+        $uname = 'DlT' . $id_user;
+        $act = 5;
+        $empty = '';
+        $zero = 0;
+        // clear sensitive + free unique email
+        $sql = 'UPDATE user SET act = ?, u_name = ?, u_email = NULL, u_pass = ?, f_name = ?, l_name = ?,
+                id_tlg = ?, u_data = NULL, u_photo = ? WHERE id_user = ?';
+        $st = $conn->prepare($sql);
+        if (!$st) return false;
+        // i s s s s i s i
+        $st->bind_param('isssissi', $act, $uname, $empty, $empty, $empty, $zero, $empty, $id_user);
+        return $st->execute();
+    }
+
+    /**
+     * Start add/change/link email flow for $me row with target $emailIn.
+     * Never writes u_email directly — always token mail.
+     * @return array status fields for JSON
+     */
+    function HA_StartEmailFlow($conn, $me, $emailIn) {
+        $emailIn = strtolower(trim((string)$emailIn));
+        $id_user = (int)$me['id_user'];
+        $current = strtolower(trim((string)($me['u_email'] ?? '')));
+
+        if ($current !== '' && $current === $emailIn) {
+            return ['email_status' => 'unchanged'];
+        }
+
+        $chk = $conn->prepare('SELECT id_user, act, u_email, u_data FROM user WHERE u_email = ? LIMIT 1');
+        $chk->bind_param('s', $emailIn);
+        $chk->execute();
+        $owner = $chk->get_result()->fetch_assoc();
+
+        // --- email already on another account → link/merge claim ---
+        if ($owner && (int)$owner['id_user'] !== $id_user) {
+            if ((int)$owner['act'] === 6 || (int)$owner['act'] === 5) {
+                return ['email_status' => 'unavailable', 'error' => 'email_unavailable'];
+            }
+            $raw = bin2hex(random_bytes(24));
+            $tokenHash = hash('sha256', $raw);
+            $data = HA_UserDataArray($owner);
+            $data['link_token'] = $tokenHash;
+            $data['link_exp'] = time() + 86400;
+            $data['link_from'] = $id_user;
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $oid = (int)$owner['id_user'];
+            $u = $conn->prepare('UPDATE user SET u_data = ? WHERE id_user = ?');
+            $u->bind_param('si', $json, $oid);
+            $u->execute();
+            $mailOk = HA_SendEmailAction($emailIn, $raw, 'link');
+            return [
+                'email_status' => 'claim_sent',
+                'mail_sent' => (bool)$mailOk,
+                'message' => 'This email is already registered. If it is yours, check the inbox to link accounts.'
+            ];
+        }
+
+        // --- free email (or same user changing toward free address) ---
+        $raw = bin2hex(random_bytes(24));
+        $tokenHash = hash('sha256', $raw);
+        $data = HA_UserDataArray($me);
+        $data['pending_email'] = $emailIn;
+        $data['em_token'] = $tokenHash;
+        $data['em_exp'] = time() + 86400;
+        $data['em_mode'] = ($current === '') ? 'add' : 'change';
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $u = $conn->prepare('UPDATE user SET u_data = ? WHERE id_user = ?');
+        $u->bind_param('si', $json, $id_user);
+        $u->execute();
+        $kind = ($current === '') ? 'add' : 'change';
+        $mailOk = HA_SendEmailAction($emailIn, $raw, $kind);
+        return [
+            'email_status' => 'verification_sent',
+            'mail_sent' => (bool)$mailOk,
+            'pending_email' => $emailIn,
+            'message' => 'Check your inbox to confirm this email.'
+        ];
+    }
     
     function ContentTypeToInt($type) {
         static $map = [
@@ -663,7 +860,7 @@
                 exit();
             }
 
-            // act: 0=ایمیل تأییدنشده | 1=عادی | 2–5=تجاری | 6=مسدود | 7–9=ادمین
+            // act: see HA_User act comments (0 verify, 1 normal, 2-4 commercial, 5 recycled, 6 blocked, 7-9 admin)
             $actRaw = $row['act'] ?? null;
             if ($actRaw !== null && $actRaw !== '' && (int)$actRaw === 0) {
                 echo json_encode([
@@ -672,7 +869,7 @@
                 ]);
                 exit();
             }
-            if ($actRaw !== null && $actRaw !== '' && (int)$actRaw === 6) {
+            if ($actRaw !== null && $actRaw !== '' && ((int)$actRaw === 5 || (int)$actRaw === 6)) {
                 echo json_encode(['error' => 'account_disabled']);
                 exit();
             }
@@ -1081,6 +1278,217 @@
             $upd->bind_param('si', $newHash, $id_user);
             $upd->execute();
             echo json_encode(['ok' => true]);
+            exit();
+        }
+
+        // ---- به‌روزرسانی پروفایل (بدون اعمال مستقیم ایمیل) ----
+        if ($ACT == 'update_profile') {
+            if (!HA_RateLimit('update_profile', 30, 600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $id_user = (int) GetUserIdFromAccessToken();
+            if ($id_user <= 0) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+            $st = $conn->prepare('SELECT * FROM user WHERE id_user = ? LIMIT 1');
+            $st->bind_param('i', $id_user);
+            $st->execute();
+            $me = $st->get_result()->fetch_assoc();
+            if (!$me || (int)$me['act'] === 5 || (int)$me['act'] === 6) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+
+            $username = isset($JSD->username) ? trim((string)$JSD->username) : null;
+            $f_name   = isset($JSD->first_name) ? trim((string)$JSD->first_name) : null;
+            $l_name   = isset($JSD->last_name) ? trim((string)$JSD->last_name) : null;
+            $emailIn  = isset($JSD->email) ? strtolower(trim((string)$JSD->email)) : '';
+
+            if ($username !== null) {
+                if (strlen($username) < 3) {
+                    echo json_encode(['error' => 'invalid_username']);
+                    exit();
+                }
+                $chk = $conn->prepare('SELECT id_user FROM user WHERE u_name = ? AND id_user != ? LIMIT 1');
+                $chk->bind_param('si', $username, $id_user);
+                $chk->execute();
+                if ($chk->get_result()->num_rows > 0) {
+                    echo json_encode(['error' => 'username_taken']);
+                    exit();
+                }
+                $u = $conn->prepare('UPDATE user SET u_name = ? WHERE id_user = ?');
+                $u->bind_param('si', $username, $id_user);
+                $u->execute();
+            }
+            if ($f_name !== null || $l_name !== null) {
+                $fn = $f_name !== null ? $f_name : (string)($me['f_name'] ?? '');
+                $ln = $l_name !== null ? $l_name : (string)($me['l_name'] ?? '');
+                $u = $conn->prepare('UPDATE user SET f_name = ?, l_name = ? WHERE id_user = ?');
+                $u->bind_param('ssi', $fn, $ln, $id_user);
+                $u->execute();
+            }
+
+            $emailResult = null;
+            if ($emailIn !== '') {
+                if (!filter_var($emailIn, FILTER_VALIDATE_EMAIL)) {
+                    echo json_encode(['error' => 'invalid_email']);
+                    exit();
+                }
+                $emailResult = HA_StartEmailFlow($conn, $me, $emailIn);
+            }
+
+            // refresh me
+            $st->execute();
+            $me2 = $st->get_result()->fetch_assoc();
+            $out = [
+                'ok' => true,
+                'user_name'  => $me2['u_name'] ?? null,
+                'first_name' => $me2['f_name'] ?? null,
+                'last_name'  => $me2['l_name'] ?? null,
+                'email'      => $me2['u_email'] ?? null,
+            ];
+            if (is_array($emailResult)) {
+                $out = array_merge($out, $emailResult);
+            }
+            echo json_encode($out);
+            exit();
+        }
+
+        // ---- درخواست ایمیل (افزودن / تغییر) — همیشه لینک توکن ----
+        if ($ACT == 'request_email_change' || $ACT == 'request_email_add') {
+            if (!HA_RateLimit('request_email_change', 5, 3600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $id_user = (int) GetUserIdFromAccessToken();
+            if ($id_user <= 0) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+            $emailIn = isset($JSD->email) ? strtolower(trim((string)$JSD->email)) : '';
+            if ($emailIn === '' || !filter_var($emailIn, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['error' => 'invalid_email']);
+                exit();
+            }
+            $st = $conn->prepare('SELECT * FROM user WHERE id_user = ? LIMIT 1');
+            $st->bind_param('i', $id_user);
+            $st->execute();
+            $me = $st->get_result()->fetch_assoc();
+            if (!$me || (int)$me['act'] === 5 || (int)$me['act'] === 6) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+            $emailResult = HA_StartEmailFlow($conn, $me, $emailIn);
+            echo json_encode(array_merge(['ok' => true], is_array($emailResult) ? $emailResult : []));
+            exit();
+        }
+
+        // ---- تأیید توکن ایمیل / لینک مرج ----
+        if ($ACT == 'confirm_email_token') {
+            if (!HA_RateLimit('confirm_email_token', 20, 600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $token = isset($JSD->token) ? trim((string)$JSD->token) : '';
+            if ($token === '' || strlen($token) < 16) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+            $tokenHash = hash('sha256', $token);
+            $like = '%' . $conn->real_escape_string(substr($tokenHash, 0, 16)) . '%';
+            // جست‌وجو در u_data برای em_token یا link_token
+            $sql = "SELECT * FROM user WHERE u_data LIKE '{$like}' LIMIT 20";
+            $res = $conn->query($sql);
+            $found = null;
+            $data = null;
+            $mode = null;
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $d = HA_UserDataArray($row);
+                    if (!empty($d['em_token']) && hash_equals((string)$d['em_token'], $tokenHash)) {
+                        if (empty($d['em_exp']) || (int)$d['em_exp'] < time()) {
+                            echo json_encode(['error' => 'token_expired']);
+                            exit();
+                        }
+                        $found = $row;
+                        $data = $d;
+                        $mode = isset($d['em_mode']) ? $d['em_mode'] : 'add';
+                        break;
+                    }
+                    if (!empty($d['link_token']) && hash_equals((string)$d['link_token'], $tokenHash)) {
+                        if (empty($d['link_exp']) || (int)$d['link_exp'] < time()) {
+                            echo json_encode(['error' => 'token_expired']);
+                            exit();
+                        }
+                        $found = $row;
+                        $data = $d;
+                        $mode = 'link';
+                        break;
+                    }
+                }
+            }
+            if (!$found || !$data) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+
+            if ($mode === 'link') {
+                // $found = email owner (target); link_from = telegram/other account
+                $toId = (int)$found['id_user'];
+                $fromId = (int)($data['link_from'] ?? 0);
+                if ($fromId <= 0 || $fromId === $toId) {
+                    echo json_encode(['error' => 'invalid_token']);
+                    exit();
+                }
+                if ((int)$found['act'] === 6 || (int)$found['act'] === 5) {
+                    echo json_encode(['error' => 'account_disabled']);
+                    exit();
+                }
+                HA_MergeUserBelongings($conn, $fromId, $toId);
+                HA_RecycleUser($conn, $fromId);
+                unset($data['link_token'], $data['link_exp'], $data['link_from']);
+                $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $u = $conn->prepare('UPDATE user SET u_data = ? WHERE id_user = ?');
+                $u->bind_param('si', $json, $toId);
+                $u->execute();
+                echo json_encode([
+                    'ok' => true,
+                    'merged' => true,
+                    'id_user' => $toId + (int)$IDHM,
+                    'message' => 'Accounts linked. Sign in with the email account.'
+                ]);
+                exit();
+            }
+
+            // add / change: pending_email on $found becomes real email
+            $pending = isset($data['pending_email']) ? strtolower(trim((string)$data['pending_email'])) : '';
+            if ($pending === '' || !filter_var($pending, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+            // still free?
+            $chk = $conn->prepare('SELECT id_user FROM user WHERE u_email = ? AND id_user != ? LIMIT 1');
+            $uid = (int)$found['id_user'];
+            $chk->bind_param('si', $pending, $uid);
+            $chk->execute();
+            if ($chk->get_result()->num_rows > 0) {
+                echo json_encode(['error' => 'email_taken']);
+                exit();
+            }
+            unset($data['em_token'], $data['em_exp'], $data['em_mode'], $data['pending_email']);
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $act = (int)$found['act'];
+            if ($act === 0) $act = 1;
+            $u = $conn->prepare('UPDATE user SET u_email = ?, u_data = ?, act = ? WHERE id_user = ?');
+            $u->bind_param('ssii', $pending, $json, $act, $uid);
+            $u->execute();
+            echo json_encode([
+                'ok' => true,
+                'email' => $pending,
+                'id_user' => $uid + (int)$IDHM
+            ]);
             exit();
         }
         
