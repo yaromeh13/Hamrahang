@@ -604,6 +604,44 @@ require_once __DIR__ . '/int/h_api.php';
     gap: 10px;
 }
 
+
+.ha-pass-wrap {
+    position: relative;
+    width: 100%;
+    display: block;
+}
+.ha-pass-wrap:has(input.is-hidden) {
+    display: none !important;
+}
+.ha-pass-wrap input.input {
+    padding-right: 48px !important;
+}
+.ha-pass-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    padding: 0;
+    border-radius: 8px;
+}
+.ha-pass-toggle:hover {
+    color: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.06);
+}
+.ha-pass-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
 .ha-count-row {
     display: flex;
     align-items: center;
@@ -2985,6 +3023,8 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_eql = '<div class="playing-eq"><span class="playing-eq-bar playing-eq-bar1"></span><span class="playing-eq-bar playing-eq-bar2"></span><span class="playing-eq-bar playing-eq-bar3"></span></div>';
     var svg_tlg = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" style="width:22px;height:22px" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M21.9453125,2.7646484c-0.4393311-0.3643188-1.0431519-0.4580688-1.5722656-0.2441406L2.4560547,9.7539062c-0.788147,0.3244019-1.1640625,1.2263184-0.8396606,2.0144043c0.1677856,0.4075928,0.50177,0.723938,0.9177856,0.8693848l3.8652344,1.34375l2.0947266,6.9257812c0.0042114,0.0140991,0.0171509,0.0227051,0.022583,0.0362549c0.0216675,0.0552368,0.0533447,0.1060791,0.0933228,0.1499023c0.0148926,0.0176392,0.0311279,0.0341797,0.0484619,0.0494385c0.0521851,0.043335,0.112793,0.0753784,0.1779785,0.0940552c0.0099487,0.0029297,0.0166016,0.0117798,0.0267334,0.0140991l0.0058594-0.0002441l0.0029297,0.0012207c0.0333862,0.0074463,0.0674438,0.0110474,0.1015625,0.0107422c0.0446167-0.0015869,0.0888672-0.0092773,0.1313477-0.0228882c0.0082397-0.0022583,0.0165405-0.0016479,0.0245972-0.0043335c0.0725708-0.0255737,0.1381226-0.067627,0.1915283-0.1229248c0.0062256-0.0062256,0.015686-0.0073242,0.0216675-0.013916l3.0136719-3.3251953l4.3964844,3.4042969C17.0200195,21.3865967,17.3493652,21.500061,17.6884155,21.5c0.7333984-0.0001221,1.3664551-0.513855,1.5175781-1.2314453L22.46875,4.2509766C22.5817871,3.6968994,22.3805542,3.1256104,21.9453125,2.7646484z M9.5878906,15.2949219l-0.7072144,3.4367676l-1.4748535-4.8778076l7.3148804-3.809021l-4.9970703,4.9971313C9.654541,15.111145,9.6073608,15.1990967,9.5878906,15.2949219z M18.2265625,20.0673828c-0.0383301,0.184082-0.1696777,0.335022-0.3466797,0.3984375c-0.1729736,0.0665283-0.3682861,0.0368652-0.5136719-0.078125l-4.7636719-3.6884766c-0.2062378-0.159668-0.5006104-0.133728-0.6757812,0.0595703l-2.0956421,2.3121948l0.7059937-3.4274292l7.1884766-7.1894531c0.1953735-0.1950073,0.1956787-0.5114136,0.0006714-0.7067261c-0.1542358-0.1546021-0.3909912-0.1911011-0.5846558-0.0901489L6.7782593,13.053894l-3.9169312-1.3615112C2.6478271,11.6221313,2.5026245,11.4239502,2.5,11.1992188c-0.0103149-0.2263184,0.1236572-0.4343872,0.3339844-0.5185547l17.9140625-7.2324219c0.1871338-0.0794067,0.4030762-0.0461426,0.5576172,0.0859375c0.1538086,0.1241455,0.2244873,0.3244019,0.1826172,0.5175781L18.2265625,20.0673828z"></path></svg>';
     var svg_stg = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings shell-nav-icon" aria-hidden="true" data-variant="outline"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+    var svg_eye = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7s10 7 10 7s-3.5 7-10 7s-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+    var svg_eye_off = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"></path><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"></path><path d="M9.9 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-2.2 3.1"></path><path d="M6.1 6.1C3.8 7.8 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.1-.8"></path></svg>';
     var svg_phone = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>';
     var svg_tv = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>';
     var svg_devices = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8"></path><path d="M12 17v4"></path><rect x="16" y="8" width="5" height="8" rx="1"></rect></svg>';
@@ -4581,6 +4621,32 @@ if (!empty($_SESSION['loggedin'])) {
      * @param {HTMLElement} host
      * @param {{ mode?: 'login'|'register', onSuccess?: Function }} opts
      */
+
+    /** Password field + eye toggle */
+    function wrapPasswordInput(inputEl) {
+        const wrap = OA(document.createElement('div'), { className: 'ha-pass-wrap' });
+        const btn = OA(document.createElement('button'), {
+            className: 'ha-pass-toggle',
+            type: 'button',
+            title: 'Show password',
+            innerHTML: typeof svg_eye !== 'undefined' ? svg_eye : '👁'
+        });
+        btn.setAttribute('aria-label', 'Show password');
+        btn.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const show = inputEl.type === 'password';
+            inputEl.type = show ? 'text' : 'password';
+            btn.innerHTML = show
+                ? (typeof svg_eye_off !== 'undefined' ? svg_eye_off : '🙈')
+                : (typeof svg_eye !== 'undefined' ? svg_eye : '👁');
+            btn.title = show ? 'Hide password' : 'Show password';
+            btn.setAttribute('aria-label', btn.title);
+        });
+        wrap.append(inputEl, btn);
+        return wrap;
+    }
+
     function RenderAuthForm(host, opts) {
         opts = opts || {};
         let mode = opts.mode || 'login';
@@ -4750,7 +4816,7 @@ if (!empty($_SESSION['loggedin'])) {
         });
     
         applyMode();
-        root.append(errorEl, okEl, userIn, emailIn, nameIn, passIn, pass2, submit, switchBtn, forgotLink, resendLink);
+        root.append(errorEl, okEl, userIn, emailIn, nameIn, wrapPasswordInput(passIn), wrapPasswordInput(pass2), submit, switchBtn, forgotLink, resendLink);
         host.append(root);
     }
 
@@ -4796,7 +4862,7 @@ if (!empty($_SESSION['loggedin'])) {
             className: 'btn btn-model-1',
             innerHTML: 'Update password'
         });
-        formHost.append(errorEl, okEl, passIn, pass2, submit);
+        formHost.append(errorEl, okEl, wrapPasswordInput(passIn), wrapPasswordInput(pass2), submit);
 
         submit.addEventListener('click', async () => {
             errorEl.style.display = 'none';
