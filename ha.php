@@ -602,6 +602,24 @@ require_once __DIR__ . '/int/h_api.php';
 .ha-profile-pass.is-hidden {
     display: none !important;
 }
+
+.ha-profile-email-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    width: 100%;
+    margin-top: 4px;
+}
+.ha-profile-email-row .ha-profile-email-text {
+    flex: 1;
+    min-width: 140px;
+}
+.ha-profile-email-row .btn {
+    width: auto !important;
+    min-width: 130px;
+    flex-shrink: 0;
+}
 .ha-profile-head {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -4685,12 +4703,14 @@ if (!empty($_SESSION['loggedin'])) {
             passRoot.classList.toggle('is-hidden', which !== 'pass');
         }
 
-        // ---- VIEW ----
         const displayName =
             [SN.user.first_name, SN.user.last_name].filter(Boolean).join(' ') ||
             SN.user.name ||
             'Account';
+        const photo = SN.user.photo || SN.user.tmb || (SN.user.meta && SN.user.meta.tmb) || null;
+        const hasEmail = !!(SN.user.email && String(SN.user.email).trim());
 
+        // ---- VIEW (بدون قلم روی آواتار) ----
         const head = OA(document.createElement('div'), { className: 'ha-profile-head' });
         const avWrap = OA(document.createElement('div'), { className: 'ha-profile-avatar' });
         const art = OA(document.createElement('div'), { className: 'artwork ratio ratio-1x1 rounded-circle' });
@@ -4698,19 +4718,13 @@ if (!empty($_SESSION['loggedin'])) {
             className: 'placeholder rounded-circle',
             innerHTML: typeof svg_usr !== 'undefined' ? svg_usr : ''
         }));
-        const photo = SN.user.photo || SN.user.tmb || (SN.user.meta && SN.user.meta.tmb) || null;
         if (photo) {
-            const src = String(photo).indexOf('http') === 0 ? photo : (UT + photo + (String(photo).indexOf('.') >= 0 ? '' : '.jpg'));
+            const src = String(photo).indexOf('http') === 0
+                ? photo
+                : (UT + photo + (String(photo).indexOf('.') >= 0 ? '' : '.jpg'));
             art.append(OA(document.createElement('img'), { className: 'rounded-circle', src: src }));
         }
         avWrap.append(art);
-        const avEdit = OA(document.createElement('div'), {
-            className: 'ha-profile-avatar-edit',
-            title: 'Edit profile',
-            innerHTML: typeof svg_edit !== 'undefined' ? svg_edit : '✎'
-        });
-        avEdit.addEventListener('click', () => showOnly('edit'));
-        avWrap.append(avEdit);
 
         const info = OA(document.createElement('div'), { className: 'ha-profile-info' });
         info.append(OA(document.createElement('div'), {
@@ -4723,10 +4737,10 @@ if (!empty($_SESSION['loggedin'])) {
                 innerHTML: '@' + SN.user.name
             }));
         }
-        if (SN.user.email) {
+        if (hasEmail) {
             info.append(OA(document.createElement('div'), {
                 className: 'setting-subtitle',
-                innerHTML: SN.user.email
+                innerHTML: String(SN.user.email).trim()
             }));
         }
         const idRow = OA(document.createElement('div'), { className: 'ha-profile-id-row' });
@@ -4762,7 +4776,7 @@ if (!empty($_SESSION['loggedin'])) {
         accountActions.append(logoutBtn, changePassBtn);
         viewRoot.append(accountActions);
 
-        // ---- CHANGE PASSWORD FORM ----
+        // ---- CHANGE PASSWORD ----
         const passForm = OA(document.createElement('div'), { className: 'auth-form ha-profile-panel' });
         passForm.append(OA(document.createElement('div'), {
             className: 'setting-title',
@@ -4781,12 +4795,10 @@ if (!empty($_SESSION['loggedin'])) {
         });
         const passActions = OA(document.createElement('div'), { className: 'ha-profile-form-actions' });
         const passSubmit = OA(document.createElement('div'), {
-            className: 'btn btn-model-1',
-            innerHTML: 'Change'
+            className: 'btn btn-model-1', innerHTML: 'Change'
         });
         const passCancel = OA(document.createElement('div'), {
-            className: 'btn btn-model-3',
-            innerHTML: 'Cancel'
+            className: 'btn btn-model-3', innerHTML: 'Cancel'
         });
         passCancel.addEventListener('click', () => {
             passErr.style.display = 'none';
@@ -4837,7 +4849,7 @@ if (!empty($_SESSION['loggedin'])) {
         passForm.append(passErr, passOk, wrapPasswordInput(oldIn), wrapPasswordInput(newIn), wrapPasswordInput(new2In), passActions);
         passRoot.append(passForm);
 
-        // ---- EDIT PROFILE FORM (UI only for save/delete/email for now) ----
+        // ---- EDIT PROFILE (UI) ----
         const editForm = OA(document.createElement('div'), { className: 'auth-form ha-profile-panel' });
         editForm.append(OA(document.createElement('div'), {
             className: 'setting-title',
@@ -4846,7 +4858,7 @@ if (!empty($_SESSION['loggedin'])) {
         const editErr = OA(document.createElement('div'), { className: 'login-error', style: 'display:none' });
         const editOk = OA(document.createElement('div'), { className: 'login-ok', style: 'display:none' });
 
-        // thumb picker (UI)
+        // آواتار + قلم فقط اینجا
         const thumbRow = OA(document.createElement('div'), { className: 'ha-profile-head' });
         const thumbAv = OA(document.createElement('div'), { className: 'ha-profile-avatar' });
         const thumbArt = OA(document.createElement('div'), { className: 'artwork ratio ratio-1x1 rounded-circle' });
@@ -4855,14 +4867,14 @@ if (!empty($_SESSION['loggedin'])) {
             innerHTML: typeof svg_usr !== 'undefined' ? svg_usr : ''
         }));
         if (photo) {
-            const src = String(photo).indexOf('http') === 0 ? photo : (UT + photo + (String(photo).indexOf('.') >= 0 ? '' : '.jpg'));
+            const src = String(photo).indexOf('http') === 0
+                ? photo
+                : (UT + photo + (String(photo).indexOf('.') >= 0 ? '' : '.jpg'));
             thumbArt.append(OA(document.createElement('img'), { className: 'rounded-circle', src: src }));
         }
         thumbAv.append(thumbArt);
         const fileIn = OA(document.createElement('input'), {
-            type: 'file',
-            accept: 'image/*',
-            style: 'display:none'
+            type: 'file', accept: 'image/*', style: 'display:none'
         });
         const pickBtn = OA(document.createElement('div'), {
             className: 'ha-profile-avatar-edit',
@@ -4902,36 +4914,53 @@ if (!empty($_SESSION['loggedin'])) {
             className: 'input focusable', type: 'text', placeholder: 'Last name',
             maxlength: 60, value: SN.user.last_name || ''
         });
-        const emailRow = OA(document.createElement('div'), { className: 'setting-row m-top-1' });
-        emailRow.append(OA(document.createElement('div'), {
-            className: 'setting-subtitle',
-            style: 'flex:1',
-            innerHTML: 'Email: ' + (SN.user.email || '—')
-        }));
-        const changeEmailBtn = OA(document.createElement('div'), {
-            className: 'btn btn-model-3',
-            style: 'width:auto;min-width:140px',
-            innerHTML: 'Change email'
-        });
-        changeEmailBtn.addEventListener('click', () => {
-            editErr.style.display = 'none';
-            editOk.innerHTML = 'Email change will be sent as a verification link (coming next).';
-            editOk.style.display = 'block';
-        });
-        emailRow.append(changeEmailBtn);
+        editForm.append(editErr, editOk, nameIn, fnIn, lnIn);
+
+        // ایمیل: دارد → نمایش + Change email | ندارد → input ورود
+        let emailIn = null;
+        if (hasEmail) {
+            const emailRow = OA(document.createElement('div'), {
+                className: 'ha-profile-email-row'
+            });
+            emailRow.append(OA(document.createElement('div'), {
+                className: 'setting-subtitle ha-profile-email-text',
+                innerHTML: 'Email: ' + String(SN.user.email).trim()
+            }));
+            const changeEmailBtn = OA(document.createElement('div'), {
+                className: 'btn btn-model-3',
+                innerHTML: 'Change email'
+            });
+            changeEmailBtn.addEventListener('click', () => {
+                editErr.style.display = 'none';
+                editOk.innerHTML = 'A verification link will be emailed to confirm the new address (API next).';
+                editOk.style.display = 'block';
+            });
+            emailRow.append(changeEmailBtn);
+            editForm.append(emailRow);
+        } else {
+            emailIn = OA(document.createElement('input'), {
+                className: 'input focusable',
+                type: 'email',
+                placeholder: 'Email',
+                maxlength: 120
+            });
+            editForm.append(emailIn);
+            editForm.append(OA(document.createElement('div'), {
+                className: 'setting-subtitle',
+                style: 'margin-top:4px',
+                innerHTML: 'Add an email to enable recovery and linking.'
+            }));
+        }
 
         const formActions = OA(document.createElement('div'), { className: 'ha-profile-form-actions' });
         const cancelEdit = OA(document.createElement('div'), {
-            className: 'btn btn-model-3',
-            innerHTML: 'Cancel'
+            className: 'btn btn-model-3', innerHTML: 'Cancel'
         });
         const saveEdit = OA(document.createElement('div'), {
-            className: 'btn btn-model-1',
-            innerHTML: 'Save'
+            className: 'btn btn-model-1', innerHTML: 'Save'
         });
         const deleteBtn = OA(document.createElement('div'), {
-            className: 'btn btn-model-3 btn-danger',
-            innerHTML: 'Delete account'
+            className: 'btn btn-model-3 btn-danger', innerHTML: 'Delete account'
         });
         cancelEdit.addEventListener('click', () => {
             editErr.style.display = 'none';
@@ -4940,26 +4969,35 @@ if (!empty($_SESSION['loggedin'])) {
         });
         saveEdit.addEventListener('click', () => {
             editErr.style.display = 'none';
+            editOk.style.display = 'none';
+            // UI-only: اگر ایمیل تازه وارد شده، پیام سناریوی لینک/مرج
+            if (emailIn) {
+                const em = (emailIn.value || '').trim().toLowerCase();
+                if (em && em.indexOf('@') < 1) {
+                    editErr.innerHTML = 'Enter a valid email';
+                    editErr.style.display = 'block';
+                    return;
+                }
+                if (em) {
+                    editOk.innerHTML = 'Profile fields will save; email needs verification if free, or link/merge if already registered (API next).';
+                    editOk.style.display = 'block';
+                    return;
+                }
+            }
             editOk.innerHTML = 'Profile save API is not wired yet — UI only.';
             editOk.style.display = 'block';
         });
         deleteBtn.addEventListener('click', () => {
             editOk.style.display = 'none';
-            editErr.innerHTML = 'Delete is not applied yet. Account data must be anonymized carefully (unique email/username).';
+            editErr.innerHTML = 'Delete is not applied yet.';
             editErr.style.display = 'block';
         });
         formActions.append(cancelEdit, saveEdit, deleteBtn);
-
-        editForm.append(editErr, editOk, nameIn, fnIn, lnIn, emailRow, formActions);
+        editForm.append(formActions);
         editRoot.append(editForm);
     }
 
-    /**
-     * @param {HTMLElement} host
-     * @param {{ mode?: 'login'|'register', onSuccess?: Function }} opts
-     */
 
-    /** Password field + eye toggle */
     function wrapPasswordInput(inputEl) {
         const wrap = OA(document.createElement('div'), { className: 'ha-pass-wrap' });
         const btn = OA(document.createElement('button'), {
