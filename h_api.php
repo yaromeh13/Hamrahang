@@ -2807,6 +2807,247 @@ $stmt->execute();*/
             ]);
             exit();
         }
+
+        // ==========================================
+        // Profile / email (gja → uac with body { q: { a, ... } })
+        // ==========================================
+        if ($ACT == 'update_profile') {
+            if (!HA_RateLimit('update_profile', 30, 600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $st = $conn->prepare('SELECT * FROM user WHERE id_user = ? LIMIT 1');
+            $st->bind_param('i', $id_user);
+            $st->execute();
+            $me = $st->get_result()->fetch_assoc();
+            if (!$me || (int)$me['act'] === 5 || (int)$me['act'] === 6) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+
+            $username = isset($qObj->username) ? trim((string)$qObj->username) : null;
+            $f_name   = isset($qObj->first_name) ? trim((string)$qObj->first_name) : null;
+            $l_name   = isset($qObj->last_name) ? trim((string)$qObj->last_name) : null;
+            $emailIn  = isset($qObj->email) ? strtolower(trim((string)$qObj->email)) : '';
+
+            if ($username !== null && $username !== '') {
+                if (strlen($username) < 3) {
+                    echo json_encode(['error' => 'invalid_username']);
+                    exit();
+                }
+                $chk = $conn->prepare('SELECT id_user FROM user WHERE u_name = ? AND id_user != ? LIMIT 1');
+                $chk->bind_param('si', $username, $id_user);
+                $chk->execute();
+                if ($chk->get_result()->num_rows > 0) {
+                    echo json_encode(['error' => 'username_taken']);
+                    exit();
+                }
+                $u = $conn->prepare('UPDATE user SET u_name = ? WHERE id_user = ?');
+                $u->bind_param('si', $username, $id_user);
+                $u->execute();
+            }
+            if ($f_name !== null || $l_name !== null) {
+                $fn = $f_name !== null ? $f_name : (string)($me['f_name'] ?? '');
+                $ln = $l_name !== null ? $l_name : (string)($me['l_name'] ?? '');
+                $u = $conn->prepare('UPDATE user SET f_name = ?, l_name = ? WHERE id_user = ?');
+                $u->bind_param('ssi', $fn, $ln, $id_user);
+                $u->execute();
+            }
+
+            $emailResult = null;
+            if ($emailIn !== '') {
+                if (!filter_var($emailIn, FILTER_VALIDATE_EMAIL)) {
+                    echo json_encode(['error' => 'invalid_email']);
+                    exit();
+                }
+                $emailResult = HA_StartEmailFlow($conn, $me, $emailIn);
+            }
+
+            $st->execute();
+            $me2 = $st->get_result()->fetch_assoc();
+            $out = [
+                'ok' => true,
+                'user_name'  => $me2['u_name'] ?? null,
+                'first_name' => $me2['f_name'] ?? null,
+                'last_name'  => $me2['l_name'] ?? null,
+                'email'      => $me2['u_email'] ?? null,
+            ];
+            if (is_array($emailResult)) {
+                $out = array_merge($out, $emailResult);
+            }
+            echo json_encode($out);
+            exit();
+        }
+
+        if ($ACT == 'request_email_change' || $ACT == 'request_email_add') {
+            if (!HA_RateLimit('request_email_change', 5, 3600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $emailIn = isset($qObj->email) ? strtolower(trim((string)$qObj->email)) : '';
+            if ($emailIn === '' || !filter_var($emailIn, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['error' => 'invalid_email']);
+                exit();
+            }
+            $st = $conn->prepare('SELECT * FROM user WHERE id_user = ? LIMIT 1');
+            $st->bind_param('i', $id_user);
+            $st->execute();
+            $me = $st->get_result()->fetch_assoc();
+            if (!$me || (int)$me['act'] === 5 || (int)$me['act'] === 6) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+            $emailResult = HA_StartEmailFlow($conn, $me, $emailIn);
+            echo json_encode(array_merge(['ok' => true], is_array($emailResult) ? $emailResult : []));
+            exit();
+        }
+
+        if ($ACT == 'confirm_email_token') {
+            if (!HA_RateLimit('confirm_email_token', 20, 600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $token = isset($qObj->token) ? trim((string)$qObj->token) : '';
+            if ($token === '' || strlen($token) < 16) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+            $tokenHash = hash('sha256', $token);
+            $like = '%' . $conn->real_escape_string(substr($tokenHash, 0, 16)) . '%';
+            $sql = "SELECT * FROM user WHERE u_data LIKE '{$like}' LIMIT 20";
+            $res = $conn->query($sql);
+            $found = null;
+            $data = null;
+            $mode = null;
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $d = HA_UserDataArray($row);
+                    if (!empty($d['em_token']) && hash_equals((string)$d['em_token'], $tokenHash)) {
+                        if (empty($d['em_exp']) || (int)$d['em_exp'] < time()) {
+                            echo json_encode(['error' => 'token_expired']);
+                            exit();
+                        }
+                        $found = $row;
+                        $data = $d;
+                        $mode = isset($d['em_mode']) ? $d['em_mode'] : 'add';
+                        break;
+                    }
+                    if (!empty($d['link_token']) && hash_equals((string)$d['link_token'], $tokenHash)) {
+                        if (empty($d['link_exp']) || (int)$d['link_exp'] < time()) {
+                            echo json_encode(['error' => 'token_expired']);
+                            exit();
+                        }
+                        $found = $row;
+                        $data = $d;
+                        $mode = 'link';
+                        break;
+                    }
+                }
+            }
+            if (!$found || !$data) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+
+            if ($mode === 'link') {
+                $toId = (int)$found['id_user'];
+                $fromId = (int)($data['link_from'] ?? 0);
+                if ($fromId <= 0 || $fromId === $toId) {
+                    echo json_encode(['error' => 'invalid_token']);
+                    exit();
+                }
+                if ((int)$found['act'] === 6 || (int)$found['act'] === 5) {
+                    echo json_encode(['error' => 'account_disabled']);
+                    exit();
+                }
+                HA_MergeUserBelongings($conn, $fromId, $toId);
+                HA_RecycleUser($conn, $fromId);
+                unset($data['link_token'], $data['link_exp'], $data['link_from']);
+                $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $u = $conn->prepare('UPDATE user SET u_data = ? WHERE id_user = ?');
+                $u->bind_param('si', $json, $toId);
+                $u->execute();
+                echo json_encode([
+                    'ok' => true,
+                    'merged' => true,
+                    'id_user' => $toId + (int)$IDHM,
+                    'message' => 'Accounts linked. Sign in with the email account.'
+                ]);
+                exit();
+            }
+
+            $pending = isset($data['pending_email']) ? strtolower(trim((string)$data['pending_email'])) : '';
+            if ($pending === '' || !filter_var($pending, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+            $uid = (int)$found['id_user'];
+            $chk = $conn->prepare('SELECT id_user FROM user WHERE u_email = ? AND id_user != ? LIMIT 1');
+            $chk->bind_param('si', $pending, $uid);
+            $chk->execute();
+            if ($chk->get_result()->num_rows > 0) {
+                echo json_encode(['error' => 'email_taken']);
+                exit();
+            }
+            unset($data['em_token'], $data['em_exp'], $data['em_mode'], $data['pending_email']);
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $act = (int)$found['act'];
+            if ($act === 0) $act = 1;
+            $u = $conn->prepare('UPDATE user SET u_email = ?, u_data = ?, act = ? WHERE id_user = ?');
+            $u->bind_param('ssii', $pending, $json, $act, $uid);
+            $u->execute();
+            echo json_encode([
+                'ok' => true,
+                'email' => $pending,
+                'id_user' => $uid + (int)$IDHM
+            ]);
+            exit();
+        }
+
+        if ($ACT == 'change_password') {
+            if (!HA_RateLimit('change_password', 10, 3600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $oldPass = isset($qObj->old_password) ? (string)$qObj->old_password : '';
+            $newPass = isset($qObj->new_password) ? (string)$qObj->new_password : '';
+            if ($oldPass === '' || $newPass === '') {
+                echo json_encode(['error' => 'missing_fields']);
+                exit();
+            }
+            if (strlen($newPass) < 6) {
+                echo json_encode(['error' => 'password_too_short']);
+                exit();
+            }
+            $stmt = $conn->prepare('SELECT id_user, u_pass, act FROM user WHERE id_user = ? LIMIT 1');
+            $stmt->bind_param('i', $id_user);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+            if (!$row) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+            if ((int)$row['act'] === 6 || (int)$row['act'] === 5) {
+                echo json_encode(['error' => 'account_disabled']);
+                exit();
+            }
+            $hash = (string)($row['u_pass'] ?? '');
+            $ok = false;
+            if ($hash !== '') {
+                if (password_verify($oldPass, $hash)) $ok = true;
+                elseif (isset($hash[0]) && $hash[0] !== '$' && hash_equals($hash, $oldPass)) $ok = true;
+            }
+            if (!$ok) {
+                echo json_encode(['error' => 'wrong_password']);
+                exit();
+            }
+            $newHash = password_hash($newPass, PASSWORD_DEFAULT);
+            $upd = $conn->prepare('UPDATE user SET u_pass = ? WHERE id_user = ?');
+            $upd->bind_param('si', $newHash, $id_user);
+            $upd->execute();
+            echo json_encode(['ok' => true]);
+            exit();
+        }
     
         echo json_encode(['error' => 'invalid action']);
         exit();
