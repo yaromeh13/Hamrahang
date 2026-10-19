@@ -4840,6 +4840,7 @@ if (!empty($_SESSION['loggedin'])) {
                     else if (j.error === 'invalid_email') msg = 'Invalid email';
                     else if (j.error === 'password_too_short') msg = 'Password must be at least 6 characters';
                     else if (j.error === 'invalid_username') msg = 'Invalid username';
+                    else if (j.error === 'rate_limited') msg = 'Too many attempts. Try again later.';
                     errorEl.innerHTML = msg;
                     errorEl.style.display = 'block';
                     resolve(false);
