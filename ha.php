@@ -5941,7 +5941,7 @@ if (!empty($_SESSION['loggedin'])) {
         pane.append(foot);
     }
 
-    /** گزارش پلی‌لیست‌ها با همان رندر لیست (تامب placeholder + img) */
+    /** گزارش پلی‌لیست‌ها با CRGL (تامب + play + more) */
     function renderPlaylistReport(container) {
         LoadProfile();
         container.innerHTML = '';
@@ -5955,11 +5955,10 @@ if (!empty($_SESSION['loggedin'])) {
             );
             return;
         }
-        // CRSC از قانون تامب عمومی استفاده می‌کند
         const oldMCNT = MCNT;
         MCNT = container;
         try {
-            CRSC(ids, 'playlist');
+            CRGL(ids, 'playlist');
         } catch (e) {
             console.error(e);
         }
@@ -11459,21 +11458,25 @@ const PROFILE_KEY = 'ha_profile';
     function CRGL(ar,T,ART){
 
         const sec = OA(document.createElement("section"), {className: "track-line-container m-top-1"});
-        
+        if (!ar || !ar.length) return sec;
         
         ar.forEach((id) => {
+            if (id && typeof id === 'object' && id.id != null) id = id.id;
             
             let e = null;
             let url = HS;
             let TPS = svg_sng;
             
             if (T == 'song') {e = SN.song ? SN.song[id] : null; url = HS; }
+            if (T == 'podcast') {e = SN.podcast ? SN.podcast[id] : (SN.song ? SN.song[id] : null); url = HS; }
             if (T == 'album') {e = SN.album ? SN.album[id] : null; url = HL; }
             if (T == 'playlist') {e = SN.playlist ? SN.playlist[id] : null; url = HPL; TPS = svg_pls;}
+            if (T == 'musicvideo') {e = SN.musicvideo ? SN.musicvideo[id] : null; url = HV; }
+            if (T == 'video') {e = SN.video ? SN.video[id] : null; url = HV; }
             
             if (!e) {
-                console.log('CRGC: ' + T + ' not found:', id);
-                return; // داخل forEach = continue
+                console.log('CRGL: ' + T + ' not found:', id);
+                return;
             }
 
             let  artistList = [];
@@ -11483,24 +11486,26 @@ const PROFILE_KEY = 'ha_profile';
                 artistList.push(SN.artist[ART]);
                 primaryArtistUrl = SN.artist[ART].url || "";
             } else {
-                
                 const artistRefs = (e.artists && Array.isArray(e.artists)) ? e.artists : [];
                 artistRefs.forEach((artistRef) => {
-
                     const artistId =
                         typeof artistRef === "object"
                             ? artistRef.id
                             : artistRef;
-        
                     if (SN.artist && SN.artist[artistId]) {
                         artistList.push(SN.artist[artistId]);
                     }
                 });
-        
                 if (artistList.length > 0) {
                     primaryArtistUrl = artistList[0].url || "";
                 }
             }
+
+            // لینک: پلی‌لیست بدون پیشوند آرتیست
+            const itemSlug = (e.url || String(e.id || id));
+            const href = (T === 'playlist')
+                ? (url + e.id + '/' + itemSlug)
+                : (url + e.id + '/' + (primaryArtistUrl ? primaryArtistUrl + '-' : '') + itemSlug);
             
             const el = OA(document.createElement("div"), {className: "track-line"});
             const elb = OA(document.createElement("div"), {className: "box"});
@@ -11510,7 +11515,7 @@ const PROFILE_KEY = 'ha_profile';
                     UHERO(this._item, this._type);
             });
             
-            const ela = OA(document.createElement("a"), {href: url + e.id + '/' + primaryArtistUrl + "-" + e.url});
+            const ela = OA(document.createElement("a"), {href: href});
             const art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
             const sep = OA(document.createElement("span"), {className: "placeholder", innerHTML: TPS});
             art.append(sep);
@@ -11520,7 +11525,6 @@ const PROFILE_KEY = 'ha_profile';
 
             ela.addEventListener("mouseenter", function () {UHERO(e, T);});
             ela.append(art);
-            
             
             const dpl = OA(document.createElement("div"), {className: "play", innerHTML: svg_ply});
             dpl.addEventListener('click', (ev) => {
@@ -11535,25 +11539,34 @@ const PROFILE_KEY = 'ha_profile';
             });
             const dst = OA(document.createElement("div"), {className: "texts"});
             const det = OA(document.createElement("div"), {className: "title"}); 
-            const tta = OA(document.createElement("a"), {draggable: "false", href: url + e.id + '/' + primaryArtistUrl + "-" + e.url, innerHTML: e.name});
+            const tta = OA(document.createElement("a"), {draggable: "false", href: href, innerHTML: e.name || 'Playlist'});
             tta.addEventListener("mouseenter", function () {UHERO(e, T);});
             det.append(tta);      
 
             const dt2 = OA(document.createElement("div"), {className: "text2 artist artists-inline"});
-            artistList.forEach((artistObj, j) => {
-                const artL = OA(document.createElement("a"), {href: HA + artistObj.id + "/" + artistObj.url});
-                const artN = OA(document.createElement("span"), {innerHTML: artistObj.name});
-                artL.append(artN);
-                artL._item = artistObj.id;
-                artL._type = 'artist';
-                artL.addEventListener("mouseenter", function () {UHERO(artistObj, 'artist');});
-                dt2.append(artL);
-            
-                if (j < artistList.length - 1) {
-                    const sepSpan = OA(document.createElement("span"), {innerHTML: " - "});
-                    dt2.append(sepSpan);
+            if (T === 'playlist') {
+                // زیر آرتیست: تعداد آیتم / مالک
+                let sub = '';
+                const n = (e.meta && (e.meta.nci || e.meta.ncs)) || (Array.isArray(e.items) ? e.items.length : 0);
+                if (n) sub = n + (n === 1 ? ' item' : ' items');
+                if (e.owner_name) sub = (sub ? sub + ' · ' : '') + e.owner_name;
+                if (sub) {
+                    dt2.append(OA(document.createElement('span'), { innerHTML: sub }));
                 }
-            });
+            } else {
+                artistList.forEach((artistObj, j) => {
+                    const artL = OA(document.createElement("a"), {href: HA + artistObj.id + "/" + artistObj.url});
+                    const artN = OA(document.createElement("span"), {innerHTML: artistObj.name});
+                    artL.append(artN);
+                    artL._item = artistObj.id;
+                    artL._type = 'artist';
+                    artL.addEventListener("mouseenter", function () {UHERO(artistObj, 'artist');});
+                    dt2.append(artL);
+                    if (j < artistList.length - 1) {
+                        dt2.append(OA(document.createElement("span"), {innerHTML: " - "}));
+                    }
+                });
+            }
             
             const dmt = OA(document.createElement('div'), { className: 'meta' });
             dmt.append(
@@ -11567,14 +11580,13 @@ const PROFILE_KEY = 'ha_profile';
             const mor = OA(document.createElement("div"), {className: "more", innerHTML: svg_dot});
             mor.addEventListener("click", ()=>{CRBW(e.id,T);},false);
             
-            
             dst.append(det,dt2);
             el.append(ela,dpl,dst,dmt,dma,mor);
             sec.append(el);
         });
 
         MCNT.append(sec);
-
+        return sec;
     }
     
     /**
