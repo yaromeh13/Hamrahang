@@ -18,24 +18,95 @@
     $TLGRM_TOKEN = '8195304633:AAErtQNWATO0AM3KlAqJdMmFgShvo_McRrg';
     $IDHM = 11210700;
 
-    /** ارسال ایمیل ساده (تأیید اکانت و …) — در صورت نیاز بعداً SMTP */
+    /**
+     * SMTP config — fill host/user/pass on the server for real delivery.
+     * If enabled=false or host empty → falls back to PHP mail().
+     */
+    $HA_SMTP = [
+        'enabled'   => true,
+        'host'      => 'mail.hamrahang.ir',
+        'port'      => 587,
+        'user'      => '',
+        'pass'      => '',
+        'secure'    => 'tls', // tls | ssl | ''
+        'from'      => 'noreply@hamrahang.ir',
+        'from_name' => 'Hamrahang',
+        'timeout'   => 20,
+    ];
+
+    /** Simple IP rate limit (file-based). Returns true if allowed. */
+    function HA_RateLimit($bucket, $max = 8, $windowSec = 600) {
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? preg_replace('/[^0-9a-fA-F:\.]/', '', (string)$_SERVER['REMOTE_ADDR']) : '0';
+        $dir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'ha_rl';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0700, true);
+        }
+        $file = $dir . DIRECTORY_SEPARATOR . md5($bucket . '|' . $ip) . '.json';
+        $now = time();
+        $hits = [];
+        if (is_file($file)) {
+            $raw = @file_get_contents($file);
+            $decoded = $raw ? json_decode($raw, true) : null;
+            if (is_array($decoded)) {
+                foreach ($decoded as $t) {
+                    if (is_int($t) && ($now - $t) < $windowSec) $hits[] = $t;
+                }
+            }
+        }
+        if (count($hits) >= $max) {
+            return false;
+        }
+        $hits[] = $now;
+        @file_put_contents($file, json_encode($hits), LOCK_EX);
+        return true;
+    }
+
+    function HA_SmtpRead($fp) {
+        $data = '';
+        while (!feof($fp)) {
+            $line = fgets($fp, 515);
+            if ($line === false) break;
+            $data .= $line;
+            if (isset($line[3]) && $line[3] === ' ') break;
+        }
+        return $data;
+    }
+
+    function HA_SmtpCmd($fp, $cmd, $expectPrefix) {
+        if ($cmd !== null) {
+            fwrite($fp, $cmd . "\r\n");
+        }
+        $resp = HA_SmtpRead($fp);
+        if ($resp === '' || strpos($resp, (string)$expectPrefix) !== 0) {
+            return false;
+        }
+        return $resp;
+    }
+
+    /** Send via SMTP AUTH LOGIN when configured; otherwise PHP mail(). */
     function HA_SendMail($to, $subject, $htmlBody, $textBody = '') {
+        global $HA_SMTP;
         $to = trim((string)$to);
         if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
             return false;
         }
-        $fromEmail = 'noreply@hamrahang.ir';
-        $fromName  = 'Hamrahang';
+        $fromEmail = !empty($HA_SMTP['from']) ? $HA_SMTP['from'] : 'noreply@hamrahang.ir';
+        $fromName  = !empty($HA_SMTP['from_name']) ? $HA_SMTP['from_name'] : 'Hamrahang';
+        if ($textBody === '') {
+            $textBody = trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $htmlBody)));
+        }
+
         $boundary = 'ha_' . md5(uniqid((string)mt_rand(), true));
+        $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
         $headers = [];
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'From: ' . sprintf('%s <%s>', $fromName, $fromEmail);
         $headers[] = 'Reply-To: ' . $fromEmail;
+        $headers[] = 'To: ' . $to;
+        $headers[] = 'Subject: ' . $encodedSubject;
         $headers[] = 'Content-Type: multipart/alternative; boundary="' . $boundary . '"';
         $headers[] = 'X-Mailer: Hamrahang-Mail';
-        if ($textBody === '') {
-            $textBody = trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $htmlBody)));
-        }
+
         $body  = "--{$boundary}\r\n";
         $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
         $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
@@ -45,22 +116,88 @@
         $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
         $body .= chunk_split(base64_encode($htmlBody)) . "\r\n";
         $body .= "--{$boundary}--\r\n";
-        $ok = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, implode("\r\n", $headers), '-f' . $fromEmail);
-        return (bool)$ok;
+
+        $useSmtp = !empty($HA_SMTP['enabled']) && !empty($HA_SMTP['host']);
+        if ($useSmtp) {
+            $host = (string)$HA_SMTP['host'];
+            $port = (int)($HA_SMTP['port'] ?? 587);
+            $secure = strtolower((string)($HA_SMTP['secure'] ?? 'tls'));
+            $timeout = (int)($HA_SMTP['timeout'] ?? 20);
+            $remote = ($secure === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
+            $fp = @stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
+            if ($fp) {
+                stream_set_timeout($fp, $timeout);
+                $ok = true;
+                $ok = $ok && HA_SmtpCmd($fp, null, '220');
+                $ok = $ok && HA_SmtpCmd($fp, 'EHLO hamrahang.ir', '250');
+                if ($ok && $secure === 'tls') {
+                    $ok = HA_SmtpCmd($fp, 'STARTTLS', '220');
+                    if ($ok) {
+                        $ok = @stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+                        if ($ok) {
+                            $ok = HA_SmtpCmd($fp, 'EHLO hamrahang.ir', '250') !== false;
+                        }
+                    }
+                }
+                $user = (string)($HA_SMTP['user'] ?? '');
+                $pass = (string)($HA_SMTP['pass'] ?? '');
+                if ($ok && $user !== '') {
+                    $ok = HA_SmtpCmd($fp, 'AUTH LOGIN', '334');
+                    $ok = $ok && HA_SmtpCmd($fp, base64_encode($user), '334');
+                    $ok = $ok && HA_SmtpCmd($fp, base64_encode($pass), '235');
+                }
+                if ($ok) {
+                    $ok = HA_SmtpCmd($fp, 'MAIL FROM:<' . $fromEmail . '>', '250');
+                    $ok = $ok && HA_SmtpCmd($fp, 'RCPT TO:<' . $to . '>', '250');
+                    $ok = $ok && HA_SmtpCmd($fp, 'DATA', '354');
+                    if ($ok) {
+                        $msg = implode("\r\n", $headers) . "\r\n\r\n" . $body . "\r\n.";
+                        $ok = HA_SmtpCmd($fp, $msg, '250') !== false;
+                    }
+                }
+                @HA_SmtpCmd($fp, 'QUIT', '221');
+                fclose($fp);
+                if ($ok) return true;
+            }
+            // fall through to mail() if SMTP failed
+        }
+
+        $mailHeaders = [];
+        $mailHeaders[] = 'MIME-Version: 1.0';
+        $mailHeaders[] = 'From: ' . sprintf('%s <%s>', $fromName, $fromEmail);
+        $mailHeaders[] = 'Reply-To: ' . $fromEmail;
+        $mailHeaders[] = 'Content-Type: multipart/alternative; boundary="' . $boundary . '"';
+        $mailHeaders[] = 'X-Mailer: Hamrahang-Mail';
+        return (bool)@mail($to, $encodedSubject, $body, implode("\r\n", $mailHeaders), '-f' . $fromEmail);
     }
 
     function HA_SendVerifyEmail($to, $token, $baseUrl = 'https://hamrahang.ir') {
         $baseUrl = rtrim((string)$baseUrl, '/');
         $link = $baseUrl . '/verify/' . rawurlencode($token);
-        $subject = 'تأیید ایمیل — همراهنگ';
-        $html = '<div style="font-family:Tahoma,Arial,sans-serif;line-height:1.7;color:#222">'
-            . '<p>سلام،</p>'
-            . '<p>برای فعال‌سازی حساب همراهنگ روی لینک زیر بزنید:</p>'
+        $subject = 'Verify your email — Hamrahang';
+        $html = '<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#222">'
+            . '<p>Hello,</p>'
+            . '<p>Please verify your Hamrahang account by opening this link:</p>'
             . '<p><a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '">'
             . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '</a></p>'
-            . '<p style="color:#666;font-size:13px">اگر شما این درخواست را نداده‌اید، این پیام را نادیده بگیرید.</p>'
-            . '<p>همراهنگ</p></div>';
-        $text = "تأیید ایمیل همراهنگ\n\nلینک فعال‌سازی:\n{$link}\n";
+            . '<p style="color:#666;font-size:13px">If you did not create this account, you can ignore this email.</p>'
+            . '<p>Hamrahang</p></div>';
+        $text = "Verify your email — Hamrahang\n\nOpen this link to activate your account:\n{$link}\n\nIf you did not create this account, ignore this email.\n";
+        return HA_SendMail($to, $subject, $html, $text);
+    }
+
+    function HA_SendResetEmail($to, $token, $baseUrl = 'https://hamrahang.ir') {
+        $baseUrl = rtrim((string)$baseUrl, '/');
+        $link = $baseUrl . '/reset/' . rawurlencode($token);
+        $subject = 'Reset your password — Hamrahang';
+        $html = '<div style="font-family:Arial,Helvetica,sans-serif;line-height:1.6;color:#222">'
+            . '<p>Hello,</p>'
+            . '<p>We received a request to reset your Hamrahang password. Open this link:</p>'
+            . '<p><a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '">'
+            . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '</a></p>'
+            . '<p style="color:#666;font-size:13px">This link expires in 1 hour. If you did not request a reset, ignore this email.</p>'
+            . '<p>Hamrahang</p></div>';
+        $text = "Reset your password — Hamrahang\n\nOpen this link (expires in 1 hour):\n{$link}\n\nIf you did not request this, ignore this email.\n";
         return HA_SendMail($to, $subject, $html, $text);
     }
     
@@ -472,6 +609,10 @@
     
         // ---- ورود با یوزرنیم/پسورد ----
         if ($ACT == 'login_password') {
+            if (!HA_RateLimit('login_password', 20, 600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
 
             $username    = isset($JSD->username) ? trim($JSD->username) : '';
             $password    = isset($JSD->password) ? $JSD->password : '';
@@ -586,6 +727,10 @@
 
         // ---- ثبت‌نام با ایمیل ----
         if ($ACT == 'register_email') {
+            if (!HA_RateLimit('register_email', 5, 3600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
             $email    = isset($JSD->email) ? strtolower(trim((string)$JSD->email)) : '';
             $password = isset($JSD->password) ? (string)$JSD->password : '';
             $u_name   = isset($JSD->username) ? trim((string)$JSD->username) : '';
@@ -751,6 +896,10 @@
 
         // ---- ارسال دوباره ایمیل تأیید ----
         if ($ACT == 'resend_verify_email') {
+            if (!HA_RateLimit('resend_verify_email', 5, 3600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
             $email = isset($JSD->email) ? strtolower(trim((string)$JSD->email)) : '';
             if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 echo json_encode(['error' => 'invalid_email']);
@@ -787,6 +936,100 @@
 
             $mailOk = HA_SendVerifyEmail($email, $token);
             echo json_encode(['ok' => true, 'mail_sent' => $mailOk]);
+            exit();
+        }
+
+        // ---- درخواست بازیابی رمز ----
+        if ($ACT == 'request_password_reset') {
+            if (!HA_RateLimit('request_password_reset', 5, 3600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $email = isset($JSD->email) ? strtolower(trim((string)$JSD->email)) : '';
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                echo json_encode(['error' => 'invalid_email']);
+                exit();
+            }
+            $stmt = $conn->prepare('SELECT id_user, act, u_data FROM user WHERE u_email = ? LIMIT 1');
+            $stmt->bind_param('s', $email);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+            // همیشه پاسخ یکسان (ضد enumeration)
+            if ($row && (int)$row['act'] !== 6) {
+                $token = bin2hex(random_bytes(24));
+                $data = [];
+                if (!empty($row['u_data'])) {
+                    $decoded = json_decode($row['u_data'], true);
+                    if (is_array($decoded)) $data = $decoded;
+                }
+                $data['rp_token'] = hash('sha256', $token);
+                $data['rp_exp']   = time() + 3600;
+                $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $uid = (int)$row['id_user'];
+                $upd = $conn->prepare('UPDATE user SET u_data = ? WHERE id_user = ?');
+                $upd->bind_param('si', $json, $uid);
+                $upd->execute();
+                $mailOk = HA_SendResetEmail($email, $token);
+                echo json_encode(['ok' => true, 'mail_sent' => $mailOk]);
+                exit();
+            }
+            echo json_encode(['ok' => true, 'mail_sent' => true]);
+            exit();
+        }
+
+        // ---- اعمال رمز جدید با توکن ----
+        if ($ACT == 'reset_password') {
+            if (!HA_RateLimit('reset_password', 10, 3600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $token = isset($JSD->token) ? trim((string)$JSD->token) : '';
+            $password = isset($JSD->password) ? (string)$JSD->password : '';
+            if ($token === '' || strlen($token) < 16) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+            if (strlen($password) < 6) {
+                echo json_encode(['error' => 'password_too_short']);
+                exit();
+            }
+            $tokenHash = hash('sha256', $token);
+            $like = '%' . $conn->real_escape_string($tokenHash) . '%';
+            $sql = "SELECT id_user, act, u_data, u_email FROM user WHERE u_data LIKE '{$like}' LIMIT 5";
+            $res = $conn->query($sql);
+            $found = null;
+            $data = null;
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $decoded = json_decode($row['u_data'] ?? '', true);
+                    if (!is_array($decoded)) continue;
+                    if (empty($decoded['rp_token']) || !hash_equals((string)$decoded['rp_token'], $tokenHash)) continue;
+                    if (empty($decoded['rp_exp']) || (int)$decoded['rp_exp'] < time()) {
+                        echo json_encode(['error' => 'token_expired']);
+                        exit();
+                    }
+                    if ((int)$row['act'] === 6) {
+                        echo json_encode(['error' => 'account_disabled']);
+                        exit();
+                    }
+                    $found = $row;
+                    $data = $decoded;
+                    break;
+                }
+            }
+            if (!$found || !$data) {
+                echo json_encode(['error' => 'invalid_token']);
+                exit();
+            }
+            unset($data['rp_token'], $data['rp_exp']);
+            $data['password_reset_at'] = time();
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $uid = (int)$found['id_user'];
+            $upd = $conn->prepare('UPDATE user SET u_pass = ?, u_data = ? WHERE id_user = ?');
+            $upd->bind_param('ssi', $hash, $json, $uid);
+            $upd->execute();
+            echo json_encode(['ok' => true, 'email' => $found['u_email']]);
             exit();
         }
         

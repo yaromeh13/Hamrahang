@@ -4011,6 +4011,15 @@ if (!empty($_SESSION['loggedin'])) {
                 }
                 if (done) done();
                 break;
+
+            case 'reset':
+                try {
+                    await CRReset(LPS[2] || '');
+                } catch (e) {
+                    console.error(e);
+                }
+                if (done) done();
+                break;
     
             case 'search':
                 CRSR(LPS[2], LPS[3], done);
@@ -4472,6 +4481,10 @@ if (!empty($_SESSION['loggedin'])) {
             className: 'auth-link is-hidden',
             innerHTML: 'Resend verification email'
         });
+        const forgotLink = OA(document.createElement('div'), {
+            className: 'auth-link',
+            innerHTML: 'Forgot password?'
+        });
 
         function setHidden(el, hide) {
             if (!el) return;
@@ -4482,33 +4495,59 @@ if (!empty($_SESSION['loggedin'])) {
         function applyMode() {
             errorEl.style.display = 'none';
             okEl.style.display = 'none';
+            root.classList.remove('mode-login', 'mode-register', 'mode-forgot');
             if (mode === 'login') {
-                // فقط لاگین: یوزرنیم/ایمیل + رمز
                 setHidden(userIn, false);
                 setHidden(emailIn, true);
                 setHidden(nameIn, true);
+                setHidden(passIn, false);
                 setHidden(pass2, true);
                 setHidden(resendLink, true);
+                setHidden(forgotLink, false);
+                setHidden(submit, false);
+                setHidden(switchBtn, false);
                 submit.innerHTML = 'Log in';
                 switchBtn.innerHTML = 'Create account';
-                root.classList.remove('mode-register');
                 root.classList.add('mode-login');
-            } else {
-                // فقط ثبت‌نام: ایمیل + یوزرنیم اختیاری + رمز + تکرار
+            } else if (mode === 'register') {
                 setHidden(userIn, true);
                 setHidden(emailIn, false);
                 setHidden(nameIn, false);
+                setHidden(passIn, false);
                 setHidden(pass2, false);
                 setHidden(resendLink, false);
+                setHidden(forgotLink, true);
+                setHidden(submit, false);
+                setHidden(switchBtn, false);
                 submit.innerHTML = 'Sign up';
                 switchBtn.innerHTML = 'Already have an account?';
-                root.classList.remove('mode-login');
                 root.classList.add('mode-register');
+            } else {
+                // forgot: only email
+                setHidden(userIn, true);
+                setHidden(emailIn, false);
+                setHidden(nameIn, true);
+                setHidden(passIn, true);
+                setHidden(pass2, true);
+                setHidden(resendLink, true);
+                setHidden(forgotLink, true);
+                setHidden(submit, false);
+                setHidden(switchBtn, false);
+                submit.innerHTML = 'Send reset link';
+                switchBtn.innerHTML = 'Back to log in';
+                root.classList.add('mode-forgot');
             }
         }
     
         switchBtn.addEventListener('click', () => {
-            mode = mode === 'login' ? 'register' : 'login';
+            if (mode === 'forgot') mode = 'login';
+            else mode = mode === 'login' ? 'register' : 'login';
+            applyMode();
+            if (opts.onModeChange) opts.onModeChange(mode);
+        });
+
+        forgotLink.addEventListener('click', () => {
+            mode = 'forgot';
             applyMode();
             if (opts.onModeChange) opts.onModeChange(mode);
         });
@@ -4539,7 +4578,7 @@ if (!empty($_SESSION['loggedin'])) {
                     opts.onSuccess,
                     okEl
                 );
-            } else {
+            } else if (mode === 'register') {
                 await AttemptRegister(
                     emailIn.value.trim(),
                     passIn.value,
@@ -4548,12 +4587,136 @@ if (!empty($_SESSION['loggedin'])) {
                     errorEl,
                     okEl
                 );
+            } else {
+                await AttemptRequestPasswordReset(emailIn.value.trim(), errorEl, okEl);
             }
         });
     
         applyMode();
-        root.append(errorEl, okEl, userIn, emailIn, nameIn, passIn, pass2, submit, switchBtn, resendLink);
+        root.append(errorEl, okEl, userIn, emailIn, nameIn, passIn, pass2, submit, switchBtn, forgotLink, resendLink);
         host.append(root);
+    }
+
+    async function CRReset(token) {
+        clearMainContent();
+        const box = OA(document.createElement('div'), {
+            className: 'page-header m-top-3',
+            style: 'max-width:420px;margin:2rem auto;padding:0 1rem'
+        });
+        const title = OA(document.createElement('h1'), {
+            className: 'title',
+            innerHTML: 'Reset password'
+        });
+        const msg = OA(document.createElement('div'), {
+            className: 'text2 m-top-1',
+            innerHTML: token ? 'Choose a new password.' : 'Missing reset token.'
+        });
+        const formHost = OA(document.createElement('div'), { className: 'm-top-2 auth-form' });
+        box.append(title, msg, formHost);
+        MCNT.appendChild(box);
+
+        if (!token) {
+            RenderAuthForm(formHost, { mode: 'forgot' });
+            ADE();
+            return;
+        }
+
+        const errorEl = OA(document.createElement('div'), { className: 'login-error', style: 'display:none' });
+        const okEl = OA(document.createElement('div'), { className: 'login-ok', style: 'display:none' });
+        const passIn = OA(document.createElement('input'), {
+            className: 'input focusable',
+            type: 'password',
+            placeholder: 'New password',
+            maxlength: 100
+        });
+        const pass2 = OA(document.createElement('input'), {
+            className: 'input focusable',
+            type: 'password',
+            placeholder: 'Confirm new password',
+            maxlength: 100
+        });
+        const submit = OA(document.createElement('div'), {
+            className: 'btn btn-model-1',
+            innerHTML: 'Update password'
+        });
+        formHost.append(errorEl, okEl, passIn, pass2, submit);
+
+        submit.addEventListener('click', async () => {
+            errorEl.style.display = 'none';
+            okEl.style.display = 'none';
+            const p1 = passIn.value;
+            const p2 = pass2.value;
+            if (!p1 || p1.length < 6) {
+                errorEl.innerHTML = 'Password must be at least 6 characters';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (p1 !== p2) {
+                errorEl.innerHTML = 'Passwords do not match';
+                errorEl.style.display = 'block';
+                return;
+            }
+            await new Promise(function (resolve) {
+                gjl({ a: 'reset_password', token: token, password: p1 }, function (success, j) {
+                    if (!success || !j || j.error) {
+                        const err = (j && j.error) || 'invalid_token';
+                        if (err === 'token_expired') errorEl.innerHTML = 'This link has expired. Request a new reset email.';
+                        else if (err === 'rate_limited') errorEl.innerHTML = 'Too many attempts. Try again later.';
+                        else if (err === 'password_too_short') errorEl.innerHTML = 'Password must be at least 6 characters';
+                        else errorEl.innerHTML = 'Invalid or used reset link.';
+                        errorEl.style.display = 'block';
+                        resolve(false);
+                        return;
+                    }
+                    msg.innerHTML = 'Password updated. You can log in now.';
+                    formHost.innerHTML = '';
+                    RenderAuthForm(formHost, { mode: 'login' });
+                    if (j.email) {
+                        const inp = formHost.querySelector('input[type="text"], input.input');
+                        if (inp) inp.value = j.email;
+                    }
+                    resolve(true);
+                });
+            });
+        });
+        ADE();
+    }
+
+    function AttemptRequestPasswordReset(email, errorEl, okEl) {
+        return new Promise(function (resolve) {
+            email = (email || '').trim().toLowerCase();
+            if (!email || email.indexOf('@') < 1) {
+                errorEl.innerHTML = 'Enter a valid email';
+                errorEl.style.display = 'block';
+                resolve(false);
+                return;
+            }
+            gjl({ a: 'request_password_reset', email: email }, function (success, j) {
+                if (!success || !j) {
+                    errorEl.innerHTML = (j && j.error === 'rate_limited')
+                        ? 'Too many attempts. Try again later.'
+                        : 'Server error';
+                    errorEl.style.display = 'block';
+                    resolve(false);
+                    return;
+                }
+                if (j.error) {
+                    errorEl.innerHTML = j.error === 'rate_limited'
+                        ? 'Too many attempts. Try again later.'
+                        : (j.error === 'invalid_email' ? 'Invalid email' : String(j.error));
+                    errorEl.style.display = 'block';
+                    resolve(false);
+                    return;
+                }
+                if (okEl) {
+                    okEl.innerHTML = j.mail_sent === false
+                        ? 'If this email exists, a reset link will be sent. (Mail could not be sent — check SMTP settings.)'
+                        : 'If this email is registered, a reset link has been sent.';
+                    okEl.style.display = 'block';
+                }
+                resolve(true);
+            });
+        });
     }
 
     async function CRVerify(token) {
@@ -5248,6 +5411,11 @@ if (!empty($_SESSION['loggedin'])) {
                     }
                     if (j && j.error === 'account_disabled') {
                         errorEl.innerHTML = 'Your account is disabled. Contact support.';
+                        errorEl.style.display = 'block';
+                        return;
+                    }
+                    if (j && j.error === 'rate_limited') {
+                        errorEl.innerHTML = 'Too many attempts. Try again later.';
                         errorEl.style.display = 'block';
                         return;
                     }
@@ -10848,8 +11016,9 @@ const PROFILE_KEY = 'ha_profile';
             
                     if (T === 'song' || T === 'podcast' || T === 'musicvideo' || T === 'video') {
                         setPlayQueue(ar, e.id, T);
+                    } else if (T === 'album' || T === 'playlist') {
+                        playCollectionFromCard(e.id, T);
                     }
-                    // album / playlist → بعداً (resolve فول + صف از آیتم‌ها)
                 });
                 elb.append(mor, elp);
             }
@@ -10977,13 +11146,13 @@ const PROFILE_KEY = 'ha_profile';
                     ev.stopPropagation();
                     if (!e) return;
             
-                    // فقط انواع قابل پخش
                     if (T === 'song' || T === 'podcast' || T === 'musicvideo' || T === 'video') {
                         setPlayQueue(ar, e.id, T);
                         return;
                     }
-                    // آلبوم / پلی‌لیست: فعلاً برو صفحهٔ جزئیات (یا بعداً صف از آیتم‌های داخل)
-                    // chp(url + e.id + '/...');
+                    if (T === 'album' || T === 'playlist') {
+                        playCollectionFromCard(e.id, T);
+                    }
                 });
     
                 elb.append(mor, elp);
@@ -11125,6 +11294,8 @@ const PROFILE_KEY = 'ha_profile';
                 if (!e) return;
                 if (T === 'song' || T === 'podcast' || T === 'musicvideo' || T === 'video') {
                     setPlayQueue(ar, e.id, T);
+                } else if (T === 'album' || T === 'playlist') {
+                    playCollectionFromCard(e.id, T);
                 }
             });
             const dst = OA(document.createElement("div"), {className: "texts"});
@@ -13665,6 +13836,34 @@ const PROFILE_KEY = 'ha_profile';
         pushPlayHistory(row.id, type);
     }
     
+    /** پخش آلبوم/پلی‌لیست از کارت: فول کارت بگیر و صف بساز */
+    async function playCollectionFromCard(itemOrId, type) {
+        try {
+            const T = (type || '').toLowerCase();
+            if (T === 'album') {
+                const e = await ULBM(['album', itemOrId]);
+                if (!e) return false;
+                const ids = Array.isArray(e.songs) ? e.songs : [];
+                if (!ids.length) return false;
+                const first = (typeof ids[0] === 'object' && ids[0]) ? ids[0].id : ids[0];
+                await setPlayQueue(ids, first, 'song');
+                return true;
+            }
+            if (T === 'playlist') {
+                const e = await UPLS(['playlist', itemOrId]);
+                if (!e) return false;
+                const items = Array.isArray(e.items) ? e.items : [];
+                if (!items.length) return false;
+                const first = items[0].id != null ? items[0].id : items[0];
+                await setPlayQueue(items, first, 'song');
+                return true;
+            }
+        } catch (err) {
+            console.error('playCollectionFromCard', err);
+        }
+        return false;
+    }
+
     async function setPlayQueue(list, startId, defaultType) {
         const P = ensurePlayer();
         let rows = normalizeQueueRows(list, defaultType);
