@@ -598,6 +598,70 @@ require_once __DIR__ . '/int/h_api.php';
     padding: 0 0 4px;
     font-size: 18px;
 }
+.ha-devices-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ha-device-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.ha-device-row.is-current {
+    border-color: rgba(29, 185, 84, 0.35);
+    background: rgba(29, 185, 84, 0.08);
+}
+.ha-device-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: rgba(255,255,255,0.75);
+}
+.ha-device-icon svg {
+    width: 22px;
+    height: 22px;
+}
+.ha-device-info {
+    flex: 1;
+    min-width: 0;
+}
+.ha-device-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #ececf1;
+}
+.ha-device-meta {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 2px;
+}
+.ha-device-revoke {
+    flex-shrink: 0;
+    width: auto !important;
+    min-width: 96px;
+    min-height: 38px !important;
+    padding: 0 14px;
+    margin: 0 !important;
+}
+.ha-device-badge {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1db954;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(29, 185, 84, 0.12);
+    border: 1px solid rgba(29, 185, 84, 0.28);
+}
+
 .ha-settings-body .setting-subtitle {
     color: rgba(255,255,255,0.55);
     font-size: 13px;
@@ -2869,6 +2933,9 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_eql = '<div class="playing-eq"><span class="playing-eq-bar playing-eq-bar1"></span><span class="playing-eq-bar playing-eq-bar2"></span><span class="playing-eq-bar playing-eq-bar3"></span></div>';
     var svg_tlg = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" style="width:22px;height:22px" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M21.9453125,2.7646484c-0.4393311-0.3643188-1.0431519-0.4580688-1.5722656-0.2441406L2.4560547,9.7539062c-0.788147,0.3244019-1.1640625,1.2263184-0.8396606,2.0144043c0.1677856,0.4075928,0.50177,0.723938,0.9177856,0.8693848l3.8652344,1.34375l2.0947266,6.9257812c0.0042114,0.0140991,0.0171509,0.0227051,0.022583,0.0362549c0.0216675,0.0552368,0.0533447,0.1060791,0.0933228,0.1499023c0.0148926,0.0176392,0.0311279,0.0341797,0.0484619,0.0494385c0.0521851,0.043335,0.112793,0.0753784,0.1779785,0.0940552c0.0099487,0.0029297,0.0166016,0.0117798,0.0267334,0.0140991l0.0058594-0.0002441l0.0029297,0.0012207c0.0333862,0.0074463,0.0674438,0.0110474,0.1015625,0.0107422c0.0446167-0.0015869,0.0888672-0.0092773,0.1313477-0.0228882c0.0082397-0.0022583,0.0165405-0.0016479,0.0245972-0.0043335c0.0725708-0.0255737,0.1381226-0.067627,0.1915283-0.1229248c0.0062256-0.0062256,0.015686-0.0073242,0.0216675-0.013916l3.0136719-3.3251953l4.3964844,3.4042969C17.0200195,21.3865967,17.3493652,21.500061,17.6884155,21.5c0.7333984-0.0001221,1.3664551-0.513855,1.5175781-1.2314453L22.46875,4.2509766C22.5817871,3.6968994,22.3805542,3.1256104,21.9453125,2.7646484z M9.5878906,15.2949219l-0.7072144,3.4367676l-1.4748535-4.8778076l7.3148804-3.809021l-4.9970703,4.9971313C9.654541,15.111145,9.6073608,15.1990967,9.5878906,15.2949219z M18.2265625,20.0673828c-0.0383301,0.184082-0.1696777,0.335022-0.3466797,0.3984375c-0.1729736,0.0665283-0.3682861,0.0368652-0.5136719-0.078125l-4.7636719-3.6884766c-0.2062378-0.159668-0.5006104-0.133728-0.6757812,0.0595703l-2.0956421,2.3121948l0.7059937-3.4274292l7.1884766-7.1894531c0.1953735-0.1950073,0.1956787-0.5114136,0.0006714-0.7067261c-0.1542358-0.1546021-0.3909912-0.1911011-0.5846558-0.0901489L6.7782593,13.053894l-3.9169312-1.3615112C2.6478271,11.6221313,2.5026245,11.4239502,2.5,11.1992188c-0.0103149-0.2263184,0.1236572-0.4343872,0.3339844-0.5185547l17.9140625-7.2324219c0.1871338-0.0794067,0.4030762-0.0461426,0.5576172,0.0859375c0.1538086,0.1241455,0.2244873,0.3244019,0.1826172,0.5175781L18.2265625,20.0673828z"></path></svg>';
     var svg_stg = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings shell-nav-icon" aria-hidden="true" data-variant="outline"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+    var svg_phone = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>';
+    var svg_tv = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>';
+    var svg_devices = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><path d="M8 21h8"></path><path d="M12 17v4"></path><rect x="16" y="8" width="5" height="8" rx="1"></rect></svg>';
     var svg_logo = '<svg fill="currentColor" version="1.1" viewBox="0 0 302.45 104.79"><defs><style>.cls-1,.cls-3{fill:#fff;}.cls-1{fill-rule:evenodd;}.cls-2{fill:#1a1b1c;}</style></defs><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><g id="radio"><polygon class="cls-1" points="30.55 0 61.09 30.55 259.22 30.55 302.45 73.75 271.91 104.29 241.36 73.75 43.22 73.75 0 30.55 30.55 0 30.55 0"/><path class="cls-2" d="M82.18,66.67H74.67V53.47H64.49v13.2H57V36.86h7.51V47.77H74.67V36.86h7.51V66.67Zm163.29,0H238V53.47H227.79v13.2h-7.51V36.86h7.51V47.77H238V36.86h7.51V66.67ZM104,59.37V53.51c-1.47.15-2.66.28-3.56.39a11.3,11.3,0,0,0-2.67.64A3.7,3.7,0,0,0,96,55.75a3.42,3.42,0,0,0-.63,2.16,3.09,3.09,0,0,0,1,2.71,5.32,5.32,0,0,0,3.1.74,5.68,5.68,0,0,0,2.32-.52A7.39,7.39,0,0,0,104,59.37Zm0,4.33c-.6.5-1.14,1-1.6,1.35a10.44,10.44,0,0,1-1.91,1.19,12.67,12.67,0,0,1-2.27.89,12.31,12.31,0,0,1-3.09.3A8.19,8.19,0,0,1,89,64.93a8.6,8.6,0,0,1-2.45-6.29,9.22,9.22,0,0,1,1.24-5,8.6,8.6,0,0,1,3.57-3.05A19,19,0,0,1,97,49q3.29-.44,7.06-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.45,11.45,0,0,0-5.1-.89,14.09,14.09,0,0,0-3.6.56,30.51,30.51,0,0,0-4,1.43h-.74V39.25c.86-.25,2.25-.55,4.18-.89a33.51,33.51,0,0,1,5.83-.51q7.23,0,10.52,2.41c2.21,1.61,3.3,4.05,3.3,7.35V66.67H104v-3Zm48.62,3v-14c0-1.38,0-2.54-.07-3.48a7.06,7.06,0,0,0-.45-2.32,2.55,2.55,0,0,0-1.17-1.31,4.93,4.93,0,0,0-2.21-.4,4.81,4.81,0,0,0-2,.43,14.45,14.45,0,0,0-2.13,1.23V66.67h-8.73v-14c0-1.36,0-2.51-.08-3.47a7.29,7.29,0,0,0-.47-2.33,2.55,2.55,0,0,0-1.17-1.31,4.82,4.82,0,0,0-2.18-.4,4.73,4.73,0,0,0-2.1.5,14.51,14.51,0,0,0-2,1.16V66.67h-8.73V38.72h8.73v3.09a23.44,23.44,0,0,1,4-2.83,8.88,8.88,0,0,1,4.26-1,8.32,8.32,0,0,1,4.51,1.21,7.68,7.68,0,0,1,3,3.64,25.3,25.3,0,0,1,4.75-3.6,9.3,9.3,0,0,1,8-.63A6.55,6.55,0,0,1,159,40.45a8.61,8.61,0,0,1,1.76,3.19,16.48,16.48,0,0,1,.58,4.84V66.67Zm34-19.69h-.73a6.15,6.15,0,0,0-1.45-.27c-.63-.06-1.34-.08-2.1-.08a11.58,11.58,0,0,0-2.89.39,28,28,0,0,0-2.94.95v18.7h-8.73V38.72h8.73v4c.4-.36.95-.82,1.67-1.37A15.21,15.21,0,0,1,180.15,40a11.41,11.41,0,0,1,2.22-1,7.51,7.51,0,0,1,2.39-.41l.94,0,1,.08V47Zm18.71,12.39V53.51c-1.46.15-2.65.28-3.55.39a11.49,11.49,0,0,0-2.68.64,3.79,3.79,0,0,0-1.77,1.21,3.48,3.48,0,0,0-.62,2.16,3.08,3.08,0,0,0,1,2.71,5.37,5.37,0,0,0,3.11.74,5.68,5.68,0,0,0,2.32-.52,7.22,7.22,0,0,0,2.15-1.47Zm0,4.33-1.6,1.35a10,10,0,0,1-1.9,1.19,13,13,0,0,1-2.27.89,12.41,12.41,0,0,1-3.09.3,8.23,8.23,0,0,1-6.15-2.5,8.6,8.6,0,0,1-2.45-6.29,9.13,9.13,0,0,1,1.25-5,8.47,8.47,0,0,1,3.57-3.05,18.78,18.78,0,0,1,5.64-1.6q3.28-.44,7-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.38,11.38,0,0,0-5.09-.89,14.09,14.09,0,0,0-3.6.56A30.65,30.65,0,0,0,191,46h-.74V39.25c.87-.25,2.26-.55,4.19-.89a33.43,33.43,0,0,1,5.83-.51q7.22,0,10.52,2.41c2.2,1.61,3.3,4.05,3.3,7.35V66.67h-8.73v-3Z"/><path class="cls-3" d="M109.91,104.29h-5.83l-1.52-4.85h-8.1l-1.53,4.85H87.24l8.09-24h6.5ZM101.2,95l-2.69-8.59L95.81,95Z"/><path class="cls-3" d="M132.69,104.29H127V93.72h-8.33v10.57h-5.65v-24h5.65v8.78H127V80.3h5.65Z"/><path class="cls-3" d="M158.51,104.29h-5.84l-1.52-4.85h-8.1l-1.53,4.85h-5.69l8.09-24h6.5ZM149.79,95l-2.69-8.59L144.41,95Z"/><path class="cls-3" d="M181.56,104.29h-5.44l-9.29-16.46v16.46h-5.18v-24h6.75l8,13.75V80.3h5.18Z"/><path class="cls-3" d="M206.51,102.92a27,27,0,0,1-3.9,1.25,19.13,19.13,0,0,1-4.84.62q-5.58,0-8.74-3.32t-3.16-9.2a12.67,12.67,0,0,1,3.19-9q3.18-3.42,8.89-3.43a19.57,19.57,0,0,1,4.12.43,17.6,17.6,0,0,1,4.35,1.7v5.62h-.63l-1.21-1a13.73,13.73,0,0,0-1.53-1.06,9.93,9.93,0,0,0-2-.89,8,8,0,0,0-2.42-.37,7.2,7.2,0,0,0-2.72.49,6.2,6.2,0,0,0-2.19,1.48,6.76,6.76,0,0,0-1.46,2.46,10.06,10.06,0,0,0-.54,3.44,8.71,8.71,0,0,0,1.93,6.09,7.34,7.34,0,0,0,5.69,2.11l.71,0c.26,0,.5,0,.71,0v-4.7h-4.36V91.08h10.1Z"/></g></g></g></svg>';
     var svg_home = '<svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21,21.9h-5c-0.5,0-0.9-0.4-0.9-0.9v-4c0-1.7-1.4-3.1-3.1-3.1c-1.7,0-3.1,1.4-3.1,3.1v4c0,0.5-0.4,0.9-0.9,0.9H3    c-0.5,0-0.9-0.4-0.9-0.9v-9.6c0-0.5,0.2-1,0.6-1.3l8-7.1c0,0,0,0,0.1,0c0.7-0.5,1.8-0.5,2.5,0l8,7.1c0.4,0.3,0.7,0.8,0.7,1.4V21    C21.9,21.5,21.5,21.9,21,21.9z M3.9,21L3.9,21L3.9,21z"></path></svg>';
     var svg_trd = '<svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.918 8.174c2.56 4.982 .501 11.656 -5.38 12.626c-7.702 1.687 -12.84 -7.716 -7.054 -13.229c.309 -.305 1.161 -1.095 1.516 -1.349c0 .528 .27 3.475 1 3.167c3 0 4 -4.222 3.587 -7.389c2.7 1.411 4.987 3.376 6.331 6.174z"></path></svg>';
@@ -4182,7 +4249,7 @@ if (!empty($_SESSION['loggedin'])) {
     function CRSA(q, a, callback) {
         q = (typeof q !== 'undefined' && q !== '') ? q : 'account';
         // audio/video map to Settings panel
-        if (q === 'audio' || q === 'video') q = 'options';
+        if (q === 'audio' || q === 'video' || q === 'devices') q = 'options';
 
         const wrap = OA(document.createElement('div'), { className: 'ha-settings-acc m-top-1' });
         MCNT.appendChild(wrap);
@@ -4248,7 +4315,7 @@ if (!empty($_SESSION['loggedin'])) {
         if (callback) callback(true);
     }
 
-    /** Settings tab: Audio + Video as nested accordions */
+    /** Settings tab: Audio + Video + Devices nested; Sync/Clear at end */
     function RenderSettingsBundleTab(pane) {
         const nest = OA(document.createElement('div'), { className: 'ha-settings-nested' });
 
@@ -4276,7 +4343,86 @@ if (!empty($_SESSION['loggedin'])) {
 
         nestPanel('audio', 'Audio', typeof svg_ado !== 'undefined' ? svg_ado : '', RenderAudioQualityTab);
         nestPanel('video', 'Video', typeof svg_vdo !== 'undefined' ? svg_vdo : '', RenderVideoQualityTab);
+        nestPanel('devices', 'Devices', typeof svg_devices !== 'undefined' ? svg_devices : '', RenderDevicesTab);
         pane.appendChild(nest);
+
+        const foot = OA(document.createElement('div'), { className: 'ha-settings-foot m-top-2' });
+        const syncAllBtn = OA(document.createElement('div'), {
+            className: 'btn btn-model-3',
+            innerHTML: 'Sync all'
+        });
+        syncAllBtn.addEventListener('click', async () => {
+            if (!SN.user || !SN.user.loggedIn) {
+                syncAllBtn.innerHTML = 'Log in first';
+                setTimeout(() => { syncAllBtn.innerHTML = 'Sync all'; }, 1000);
+                return;
+            }
+            syncAllBtn.innerHTML = '...';
+            const ok = await ManualSyncAll();
+            syncAllBtn.innerHTML = ok ? 'Done' : 'Error';
+            setTimeout(() => { syncAllBtn.innerHTML = 'Sync all'; }, 800);
+        });
+        const clearLocalBtn = OA(document.createElement('div'), {
+            className: 'btn btn-model-3',
+            innerHTML: 'Clear local data'
+        });
+        clearLocalBtn.addEventListener('click', () => {
+            ResetLocalProfile();
+            clearLocalBtn.innerHTML = 'Cleared';
+            setTimeout(() => { clearLocalBtn.innerHTML = 'Clear local data'; }, 800);
+        });
+        foot.append(syncAllBtn, clearLocalBtn);
+        pane.appendChild(foot);
+    }
+
+    function deviceIconFor(dev) {
+        const t = String((dev && (dev.device_type || dev.device_label)) || '').toLowerCase();
+        if (t.indexOf('tv') >= 0 || t.indexOf('smart') >= 0 || t.indexOf('webos') >= 0 || t.indexOf('tizen') >= 0) {
+            return typeof svg_tv !== 'undefined' ? svg_tv : '';
+        }
+        if (t.indexOf('mobile') >= 0 || t.indexOf('android') >= 0 || t.indexOf('ios') >= 0 || t.indexOf('phone') >= 0) {
+            return typeof svg_phone !== 'undefined' ? svg_phone : '';
+        }
+        // webapp / desktop default phone-like or devices
+        if (t.indexOf('web') >= 0 || t.indexOf('desktop') >= 0 || t.indexOf('browser') >= 0) {
+            return typeof svg_tv !== 'undefined' ? svg_tv : '';
+        }
+        return typeof svg_phone !== 'undefined' ? svg_phone : '';
+    }
+
+    function RenderDevicesTab(pane) {
+        if (!SN.user || !SN.user.loggedIn) {
+            pane.append(
+                OA(document.createElement('div'), {
+                    className: 'text2',
+                    innerHTML: 'Log in to manage devices.'
+                })
+            );
+            return;
+        }
+        const list = OA(document.createElement('div'), { className: 'devices-list ha-devices-list' });
+        pane.append(list);
+        renderDevicesList(list);
+        refreshDevicesList(list);
+
+        const actions = OA(document.createElement('div'), { className: 'ha-settings-foot' });
+        const refreshDevBtn = OA(document.createElement('div'), {
+            className: 'btn btn-model-3',
+            innerHTML: 'Refresh devices'
+        });
+        refreshDevBtn.addEventListener('click', () => {
+            refreshDevBtn.innerHTML = '...';
+            refreshDevicesList(list, () => {
+                refreshDevBtn.innerHTML = 'Refresh devices';
+            });
+        });
+        const addDevBtn = OA(document.createElement('a'), {
+            className: 'btn btn-model-1',
+            innerHTML: 'Add a device',
+            href: '/pair'
+        });
+        actions.append(refreshDevBtn, addDevBtn);
+        pane.append(actions);
     }
 
     async function RenderAccountTab(pane) {
@@ -4284,7 +4430,6 @@ if (!empty($_SESSION['loggedin'])) {
         const dtl1 = OA(document.createElement('div'), { className: 'page-detail' });
         dcn.append(dtl1);
 
-        // guest: login/register only
         if (!SN.user || !SN.user.loggedIn) {
             const passSection = OA(document.createElement('div'), {
                 className: 'login-section login-password-section'
@@ -4296,17 +4441,6 @@ if (!empty($_SESSION['loggedin'])) {
                 }
             });
             dtl1.append(passSection);
-
-            const clearLocalBtn = OA(document.createElement('div'), {
-                className: 'btn btn-model-3 m-top-1',
-                innerHTML: 'Clear local data'
-            });
-            clearLocalBtn.addEventListener('click', () => {
-                ResetLocalProfile();
-                clearLocalBtn.innerHTML = 'Cleared';
-                setTimeout(() => { clearLocalBtn.innerHTML = 'Clear local data'; }, 800);
-            });
-            dtl1.append(clearLocalBtn);
             pane.append(dcn);
             return;
         }
@@ -4354,27 +4488,6 @@ if (!empty($_SESSION['loggedin'])) {
             if (pane) RerenderAccountPane(pane);
         });
 
-        const syncAllBtn = OA(document.createElement('div'), {
-            className: 'btn btn-model-3',
-            innerHTML: 'Sync all'
-        });
-        syncAllBtn.addEventListener('click', async () => {
-            syncAllBtn.innerHTML = '...';
-            const ok = await ManualSyncAll();
-            syncAllBtn.innerHTML = ok ? 'Done' : 'Error';
-            setTimeout(() => { syncAllBtn.innerHTML = 'Sync all'; }, 800);
-        });
-
-        const clearLocalBtn = OA(document.createElement('div'), {
-            className: 'btn btn-model-3',
-            innerHTML: 'Clear local data'
-        });
-        clearLocalBtn.addEventListener('click', () => {
-            ResetLocalProfile();
-            clearLocalBtn.innerHTML = 'Cleared';
-            setTimeout(() => { clearLocalBtn.innerHTML = 'Clear local data'; }, 800);
-        });
-
         const changePassBtn = OA(document.createElement('div'), {
             className: 'btn btn-model-1',
             innerHTML: 'Change password'
@@ -4401,42 +4514,9 @@ if (!empty($_SESSION['loggedin'])) {
             changePassBtn.innerHTML = 'Change password';
         });
 
-        accountActions.append(logoutBtn, syncAllBtn, clearLocalBtn, changePassBtn, passErr, passMsg);
+        accountActions.append(logoutBtn, changePassBtn, passErr, passMsg);
         dtl1.append(accountActions);
         pane.append(dcn);
-
-        // Devices only (no section-header title — parent accordion is Profile)
-        const secDevices = OA(document.createElement('div'), { className: 'section m-top-2' });
-        secDevices.append(
-            OA(document.createElement('div'), {
-                className: 'setting-subtitle',
-                innerHTML: 'Active devices'
-            })
-        );
-        const devicesBox = OA(document.createElement('div'), { className: 'devices-list content' });
-        secDevices.append(devicesBox);
-        renderDevicesList(devicesBox);
-        refreshDevicesList(devicesBox);
-
-        const Brow = OA(document.createElement('div'), { className: 'setting-row' });
-        const refreshDevBtn = OA(document.createElement('div'), {
-            className: 'btn btn-model-3',
-            innerHTML: 'Refresh devices'
-        });
-        refreshDevBtn.addEventListener('click', () => {
-            refreshDevBtn.innerHTML = '...';
-            refreshDevicesList(devicesBox, () => {
-                refreshDevBtn.innerHTML = 'Refresh devices';
-            });
-        });
-        const addDevBtn = OA(document.createElement('a'), {
-            className: 'btn btn-model-3',
-            innerHTML: 'Add a device',
-            href: '/pair'
-        });
-        Brow.append(refreshDevBtn, addDevBtn);
-        secDevices.append(Brow);
-        pane.append(secDevices);
     }
 
     /**
@@ -5332,8 +5412,8 @@ if (!empty($_SESSION['loggedin'])) {
         if (!devices.length) {
             container.append(
                 OA(document.createElement('div'), {
-                    className: 'setting-empty',
-                    innerHTML: 'دستگاهی یافت نشد'
+                    className: 'setting-empty text2',
+                    innerHTML: 'No devices found'
                 })
             );
             return;
@@ -5345,31 +5425,42 @@ if (!empty($_SESSION['loggedin'])) {
             const isCurrent = dev.is_current || dev.did === currentDid;
     
             const row = OA(document.createElement('div'), {
-                className: 'setting-row type-count-row' + (isCurrent ? ' is-current' : '')
+                className: 'ha-device-row' + (isCurrent ? ' is-current' : '')
+            });
+
+            const ico = OA(document.createElement('div'), {
+                className: 'ha-device-icon',
+                innerHTML: deviceIconFor(dev)
             });
     
-            const info = OA(document.createElement('div'), { className: 'device-info' });
+            const info = OA(document.createElement('div'), { className: 'ha-device-info' });
             const title = OA(document.createElement('div'), {
-                className: 'device-title',
+                className: 'ha-device-title',
                 innerHTML: (dev.device_label || dev.device_type || 'Device') +
-                    (isCurrent ? ' (این دستگاه)' : '')
+                    (isCurrent ? ' (this device)' : '')
             });
             const meta = OA(document.createElement('div'), {
-                className: 'device-meta',
+                className: 'ha-device-meta',
                 innerHTML: formatDeviceMeta(dev)
             });
             info.append(title, meta);
-            row.append(info);
+            row.append(ico, info);
     
             if (!isCurrent) {
                 const removeBtn = OA(document.createElement('div'), {
-                    className: 'btn btn-sm btn-model-3',
-                    innerHTML: 'خروج'
+                    className: 'btn btn-model-3 ha-device-revoke',
+                    innerHTML: 'Sign out'
                 });
                 removeBtn.addEventListener('click', function () {
                     revokeDevice(dev.did, container);
                 });
                 row.append(removeBtn);
+            } else {
+                const badge = OA(document.createElement('div'), {
+                    className: 'ha-device-badge',
+                    innerHTML: 'Current'
+                });
+                row.append(badge);
             }
     
             container.append(row);
@@ -5565,12 +5656,11 @@ if (!empty($_SESSION['loggedin'])) {
     
     async function RenderFavoriteTab(pane) {
         LoadProfile();
-
         await HydrateProfileItems();
 
-        const listBox = OA(document.createElement('div'), { className: 'favorite-tab-list' });
-        pane.append(listBox);
-        renderFavoriteSections(listBox);
+        const countsBox = OA(document.createElement('div'), { className: 'counts-list' });
+        pane.append(countsBox);
+        renderFavoriteCounts(countsBox);
 
         const foot = OA(document.createElement('div'), { className: 'ha-settings-foot' });
         if (SN.user && SN.user.loggedIn) {
@@ -5584,18 +5674,18 @@ if (!empty($_SESSION['loggedin'])) {
                 syncBtn.innerHTML = ok ? 'Synced' : 'Error';
                 setTimeout(() => {
                     syncBtn.innerHTML = 'Sync with account';
-                    listBox.innerHTML = '';
-                    renderFavoriteSections(listBox);
+                    renderFavoriteCounts(countsBox);
                 }, 800);
             });
             foot.append(syncBtn);
         }
-        const seeAll = OA(document.createElement('a'), {
-            className: 'btn btn-model-1',
-            href: '/library',
-            innerHTML: 'See all'
-        });
-        foot.append(seeAll);
+        foot.append(
+            OA(document.createElement('a'), {
+                className: 'btn btn-model-1',
+                href: '/library',
+                innerHTML: 'See all'
+            })
+        );
         pane.append(foot);
     }
     
