@@ -1032,6 +1032,57 @@
             echo json_encode(['ok' => true, 'email' => $found['u_email']]);
             exit();
         }
+
+        // ---- تغییر پسورد وقتی لاگین است ----
+        if ($ACT == 'change_password') {
+            if (!HA_RateLimit('change_password', 10, 3600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $id_user = (int) GetUserIdFromAccessToken();
+            if ($id_user <= 0) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+            $oldPass = isset($JSD->old_password) ? (string)$JSD->old_password : '';
+            $newPass = isset($JSD->new_password) ? (string)$JSD->new_password : '';
+            if ($oldPass === '' || $newPass === '') {
+                echo json_encode(['error' => 'missing_fields']);
+                exit();
+            }
+            if (strlen($newPass) < 6) {
+                echo json_encode(['error' => 'password_too_short']);
+                exit();
+            }
+            $stmt = $conn->prepare('SELECT id_user, u_pass, act FROM user WHERE id_user = ? LIMIT 1');
+            $stmt->bind_param('i', $id_user);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+            if (!$row) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+            if ((int)$row['act'] === 6) {
+                echo json_encode(['error' => 'account_disabled']);
+                exit();
+            }
+            $hash = (string)($row['u_pass'] ?? '');
+            $ok = false;
+            if ($hash !== '') {
+                if (password_verify($oldPass, $hash)) $ok = true;
+                elseif (isset($hash[0]) && $hash[0] !== '$' && hash_equals($hash, $oldPass)) $ok = true;
+            }
+            if (!$ok) {
+                echo json_encode(['error' => 'wrong_password']);
+                exit();
+            }
+            $newHash = password_hash($newPass, PASSWORD_DEFAULT);
+            $upd = $conn->prepare('UPDATE user SET u_pass = ? WHERE id_user = ?');
+            $upd->bind_param('si', $newHash, $id_user);
+            $upd->execute();
+            echo json_encode(['ok' => true]);
+            exit();
+        }
         
         if ($ACT == 'logout') {
             $refreshToken = isset($JSD->refresh_token) ? (string)$JSD->refresh_token : '';
