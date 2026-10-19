@@ -1685,8 +1685,8 @@
             $row = $result->fetch_assoc();
             $id_user = (int)$row['id_user'];
         
-            // وجود کاربر
-            $userStmt = $conn->prepare("SELECT act FROM user WHERE id_user = ?");
+            // وجود کاربر + متا (tmb/join در u_data)
+            $userStmt = $conn->prepare("SELECT act, u_name, f_name, l_name, u_email, u_photo, u_data FROM user WHERE id_user = ?");
             $userStmt->bind_param("i", $id_user);
             $userStmt->execute();
             $userResult = $userStmt->get_result();
@@ -1698,6 +1698,14 @@
         
             $userRow = $userResult->fetch_assoc();
             $act = (int)$userRow['act'];
+            if ($act === 5 || $act === 6) {
+                echo json_encode(['error' => 'account_disabled']);
+                exit();
+            }
+            $meta = null;
+            if (!empty($userRow['u_data'])) {
+                $meta = json_decode((string)$userRow['u_data']);
+            }
         
             // چرخش توکن
             $newRefreshToken = bin2hex(random_bytes(48));
@@ -1722,7 +1730,13 @@
                 'access_token'  => $accessToken,
                 'refresh_token' => $newRefreshToken,
                 'id_user'       => $id_user + $IDHM,
-                'act'           => $act
+                'act'           => $act,
+                'user_name'     => $userRow['u_name'] ?? null,
+                'first_name'    => $userRow['f_name'] ?? null,
+                'last_name'     => $userRow['l_name'] ?? null,
+                'email'         => $userRow['u_email'] ?? null,
+                'photo'         => !empty($userRow['u_photo']) ? (string)$userRow['u_photo'] : null,
+                'meta'          => $meta
             ]);
             exit();
         }

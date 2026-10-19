@@ -4215,6 +4215,12 @@ if (!empty($_SESSION['loggedin'])) {
             SN.user = {
                 id: cachedUser.id || null,
                 name: cachedUser.name || '',
+                first_name: cachedUser.first_name || '',
+                last_name: cachedUser.last_name || '',
+                email: cachedUser.email || '',
+                tmb: cachedUser.tmb || (cachedUser.meta && cachedUser.meta.tmb) || null,
+                join: cachedUser.join != null ? cachedUser.join : (cachedUser.meta && cachedUser.meta.join),
+                meta: cachedUser.meta || null,
                 loggedIn: true
             };
         } else {
@@ -4250,27 +4256,19 @@ if (!empty($_SESSION['loggedin'])) {
                     return;
                 }
     
-                // موفق
+                // موفق — پروفایل کامل از سرور (شامل meta.tmb / join)
                 SN.accessToken = j.access_token;
-    
-                SN.user = {
-                    id: j.id_user || SN.user?.id || null,
-                    name: SN.user?.name || cachedUser?.name || '',
-                    loggedIn: true
-                };
-    
-                // اگر سرور act فرستاد، نگه دار (برای پیام اکانت خاموش و ...)
-                if (typeof j.act !== 'undefined') {
-                    SN.user.act = j.act;
-                }
-    
-                try {
-                    localStorage.setItem('ha_rftk', j.refresh_token);
-                    localStorage.setItem('ha_user', JSON.stringify({
-                        id: SN.user.id,
-                        name: SN.user.name
-                    }));
-                } catch (e) {}
+                PersistUserSession({
+                    id: j.id_user || (SN.user && SN.user.id) || (cachedUser && cachedUser.id) || null,
+                    name: j.user_name || (SN.user && SN.user.name) || (cachedUser && cachedUser.name) || '',
+                    first_name: j.first_name || (SN.user && SN.user.first_name) || (cachedUser && cachedUser.first_name) || '',
+                    last_name: j.last_name || (SN.user && SN.user.last_name) || (cachedUser && cachedUser.last_name) || '',
+                    email: j.email || (SN.user && SN.user.email) || (cachedUser && cachedUser.email) || '',
+                    act: typeof j.act !== 'undefined' ? j.act : (SN.user && SN.user.act),
+                    meta: j.meta || (SN.user && SN.user.meta) || (cachedUser && cachedUser.meta) || null,
+                    photo: j.photo || null,
+                    devices: (SN.user && SN.user.devices) || []
+                }, j.access_token, j.refresh_token);
                 
 
                 startHistoryFlushTimer();
@@ -4303,6 +4301,13 @@ if (!empty($_SESSION['loggedin'])) {
     }
     
     function PersistUserSession(userData, accessToken, refreshToken) {
+        const meta = userData.meta || userData.u_data || null;
+        let tmb = userData.photo || userData.tmb || null;
+        let join = userData.join || null;
+        if (meta && typeof meta === 'object') {
+            if (!tmb && meta.tmb) tmb = meta.tmb;
+            if (!join && meta.join != null) join = meta.join;
+        }
         SN.user = {
             id: userData.id || null,
             name: userData.name || '',
@@ -4310,6 +4315,10 @@ if (!empty($_SESSION['loggedin'])) {
             last_name: userData.last_name || '',
             email: userData.email || '',
             act: userData.act,
+            photo: userData.photo || null,
+            tmb: tmb,
+            join: join,
+            meta: meta,
             devices: Array.isArray(userData.devices) ? userData.devices : [],
             loggedIn: true
         };
@@ -4321,12 +4330,39 @@ if (!empty($_SESSION['loggedin'])) {
                 name: SN.user.name,
                 first_name: SN.user.first_name,
                 last_name: SN.user.last_name,
-                email: SN.user.email
+                email: SN.user.email,
+                tmb: SN.user.tmb,
+                join: SN.user.join,
+                meta: SN.user.meta
             }));
             localStorage.setItem('ha_rftk', refreshToken);
         } catch (e) {}
         
         startHistoryFlushTimer();
+    }
+
+    /** تامب کاربر از meta.tmb / photo */
+    function userThumbKey(u) {
+        if (!u) return null;
+        return u.tmb || u.photo || (u.meta && u.meta.tmb) || null;
+    }
+
+    /** تاریخ join کاربر (unix یا ISO) — همان سبک toLocaleString اپ */
+    function formatUserJoin(joinVal) {
+        if (joinVal == null || joinVal === '') return '';
+        let d;
+        if (typeof joinVal === 'number' || /^\d+$/.test(String(joinVal))) {
+            const n = Number(joinVal);
+            d = new Date(n < 1e12 ? n * 1000 : n);
+        } else {
+            d = new Date(joinVal);
+        }
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleString('en-us', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
     }
 
     async function chp(u, callback) {
@@ -4707,8 +4743,11 @@ if (!empty($_SESSION['loggedin'])) {
             [SN.user.first_name, SN.user.last_name].filter(Boolean).join(' ') ||
             SN.user.name ||
             'Account';
-        const photo = SN.user.photo || SN.user.tmb || (SN.user.meta && SN.user.meta.tmb) || null;
+        const photo = userThumbKey(SN.user);
         const hasEmail = !!(SN.user.email && String(SN.user.email).trim());
+        const joinText = formatUserJoin(
+            SN.user.join != null ? SN.user.join : (SN.user.meta && SN.user.meta.join)
+        );
 
         // ---- VIEW (بدون قلم روی آواتار) ----
         const head = OA(document.createElement('div'), { className: 'ha-profile-head' });
@@ -4756,6 +4795,12 @@ if (!empty($_SESSION['loggedin'])) {
         editBtn.addEventListener('click', () => showOnly('edit'));
         idRow.append(editBtn);
         info.append(idRow);
+        if (joinText) {
+            info.append(OA(document.createElement('div'), {
+                className: 'setting-subtitle',
+                innerHTML: joinText
+            }));
+        }
         head.append(avWrap, info);
         viewRoot.append(head);
 
@@ -6116,6 +6161,8 @@ if (!empty($_SESSION['loggedin'])) {
                     last_name: j.last_name || '',
                     email: j.email || '',
                     act: j.act,
+                    meta: j.meta || null,
+                    photo: j.photo || null,
                     devices: j.devices || []
                 }, j.access_token, j.refresh_token);
                 
