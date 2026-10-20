@@ -4778,6 +4778,14 @@ if (!empty($_SESSION['loggedin'])) {
             art.append(OA(document.createElement('img'), { className: 'rounded-circle', src: src }));
         }
         avWrap.append(art);
+        // دکمه ادیت: پایین‌راست آواتار (نه کنار ID)
+        const editBtn = OA(document.createElement('div'), {
+            className: 'ha-profile-avatar-edit',
+            title: 'Edit profile',
+            innerHTML: typeof svg_edit !== 'undefined' ? svg_edit : '✎'
+        });
+        editBtn.addEventListener('click', () => showOnly('edit'));
+        avWrap.append(editBtn);
 
         const info = OA(document.createElement('div'), { className: 'ha-profile-info' });
         info.append(OA(document.createElement('div'), {
@@ -4801,13 +4809,6 @@ if (!empty($_SESSION['loggedin'])) {
             className: 'ha-profile-id',
             innerHTML: 'ID: ' + (SN.user.id != null ? SN.user.id : '—')
         }));
-        const editBtn = OA(document.createElement('div'), {
-            className: 'ha-profile-edit-btn',
-            title: 'Edit profile',
-            innerHTML: typeof svg_edit !== 'undefined' ? svg_edit : '✎'
-        });
-        editBtn.addEventListener('click', () => showOnly('edit'));
-        idRow.append(editBtn);
         info.append(idRow);
         if (joinText) {
             info.append(OA(document.createElement('div'), {
