@@ -2829,134 +2829,156 @@ $stmt->execute();*/
         // Profile / email (gja → uac with body { q: { a, ... } })
         // ==========================================
 
-        // آپلود عکس پروفایل — data URL یا https
+        // آپلود عکس پروفایل — data URL
         // { a:'upload_profile_photo', image:'data:image/jpeg;base64,...' }
         if ($ACT == 'upload_profile_photo') {
-            if (!HA_RateLimit('upload_profile_photo', 10, 600)) {
-                echo json_encode(['error' => 'rate_limited']);
-                exit();
-            }
-            $image = isset($qObj->image) ? trim((string)$qObj->image) : '';
-            if ($image === '') {
-                echo json_encode(['error' => 'missing_image']);
-                exit();
-            }
-            if (strlen($image) > 7 * 1024 * 1024) {
-                echo json_encode(['error' => 'image_too_large']);
-                exit();
-            }
+            try {
+                if (!HA_RateLimit('upload_profile_photo', 10, 600)) {
+                    echo json_encode(['error' => 'rate_limited']);
+                    exit();
+                }
+                $image = isset($qObj->image) ? trim((string)$qObj->image) : '';
+                if ($image === '') {
+                    echo json_encode(['error' => 'missing_image']);
+                    exit();
+                }
+                if (strlen($image) > 7 * 1024 * 1024) {
+                    echo json_encode(['error' => 'image_too_large']);
+                    exit();
+                }
+                if (!preg_match('#^data:image/(jpeg|jpg|png|webp|gif);base64,#i', $image)) {
+                    echo json_encode(['error' => 'invalid_image']);
+                    exit();
+                }
 
-            $st = $conn->prepare('SELECT id_user, act, u_data FROM user WHERE id_user = ? LIMIT 1');
-            $st->bind_param('i', $id_user);
-            $st->execute();
-            $me = $st->get_result()->fetch_assoc();
-            if (!$me || (int)$me['act'] === 5 || (int)$me['act'] === 6) {
-                echo json_encode(['error' => 'unauthorized']);
-                exit();
-            }
+                $st = $conn->prepare('SELECT id_user, act, u_data FROM user WHERE id_user = ? LIMIT 1');
+                if (!$st) {
+                    echo json_encode(['error' => 'db_error', 'detail' => 'prepare_user']);
+                    exit();
+                }
+                $st->bind_param('i', $id_user);
+                $st->execute();
+                $me = $st->get_result()->fetch_assoc();
+                if (!$me || (int)$me['act'] === 5 || (int)$me['act'] === 6) {
+                    echo json_encode(['error' => 'unauthorized']);
+                    exit();
+                }
 
-            global $IDHM;
-            $pubId = (int)$id_user + (int)$IDHM;
-            // کلید استاندارد: u{publicId}t
-            $id_img = 'u' . $pubId . 't';
-            if (function_exists('MediaPlanBKey')) {
-                $id_img = MediaPlanBKey('user', $pubId, 'tmb', 0);
-            }
+                $idhm = isset($IDHM) ? (int)$IDHM : 11210700;
+                $pubId = (int)$id_user + $idhm;
+                $finalKey = 'u' . $pubId . 't';
 
-            $saved = '';
-            // 1) موتور مشترک تامب
-            if (function_exists('IngestThumbFromSource') && function_exists('MediaRoleToAct')) {
-                $saved = IngestThumbFromSource($conn, $image, $id_img, MediaRoleToAct('tmb'));
-            }
+                $comma = strpos($image, ',');
+                $raw = ($comma !== false) ? base64_decode(substr($image, $comma + 1), true) : false;
+                if ($raw === false || strlen($raw) < 32) {
+                    echo json_encode(['error' => 'invalid_image', 'detail' => 'decode']);
+                    exit();
+                }
 
-            // 2) fallback مستقیم: decode data-URI و نوشتن thumb/{id}.jpg
-            if ($saved === '' && preg_match('#^data:image/(jpeg|jpg|png|webp|gif);base64,#i', $image)) {
-                $raw = base64_decode(substr($image, strpos($image, ',') + 1), true);
-                if ($raw !== false && strlen($raw) >= 32) {
-                    $dirs = [];
-                    // h_api در /int/ → ../thumb
-                    $dirs[] = dirname(__DIR__) . '/thumb';
-                    // کنار document root
-                    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
-                        $dirs[] = rtrim((string)$_SERVER['DOCUMENT_ROOT'], '/') . '/thumb';
+                $dirs = [];
+                if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+                    $dirs[] = rtrim((string)$_SERVER['DOCUMENT_ROOT'], "/\\") . DIRECTORY_SEPARATOR . 'thumb';
+                }
+                $dirs[] = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'thumb';
+                $dirs[] = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'thumb';
+                $dirs[] = __DIR__ . DIRECTORY_SEPARATOR . 'thumb';
+
+                $saved = '';
+                $writeErrors = [];
+                foreach ($dirs as $dir) {
+                    if (!is_dir($dir)) {
+                        @mkdir($dir, 0755, true);
                     }
-                    $dirs[] = __DIR__ . '/../thumb';
-                    $dirs[] = __DIR__ . '/thumb';
-
-                    $wrote = false;
-                    $finalKey = preg_replace('/[^A-Za-z0-9_\-]/', '', $id_img);
-                    if ($finalKey === '') $finalKey = 'u' . $pubId . 't';
-
-                    foreach ($dirs as $dir) {
-                        if (!is_dir($dir)) {
-                            @mkdir($dir, 0755, true);
-                        }
-                        if (!is_dir($dir) || !is_writable($dir)) {
-                            continue;
-                        }
-                        $path = $dir . '/' . $finalKey . '.jpg';
-                        // ترجیح JPEG واقعی با GD
-                        if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
-                            $im = @imagecreatefromstring($raw);
-                            if ($im) {
-                                $ok = @imagejpeg($im, $path, 90);
-                                imagedestroy($im);
-                                if ($ok && is_file($path)) {
-                                    $wrote = true;
-                                    $saved = $finalKey;
-                                    break;
-                                }
-                            }
-                        }
-                        if (@file_put_contents($path, $raw) !== false && is_file($path)) {
-                            $wrote = true;
-                            $saved = $finalKey;
-                            break;
+                    if (!is_dir($dir)) {
+                        $writeErrors[] = $dir . ':no_dir';
+                        continue;
+                    }
+                    if (!is_writable($dir)) {
+                        $writeErrors[] = $dir . ':not_writable';
+                        continue;
+                    }
+                    $path = $dir . DIRECTORY_SEPARATOR . $finalKey . '.jpg';
+                    $okWrite = false;
+                    if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
+                        $im = @imagecreatefromstring($raw);
+                        if ($im) {
+                            $okWrite = @imagejpeg($im, $path, 90);
+                            @imagedestroy($im);
                         }
                     }
+                    if (!$okWrite) {
+                        $okWrite = (@file_put_contents($path, $raw) !== false);
+                    }
+                    if ($okWrite && is_file($path) && filesize($path) > 8) {
+                        $saved = $finalKey;
+                        break;
+                    }
+                    $writeErrors[] = $dir . ':write_fail';
+                }
 
-                    // ثبت در جدول thumb اگر ممکن
-                    if ($wrote && $saved !== '') {
-                        $actTmb = 1;
-                        $chk = $conn->prepare('SELECT id_img FROM thumb WHERE id_img = ? LIMIT 1');
-                        if ($chk) {
-                            $chk->bind_param('s', $saved);
-                            $chk->execute();
-                            $exists = $chk->get_result()->fetch_assoc();
-                            if ($exists) {
-                                $up = $conn->prepare('UPDATE thumb SET act = ? WHERE id_img = ? LIMIT 1');
-                                if ($up) { $up->bind_param('is', $actTmb, $saved); $up->execute(); }
-                            } else {
-                                $ins = $conn->prepare('INSERT INTO thumb (id_img, act) VALUES (?, ?)');
-                                if ($ins) { $ins->bind_param('si', $saved, $actTmb); @$ins->execute(); }
-                            }
-                        }
+                if ($saved === '') {
+                    echo json_encode([
+                        'error' => 'ingest_failed',
+                        'detail' => 'write',
+                        'dirs' => $writeErrors
+                    ]);
+                    exit();
+                }
+
+                // thumb table optional
+                $actTmb = 1;
+                $chk = @$conn->prepare('SELECT id_img FROM thumb WHERE id_img = ? LIMIT 1');
+                if ($chk) {
+                    $chk->bind_param('s', $saved);
+                    @$chk->execute();
+                    $res = @$chk->get_result();
+                    $exists = $res ? $res->fetch_assoc() : null;
+                    if ($exists) {
+                        $up = @$conn->prepare('UPDATE thumb SET act = ? WHERE id_img = ? LIMIT 1');
+                        if ($up) { $up->bind_param('is', $actTmb, $saved); @$up->execute(); }
+                    } else {
+                        $ins = @$conn->prepare('INSERT INTO thumb (id_img, act) VALUES (?, ?)');
+                        if ($ins) { $ins->bind_param('si', $saved, $actTmb); @$ins->execute(); }
                     }
                 }
-            }
 
-            if ($saved === '') {
-                echo json_encode(['error' => 'ingest_failed']);
+                $data = [];
+                if (!empty($me['u_data'])) {
+                    $decoded = json_decode((string)$me['u_data'], true);
+                    if (is_array($decoded)) $data = $decoded;
+                }
+                $data['tmb'] = $saved;
+                $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                if ($json === false) $json = '{"tmb":"' . $saved . '"}';
+
+                $u = $conn->prepare('UPDATE user SET u_data = ?, u_photo = ? WHERE id_user = ?');
+                if (!$u) {
+                    echo json_encode(['error' => 'db_error', 'detail' => 'prepare_update']);
+                    exit();
+                }
+                $u->bind_param('ssi', $json, $saved, $id_user);
+                if (!$u->execute()) {
+                    echo json_encode(['error' => 'db_error', 'detail' => 'update_user']);
+                    exit();
+                }
+
+                echo json_encode([
+                    'ok'    => true,
+                    'tmb'   => $saved,
+                    'photo' => $saved,
+                    'meta'  => [
+                        'tmb'  => $saved,
+                        'join' => isset($data['join']) ? $data['join'] : null
+                    ]
+                ]);
+                exit();
+            } catch (Throwable $ex) {
+                echo json_encode([
+                    'error' => 'server_error',
+                    'detail' => $ex->getMessage()
+                ]);
                 exit();
             }
-
-            $data = HA_UserDataArray($me);
-            $data['tmb'] = $saved;
-            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            $u = $conn->prepare('UPDATE user SET u_data = ?, u_photo = ? WHERE id_user = ?');
-            $u->bind_param('ssi', $json, $saved, $id_user);
-            $u->execute();
-
-            echo json_encode([
-                'ok'    => true,
-                'tmb'   => $saved,
-                'photo' => $saved,
-                'meta'  => [
-                    'tmb'  => $saved,
-                    'join' => isset($data['join']) ? $data['join'] : null
-                ]
-            ]);
-            exit();
         }
 
         if ($ACT == 'update_profile') {
