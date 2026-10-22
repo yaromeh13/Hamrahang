@@ -4091,9 +4091,14 @@ if (!empty($_SESSION['loggedin'])) {
         return ids.filter(isPresent);
     }
     
-    async function gja(q) {
+    async function gja(q, _retried) {
         const url = `${HP}?_qjs=uac`;
-    
+
+        // قبل از درخواست مطمئن شو access داریم
+        if (!SN.accessToken) {
+            await EnsureAccessToken();
+        }
+
         const headers = {
             'Content-Type': 'application/json; charset=UTF-8'
         };
@@ -4115,6 +4120,12 @@ if (!empty($_SESSION['loggedin'])) {
         const j = await response.json();
     
         if (j && j.error) {
+            // یک‌بار رفرش سشن و retry
+            if (!_retried && (j.error === 'unauthorized' || j.error === 'invalid_session')) {
+                SN.accessToken = null;
+                const ok = await EnsureAccessToken();
+                if (ok) return gja(q, true);
+            }
             throw new Error(j.error);
         }
     
@@ -4326,7 +4337,7 @@ if (!empty($_SESSION['loggedin'])) {
             devices: Array.isArray(userData.devices) ? userData.devices : [],
             loggedIn: true
         };
-        SN.accessToken = accessToken;
+        SN.accessToken = accessToken || SN.accessToken || null;
     
         try {
             localStorage.setItem('ha_user', JSON.stringify({
@@ -4339,7 +4350,9 @@ if (!empty($_SESSION['loggedin'])) {
                 join: SN.user.join,
                 meta: SN.user.meta
             }));
-            localStorage.setItem('ha_rftk', refreshToken);
+            if (refreshToken && refreshToken !== 'undefined' && refreshToken !== 'null') {
+                localStorage.setItem('ha_rftk', refreshToken);
+            }
         } catch (e) {}
         
         startHistoryFlushTimer();
@@ -5043,14 +5056,23 @@ if (!empty($_SESSION['loggedin'])) {
             img.src = localUrl;
 
             try {
-                if (!SN.accessToken && !(await EnsureAccessToken())) {
-                    editErr.innerHTML = 'Session expired. Log in again.';
-                    editErr.style.display = 'block';
-                    return;
-                }
                 editOk.innerHTML = 'Uploading…';
                 editOk.style.display = 'block';
+                // همیشه قبل از آپلود توکن را تازه کن
+                const tokOk = await EnsureAccessToken();
+                if (!tokOk && !SN.accessToken) {
+                    editErr.innerHTML = 'Session expired. Log in again.';
+                    editErr.style.display = 'block';
+                    editOk.style.display = 'none';
+                    return;
+                }
                 const dataUrl = await readImageAsJpegDataUrl(f, 512, 0.85);
+                if (!dataUrl || dataUrl.indexOf('data:image') !== 0) {
+                    editErr.innerHTML = 'Could not read image';
+                    editErr.style.display = 'block';
+                    editOk.style.display = 'none';
+                    return;
+                }
                 const j = await gja({ a: 'upload_profile_photo', image: dataUrl });
                 const tmb = (j && (j.tmb || j.photo)) || null;
                 if (tmb) {
@@ -5071,11 +5093,14 @@ if (!empty($_SESSION['loggedin'])) {
                 editOk.style.display = 'block';
             } catch (err) {
                 const msg = (err && err.message) ? String(err.message) : 'upload_failed';
+                console.warn('profile photo upload:', msg);
                 if (msg === 'image_too_large') editErr.innerHTML = 'Image is too large';
-                else if (msg === 'unauthorized') editErr.innerHTML = 'Session expired. Log in again.';
+                else if (msg === 'unauthorized' || msg === 'invalid_session') editErr.innerHTML = 'Session expired. Log in again.';
                 else if (msg === 'rate_limited') editErr.innerHTML = 'Too many uploads. Try later.';
-                else if (msg === 'ingest_failed') editErr.innerHTML = 'Could not process image';
-                else editErr.innerHTML = 'Upload failed';
+                else if (msg === 'ingest_failed') editErr.innerHTML = 'Could not save image on server';
+                else if (msg === 'invalid_image') editErr.innerHTML = 'Invalid image format';
+                else if (msg === 'missing_image') editErr.innerHTML = 'No image data';
+                else editErr.innerHTML = 'Upload failed: ' + msg;
                 editErr.style.display = 'block';
                 editOk.style.display = 'none';
             }

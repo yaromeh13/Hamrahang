@@ -2841,12 +2841,6 @@ $stmt->execute();*/
                 echo json_encode(['error' => 'missing_image']);
                 exit();
             }
-            $okSrc = preg_match('#^data:image/(jpeg|jpg|png|webp|gif);base64,#i', $image)
-                || preg_match('#^https?://#i', $image);
-            if (!$okSrc) {
-                echo json_encode(['error' => 'invalid_image']);
-                exit();
-            }
             if (strlen($image) > 7 * 1024 * 1024) {
                 echo json_encode(['error' => 'image_too_large']);
                 exit();
@@ -2863,8 +2857,84 @@ $stmt->execute();*/
 
             global $IDHM;
             $pubId = (int)$id_user + (int)$IDHM;
-            $id_img = MediaPlanBKey('user', $pubId, 'tmb', 0);
-            $saved = IngestThumbFromSource($conn, $image, $id_img, MediaRoleToAct('tmb'));
+            // کلید استاندارد: u{publicId}t
+            $id_img = 'u' . $pubId . 't';
+            if (function_exists('MediaPlanBKey')) {
+                $id_img = MediaPlanBKey('user', $pubId, 'tmb', 0);
+            }
+
+            $saved = '';
+            // 1) موتور مشترک تامب
+            if (function_exists('IngestThumbFromSource') && function_exists('MediaRoleToAct')) {
+                $saved = IngestThumbFromSource($conn, $image, $id_img, MediaRoleToAct('tmb'));
+            }
+
+            // 2) fallback مستقیم: decode data-URI و نوشتن thumb/{id}.jpg
+            if ($saved === '' && preg_match('#^data:image/(jpeg|jpg|png|webp|gif);base64,#i', $image)) {
+                $raw = base64_decode(substr($image, strpos($image, ',') + 1), true);
+                if ($raw !== false && strlen($raw) >= 32) {
+                    $dirs = [];
+                    // h_api در /int/ → ../thumb
+                    $dirs[] = dirname(__DIR__) . '/thumb';
+                    // کنار document root
+                    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+                        $dirs[] = rtrim((string)$_SERVER['DOCUMENT_ROOT'], '/') . '/thumb';
+                    }
+                    $dirs[] = __DIR__ . '/../thumb';
+                    $dirs[] = __DIR__ . '/thumb';
+
+                    $wrote = false;
+                    $finalKey = preg_replace('/[^A-Za-z0-9_\-]/', '', $id_img);
+                    if ($finalKey === '') $finalKey = 'u' . $pubId . 't';
+
+                    foreach ($dirs as $dir) {
+                        if (!is_dir($dir)) {
+                            @mkdir($dir, 0755, true);
+                        }
+                        if (!is_dir($dir) || !is_writable($dir)) {
+                            continue;
+                        }
+                        $path = $dir . '/' . $finalKey . '.jpg';
+                        // ترجیح JPEG واقعی با GD
+                        if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
+                            $im = @imagecreatefromstring($raw);
+                            if ($im) {
+                                $ok = @imagejpeg($im, $path, 90);
+                                imagedestroy($im);
+                                if ($ok && is_file($path)) {
+                                    $wrote = true;
+                                    $saved = $finalKey;
+                                    break;
+                                }
+                            }
+                        }
+                        if (@file_put_contents($path, $raw) !== false && is_file($path)) {
+                            $wrote = true;
+                            $saved = $finalKey;
+                            break;
+                        }
+                    }
+
+                    // ثبت در جدول thumb اگر ممکن
+                    if ($wrote && $saved !== '') {
+                        $actTmb = 1;
+                        $chk = $conn->prepare('SELECT id_img FROM thumb WHERE id_img = ? LIMIT 1');
+                        if ($chk) {
+                            $chk->bind_param('s', $saved);
+                            $chk->execute();
+                            $exists = $chk->get_result()->fetch_assoc();
+                            if ($exists) {
+                                $up = $conn->prepare('UPDATE thumb SET act = ? WHERE id_img = ? LIMIT 1');
+                                if ($up) { $up->bind_param('is', $actTmb, $saved); $up->execute(); }
+                            } else {
+                                $ins = $conn->prepare('INSERT INTO thumb (id_img, act) VALUES (?, ?)');
+                                if ($ins) { $ins->bind_param('si', $saved, $actTmb); @$ins->execute(); }
+                            }
+                        }
+                    }
+                }
+            }
+
             if ($saved === '') {
                 echo json_encode(['error' => 'ingest_failed']);
                 exit();
