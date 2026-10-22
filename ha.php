@@ -4408,8 +4408,12 @@ if (!empty($_SESSION['loggedin'])) {
     }
 
     /** خواندن فایل تصویر → data URL jpeg مربعی/کوچک برای آپلود پروفایل */
+    /**
+     * کراپ مربعی مرکز + ریسایز سمت کلاینت (بدون کار سرور)
+     * هر نسبتی → مربع center-crop → JPEG تا maxSide
+     */
     function readImageAsJpegDataUrl(file, maxSide, quality) {
-        maxSide = maxSide || 512;
+        maxSide = maxSide || 400;
         quality = quality == null ? 0.85 : quality;
         return new Promise(function (resolve, reject) {
             const reader = new FileReader();
@@ -4419,20 +4423,25 @@ if (!empty($_SESSION['loggedin'])) {
                 const im = new Image();
                 im.onload = function () {
                     try {
-                        let w = im.naturalWidth || im.width;
-                        let h = im.naturalHeight || im.height;
-                        if (!w || !h) {
+                        const iw = im.naturalWidth || im.width;
+                        const ih = im.naturalHeight || im.height;
+                        if (!iw || !ih) {
                             resolve(src);
                             return;
                         }
-                        const scale = Math.min(1, maxSide / Math.max(w, h));
-                        w = Math.max(1, Math.round(w * scale));
-                        h = Math.max(1, Math.round(h * scale));
+                        // مرکز کراپ مربعی
+                        const side = Math.min(iw, ih);
+                        const sx = Math.floor((iw - side) / 2);
+                        const sy = Math.floor((ih - side) / 2);
+                        const out = Math.min(maxSide, side);
                         const canvas = document.createElement('canvas');
-                        canvas.width = w;
-                        canvas.height = h;
+                        canvas.width = out;
+                        canvas.height = out;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(im, 0, 0, w, h);
+                        // پس‌زمینه سفید برای PNG شفاف
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, out, out);
+                        ctx.drawImage(im, sx, sy, side, side, 0, 0, out, out);
                         resolve(canvas.toDataURL('image/jpeg', quality));
                     } catch (e) {
                         resolve(src);
@@ -5046,14 +5055,13 @@ if (!empty($_SESSION['loggedin'])) {
                 editErr.style.display = 'block';
                 return;
             }
-            // پیش‌نمایش فوری
-            const localUrl = URL.createObjectURL(f);
             let img = thumbArt.querySelector('img');
             if (!img) {
                 img = OA(document.createElement('img'), { className: 'rounded-circle' });
                 thumbArt.append(img);
             }
-            img.src = localUrl;
+            // پیش‌نمایش موقت تا کراپ تمام شود
+            img.src = URL.createObjectURL(f);
 
             try {
                 editOk.innerHTML = 'Uploading…';
@@ -5065,8 +5073,11 @@ if (!empty($_SESSION['loggedin'])) {
                     editOk.style.display = 'none';
                     return;
                 }
-                // JPEG فشرده — سپس multipart (نه JSON base64؛ همان موتور ادمین)
-                const dataUrl = await readImageAsJpegDataUrl(f, 400, 0.8);
+                // کراپ مربعی + JPEG فقط سمت کلاینت
+                const dataUrl = await readImageAsJpegDataUrl(f, 400, 0.85);
+                if (dataUrl && dataUrl.indexOf('data:image') === 0) {
+                    img.src = dataUrl; // پیش‌نمایش همان مربعی که آپلود می‌شود
+                }
                 let blob = f;
                 if (dataUrl && dataUrl.indexOf('data:image') === 0) {
                     const res = await fetch(dataUrl);
