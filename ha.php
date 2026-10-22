@@ -4394,6 +4394,44 @@ if (!empty($_SESSION['loggedin'])) {
         return u.tmb || u.photo || (u.meta && u.meta.tmb) || null;
     }
 
+    /** خواندن فایل تصویر → data URL jpeg مربعی/کوچک برای آپلود پروفایل */
+    function readImageAsJpegDataUrl(file, maxSide, quality) {
+        maxSide = maxSide || 512;
+        quality = quality == null ? 0.85 : quality;
+        return new Promise(function (resolve, reject) {
+            const reader = new FileReader();
+            reader.onerror = function () { reject(new Error('read_failed')); };
+            reader.onload = function () {
+                const src = reader.result;
+                const im = new Image();
+                im.onload = function () {
+                    try {
+                        let w = im.naturalWidth || im.width;
+                        let h = im.naturalHeight || im.height;
+                        if (!w || !h) {
+                            resolve(src);
+                            return;
+                        }
+                        const scale = Math.min(1, maxSide / Math.max(w, h));
+                        w = Math.max(1, Math.round(w * scale));
+                        h = Math.max(1, Math.round(h * scale));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(im, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    } catch (e) {
+                        resolve(src);
+                    }
+                };
+                im.onerror = function () { reject(new Error('decode_failed')); };
+                im.src = src;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     /** تاریخ join کاربر (unix یا ISO) — همان سبک toLocaleString اپ */
     function formatUserJoin(joinVal) {
         if (joinVal == null || joinVal === '') return '';
@@ -4985,18 +5023,62 @@ if (!empty($_SESSION['loggedin'])) {
             innerHTML: typeof svg_edit !== 'undefined' ? svg_edit : '✎'
         });
         pickBtn.addEventListener('click', () => fileIn.click());
-        fileIn.addEventListener('change', () => {
+        fileIn.addEventListener('change', async () => {
             const f = fileIn.files && fileIn.files[0];
             if (!f) return;
-            const url = URL.createObjectURL(f);
+            editErr.style.display = 'none';
+            editOk.style.display = 'none';
+            if (!/^image\//.test(f.type || '')) {
+                editErr.innerHTML = 'Choose an image file';
+                editErr.style.display = 'block';
+                return;
+            }
+            // پیش‌نمایش فوری
+            const localUrl = URL.createObjectURL(f);
             let img = thumbArt.querySelector('img');
             if (!img) {
                 img = OA(document.createElement('img'), { className: 'rounded-circle' });
                 thumbArt.append(img);
             }
-            img.src = url;
-            editOk.innerHTML = 'Photo selected (upload not enabled yet)';
-            editOk.style.display = 'block';
+            img.src = localUrl;
+
+            try {
+                if (!SN.accessToken && !(await EnsureAccessToken())) {
+                    editErr.innerHTML = 'Session expired. Log in again.';
+                    editErr.style.display = 'block';
+                    return;
+                }
+                editOk.innerHTML = 'Uploading…';
+                editOk.style.display = 'block';
+                const dataUrl = await readImageAsJpegDataUrl(f, 512, 0.85);
+                const j = await gja({ a: 'upload_profile_photo', image: dataUrl });
+                const tmb = (j && (j.tmb || j.photo)) || null;
+                if (tmb) {
+                    SN.user.tmb = tmb;
+                    SN.user.photo = tmb;
+                    if (!SN.user.meta || typeof SN.user.meta !== 'object') SN.user.meta = {};
+                    SN.user.meta.tmb = tmb;
+                    try {
+                        const raw = localStorage.getItem('ha_user');
+                        const cached = raw ? JSON.parse(raw) : {};
+                        cached.tmb = tmb;
+                        cached.meta = Object.assign({}, cached.meta || {}, { tmb: tmb });
+                        localStorage.setItem('ha_user', JSON.stringify(cached));
+                    } catch (e) {}
+                    img.src = UT + tmb + (String(tmb).indexOf('.') >= 0 ? '' : '.jpg') + '?t=' + Date.now();
+                }
+                editOk.innerHTML = 'Photo updated';
+                editOk.style.display = 'block';
+            } catch (err) {
+                const msg = (err && err.message) ? String(err.message) : 'upload_failed';
+                if (msg === 'image_too_large') editErr.innerHTML = 'Image is too large';
+                else if (msg === 'unauthorized') editErr.innerHTML = 'Session expired. Log in again.';
+                else if (msg === 'rate_limited') editErr.innerHTML = 'Too many uploads. Try later.';
+                else if (msg === 'ingest_failed') editErr.innerHTML = 'Could not process image';
+                else editErr.innerHTML = 'Upload failed';
+                editErr.style.display = 'block';
+                editOk.style.display = 'none';
+            }
         });
         thumbAv.append(pickBtn, fileIn);
         thumbRow.append(thumbAv, OA(document.createElement('div'), {

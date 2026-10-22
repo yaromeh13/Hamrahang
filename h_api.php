@@ -2828,6 +2828,67 @@ $stmt->execute();*/
         // ==========================================
         // Profile / email (gja → uac with body { q: { a, ... } })
         // ==========================================
+
+        // آپلود عکس پروفایل — data URL یا https
+        // { a:'upload_profile_photo', image:'data:image/jpeg;base64,...' }
+        if ($ACT == 'upload_profile_photo') {
+            if (!HA_RateLimit('upload_profile_photo', 10, 600)) {
+                echo json_encode(['error' => 'rate_limited']);
+                exit();
+            }
+            $image = isset($qObj->image) ? trim((string)$qObj->image) : '';
+            if ($image === '') {
+                echo json_encode(['error' => 'missing_image']);
+                exit();
+            }
+            $okSrc = preg_match('#^data:image/(jpeg|jpg|png|webp|gif);base64,#i', $image)
+                || preg_match('#^https?://#i', $image);
+            if (!$okSrc) {
+                echo json_encode(['error' => 'invalid_image']);
+                exit();
+            }
+            if (strlen($image) > 7 * 1024 * 1024) {
+                echo json_encode(['error' => 'image_too_large']);
+                exit();
+            }
+
+            $st = $conn->prepare('SELECT id_user, act, u_data FROM user WHERE id_user = ? LIMIT 1');
+            $st->bind_param('i', $id_user);
+            $st->execute();
+            $me = $st->get_result()->fetch_assoc();
+            if (!$me || (int)$me['act'] === 5 || (int)$me['act'] === 6) {
+                echo json_encode(['error' => 'unauthorized']);
+                exit();
+            }
+
+            global $IDHM;
+            $pubId = (int)$id_user + (int)$IDHM;
+            $id_img = MediaPlanBKey('user', $pubId, 'tmb', 0);
+            $saved = IngestThumbFromSource($conn, $image, $id_img, MediaRoleToAct('tmb'));
+            if ($saved === '') {
+                echo json_encode(['error' => 'ingest_failed']);
+                exit();
+            }
+
+            $data = HA_UserDataArray($me);
+            $data['tmb'] = $saved;
+            $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $u = $conn->prepare('UPDATE user SET u_data = ?, u_photo = ? WHERE id_user = ?');
+            $u->bind_param('ssi', $json, $saved, $id_user);
+            $u->execute();
+
+            echo json_encode([
+                'ok'    => true,
+                'tmb'   => $saved,
+                'photo' => $saved,
+                'meta'  => [
+                    'tmb'  => $saved,
+                    'join' => isset($data['join']) ? $data['join'] : null
+                ]
+            ]);
+            exit();
+        }
+
         if ($ACT == 'update_profile') {
             if (!HA_RateLimit('update_profile', 30, 600)) {
                 echo json_encode(['error' => 'rate_limited']);
