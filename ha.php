@@ -5176,13 +5176,109 @@ if (!empty($_SESSION['loggedin'])) {
                 className: 'btn btn-model-3',
                 innerHTML: 'Change email'
             });
+            const changeBox = OA(document.createElement('div'), {
+                className: 'ha-email-change-box',
+                style: 'display:none;width:100%;margin-top:8px'
+            });
+            const newEmailIn = OA(document.createElement('input'), {
+                className: 'input focusable',
+                type: 'email',
+                placeholder: 'New email address',
+                maxlength: 120
+            });
+            const sendEmailBtn = OA(document.createElement('div'), {
+                className: 'btn btn-model-1',
+                style: 'margin-top:8px',
+                innerHTML: 'Send verification link'
+            });
+            const cancelEmailBtn = OA(document.createElement('div'), {
+                className: 'btn btn-model-3',
+                style: 'margin-top:8px;margin-left:8px',
+                innerHTML: 'Cancel'
+            });
+            const emailBtnRow = OA(document.createElement('div'), {
+                className: 'ha-settings-foot-row',
+                style: 'margin-top:0'
+            });
+            emailBtnRow.append(sendEmailBtn, cancelEmailBtn);
+            changeBox.append(newEmailIn, emailBtnRow);
+
             changeEmailBtn.addEventListener('click', () => {
                 editErr.style.display = 'none';
-                editOk.innerHTML = 'A verification link will be emailed to confirm the new address (API next).';
-                editOk.style.display = 'block';
+                editOk.style.display = 'none';
+                changeBox.style.display = 'block';
+                changeEmailBtn.style.display = 'none';
+                try { newEmailIn.focus(); } catch (e) {}
             });
+            cancelEmailBtn.addEventListener('click', () => {
+                changeBox.style.display = 'none';
+                changeEmailBtn.style.display = '';
+                newEmailIn.value = '';
+                editErr.style.display = 'none';
+            });
+            sendEmailBtn.addEventListener('click', async () => {
+                editErr.style.display = 'none';
+                editOk.style.display = 'none';
+                const em = (newEmailIn.value || '').trim().toLowerCase();
+                if (!em || em.indexOf('@') < 1) {
+                    editErr.innerHTML = 'Enter a valid email';
+                    editErr.style.display = 'block';
+                    return;
+                }
+                if (em === String(SN.user.email || '').trim().toLowerCase()) {
+                    editErr.innerHTML = 'This is already your email';
+                    editErr.style.display = 'block';
+                    return;
+                }
+                sendEmailBtn.innerHTML = '...';
+                try {
+                    const j = await gja({ a: 'request_email_change', email: em });
+                    sendEmailBtn.innerHTML = 'Send verification link';
+                    if (!j || j.error) {
+                        const err = (j && j.error) || 'error';
+                        if (err === 'invalid_email') editErr.innerHTML = 'Invalid email';
+                        else if (err === 'rate_limited') editErr.innerHTML = 'Too many attempts. Try later.';
+                        else if (err === 'unauthorized') editErr.innerHTML = 'Session expired. Log in again.';
+                        else if (err === 'email_unavailable') editErr.innerHTML = 'This email cannot be used.';
+                        else editErr.innerHTML = String(err);
+                        editErr.style.display = 'block';
+                        return;
+                    }
+                    const st = j.email_status || '';
+                    if (st === 'unchanged') {
+                        editOk.innerHTML = 'This is already your email';
+                    } else if (st === 'claim_sent') {
+                        editOk.innerHTML = j.message || 'This email is registered. Check the inbox to link accounts.';
+                    } else if (st === 'unavailable') {
+                        editErr.innerHTML = 'This email cannot be used.';
+                        editErr.style.display = 'block';
+                        return;
+                    } else {
+                        editOk.innerHTML = j.message || ('Check your inbox at ' + em + ' to confirm the new address.');
+                        if (j.mail_sent === false) {
+                            editOk.innerHTML += ' (Mail may be delayed.)';
+                        }
+                    }
+                    editOk.style.display = 'block';
+                    changeBox.style.display = 'none';
+                    changeEmailBtn.style.display = '';
+                    newEmailIn.value = '';
+                } catch (err) {
+                    sendEmailBtn.innerHTML = 'Send verification link';
+                    const msg = (err && err.message) ? String(err.message) : 'error';
+                    if (msg === 'unauthorized' || msg === 'invalid_session') {
+                        editErr.innerHTML = 'Session expired. Log in again.';
+                    } else if (msg === 'rate_limited') {
+                        editErr.innerHTML = 'Too many attempts. Try later.';
+                    } else {
+                        editErr.innerHTML = 'Could not send: ' + msg;
+                    }
+                    editErr.style.display = 'block';
+                }
+            });
+
             emailRow.append(changeEmailBtn);
-            editForm.append(emailRow);
+            editForm.append(emailRow, changeBox);
         } else {
             emailIn = OA(document.createElement('input'), {
                 className: 'input focusable',
