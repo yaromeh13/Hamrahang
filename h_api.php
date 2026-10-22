@@ -2038,7 +2038,8 @@ $stmt->execute();*/
         if ($ACT == 'sync_favorites') {
     
             $items = isset($qObj->items) ? $qObj->items : null;
-            if (!$items || !is_object($items)) {
+            // object یا associative array؛ خالی هم مجاز است
+            if ($items === null || (!is_object($items) && !is_array($items))) {
                 echo json_encode(['error' => 'invalid_items']);
                 exit();
             }
@@ -2052,6 +2053,7 @@ $stmt->execute();*/
             ");
     
             foreach ($items as $typeName => $idList) {
+                if (is_numeric($typeName)) continue;
                 $itemType = ContentTypeToInt($typeName);
                 if ($itemType === null || !is_array($idList)) {
                     continue;

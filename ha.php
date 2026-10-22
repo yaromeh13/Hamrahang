@@ -4345,6 +4345,49 @@ if (!empty($_SESSION['loggedin'])) {
         startHistoryFlushTimer();
     }
 
+    /**
+     * برای gja (uac) حتماً Bearer لازم است.
+     * بعد از رفرش صفحه ممکن است فقط ha_rftk باشد و accessToken خالی → Sync → Error
+     */
+    async function EnsureAccessToken() {
+        if (SN.accessToken) return true;
+
+        let refreshToken = null;
+        try {
+            refreshToken = localStorage.getItem('ha_rftk');
+        } catch (e) {}
+        if (!refreshToken) return false;
+
+        const did = GetOrCreateDeviceId();
+        return await new Promise(function (resolve) {
+            gjl(
+                { a: 'refresh_session', refresh_token: refreshToken, did: did },
+                function (success, j) {
+                    if (!success || !j || j.error || !j.access_token) {
+                        resolve(false);
+                        return;
+                    }
+                    PersistUserSession(
+                        {
+                            id: j.id_user || (SN.user && SN.user.id) || null,
+                            name: j.user_name || (SN.user && SN.user.name) || '',
+                            first_name: j.first_name || (SN.user && SN.user.first_name) || '',
+                            last_name: j.last_name || (SN.user && SN.user.last_name) || '',
+                            email: j.email || (SN.user && SN.user.email) || '',
+                            act: typeof j.act !== 'undefined' ? j.act : (SN.user && SN.user.act),
+                            meta: j.meta || (SN.user && SN.user.meta) || null,
+                            photo: j.photo || null,
+                            devices: (SN.user && SN.user.devices) || []
+                        },
+                        j.access_token,
+                        j.refresh_token || refreshToken
+                    );
+                    resolve(true);
+                }
+            );
+        });
+    }
+
     /** تامب کاربر از meta.tmb / photo */
     function userThumbKey(u) {
         if (!u) return null;
@@ -5982,37 +6025,48 @@ if (!empty($_SESSION['loggedin'])) {
     }
     
     async function fetchServerHistory() {
-        if (!SN.user?.loggedIn || !SN.accessToken) return null;
-        const j = await gja({ a: 'get_history' });
-        if (!j || j.error || !Array.isArray(j.history)) return null;
-        return j.history;
+        if (!SN.user?.loggedIn) return null;
+        if (!SN.accessToken && !(await EnsureAccessToken())) return null;
+        try {
+            const j = await gja({ a: 'get_history' });
+            if (!j || j.error || !Array.isArray(j.history)) return null;
+            return j.history;
+        } catch (err) {
+            console.warn('fetchServerHistory failed:', err && err.message);
+            return null;
+        }
     }
     
     /** دکمه دستی / بخشی از ManualSyncAll */
     async function ManualSyncHistory() {
-        if (!SN.user?.loggedIn || !SN.accessToken) return false;
+        if (!SN.user?.loggedIn) return false;
+        if (!SN.accessToken && !(await EnsureAccessToken())) return false;
+
+        try {
+            const serverList = await fetchServerHistory();
+            if (serverList) {
+                mergeServerHistoryIntoLocal(serverList);
+            }
     
-        const serverList = await fetchServerHistory();
-        if (serverList) {
-            mergeServerHistoryIntoLocal(serverList);
+            LoadProfile();
+            const items = (SN.profile.history || []).map((row) => ({
+                id: row.id,
+                type: row.type || 'song',
+                at: row.at || Math.floor(Date.now() / 1000)
+            }));
+    
+            if (items.length) {
+                const j = await gja({ a: 'sync_history', items: items });
+                if (!j || j.error) return false;
+                SN._pendingHistory = [];
+                SN._lastHistoryFlushAt = Date.now();
+            }
+    
+            return true;
+        } catch (err) {
+            console.warn('ManualSyncHistory failed:', err && err.message);
+            return false;
         }
-    
-        // کل لوکال را push کن (سرور upsert می‌کند)
-        LoadProfile();
-        const items = (SN.profile.history || []).map((row) => ({
-            id: row.id,
-            type: row.type || 'song',
-            at: row.at || Math.floor(Date.now() / 1000)
-        }));
-    
-        if (items.length) {
-            const j = await gja({ a: 'sync_history', items: items });
-            if (!j || j.error) return false;
-            SN._pendingHistory = [];
-            SN._lastHistoryFlushAt = Date.now();
-        }
-    
-        return true;
     }
     
     async function SoftPullHistory() {
@@ -8660,8 +8714,10 @@ if (!empty($_SESSION['loggedin'])) {
     }
 
     async function ManualSyncPlaylists() {
-        if (!SN.user?.loggedIn || !SN.accessToken) return false;
-    
+        if (!SN.user?.loggedIn) return false;
+        if (!SN.accessToken && !(await EnsureAccessToken())) return false;
+
+        try {
         LoadProfile();
         if (!SN.playlist) SN.playlist = {};
     
@@ -8752,6 +8808,10 @@ if (!empty($_SESSION['loggedin'])) {
     
         SaveProfile();
         return true;
+        } catch (err) {
+            console.warn('ManualSyncPlaylists failed:', err && err.message);
+            return false;
+        }
     }
     
     async function ManualSyncAll(cb) {
@@ -9553,6 +9613,8 @@ const PROFILE_KEY = 'ha_profile';
     }
 
     async function fetchServerFavorites() {
+        if (!SN.user?.loggedIn) return null;
+        if (!SN.accessToken && !(await EnsureAccessToken())) return null;
         try {
             const j = await gja({ a: 'get_favorites' });
             return j?.favorites || null;
@@ -9563,7 +9625,8 @@ const PROFILE_KEY = 'ha_profile';
     }
     
     async function SoftPullFavorites() {
-        if (!SN.user?.loggedIn || !SN.accessToken) return;
+        if (!SN.user?.loggedIn) return;
+        if (!SN.accessToken && !(await EnsureAccessToken())) return;
     
         const serverFav = await fetchServerFavorites();
         if (serverFav) {
@@ -9652,15 +9715,21 @@ const PROFILE_KEY = 'ha_profile';
     }
     
     async function ManualSyncFavorites() {
-        if (!SN.user?.loggedIn || !SN.accessToken) return false;
-    
-        const serverFav = await fetchServerFavorites();
-        if (serverFav) {
-            mergeServerFavoritesIntoLocal(serverFav);
+        if (!SN.user?.loggedIn) return false;
+        if (!SN.accessToken && !(await EnsureAccessToken())) return false;
+
+        try {
+            const serverFav = await fetchServerFavorites();
+            if (serverFav) {
+                mergeServerFavoritesIntoLocal(serverFav);
+            }
+            LoadProfile();
+            const j = await pushLocalFavoritesToServer(SN.profile.favorite || {});
+            return !!j;
+        } catch (err) {
+            console.warn('ManualSyncFavorites failed:', err && err.message);
+            return false;
         }
-    
-        const j = await pushLocalFavoritesToServer(SN.profile.favorite);
-        return !!j;
     }
 
     async function userAction(localFirst, serverPayload) {
