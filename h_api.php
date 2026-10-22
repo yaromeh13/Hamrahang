@@ -1852,6 +1852,143 @@ $stmt->execute();*/
             echo json_encode(['error' => 'unauthorized']);
             exit();
         }
+
+        // ---- آپلود عکس پروفایل با multipart (مثل ادمین از IngestThumbFromSource) ----
+        // FormData: a=upload_profile_photo, image=<file>
+        // از JSON base64 بزرگ اجتناب می‌کند (علت رایج HTTP 500)
+        if (
+            !empty($_FILES['image']) &&
+            isset($_POST['a']) &&
+            (string)$_POST['a'] === 'upload_profile_photo'
+        ) {
+            try {
+                if (!HA_RateLimit('upload_profile_photo', 10, 600)) {
+                    echo json_encode(['error' => 'rate_limited']);
+                    exit();
+                }
+                $file = $_FILES['image'];
+                if (!isset($file['error']) || (int)$file['error'] !== UPLOAD_ERR_OK) {
+                    echo json_encode(['error' => 'upload_error', 'detail' => (int)($file['error'] ?? -1)]);
+                    exit();
+                }
+                if (!is_uploaded_file($file['tmp_name'])) {
+                    echo json_encode(['error' => 'invalid_upload']);
+                    exit();
+                }
+                $size = (int)($file['size'] ?? 0);
+                if ($size < 32 || $size > 5 * 1024 * 1024) {
+                    echo json_encode(['error' => 'image_too_large']);
+                    exit();
+                }
+                $finfo = function_exists('finfo_open') ? finfo_open(FILEINFO_MIME_TYPE) : false;
+                $mime = $finfo ? finfo_file($finfo, $file['tmp_name']) : ($file['type'] ?? '');
+                if ($finfo) finfo_close($finfo);
+                $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
+                if (!isset($allowed[$mime])) {
+                    // fallback extension
+                    $extGuess = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+                    if (!in_array($extGuess, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true)) {
+                        echo json_encode(['error' => 'invalid_image', 'detail' => (string)$mime]);
+                        exit();
+                    }
+                }
+
+                $st = $conn->prepare('SELECT id_user, act, u_data FROM user WHERE id_user = ? LIMIT 1');
+                if (!$st) {
+                    echo json_encode(['error' => 'db_error']);
+                    exit();
+                }
+                $st->bind_param('i', $id_user);
+                $st->execute();
+                $me = $st->get_result()->fetch_assoc();
+                $st->close();
+                if (!$me || (int)$me['act'] === 5 || (int)$me['act'] === 6) {
+                    echo json_encode(['error' => 'unauthorized']);
+                    exit();
+                }
+
+                $idhm = isset($IDHM) ? (int)$IDHM : 11210700;
+                $pubId = (int)$id_user + $idhm;
+                $id_img = MediaPlanBKey('user', $pubId, 'tmb', 0);
+
+                // data URI از فایل موقت — همان ورودی که ادمین به IngestThumb می‌دهد
+                $bin = @file_get_contents($file['tmp_name']);
+                if ($bin === false || strlen($bin) < 32) {
+                    echo json_encode(['error' => 'invalid_image', 'detail' => 'read']);
+                    exit();
+                }
+                $b64 = 'data:image/jpeg;base64,' . base64_encode($bin);
+                $saved = IngestThumbFromSource($conn, $b64, $id_img, MediaRoleToAct('tmb'));
+
+                // اگر ingest شکست خورد، مستقیم بنویس (همان مسیر thumb)
+                if ($saved === '') {
+                    $dir = dirname(__DIR__) . '/thumb';
+                    if (!is_dir($dir) && !empty($_SERVER['DOCUMENT_ROOT'])) {
+                        $dir = rtrim((string)$_SERVER['DOCUMENT_ROOT'], '/\\') . '/thumb';
+                    }
+                    if (!is_dir($dir)) {
+                        @mkdir($dir, 0755, true);
+                    }
+                    $path = $dir . '/' . $id_img . '.jpg';
+                    $okW = false;
+                    if (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
+                        $im = @imagecreatefromstring($bin);
+                        if ($im) {
+                            $okW = @imagejpeg($im, $path, 90);
+                            @imagedestroy($im);
+                        }
+                    }
+                    if (!$okW) {
+                        $okW = (@file_put_contents($path, $bin) !== false);
+                    }
+                    if ($okW && is_file($path)) {
+                        $saved = $id_img;
+                        $actTmb = 1;
+                        $chk = @$conn->prepare('SELECT id_img FROM thumb WHERE id_img = ? LIMIT 1');
+                        if ($chk) {
+                            $chk->bind_param('s', $saved);
+                            @$chk->execute();
+                            $ex = @$chk->get_result();
+                            $rowT = $ex ? $ex->fetch_assoc() : null;
+                            if ($rowT) {
+                                $up = @$conn->prepare('UPDATE thumb SET act = ? WHERE id_img = ?');
+                                if ($up) { $up->bind_param('is', $actTmb, $saved); @$up->execute(); }
+                            } else {
+                                $ins = @$conn->prepare('INSERT INTO thumb (id_img, act) VALUES (?, ?)');
+                                if ($ins) { $ins->bind_param('si', $saved, $actTmb); @$ins->execute(); }
+                            }
+                        }
+                    }
+                }
+
+                if ($saved === '') {
+                    echo json_encode(['error' => 'ingest_failed']);
+                    exit();
+                }
+
+                $data = HA_UserDataArray($me);
+                $data['tmb'] = $saved;
+                $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                $u = $conn->prepare('UPDATE user SET u_data = ?, u_photo = ? WHERE id_user = ?');
+                if (!$u) {
+                    echo json_encode(['error' => 'db_error', 'detail' => 'update']);
+                    exit();
+                }
+                $u->bind_param('ssi', $json, $saved, $id_user);
+                $u->execute();
+
+                echo json_encode([
+                    'ok'    => true,
+                    'tmb'   => $saved,
+                    'photo' => $saved,
+                    'meta'  => ['tmb' => $saved, 'join' => isset($data['join']) ? $data['join'] : null]
+                ]);
+                exit();
+            } catch (Throwable $ex) {
+                echo json_encode(['error' => 'server_error', 'detail' => $ex->getMessage()]);
+                exit();
+            }
+        }
     
         $INPUT = file_get_contents('php://input');
         $JSD   = json_decode($INPUT);
