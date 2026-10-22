@@ -1973,7 +1973,7 @@ $stmt->execute();*/
                     $json = '{"tmb":' . json_encode($saved) . '}';
                 }
 
-                // اول فقط u_data (منبع اصلی تامب در اپ) — u_photo اختیاری
+                // تامب فقط در u_data.tmb — ستون u_photo در اسکیما نیست
                 $okData = false;
                 $u = $conn->prepare('UPDATE user SET u_data = ? WHERE id_user = ?');
                 if ($u) {
@@ -1982,27 +1982,20 @@ $stmt->execute();*/
                     $u->close();
                 }
                 if (!$okData) {
-                    // یک تلاش با escape خام
                     $esc = $conn->real_escape_string($json);
                     $okData = @$conn->query(
                         "UPDATE user SET u_data = '{$esc}' WHERE id_user = " . (int)$id_user . " LIMIT 1"
                     );
                 }
-                // best-effort روی u_photo (ممکن است طول/نوع ستون گیر بدهد)
-                $up2 = @$conn->prepare('UPDATE user SET u_photo = ? WHERE id_user = ?');
-                if ($up2) {
-                    $up2->bind_param('si', $saved, $id_user);
-                    @$up2->execute();
-                    $up2->close();
+                if (!$okData) {
+                    echo json_encode(['error' => 'db_error', 'detail' => 'u_data']);
+                    exit();
                 }
 
-                // فایل روی دیسک است؛ حتی اگر DB جزئی fail شود ok برمی‌گردانیم
-                // تا UI خطای غلط نشان ندهد
                 echo json_encode([
                     'ok'    => true,
                     'tmb'   => $saved,
                     'photo' => $saved,
-                    'db'    => $okData ? 'ok' : 'partial',
                     'meta'  => ['tmb' => $saved, 'join' => isset($data['join']) ? $data['join'] : null]
                 ]);
                 exit();
@@ -3110,6 +3103,7 @@ $stmt->execute();*/
                 $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 if ($json === false) $json = '{"tmb":' . json_encode($saved) . '}';
 
+                // فقط u_data — بدون u_photo
                 $okData = false;
                 $u = $conn->prepare('UPDATE user SET u_data = ? WHERE id_user = ?');
                 if ($u) {
@@ -3123,18 +3117,15 @@ $stmt->execute();*/
                         "UPDATE user SET u_data = '{$esc}' WHERE id_user = " . (int)$id_user . " LIMIT 1"
                     );
                 }
-                $up2 = @$conn->prepare('UPDATE user SET u_photo = ? WHERE id_user = ?');
-                if ($up2) {
-                    $up2->bind_param('si', $saved, $id_user);
-                    @$up2->execute();
-                    $up2->close();
+                if (!$okData) {
+                    echo json_encode(['error' => 'db_error', 'detail' => 'u_data']);
+                    exit();
                 }
 
                 echo json_encode([
                     'ok'    => true,
                     'tmb'   => $saved,
                     'photo' => $saved,
-                    'db'    => $okData ? 'ok' : 'partial',
                     'meta'  => [
                         'tmb'  => $saved,
                         'join' => isset($data['join']) ? $data['join'] : null
