@@ -3109,33 +3109,9 @@ if (!empty($_SESSION['loggedin'])) {
 
     // Helper
     
-    function assignObject(target) {
-    
-        if (target == null) {
-            throw new TypeError('Cannot convert undefined or null to object');
-        }
-    
-        var to = Object(target);
-    
-        for (var i = 1; i < arguments.length; i++) {
-    
-            var source = arguments[i];
-    
-            if (source == null) {
-                continue;
-            }
-    
-            for (var key in Object(source)) {
-                if (Object.prototype.hasOwnProperty.call(source, key)) {
-                    to[key] = source[key];
-                }
-            }
-        }
-    
-        return to;
-    }
-    
-    var OA = assignObject;
+    // وب مدرن: native Object.assign
+    // TV (tv.hamrahang.ir) جداست و می‌تواند پلی‌فیل ES5 خودش را نگه دارد
+    var OA = Object.assign;
 
     var SN=self._next;    
     var e,a={},l={};
