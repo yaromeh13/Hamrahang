@@ -15975,33 +15975,6 @@ const PROFILE_KEY = 'ha_profile';
         }
     }
     
-    /** مسیر SPA برای آیتم در حال پخش — مثل لینک کارت / go to song */
-    function hrefForPlayableItem(item) {
-        if (!item || item.id == null) return null;
-        const type = String(
-            item.type || (item.meta && item.meta.type) || 'song'
-        ).toLowerCase();
-        let base = HS;
-        if (type === 'video' || type === 'musicvideo') base = HV;
-        const slug = item.url ? String(item.url) : '';
-        return base + item.id + (slug ? '/' + slug : '');
-    }
-
-    /** رفتن به صفحه آیتم بدون رفرش (chp) */
-    function goToPlayableItemPage(item) {
-        const href = hrefForPlayableItem(item);
-        if (!href) return;
-        try {
-            if (typeof minimizeMaxToMini === 'function') minimizeMaxToMini();
-        } catch (e) {}
-        // شل دسکتاپ را جمع کن تا صفحه جزئیات زیرش نماند
-        if (typeof MaxDeskPly !== 'undefined' && MaxDeskPly) {
-            MaxDeskPly.classList.add('vis-none');
-            MaxDeskPly.classList.remove('is-active', 'translate-to-up');
-        }
-        chp(href);
-    }
-
     function UpdateNowPlayingMeta(item) {
         if (!item) return;
     
@@ -16032,13 +16005,7 @@ const PROFILE_KEY = 'ha_profile';
             if (small) small.innerHTML = artistName;
             else MaxTx2.innerHTML = artistName;
         }
-        // نام ترک دسکتاپ: کلیک = go to song (SPA)
-        if (MaxDeskTx1) {
-            MaxDeskTx1.innerHTML = name;
-            MaxDeskTx1.style.cursor = name ? 'pointer' : '';
-            MaxDeskTx1.title = name ? 'Go to track' : '';
-            MaxDeskTx1.setAttribute('role', 'link');
-        }
+        if (MaxDeskTx1) MaxDeskTx1.innerHTML = name;
         if (MaxDeskTx2) MaxDeskTx2.innerHTML = artistName;
     
         // media-stage: تامب + عنوان + CRAL هنرمندان + CRAB about + پس‌زمینه
@@ -17206,17 +17173,6 @@ const PROFILE_KEY = 'ha_profile';
         }
 
         // دسکتاپ details — مستقل؛ PlayList فقط اگر لیریک باز باشد اول آن را می‌بندد
-        // نام ترک در playing-track → صفحه آهنگ/ویدیو بدون رفرش
-        if (MaxDeskTx1 && !MaxDeskTx1._haGoTrack) {
-            MaxDeskTx1._haGoTrack = true;
-            MaxDeskTx1.addEventListener('click', (ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                const P = ensurePlayer();
-                const item = P.nowPlaying && P.nowPlaying.item;
-                if (item) goToPlayableItemPage(item);
-            });
-        }
         if (MaxDeskDtls && MaxDeskDtls.length >= 1) {
             wireOnce(MaxDeskDtls[0], 'click', () => openMaxQueuePanel());
             if (MaxDeskDtls[1]) wireOnce(MaxDeskDtls[1], 'click', () => openMaxLyricsPanel());
