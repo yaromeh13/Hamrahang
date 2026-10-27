@@ -1845,13 +1845,11 @@ body::-webkit-scrollbar-thumb:hover,
 /* max-queue track-line: fixed columns for date/duration */
 .track-line-queue-container .track-line .meta .date {
     min-width: 92px;
-    display: inline-block;
     text-align: center;
     font-variant-numeric: tabular-nums;
 }
 .track-line-queue-container .track-line .meta .duration {
     min-width: 44px;
-    display: inline-block;
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
@@ -15304,7 +15302,7 @@ const PROFILE_KEY = 'ha_profile';
                     innerHTML: formatQueueDuration(item.meta) || ''
                 })
             );
-            const dbr = OA(document.createElement('div'), { className: 'btn btn-model-3', innerHTML: 'Remove' });
+            const dbr = OA(document.createElement('div'), { className: 'btn btn-model-6', innerHTML: 'Remove' });
             dbr.addEventListener('click', () => removeFromPlayQueue(row.id, type));
             dmt.append(dbr);
 

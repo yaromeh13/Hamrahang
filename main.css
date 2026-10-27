@@ -4691,6 +4691,24 @@ div: nth-of-type(2) {
     --bs-btn-disabled-border-color: transparent
 }
 
+.btn-model-6 {
+    --bs-btn-color: #fff;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    text-wrap: nowrap;
+    border-radius: 5px;
+    padding: 0 15px;
+    border: 1px solid hsla(0, 0%, 100%, .3);
+    cursor: pointer;
+    gap: 8px;
+    transition: all .3s ease;
+}
+
 input[type=range] {
     height: 20px;
     margin: 0;
