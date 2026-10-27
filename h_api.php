@@ -9824,6 +9824,7 @@ $stmt->execute();*/
         if (!empty($song_data->art)) $meta["art"] = (int)$song_data->art;
         if (!empty($song_data->lrc)) $meta["lrc"] = (int)$song_data->lrc;
         if (!empty($song_data->des)) $meta["des"] = $song_data->des;
+        if (!empty($song_data->dur)) $meta["dur"] = (int)$song_data->dur;
         if (!empty($song_data->names) && (is_object($song_data->names) || is_array($song_data->names))) {
             $song["names"] = $song_data->names;
         }

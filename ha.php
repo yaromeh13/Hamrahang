@@ -9273,7 +9273,10 @@ if (!empty($_SESSION['loggedin'])) {
                     className: 'date',
                     innerHTML: item.meta?.bd || item.meta?.rls || ''
                 }),
-                OA(document.createElement('div'), { className: 'duration' })
+                OA(document.createElement('div'), {
+                    className: 'duration',
+                    innerHTML: itemDurationText(item) || ''
+                })
             );
     
             if (isOwner) {
@@ -12451,7 +12454,6 @@ const PROFILE_KEY = 'ha_profile';
             }
             
             const dmt = OA(document.createElement('div'), { className: 'meta' });
-            const trackDur = (e.meta && e.meta.dur != null) ? FormatTime(Number(e.meta.dur)) : '';
             dmt.append(
                 OA(document.createElement('div'), {
                     className: 'date',
@@ -12459,7 +12461,7 @@ const PROFILE_KEY = 'ha_profile';
                 }),
                 OA(document.createElement('div'), {
                     className: 'duration',
-                    innerHTML: trackDur
+                    innerHTML: itemDurationText(e) || ''
                 })
             );
             const dma = OA(document.createElement('div'), { className: 'more-arrow' });
@@ -15117,11 +15119,22 @@ const PROFILE_KEY = 'ha_profile';
         return y + '-' + m + '-' + day;
     }
 
+    /** مدت ثابت ترک از meta.dur (ثانیه) — برای لیست‌ها و کیو */
     function formatQueueDuration(meta) {
-        if (!meta || meta.dur == null || meta.dur === '') return '';
-        const sec = Number(meta.dur);
+        if (!meta) return '';
+        let sec = meta.dur;
+        if (sec == null || sec === '') return '';
+        sec = Number(sec);
         if (!Number.isFinite(sec) || sec < 0) return '';
+        // اگر اشتباهاً میلی‌ثانیه بود
+        if (sec > 100000) sec = Math.round(sec / 1000);
         return FormatTime(sec);
+    }
+
+    function itemDurationText(item) {
+        if (!item) return '';
+        if (item.meta) return formatQueueDuration(item.meta);
+        return formatQueueDuration(item);
     }
 
     /** نام‌های فرعی آیتم (غیر از name اصلی) با جداکننده - */
