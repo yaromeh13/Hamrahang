@@ -24,46 +24,17 @@ require_once __DIR__ . '/int/h_api.php';
 	<!-- Telegram.js -->	
 	<script src="/js/telegram-web-app.js?v=9.0"></script>
 <style>
+
+img, svg {
+    vertical-align: middle;
+}
+
 .main-video {
     width: 100%;
     height: 100%;
     object-fit: contain;
     display: block;
 }   
-.friends-button {
-    bottom: 70px;
-    z-index: 20;
-}
-
-.friends-button-inner {
-    align-items: center;
-    display: flex;
-    margin: 0 auto;
-    max-width: 768px;
-}
-.pulse {
-    animation: pulse-animation 1s ease-in-out infinite !important;
-}
-
-.friends-button-inner .is-invite {
-    background: #fff;
-    color: #000;
-    flex: 1 1 auto;
-}
-
-.button-default {
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: 700;
-    min-height: 60px;
-    padding: 0 6px;
-}
-
-.button-primary {
-    background: #5550ff;
-    color: #fff;
-}
-
 
 .button {
     border: none;
@@ -84,87 +55,17 @@ require_once __DIR__ . '/int/h_api.php';
     width: 100%;
 }
 
-.button-copy {
-    background: #fff;
-    color: #000;
-}
-
-.button-primary {
-    background: #5550ff;
-    color: #fff;
-}
-
-.friends-button-inner .is-copy {
-    flex: 0 0 60px;
-    margin-left: 6px;
-}
-.icon.is-32 {
-    height: 32px;
-    width: 32px;
-}
-
-
 .icon {
     align-items: center;
     display: flex;
     justify-content: center;
 }
 
-.friends-button-inner .is-copy svg {
-    fill: black;
-    margin-left: 0;
-}
-
-
 .icon svg {
     height: 100%;
     width: 100%;
 }
 
-
-.header_search {
-    max-width: 50%;
-    min-height: 1px;
-    padding: 0 10px;
-    margin: 7 auto;
-    display: flex;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
-    -webkit-transition: border-color .15s ease-in-out, -webkit-box-shadow .15s ease-in-out;
-    transition: border-color .15s ease-in-out, -webkit-box-shadow .15s ease-in-out;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out, -webkit-box-shadow .15s ease-in-out;
-}
-.form-inline {
-    -webkit-box-align: center;
-    width: 100%;
-}
-.search-input {
-    float: right;
-    display: block;
-    height: 34px;
-    width: 80%;
-    line-height: 1.42857143;
-    color: #555;
-    border: none !important;
-    box-shadow: none;
-    background-image: none;
-    background-color: transparent;
-    border: 0px solid;
-    outline: none !important;
-}
-.search-btn {
-    float: left;
-    padding: 10px;
-    background: #fff;
-    color: #555;
-    border: none;
-    cursor: pointer;
-    font: normal normal normal 14px / 1 FontAwesome;
-}
 .fa {
     display: inline-block;
     font: normal normal normal 14px / 1 FontAwesome;
@@ -173,9 +74,6 @@ require_once __DIR__ . '/int/h_api.php';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
-
-
-
 
 .artists-list {
     display: flex;
@@ -413,29 +311,6 @@ require_once __DIR__ . '/int/h_api.php';
     align-items: center;
 }
 
-.setting-section{
-    display: inline-block;
-    vertical-align: top;
-    width: 100%;
-}
-
-.setting-section-header{
-
-    
-}
-
-.setting-column {
-    display: inline-block;
-    vertical-align: top;
-    width: 23%;
-    margin-right: 2%;
-    cursor: pointer;
-}
-
-.setting-column:last-child {
-    margin-right: 0;
-}
-
 .setting-title {
     font-size: 16px;
     font-weight: bold;
@@ -533,6 +408,24 @@ require_once __DIR__ . '/int/h_api.php';
     transform: scale(1.45);
 }
 .ha-settings-sum-label { flex: 1; min-width: 0; }
+/* آکاردئون نرم: grid 0fr→1fr (مدرن)؛ قدیمی‌ها بدون انیمیشن همان open */
+.ha-settings-anim {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s ease;
+}
+.ha-settings-details[open] > .ha-settings-anim {
+    grid-template-rows: 1fr;
+}
+.ha-settings-anim > .ha-settings-body {
+    overflow: hidden;
+    min-height: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    .ha-settings-anim {
+        transition: none;
+    }
+}
 .ha-settings-body {
     padding: 0 0 18px;
     min-width: 0;
@@ -555,7 +448,6 @@ require_once __DIR__ . '/int/h_api.php';
     margin-top: 12px;
 }
 .ha-settings-body .account-actions .btn,
-.ha-settings-body .ha-settings-actions .btn,
 .ha-settings-body .setting-row .btn {
     display: flex !important;
     align-items: center;
@@ -687,23 +579,6 @@ require_once __DIR__ . '/int/h_api.php';
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.ha-profile-id-row .ha-profile-edit-btn {
-    flex-shrink: 0;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: rgba(255,255,255,0.7);
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-}
-.ha-profile-id-row .ha-profile-edit-btn:hover {
-    color: #fff;
-    border-color: rgba(29,185,84,0.4);
-}
 .ha-profile-panel {
     margin-top: 12px;
 }
@@ -832,13 +707,7 @@ require_once __DIR__ . '/int/h_api.php';
     min-width: 2ch;
     text-align: right;
 }
-.account-msg-layer {
-    width: 100%;
-}
-.account-msg-layer .login-error,
-.account-msg-layer .login-ok {
-    margin-top: 8px;
-}
+
 .playlist-tab-list .section-container {
     margin-top: 0.5rem;
 }
@@ -1045,34 +914,6 @@ require_once __DIR__ . '/int/h_api.php';
     color: #1db954;
 }
 
-.setting-toggle {
-    position: absolute;
-    right: 10px;
-    top: 8px;
-    width: 50px;
-    height: 26px;
-    background: #555555;
-    border-radius: 13px;
-}
-
-.setting-toggle span {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 20px;
-    height: 20px;
-    background: #ffffff;
-    border-radius: 10px;
-}
-
-.setting-toggle.on {
-    background: #0078D4;
-}
-
-.setting-toggle.on span {
-    left: 27px;
-}
-
 .quality-list {
     display: flex;
     flex-direction: column;
@@ -1244,9 +1085,6 @@ require_once __DIR__ . '/int/h_api.php';
     }
 
 }
- 
-</style>
-<style>  
 
 .play-pause{
     flex-direction: row;
@@ -1255,7 +1093,6 @@ require_once __DIR__ . '/int/h_api.php';
     display: flex;
     cursor: pointer;
 }
-
 
 .maxminplayer {
     display: flex;
@@ -1279,64 +1116,6 @@ require_once __DIR__ . '/int/h_api.php';
     box-shadow: 0 0 2px 2px rgba(0, 0, 0, .5);
 }
 
-img, svg {
-    vertical-align: middle;
-}
-
-
-.material-symbols-rounded{
-  cursor: pointer;
-}
-
-.top-bar{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 18px;
-}
-
-.top-bar .material-symbols-rounded{
-  font-size: 24px;
-}
-
-
-
-.music-titles{
-  text-align: center;
-  margin: 30px 0;
-  color: #d7d7d7;
-}
-
-.music-titles .name{
-  font-size: 19px;
-}
-
-.music-titles .artist{
-  font-size: 17px;
-  margin-top: 3px;
-  opacity: 0.9;
-}
-
-
-
- 
-.progress-bar span{
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  background-color: #a73537;
-  border-radius: inherit;
-  transform: translateY(-25%);
-  right: -5px;
-  top: 0px;
-  opacity: 0;
-  transition: opacity 0.3s ease-out;
-}
-
-.progress-details:hover .progress-bar span{
-  opacity: 1;
-}
-
 .time{
   display: flex;
   align-items: center;
@@ -1344,28 +1123,6 @@ img, svg {
   margin-top: 7px;
 
 }
- 
-.control-btn{
-  margin-top: 21px;
-  margin-bottom: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.control-btn div{
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.control-btn div:hover{
-  color:#777777;
-}
-
-
 
 .play-pause span1 {
     display: flex;
@@ -1386,28 +1143,6 @@ img, svg {
 .play-pause span1:hover {
     scale: .9
 } 
-
-.maxminplayer {
-    display: flex;
-    justify-content: center;
-    align-content: center;
-    text-align: center;
-    align-items: center;
-    width: 30px;
-    height: 22px;
-    background-color: #000;
-    position: absolute;
-    top: -22px;
-    right: 13px;
-    padding: 0px;
-    border-radius: 5px 5px 0 0;
-    border-top: 1px solid #a73537;
-    border-left: 1px solid #a73537;
-    border-right: 1px solid #a73537;
-    box-shadow: 0 0 4px 4px #1c1f2433;
-    -webkit-box-shadow: 0 0 2px 2px rgba(0, 0, 0, .5);
-    box-shadow: 0 0 2px 2px rgba(0, 0, 0, .5);
-}
 
 .wlap {    
     width: 2.5rem;
@@ -1439,20 +1174,6 @@ img, svg {
 .player-art-spin.is-playing img {
     animation-play-state: running;
 }
-
-.player-container-mobile {
-    
-    
-    grid-template-rows: 100px;
-
-    z-index: 10;
-    padding: 0 1rem;
-    width: 100%;
-    transition: 0.3s;
-
-}
-
-
 
 @keyframes spin {
     0% {
@@ -1567,8 +1288,6 @@ img, svg {
     grid-template-columns: auto 1fr auto;
 }
 
-
-
 .player-control {
     display: flex;
     flex-direction: row;
@@ -1583,7 +1302,6 @@ img, svg {
 
    width: 100%;
 }
-
 
 /* ---- app-wide thin scrollbar ---- */
 html, body, .main-container, .main-content, .ln,
@@ -2081,12 +1799,6 @@ body::-webkit-scrollbar-thumb:hover,
     width: 45px;
 }
 
-.player-progress .progress-details {
-    height: 10px;
-    width: auto;
-    background-color: #ccc;
-    border-radius: 15px;
-}
 #player .seekbar{
   width: 100%;
   align-content: center;
@@ -2114,35 +1826,6 @@ body::-webkit-scrollbar-thumb:hover,
     -moz-appearance: none;
     appearance: none;
 }
-
-.player-progress .progress-bar-wrap {
-    position: relative;
-    width: 100%;
-    height: 1rem;
-}
-
-.player-progress .progress-bar-track {
-    direction: ltr;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 1rem;
-    border-radius: 0.3125rem;
-    background: #d7dcd3;
-    overflow: hidden;
-    opacity: 1;
-    pointer-events: none;
-}
-
-.player-progress .progress-bar-fill {
-    height: 100%;
-    width: 0;
-    background: #fc1748;
-}
-
-
-
 
 .focused {
     background: #d70647;
@@ -2549,7 +2232,6 @@ body::-webkit-scrollbar-thumb:hover,
     font-size: var(--ha-lyric-size, 16px);
 }
 
-
 .video-stage { max-width: 650px;position: relative; background: #000; overflow: hidden; }
 .video-stage.ratio {
     position: relative;
@@ -2559,13 +2241,7 @@ body::-webkit-scrollbar-thumb:hover,
 .video-stage-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .video-stage-slot { position: absolute; inset: 0; z-index: 1; }
 .video-stage-slot video,
-
-.video-stage-overlay {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  pointer-events: none; /* دکمه‌ها pointer-events: auto */
-}
 .video-stage.is-playing .video-stage-thumb { display: none; }
-
 .video-stage .video-inline-controls {
     position: absolute;
     left: 0;
@@ -2580,7 +2256,6 @@ body::-webkit-scrollbar-thumb:hover,
     background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
     margin: 0;
 }
-
 .video-inline-seek {
     width: 100%;
     display: block;
@@ -2607,7 +2282,6 @@ body::-webkit-scrollbar-thumb:hover,
     align-items: center;
     justify-content: center;
 }
- 
 .media-stage{
     position: absolute;
     inset: 0;
@@ -2634,7 +2308,6 @@ body::-webkit-scrollbar-thumb:hover,
     position: relative;
     z-index: 1;
 }
-
 .vis-none {
     display: none;
     visibility: hidden;
@@ -2728,9 +2401,6 @@ body::-webkit-scrollbar-thumb:hover,
 .bit-badge.bit-v-720  { background: #ec489933; color: #f9a8d4; border-color: #ec489955; }
 .bit-badge.bit-v-480  { background: #f9731633; color: #fdba74; border-color: #f9731655; }
 .bit-badge.bit-muted  { background: #64748b33; color: #94a3b8; border-color: #64748b44; }
-
-
-
 </style>    
 
 </head>
@@ -4656,7 +4326,9 @@ if (!empty($_SESSION['loggedin'])) {
             sum.appendChild(ico);
             sum.appendChild(lab);
 
+            const anim = OA(document.createElement('div'), { className: 'ha-settings-anim' });
             const body = OA(document.createElement('div'), { className: 'ha-settings-body' });
+            anim.appendChild(body);
 
             // URL sync when toggled open
             det.addEventListener('toggle', function () {
@@ -4674,7 +4346,7 @@ if (!empty($_SESSION['loggedin'])) {
             });
 
             det.appendChild(sum);
-            det.appendChild(body);
+            det.appendChild(anim);
             wrap.appendChild(det);
 
             const oldMCNT = MCNT;
@@ -4707,9 +4379,11 @@ if (!empty($_SESSION['loggedin'])) {
                 className: 'ha-settings-sum-label',
                 innerHTML: label
             }));
+            const anim = OA(document.createElement('div'), { className: 'ha-settings-anim' });
             const body = OA(document.createElement('div'), { className: 'ha-settings-body' });
+            anim.appendChild(body);
             det.appendChild(sum);
-            det.appendChild(body);
+            det.appendChild(anim);
             nest.appendChild(det);
             const old = MCNT;
             MCNT = body;
@@ -10681,15 +10355,10 @@ const PROFILE_KEY = 'ha_profile';
      * CRPL — ساخت UI شل پلیر (#player-box)
      * media elements (vply/aply) در HTML می‌مانند؛ chrome از اینجا ساخته می‌شود.
      */
-
     /** CRSB — ساخت سایدبار (زودتر از پلیر؛ فقط DOM لازم دارد) */
-
     /** CRTB — topbar: back/logo/forward + search */
-
     /** CRMP — minimize player bar (بدون id روی دکمه‌ها؛ artwork فقط placeholder تا تامب باشد) */
-
     /** CRMX — maximum-player-wrapper (موبایل + کیو + لیریک؛ بدون id اضافی روی دکمه‌ها) */
-
     /** CRDX — maximum-player-desktop */
     function CRDX() {
         const root = document.querySelector('.maximum-player-desktop');
