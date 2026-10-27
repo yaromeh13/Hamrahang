@@ -12451,12 +12451,16 @@ const PROFILE_KEY = 'ha_profile';
             }
             
             const dmt = OA(document.createElement('div'), { className: 'meta' });
+            const trackDur = (e.meta && e.meta.dur != null) ? FormatTime(Number(e.meta.dur)) : '';
             dmt.append(
                 OA(document.createElement('div'), {
                     className: 'date',
                     innerHTML: e.meta?.bd || e.meta?.rls || ''
                 }),
-                OA(document.createElement('div'), { className: 'duration' })
+                OA(document.createElement('div'), {
+                    className: 'duration',
+                    innerHTML: trackDur
+                })
             );
             const dma = OA(document.createElement('div'), { className: 'more-arrow' });
             const mor = OA(document.createElement("div"), {className: "more", innerHTML: svg_dot});
@@ -15985,8 +15989,15 @@ const PROFILE_KEY = 'ha_profile';
         if (MaxTim && MaxTim.length >= 2) MaxTim[1].innerHTML = FormatTime(duration);
         document.querySelectorAll('.video-inline-times .t-cur').forEach((el) => { el.innerHTML = FormatTime(current); });
         document.querySelectorAll('.video-inline-times .t-dur').forEach((el) => { el.innerHTML = FormatTime(duration); });
-        document.querySelectorAll('.current-time').forEach((el) => { el.innerHTML = FormatTime(current); });
-        document.querySelectorAll('.duration').forEach((el) => { el.innerHTML = FormatTime(duration); });
+        // فقط زمان‌های خود پلیر — نه ستون Length/duration لیست ترک‌ها
+        document.querySelectorAll('.current-time').forEach((el) => {
+            if (el.closest('.track-line') || el.closest('.meta')) return;
+            el.innerHTML = FormatTime(current);
+        });
+        document.querySelectorAll('.duration').forEach((el) => {
+            if (el.closest('.track-line') || el.closest('.meta')) return;
+            el.innerHTML = FormatTime(duration);
+        });
         // سینک لیریک با زمان پخش
         try { LyricsEngine.sync(current); } catch (e) {}
     }
