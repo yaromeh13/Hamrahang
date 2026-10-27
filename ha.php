@@ -1249,6 +1249,10 @@ require_once __DIR__ . '/int/h_api.php';
 <style>  
 
 .play-pause{
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    display: flex;
     cursor: pointer;
 }
 
@@ -1409,7 +1413,7 @@ img, svg {
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 9999px;
-    position: fixed;
+    position: absolute;
     border-width: 3px;
     border-style: solid;
     border-color: #3d3d3d #3d3d3d #ffffff;
@@ -9227,6 +9231,8 @@ if (!empty($_SESSION['loggedin'])) {
                 className: 'play',
                 innerHTML: svg_ply
             });
+            dpl._itemId = item.id;
+            dpl._itemType = type || 'song';
             dpl.addEventListener('click', () => {
                 setPlayQueue(pl.items, item.id);
             });
@@ -9342,6 +9348,7 @@ if (!empty($_SESSION['loggedin'])) {
         }
         
         MCNT.append(sec);
+        try { UpdateAllPlayButtons(); } catch (e) {}
         ADE();
     }
     
@@ -12110,6 +12117,8 @@ const PROFILE_KEY = 'ha_profile';
                 mor.addEventListener("click", ()=>{CRBW(e.id,T);},false);
                 
                 const elp = OA(document.createElement("div"), {className: "play",innerHTML: svg_ply});
+                elp._itemId = e.id;
+                elp._itemType = T;
                 elp.addEventListener('click', (ev) => {
                     ev.preventDefault();
                     ev.stopPropagation();
@@ -12159,6 +12168,7 @@ const PROFILE_KEY = 'ha_profile';
         }
     
         MCNT.append(sec);
+        try { UpdateAllPlayButtons(); } catch (e) {}
     }
 
     function CRGC(ar,T,ART){
@@ -12242,6 +12252,8 @@ const PROFILE_KEY = 'ha_profile';
                 mor.addEventListener("click", ()=>{CRBW(e.id,T);},false);
                 
                 const elp = OA(document.createElement("div"), {className: "play",innerHTML: svg_ply});
+                elp._itemId = e.id;
+                elp._itemType = T;
                 elp.addEventListener('click', (ev) => {
                     ev.preventDefault();
                     ev.stopPropagation();
@@ -12286,6 +12298,7 @@ const PROFILE_KEY = 'ha_profile';
         }); 
 
         sec.append(sec_div);
+        try { UpdateAllPlayButtons(); } catch (e) {}
         return sec;
     }
     
@@ -12394,6 +12407,8 @@ const PROFILE_KEY = 'ha_profile';
             ela.append(art);
             
             const dpl = OA(document.createElement("div"), {className: "play", innerHTML: svg_ply});
+            dpl._itemId = e.id;
+            dpl._itemType = T;
             dpl.addEventListener('click', (ev) => {
                 ev.preventDefault();
                 ev.stopPropagation();
@@ -12453,6 +12468,7 @@ const PROFILE_KEY = 'ha_profile';
         });
 
         MCNT.append(sec);
+        try { UpdateAllPlayButtons(); } catch (e) {}
         return sec;
     }
     
@@ -15387,6 +15403,20 @@ const PROFILE_KEY = 'ha_profile';
             btn.innerHTML = icon;
             btn.classList.toggle('loading', showSpin || buffering);
             btn.classList.toggle('is-playing', playing);
+        });
+
+        // لیست‌ها (CRGL/CRGC/CRSC/صفحه پلی‌لیست): .play با _itemId / _itemType
+        // بدون data-* در HTML — مثل کیو: ترک فعلی → svg_eql
+        const npType = np && np.type ? np.type : null;
+        document.querySelectorAll('.play').forEach((btn) => {
+            if (btn._itemId == null) return;
+            // دکمه‌های کیو پلیر را CRQT خودش می‌سازد؛ اگر _fromQueue بود رد شو
+            if (btn._fromQueue) return;
+            const sameId = npId != null && Number(btn._itemId) === npId;
+            const sameType = !btn._itemType || !npType || btn._itemType === npType;
+            const isCurrent = sameId && sameType;
+            const next = isCurrent ? svg_eql : svg_ply;
+            if (btn.innerHTML !== next) btn.innerHTML = next;
         });
     
         if (MinPlyBtn && MinPlyBtn[1]) {
