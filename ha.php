@@ -25,9 +25,6 @@ require_once __DIR__ . '/int/h_api.php';
 	<script src="/js/telegram-web-app.js?v=9.0"></script>
 <style>
 
-img, svg {
-    vertical-align: middle;
-}
 
 .main-video {
     width: 100%;
@@ -122,6 +119,10 @@ img, svg {
     width: 240px;
     max-width: 240px;
     padding: 10px 5px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
 }
 
 #hero .artwork img {
@@ -1297,82 +1298,7 @@ img, svg {
     width: 100%;
     margin-top: 10px;
     align-items: center;
-    /* display: flex; */
     flex-wrap: nowrap;
-
-   width: 100%;
-}
-
-/* ---- app-wide thin scrollbar ---- */
-html, body, .main-container, .main-content, .ln,
-.bottom-sheet-wrapper, .track-line-queue-container,
-.section-carousel-container,
-.setting-content, .maximum-player-wrapper,
-.maximum-player-scroll-area, .maximum-player-queue {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.28) transparent;
-}
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-.main-container::-webkit-scrollbar,
-.main-content::-webkit-scrollbar,
-.ln::-webkit-scrollbar,
-.bottom-sheet-wrapper::-webkit-scrollbar,
-.track-line-queue-container::-webkit-scrollbar,
-.section-carousel-container::-webkit-scrollbar,
-.carousel-container::-webkit-scrollbar,
-.setting-content::-webkit-scrollbar,
-.maximum-player-wrapper::-webkit-scrollbar,
-.maximum-player-scroll-area::-webkit-scrollbar,
-.maximum-player-queue::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track,
-.main-container::-webkit-scrollbar-track,
-.main-content::-webkit-scrollbar-track,
-.ln::-webkit-scrollbar-track,
-.bottom-sheet-wrapper::-webkit-scrollbar-track,
-.track-line-queue-container::-webkit-scrollbar-track,
-.section-carousel-container::-webkit-scrollbar-track,
-.carousel-container::-webkit-scrollbar-track,
-.setting-content::-webkit-scrollbar-track,
-.maximum-player-wrapper::-webkit-scrollbar-track,
-.maximum-player-scroll-area::-webkit-scrollbar-track,
-.maximum-player-queue::-webkit-scrollbar-track {
-    background: transparent;
-}
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb,
-.main-container::-webkit-scrollbar-thumb,
-.main-content::-webkit-scrollbar-thumb,
-.ln::-webkit-scrollbar-thumb,
-.bottom-sheet-wrapper::-webkit-scrollbar-thumb,
-.track-line-queue-container::-webkit-scrollbar-thumb,
-.section-carousel-container::-webkit-scrollbar-thumb,
-.carousel-container::-webkit-scrollbar-thumb,
-.setting-content::-webkit-scrollbar-thumb,
-.maximum-player-wrapper::-webkit-scrollbar-thumb,
-.maximum-player-scroll-area::-webkit-scrollbar-thumb,
-.maximum-player-queue::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.22);
-    border-radius: 999px;
-}
-html::-webkit-scrollbar-thumb:hover,
-body::-webkit-scrollbar-thumb:hover,
-.main-container::-webkit-scrollbar-thumb:hover,
-.main-content::-webkit-scrollbar-thumb:hover,
-.ln::-webkit-scrollbar-thumb:hover,
-.bottom-sheet-wrapper::-webkit-scrollbar-thumb:hover,
-.track-line-queue-container::-webkit-scrollbar-thumb:hover,
-.section-carousel-container::-webkit-scrollbar-thumb:hover,
-.carousel-container::-webkit-scrollbar-thumb:hover,
-.setting-content::-webkit-scrollbar-thumb:hover,
-.maximum-player-wrapper::-webkit-scrollbar-thumb:hover,
-.maximum-player-scroll-area::-webkit-scrollbar-thumb:hover,
-.maximum-player-queue::-webkit-scrollbar-thumb:hover {
-    background: rgba(215, 6, 71, 0.7);
 }
 
 /* ---- player in-shell panel (settings / sources / queue) ---- */
@@ -2240,7 +2166,6 @@ body::-webkit-scrollbar-thumb:hover,
 .video-stage-thumb { position: absolute; inset: 0; z-index: 0; }
 .video-stage-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .video-stage-slot { position: absolute; inset: 0; z-index: 1; }
-.video-stage-slot video,
 .video-stage.is-playing .video-stage-thumb { display: none; }
 .video-stage .video-inline-controls {
     position: absolute;
@@ -2402,7 +2327,6 @@ body::-webkit-scrollbar-thumb:hover,
 .bit-badge.bit-v-480  { background: #f9731633; color: #fdba74; border-color: #f9731655; }
 .bit-badge.bit-muted  { background: #64748b33; color: #94a3b8; border-color: #64748b44; }
 </style>    
-
 </head>
 <body>
 <main class="ln">
@@ -2412,7 +2336,6 @@ body::-webkit-scrollbar-thumb:hover,
         </div>
     </div>
     <div class="main-container">
-           
         <div class="topbar-container">
             <div class="desktop-navigation"><!-- CRTB --></div>
             <!-- search built by CRTB -->
@@ -2420,13 +2343,10 @@ body::-webkit-scrollbar-thumb:hover,
         <div class="main-content" >
             <div class="gradient-color-container vis-none"><div class="page-gradient-layer"></div></div>
         </div>
-  
         <div class="minimize-player-wrapper"><!-- CRMP --></div>
-
         <div class="maximum-player-wrapper"><!-- CRMX --></div>
         <div class="maximum-player-desktop vis-none"><!-- CRDX --></div>
         <footer class="main-footer"><!-- CRFT --></footer>
-        
     </div>
     <div class="navbar-m"><!-- CRNB --></div>
 </main>
@@ -2434,7 +2354,6 @@ body::-webkit-scrollbar-thumb:hover,
     <!-- media in HTML: video reparents between page stage and fullscreen shell -->
     <video id="vply" class="main-video vis-none" playsinline></video>
     <audio id="aply" class="main-audio vis-none" src="" preload="metadata"></audio>
-
     <!-- media-stage + chrome built by CRPL() -->
     <div id="player-box" class="player-box vis-none"></div>
 </div>
@@ -2884,6 +2803,8 @@ if (!empty($_SESSION['loggedin'])) {
 
     var svg_srh2 = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>';
     
+    var svg_cal = '<svg style="width:20px;height:20px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path><rect x="6" y="13" width="2" height="2" rx=".3"></rect><rect x="11" y="13" width="2" height="2" rx=".3"></rect><rect x="16" y="13" width="2" height="2" rx=".3"></rect></svg>';
+    var svg_dur = '<svg style="width:20px;height:20px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l3 3"></path><path d="M3.6 3.4V7h3.6"></path><path d="M3.8 7A10 10 0 1 1 2 13"></path></svg>';
     var svg_rpt = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>';
     var svg_rpt1= '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path><path d="M10.5 9.5l1.5 -1.5v8"></path></svg>';
     var svg_rpta= '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path><path d="M9.5 15l2.5 -6l2.5 6m-4 -2h3"></path></svg>';
@@ -2911,8 +2832,8 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_hrt = '<svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" /></svg>';
     var svg_hrt2 = '<svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="#ffffff" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" /></svg>';
     
-    var svg_fsc = '<svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"   style="width: 20px; height: 20px;"><path d="M4 9V4h5"></path>    <path d="M15 4h5v5"></path>    <path d="M20 15v5h-5"></path>    <path d="M9 20H4v-5"></path></svg>';
-  
+    var svg_fsc = '<svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"   style="width: 20px; height: 20px;"><path d="M4 9V4h5"></path><path d="M15 4h5v5"></path><path d="M20 15v5h-5"></path><path d="M9 20H4v-5"></path></svg>';
+    var svg_off = '<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10"></path><path d="M7 4.8a9 9 0 1 0 10 0"></path></svg>';
     var PlyLst = [];
     var AduLst = [];
     var VdoLst = [];
@@ -2922,7 +2843,6 @@ if (!empty($_SESSION['loggedin'])) {
     var svg_tig = '<svg version="1.1" width="48" height="48" viewBox="0 0 48 48" enable-background="new 0 0 48 48"><path fill="#8CBCD6" d="M40,41H8c-2.2,0-4-1.8-4-4V11c0-2.2,1.8-4,4-4h32c2.2,0,4,1.8,4,4v26C44,39.2,42.2,41,40,41z"/><circle fill="#B3DDF5" cx="35" cy="16" r="3"/><polygon fill="#9AC9E3" points="20,16 9,32 31,32"/><polygon fill="#B3DDF5" points="31,22 23,32 39,32"/><circle fill="#F44336" cx="38" cy="38" r="10"/><g fill="#ffffff"><rect x="36.5" y="32" transform="matrix(-.707 .707 -.707 -.707 91.74 38)" width="3" height="12"/><rect x="36.5" y="32" transform="matrix(-.707 -.707 .707 -.707 38 91.74)" width="3" height="12"/></g></svg>';
     var PlyLst = [];
     var AudLst = [];
-    var LOAD_PAGE = '<div class="page-loading-container"><div class="spinner-large"></div></div>';
     var spn_lrg = OA(document.createElement("div"), {className: "spinner-large"});
 
     var TGAP = null;
@@ -7399,8 +7319,35 @@ if (!empty($_SESSION['loggedin'])) {
         }
     
         const dtl = OA(document.createElement('div'), { className: 'detailes' });
+        const dtc = OA(document.createElement('div'), { className: 'detaile' });
+        if (e.meta) {
+            const parts = [];
+        
+            if (e.meta.ncp != null && e.meta.ncp !== '') {
+                parts.push(svg_playc + ' ' + e.meta.ncp);
+            }
+        
+            if (e.meta.rls) {
+                const releaseDate = new Date(e.meta.rls);
+                if (!isNaN(releaseDate.getTime())) {
+                    parts.push(
+                        svg_cal + ' ' + releaseDate.toLocaleDateString('en-US', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                        })
+                    );
+                }
+            }
+        
+            if (e.meta.dur != null && e.meta.dur !== '') {
+                parts.push(svg_dur + ' ' + formatQueueDuration(e.meta) || '');
+            }
+            dtc.innerHTML = parts.join(' &nbsp;&nbsp; ');
+        }
+
         const artl = CRAL(e.artists);
-        dtl.appendChild(artl);
+        dtl.append(dtc,artl);
         
         dct.append(tlt, art, dtl);
         
@@ -7772,18 +7719,11 @@ if (!empty($_SESSION['loggedin'])) {
         // ویدیو: tmv اولویت دارد، بعد tmb
         const thumb = (e.meta && (e.meta.tmv || e.meta.tmb)) ? (e.meta.tmv || e.meta.tmb) : null;
         if (thumb) {
-            thumbWrap.append(
-                OA(document.createElement('img'), {
-                    className: 'video-poster',
-                    src: UT + thumb + '.jpg'
-                })
-            );
+            thumbWrap.append(OA(document.createElement('img'), { className: 'video-poster', src: UT + thumb + '.jpg' }));
         }
 
         const videoSlot = OA(document.createElement('div'), {className: 'video-stage-slot'});
-        
         const inlineBar = OA(document.createElement('div'), {className: 'video-inline-controls vis-none'});
-        
         const seek = OA(document.createElement('input'), {
             type: 'range',
             className: 'video-inline-seek',
@@ -7793,32 +7733,18 @@ if (!empty($_SESSION['loggedin'])) {
             value: 0
         });
         
-        const row = OA(document.createElement('div'), {
-            className: 'video-inline-row'
-        });
-        
-        const times = OA(document.createElement('div'), {
-            className: 'video-inline-times'
-        });
-        const tCur = OA(document.createElement('span'), {
-            className: 't-cur',
-            innerHTML: '0:00'
-        });
+        const row = OA(document.createElement('div'), { className: 'video-inline-row' });
+        const times = OA(document.createElement('div'), { className: 'video-inline-times' });
+        const tCur = OA(document.createElement('span'), { className: 't-cur', innerHTML: '0:00' });
         const tSep = OA(document.createElement('span'), { innerHTML: ' / ' });
-        const tDur = OA(document.createElement('span'), {
-            className: 't-dur',
-            innerHTML: '0:00'
-        });
+        const tDur = OA(document.createElement('span'), { className: 't-dur', innerHTML: '0:00' });
         times.append(tCur, tSep, tDur);
         
-        const actions = OA(document.createElement('div'), {
-            className: 'video-inline-actions'
-        });
-        
+        const actions = OA(document.createElement('div'), { className: 'video-inline-actions' });
         const stBtn = OA(document.createElement('div'), {
             className: 'video-inline-st',
             title: 'Settings',
-            innerHTML: svg_fsc
+            innerHTML: svg_stg
         });
         stBtn.addEventListener('click', () => {
             // بعداً: باز کردن پنل کیفیت / سرعت
@@ -8185,7 +8111,7 @@ if (!empty($_SESSION['loggedin'])) {
             if (HERO) HERO.innerHTML = '';
         } catch (err) {}
     }
-
+    
     function beforePageClear() {
         const P = ensurePlayer();
         // ویدیو را از slot صفحه بکش بیرون تا با innerHTML از بین نرود
@@ -10055,16 +9981,12 @@ const PROFILE_KEY = 'ha_profile';
         const slt = OA(document.createElement("label"), {className: "editor-label", innerHTML: "Track Number:"});
         const int = OA(document.createElement("input"), {className: "input" ,type: "text",id:"track_num" ,value:(e.album || '') , placeholder:"Track Number", autocorrect:"off", autocapitalize:"off", spellcheck:"false"});
         df7.append(int,slt);
-        
-        
-        
-        
+
         dlm.append(df7);
         
         dsf.append(dlm);
         
         const dsg = OA(document.createElement("div"), {className: "song vis-none"});
-
 
         const df8 = OA(document.createElement("div"), {className: "input-container"});
         const ssn = OA(document.createElement("label"), {className: "editor-label", innerHTML: "Song Name:"});
@@ -10438,8 +10360,8 @@ const PROFILE_KEY = 'ha_profile';
         );
         const rowB = OA(document.createElement('div'), { className: 'buttons' });
         rowB.append(
-            OA(document.createElement('div'), { className: 'button', innerHTML: ico.list + ' Full SC' }),
-            OA(document.createElement('div'), { className: 'button', innerHTML: ico.list + ' Close' })
+            OA(document.createElement('div'), { className: 'button', innerHTML: svg_fsc + ' Full SC' }),
+            OA(document.createElement('div'), { className: 'button', innerHTML: svg_off + ' Close' })
         );
         det2.append(rowA, rowB);
 
@@ -10904,6 +10826,10 @@ const PROFILE_KEY = 'ha_profile';
             MENU = nav;
             HERO = hero;
         } catch (e) {}
+        
+        nav.addEventListener('mouseenter', function () {
+            clearHeroMenu();
+        });
     }
 
     function CRPL() {
@@ -10916,17 +10842,11 @@ const PROFILE_KEY = 'ha_profile';
         // media-stage (audio / video-without-picture)
         let stage = document.getElementById('media-stage');
         if (!stage) {
-            stage = OA(document.createElement('div'), {
-                id: 'media-stage',
-                className: 'media-stage detailes-container vis-none'
-            });
+            stage = OA(document.createElement('div'), { id: 'media-stage', className: 'media-stage detailes-container vis-none' });
             const stageBg = OA(document.createElement('div'), { id: 'stage-bg', className: 'stage-bg' });
             const det = OA(document.createElement('div'), { id: 'detailes-container' });
             const texts = OA(document.createElement('div'), { className: 'texts media-stage-title-wrap' });
-            texts.append(OA(document.createElement('h1'), {
-                id: 'media-stage-title',
-                className: 'text1'
-            }));
+            texts.append(OA(document.createElement('h1'), { id: 'media-stage-title', className: 'text1' }));
             const hdr = OA(document.createElement('div'), {
                 id: 'header-container',
                 className: 'page-detail-header-container media-stage-header'
@@ -11012,12 +10932,8 @@ const PROFILE_KEY = 'ha_profile';
 
         // center controls
         const control = OA(document.createElement('div'), { className: 'player-control' });
-        const btnPrev = OA(document.createElement('div'), {
-            id: 'prev', className: 'btn play-prev', title: 'Previous', innerHTML: svg_prv
-        });
-        const btnBw10 = OA(document.createElement('div'), {
-            id: 'backward-10', className: 'btn', title: '-10s', innerHTML: svg_bw10
-        });
+        const btnPrev = OA(document.createElement('div'), { id: 'prev', className: 'btn play-prev', title: 'Previous', innerHTML: svg_prv });
+        const btnBw10 = OA(document.createElement('div'), { id: 'backward-10', className: 'btn', title: '-10s', innerHTML: svg_bw10 });
         const btnPlay = OA(document.createElement('div'), {
             id: 'play', className: 'play-pause btn', title: 'Play/Pause',
             innerHTML: svg_plys + '<i class="wlap"></i>'
@@ -11763,7 +11679,7 @@ const PROFILE_KEY = 'ha_profile';
                 }
             }
     
-            const el = OA(document.createElement("div"), {className: (T === "artist" ? "artist-box" : "track-box")});
+            const el = OA(document.createElement("div"), {className: (T === "artist" ? "artist-box" : "item-box")});
             const elb = OA(document.createElement("div"), {className: "box"});
             elb._item = e;
             elb._type = T;
@@ -11895,7 +11811,7 @@ const PROFILE_KEY = 'ha_profile';
                 }
             }
             
-            const el = OA(document.createElement("div"), {className: (T === "artist" ? "artist-box" : "track-box")});
+            const el = OA(document.createElement("div"), {className: (T === "artist" ? "artist-box" : "item-box")});
             const elb = OA(document.createElement("div"), {className: "box"});
             elb._item = e;
             elb._type = T;
@@ -14398,7 +14314,7 @@ const PROFILE_KEY = 'ha_profile';
         var AA = [];
         const ABox = document.querySelectorAll(".artist-box a");
         const ALnk = document.querySelectorAll(".artists a");
-        const TBox = document.querySelectorAll(".track-box a");
+        const TBox = document.querySelectorAll(".item-box a");
         const TLin = document.querySelectorAll(".track-line a");
         const SAll = document.querySelectorAll(".section-header a");
         const MTab = document.querySelectorAll(".main-tabs a");
@@ -14545,6 +14461,7 @@ const PROFILE_KEY = 'ha_profile';
     const MaxDeskArt = MaxDeskPly ? MaxDeskPly.querySelector('.artwork') : null;
     const MaxDeskTx1 = MaxDeskPly ? MaxDeskPly.querySelector('.text1') : null;
     const MaxDeskTx2 = MaxDeskPly ? MaxDeskPly.querySelector('.text2') : null;
+    
     const MaxDeskBtns = MaxDeskPly ? MaxDeskPly.querySelectorAll('.controll .button') : [];
     const MaxDeskDtls = MaxDeskPly ? MaxDeskPly.querySelectorAll('.details .button') : [];
     
@@ -15728,6 +15645,12 @@ const PROFILE_KEY = 'ha_profile';
         }
         if (MaxDeskTx1) MaxDeskTx1.innerHTML = name;
         if (MaxDeskTx2) MaxDeskTx2.innerHTML = artistName;
+        
+        document.querySelectorAll('.plays-count').forEach((i) => {
+            i.innerHTML = item.meta && item.meta.ncp != null
+                ? item.meta.ncp
+                : '';
+        });
     
         // media-stage: تامب + عنوان + CRAL هنرمندان + CRAB about + پس‌زمینه
         const stageThumb = document.getElementById('media-stage-thumb');
