@@ -3007,16 +3007,6 @@ if (!empty($_SESSION['loggedin'])) {
         return SN.artist[id] || null;
     }
 
-
-    function playlistTimeline(pl) {
-        const rows = [
-            ...(pl.songs || []).map(c => ({ table: 'song', card: c, position: c.position })),
-            ...(pl.videos || []).map(c => ({ table: 'video', card: c, position: c.position })),
-        ];
-        rows.sort((a, b) => a.position - b.position);
-        return rows;
-    }
-
     async function UPLS(Q) {
         let id = Q[1];
     
@@ -3563,6 +3553,11 @@ if (!empty($_SESSION['loggedin'])) {
         }
     
         const jd = await response.json();
+
+        // API: { error: "not_found" } — در SN ذخیره نشود
+        if (jd && typeof jd === 'object' && !Array.isArray(jd) && jd.error) {
+            return jd;
+        }
     
         // resolve → فقط SN، بدون UHOM
         if (action === 'resolve' && Array.isArray(jd)) {
@@ -5667,36 +5662,6 @@ if (!empty($_SESSION['loggedin'])) {
         renderTypeCountList(container, rows, 'No favorites yet');
     }
     
-    function renderPlaylistCounts(container) {
-        LoadProfile();
-        const ids = SN.profile.playlist || [];
-        const n = ids.length;
-        container.innerHTML = '';
-        if (!n) {
-            container.append(
-                OA(document.createElement('div'), {
-                    className: 'text2',
-                    innerHTML: 'هنوز پلی‌لیستی ندارید'
-                })
-            );
-            return;
-        }
-        const row = OA(document.createElement('div'), {
-            className: 'setting-row type-count-row'
-        });
-        row.append(
-            OA(document.createElement('span'), {
-                className: 'type-name',
-                innerHTML: 'playlist'
-            }),
-            OA(document.createElement('span'), {
-                className: 'type-count',
-                innerHTML: String(n)
-            })
-        );
-        container.append(row);
-    }
-    
     /** از SN.profile.history → [{ type, count }, ...] فقط typeهایی که count > 0 */
     function countHistoryByType() {
         LoadProfile();
@@ -6221,50 +6186,6 @@ if (!empty($_SESSION['loggedin'])) {
         pane.append(foot);
     }
     
-    function renderFavoriteSections(container) {
-        LoadProfile();
-    
-        const sections = [
-            { type: 'song',        label: 'Songs',        render: (ids) => CRSC(ids, 'song') },
-            { type: 'artist',      label: 'Artists',      render: (ids) => CRSC(ids, 'artist') },
-            { type: 'album',       label: 'Albums',       render: (ids) => CRGC(ids, 'album') },
-            { type: 'musicvideo',  label: 'Music Videos', render: (ids) => CRGC(ids, 'musicvideo') },
-            { type: 'video',       label: 'Videos',       render: (ids) => CRGC(ids, 'video') },
-            { type: 'podcast',     label: 'Podcasts',     render: (ids) => CRGC(ids, 'podcast') },
-            { type: 'playlist',    label: 'Playlists',    render: (ids) => CRGC(ids, 'playlist') },
-        ];
-    
-        const oldMCNT = MCNT;
-        MCNT = container;
-    
-        let any = false;
-        for (const sec of sections) {
-            const ids = SN.profile.favorite[sec.type];
-            if (!ids || !ids.length) continue;
-            any = true;
-            // برچسب کوچک — بدون section-header / see-all
-            container.append(
-                OA(document.createElement('div'), {
-                    className: 'setting-subtitle m-top-1',
-                    innerHTML: sec.label
-                })
-            );
-            const node = sec.render(ids);
-            if (node) container.append(node);
-        }
-        if (!any) {
-            container.append(
-                OA(document.createElement('div'), {
-                    className: 'text2',
-                    innerHTML: 'No favorites yet'
-                })
-            );
-        }
-    
-        MCNT = oldMCNT;
-        ADE();
-    }
-    
     function ShowFavoriteSyncSheet(count, localOnly) {
         // اگر از قبل باز است، دوباره نساز
         if (document.querySelector('.sync-sheet-wrapper')) return;
@@ -6410,40 +6331,6 @@ if (!empty($_SESSION['loggedin'])) {
         } catch (e) {
             console.error(e);
         }
-        MCNT = oldMCNT;
-        ADE();
-    }
-    
-    function renderPlaylistList(container) {
-        LoadProfile();
-        container.innerHTML = '';
-    
-        const ids = SN.profile.playlist || [];
-    
-        if (!ids.length) {
-            container.append(
-                OA(document.createElement('div'), {
-                    className: 'text2',
-                    innerHTML: 'هنوز پلی‌لیستی نساخته‌اید'
-                })
-            );
-            return;
-        }
-    
-        const ready = ids.filter((id) => SN.playlist && SN.playlist[id]);
-        if (!ready.length) {
-            container.append(
-                OA(document.createElement('div'), {
-                    className: 'text2',
-                    innerHTML: 'لیست خالی است'
-                })
-            );
-            return;
-        }
-    
-        const oldMCNT = MCNT;
-        MCNT = container;
-        CRSC(ready, 'playlist');
         MCNT = oldMCNT;
         ADE();
     }
@@ -6655,14 +6542,28 @@ if (!empty($_SESSION['loggedin'])) {
     try { CRFT(); } catch (e) {}
     SPA();
     
-    function CRNF(){
-        const dtx = OA(document.createElement("div"), {className: "error-message-container"});
-        const tx1 = OA(document.createElement("div"), {className: "text1 m-top-1-5", innerHTML: "Page not found!"});
-        const tx2 = OA(document.createElement("div"), {className: "text2", innerHTML: "The requested page was not found"});
-        const btn = OA(document.createElement("button"), {className: "btn btn-sm btn-model-4 m-top-1-5", type:"button", innerHTML: "Back to home"});
-        dtx.append(tx1,tx2,btn);
+    function CRNF(message) {
+        const dtx = OA(document.createElement('div'), { className: 'error-message-container' });
+        const tx1 = OA(document.createElement('div'), {
+            className: 'text1 m-top-1-5',
+            innerHTML: 'Page not found!'
+        });
+        const tx2 = OA(document.createElement('div'), {
+            className: 'text2',
+            innerHTML: message || 'The requested page was not found'
+        });
+        const btn = OA(document.createElement('button'), {
+            className: 'btn btn-sm btn-model-4 m-top-1-5',
+            type: 'button',
+            innerHTML: 'Back to home'
+        });
+        dtx.append(tx1, tx2, btn);
         MCNT.append(dtx);
-        btn.addEventListener("click", function(){ chp(HP); });
+        btn.addEventListener('click', function () { chp(HP); });
+        try {
+            document.title = 'Page not found | Hamrahang';
+        } catch (e) {}
+        try { ADE(); } catch (e) {}
     }
     
     async function CRHP(P, QS) {
@@ -6743,7 +6644,7 @@ if (!empty($_SESSION['loggedin'])) {
     
         if (!route) {
             console.log('CRHP: Unknown route:', P, QS);
-            await renderHome();
+            CRNF();
             return;
         }
     
@@ -7124,7 +7025,10 @@ if (!empty($_SESSION['loggedin'])) {
     async function CRAP(q) {
         
         const e = await UART(['artist', q]);
-        if (!e) return;
+        if (!e) {
+            CRNF('Artist not found');
+            return;
+        }
 
         var au = e.url;
 
@@ -7282,7 +7186,10 @@ if (!empty($_SESSION['loggedin'])) {
         if (T == 'artist') {e = await UART(['artist', q]); url = HA; }
         if (T == 'podcast') {e = await USNG(['podcast', q]); url = HS; }
 
-        if (!e) return;
+        if (!e) {
+            CRNF(T === 'album' ? 'Album not found' : 'Track not found');
+            return;
+        }
     
         //AudLst[0] = e;
     
@@ -7710,7 +7617,10 @@ if (!empty($_SESSION['loggedin'])) {
     
     async function CRVP(q) {
         const e = await resolveVideoItem(q);
-        if (!e) return;
+        if (!e) {
+            CRNF('Video not found');
+            return;
+        }
     
         const actualType = (e.meta && e.meta.type === 'video') ? 'video' : 'musicvideo';
         const dhc = OA(document.createElement('div'), {className: 'page-detail-header-container video-page-header'});
@@ -8122,14 +8032,6 @@ if (!empty($_SESSION['loggedin'])) {
         clearHeroMenu();
     }
 
-    function leaveInlineVideoStage() {
-        const video = document.querySelector('.main-video');
-        if (!video) return;
-        // برگرداندن video به جای ثابت انتهای body (اگر لازم)
-        // document.body.appendChild(video);
-        // video.classList.add('vis-none');
-    }
-    
     function getVideoFsRoot() {
         // اگر داخل صفحه ویدیو هستیم و stage هست:
         const stage = document.querySelector('.video-stage.is-playing');
@@ -8138,17 +8040,6 @@ if (!empty($_SESSION['loggedin'])) {
         const maxSlot = document.querySelector('.maximum-player-mobile .video-fs-root');
         if (maxSlot) return maxSlot;
         return document.querySelector('.main-video');
-    }
-    
-    async function toggleVideoFullscreen() {
-        if (document.fullscreenElement) {
-            await document.exitFullscreen();
-            return;
-        }
-        const root = getVideoFsRoot();
-        if (!root) return;
-        if (root.requestFullscreen) await root.requestFullscreen();
-        else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
     }
     
     function openPlayerShell() {
@@ -8650,7 +8541,10 @@ if (!empty($_SESSION['loggedin'])) {
         
         if (T !== 'playlist') return;
         const pl = await UPLS(['playlist', q]);
-        if (!pl) return;
+        if (!pl) {
+            CRNF('Playlist not found');
+            return;
+        }
 
         const m = pl.meta || {};
         let thumb_item = null;
@@ -9404,11 +9298,6 @@ const PROFILE_KEY = 'ha_profile';
         return nowFavorite; // boolean برای UI
     }
     
-    async function ToggleFavoriteAsync(type, id) {
-        const nowFavorite = ToggleFavorite(type, id); // لوکال + fire-and-forget سرور
-        return nowFavorite;
-    }
-
     async function syncFavoriteToServer(type, id, isAdd) {
         try {
             await gja({
@@ -10244,35 +10133,6 @@ const PROFILE_KEY = 'ha_profile';
 
     }
 
-    function CSH(title, href) {
-    
-        var hed = OA(document.createElement("div"), {
-            className: "section-header m-top-3"
-        });
-    
-        var ht = OA(document.createElement("h2"), {
-            className: "title",
-            innerHTML: title
-        });
-    
-        hed.appendChild(ht);
-    
-        if (href) {
-    
-            var ha = OA(document.createElement("a"), {
-                className: "see-all",
-                innerHTML: "See All",
-                href: href
-            });
-    
-            hed.appendChild(ha);
-        }
-    
-        MCNT.appendChild(hed);
-    
-        return hed;
-    }
-    
     /**
      * CRPL — ساخت UI شل پلیر (#player-box)
      * media elements (vply/aply) در HTML می‌مانند؛ chrome از اینجا ساخته می‌شود.
@@ -11105,10 +10965,6 @@ const PROFILE_KEY = 'ha_profile';
             renderPlayerSettingsPanel(body);
         }
         panel.classList.add('is-open');
-    }
-
-    function openPlayerQueue() {
-        openPlayerPanel('queue');
     }
 
     function renderPlayerQueuePanel(body) {
@@ -12467,11 +12323,9 @@ const PROFILE_KEY = 'ha_profile';
         controller.next();
     }
 
-
     function onBack() {
         controller.previous();
     }
-
 
     function onScroll() {
         controller.update();
@@ -12630,58 +12484,6 @@ const PROFILE_KEY = 'ha_profile';
     return controller;
 }
     
-    async function CRTS(QS,a){
-
-        var a=0,ar;
-        
-        switch(QS) {
-            case 'featured':
-                a=1;
-                ar=SN.featured_song;
-                break;
-            case 'latest':
-            case 'trending':
-            case 'popular':
-                a=2;
-                ar=SN.latest_song;
-                break;
-        }
-        
-        if(a!=0){
-            const hed = OA(document.createElement("div"), {className: "main-tabs"});
-            const ha1 = OA(document.createElement("a"), {className: "item"+(a==1?' active':''), href: "/song/featured", innerHTML:"Featured"});
-            const ha2 = OA(document.createElement("a"), {className: "item"+(a==2?' active':''), href: "/song/latest", innerHTML:"Latest"});
-            const ha3 = OA(document.createElement("a"), {className: "item"+(a==3?' active':''), href: "/song/trending", innerHTML:"Trending"});
-            const ha4 = OA(document.createElement("a"), {className: "item"+(a==4?' active':''), href: "/song/popular", innerHTML:"Popular"});
-            
-            hed.append(ha1,ha2,ha3,ha4);
-            MCNT.append(hed);
-            CRGL(ar);
-            ADE();
-            
-        }else{
-            await CRSP(QS);
-        }
-
-    }
-    
-    async function CRPS(QS){
-
-        if(QS=='favorite'){
-            const hed = OA(document.createElement("div"), {className: "page-header m-top-1"});
-            const hh1 = OA(document.createElement("h1"), {className: "title", innerHTML:'Your Favorite Songs'});
-            hed.append(hh1);
-            MCNT.append(hed);
-            CRGL(SN.user.fv.sng);
-            ADE();
-            
-        }else{
-            // get playlist with json
-            
-        }
-
-    }
-    
     var MENU = document.querySelector(".menu");
     var HERO = document.querySelector("#hero");
     
@@ -12728,17 +12530,7 @@ const PROFILE_KEY = 'ha_profile';
         ADE();
 
     }
-    
-    function Cmor(){
-        
-        const eM = MCNT.querySelectorAll(".menu");
-        for (const e of eM) {
-                e.addEventListener("click", (h)=>{
-                     CRBW(e);
-                },false);
-        }
-    }
-    
+
     function rebuildPlaylistPicker(dbs, itemId, itemType, RmvDBW) {
         dbs.innerHTML = '';
         LoadProfile();
@@ -13905,318 +13697,6 @@ const PROFILE_KEY = 'ha_profile';
         
         
     }
-    /*function CRBW(id, T, c, ctx){
-
-        if (!SN[T][id]) return;
-        ctx = ctx || {};
-        
-        const dbw = OA(document.createElement("div"), {className: "bottom-sheet-wrapper"});
-        MCLN.append(dbw);
-        
-        const dbc = OA(document.createElement("div"), {className: "bottom-sheet-container"});
-        const hed = OA(document.createElement("div"), {className: "bottom-sheet-header"});
-        dbc.append(hed);
-        dbw.append(dbc);
-        
-        let url = HS;
-        let TPS = svg_sng;
-
-        if (T == 'song') { url = HS; }
-        if (T == 'album') { url = HL; }
-        if (T == 'artist') { url = HA; }
-        if (T == 'playlist') { url = HPL; TPS = svg_pls;}
-
-        const e = SN[T][id];
-
-        let  artistList = [];
-        let  primaryArtistUrl = "";
-
-        const artistRefs = (e.artists && Array.isArray(e.artists)) ? e.artists : [];
-        artistRefs.forEach((artistRef) => {
-
-            const artistId =
-                typeof artistRef === "object"
-                    ? artistRef.id
-                    : artistRef;
-
-            if (SN.artist && SN.artist[artistId]) {
-                artistList.push(SN.artist[artistId]);
-            }
-        });
-
-        if (artistList.length > 0) {
-            primaryArtistUrl = artistList[0].url || "";
-        }
-
-        const daw = OA(document.createElement("div"), {className: "artwork"});
-        const dph = OA(document.createElement("div"), {className: "placeholder", innerHTML: TPS });
-       
-        const thumb = resolveThumb(e);
-        if (thumb) {
-            daw.append(dph, OA(document.createElement("img"), {src: UT + thumb + ".jpg"}));
-        } else {
-            daw.append(dph);
-        }
-        const dtx = OA(document.createElement("div"), {className: "texts"});
-        const tx1 = OA(document.createElement("div"), {innerHTML: e.name});
-        
-        const tx2 = OA(document.createElement("div"), {className: "text2 artist artists-inline"});
-        artistList.forEach((artistObj, j) => {
-            const artN = OA(document.createElement("span"), {innerHTML: artistObj.name});
-            tx2.append(artN);
-        
-            if (j < artistList.length - 1) {
-                const sepSpan = OA(document.createElement("span"), {innerHTML: " - "});
-                tx2.append(sepSpan);
-            }
-        });
-        dtx.append(tx1,tx2)
-        hed.append(daw,dtx);
-        
-        const cnt = OA(document.createElement("div"), {className: "bottom-sheet-content"});
-        const d10 = OA(document.createElement("div"), {style: "width: 100%; height: 100%;"});
-        cnt.append(d10);
-        const dbs = OA(document.createElement("div"), {className: "bottom-sheet-menu"});
-        d10.append(dbs);
-        
-        if(c==='art'){
-            dbs.innerHTML = '';
-            dbs.appendChild(renderArtistToBW(e));
-            
-        }else if (c === 'pls') {
-            // عنوان اختیاری
-            dbs.append(
-                OA(document.createElement('div'), {
-                    className: 'item text2',
-                    innerHTML: 'افزودن به پلی‌لیست'
-                })
-            );
-            renderPlaylistPicker(dbs, id, T, () => {
-                RmvDBW();
-            });
-            rebuildPlaylistPicker(dbs, id, T, RmvDBW);
-        }else if (c === 'rmpls') {
-            const pids = findPlaylistsContainingItem(id, T);
-            dbs.append(
-                OA(document.createElement('div'), {
-                    className: 'item text2',
-                    innerHTML: 'حذف از پلی‌لیست'
-                })
-            );
-            if (!pids.length) {
-                dbs.append(
-                    OA(document.createElement('div'), {
-                        className: 'text2',
-                        innerHTML: 'در هیچ پلی‌لیستی نیست'
-                    })
-                );
-            } else {
-                pids.forEach((pid) => {
-                    const pl = SN.playlist[pid];
-                    const row = OA(document.createElement('div'), {
-                        className: 'item focusable',
-                        innerHTML: (pl && pl.name) ? pl.name : ('Playlist ' + pid)
-                    });
-                    row.addEventListener('click', async () => {
-                        removeItemFromPlaylist(pid, id, T);
-                        RmvDBW();
-                        // اگر روی همان پلی‌لیست بودیم
-                        if (ctx.playlistId && Number(ctx.playlistId) === Number(pid)) {
-                            await softRefreshPlaylistPage(pid);
-                        }
-                    });
-                    dbs.append(row);
-                });
-            }
-        }else if (T === 'playlist' && !c) {
-            renderPlaylistSheetMenu(dbs, e, id, RmvDBW);
-        }else if (c === 'edit' && T === 'playlist') {
-            //RmvDBW();
-            // CRBW(id, T, 'rmpls', ctx);
-            renderPlaylistEditForm(dbs, e, id, RmvDBW);
-        }else if (c === 'del' && T === 'playlist') {
-            renderDeletePlaylistConfirm(dbs, id, RmvDBW);
-        }else{
-            const tm1 = OA(document.createElement('div'), {
-                className: 'item',
-                innerHTML: svg_cpl + (e.meta?.ncp != null ? e.meta.ncp + ' Plays' : 'Plays')
-            });
-            
-
-            
-    
-            const containing = findPlaylistsContainingItem(id, T);
-            const trm = OA(document.createElement('div'), {
-                className: 'item',
-                innerHTML: svg_r2p + 'Remove From Playlist'
-            });
-                // فقط اگر حداقل در یک پلی‌لیست باشد
-            if (containing.length) {
-                trm.addEventListener('click', () => {
-                    // اگر ctx.playlistId هست و فقط همان را می‌خواهی مستقیم حذف کنی:
-                    if (ctx.playlistId && containing.map(Number).includes(Number(ctx.playlistId))) {
-                        removeItemFromPlaylist(ctx.playlistId, id, T);
-                        RmvDBW();
-                        softRefreshPlaylistPage(ctx.playlistId);
-                        return;
-                    }
-                    RmvDBW();
-                    CRBW(id, T, 'rmpls', ctx);
-                });
-            }    
-                
-
-                const tm3 = OA(document.createElement("div"), {className: "item", innerHTML: svg_g2a+'Go to artist'});
-                tm3.addEventListener("click", ()=>{
-                        RmvDBW();
-                        CRBW(id,T,'art');
-                        return false;
-                },false);
-                
-                const tm4 = OA(document.createElement("div"), {className: "item", innerHTML: svg_g2s+'Go to '+T});
-                tm4.addEventListener("click", ()=>{
-                        RmvDBW();
-                        chp(url + e.id + '/' + (T !== "artist" ? primaryArtistUrl + "-" : "") + e.url);
-                        return false;
-                },false);
-                
-                const tm5 = OA(document.createElement("div"), {className: "item", innerHTML: svg_don+'Download'});
-                const tm6 = OA(document.createElement("div"), {className: "vis-none", innerHTML: svg_cmt+'View Comments'});
-                const tm7 = OA(document.createElement("div"), {className: "item", innerHTML: svg_lik+'View Likes'});
-                const tm8 = OA(document.createElement("div"), {className: "item", innerHTML: svg_shr+'Share'});
-                const tm9 = OA(document.createElement("div"), {className: "item", innerHTML: svg_inf+'Report'});
-                const tm10 = OA(document.createElement("div"), {className: "vis-none", innerHTML: svg_app+'Open in app'});
-                
-                const dbr = OA(document.createElement("div"), {className: "download-bar vis-nt"});
-                const bar = OA(document.createElement("div"), {className: "download-bar-content"});
-                const s128 = OA(document.createElement("div"), {className: "down-item",innerHTML: '128'});
-                const s320 = OA(document.createElement("div"), {className: "down-item",innerHTML: '320'});
-                const stlg = OA(document.createElement("div"), {className: "down-item",innerHTML: '<span style="margin-right:10px" >To</span>'+svg_tl2});
-                bar.append(s128,s320,stlg);
-                dbr.append(bar);
-                
-                const nodes = [tm1];
-                
-                if (PLAYABLE_TYPES.indexOf(T) !== -1) {
-                    const btnQ = OA(document.createElement('div'), {
-                        className: 'item',
-                        innerHTML: svg_a2p + 'Add to Queue'
-                    });
-                    btnQ.addEventListener('click', () => {
-                        addToPlayQueue(id, T);
-                        RmvDBW();
-                    });
-                    nodes.push(btnQ)
-                    
-                    const tm2 = OA(document.createElement('div'), {
-                    className: 'item',
-                        innerHTML: svg_a2p + 'Add to Playlist'
-                    });
-                    tm2.addEventListener('click', () => {
-                        RmvDBW();
-                        CRBW(id, T, 'pls', ctx);
-                    });
-                    nodes.push(tm2)
-                }
-                
-                
-                if (containing.length) nodes.push(trm);
-                dbs.append(...nodes,tm3,tm4,dbr,tm5,tm7,tm8,tm9);
-            }
-        
-        const btc = OA(document.createElement("div"), {className: "bottom-sheet-close", innerHTML: "Close" });
-        btc.addEventListener("click", ()=>{
-                    RmvDBW();
-        });
-        
-        dbc.append(cnt,btc);
-
-
-        
-        const BWC = DBW.querySelector(".bottom-sheet-close");
-        const BMI = DBW.querySelectorAll(".bottom-sheet-menu .item");
-        const BDB = DBW.querySelector(".bottom-sheet-menu .download-bar");
-        const BDI = DBW.querySelectorAll(".download-bar-content .down-item");
-       //  href: HS+e.artist_url+'-'+e.url, 
-
-        
-
-        
-        BMI[4].addEventListener("click", ()=>{
-            
-            (TGAP.platform !='unknown')?
-            (SN.user.ap)?Send2TG(q):SrtBot()
-            :
-            (BDB.classList.contains("vis-nt"))?BDB.classList.remove("vis-nt"):BDB.classList.add("vis-nt");
-            return false;
-        });
-
-        
-     
-        BDI[0].addEventListener("click", ()=>{
-                downloadFile(q.audio[0].url,q.artist+' - '+q.name,'.mp3');
-                return false;
-        },false);
-        
-        BDI[2].addEventListener("click", ()=>{
-                (SN.user.ap)?Send2TG(q):SrtBot();
-                return false;
-        },false);
-        
-        BMI[6].addEventListener("click", ()=>{
-            //    (SN.user.ap)?Send2TG(q):SrtBot();
-                (SN.user.id)?(parent.location.href = 'https://t.me/share/url?url=https://t.me/HamrahangBot?startapp='+q.artist_url+'-'+q.url+'==ref'+SN.user.id+'&text=Listen To '+q.name+' By '+q.artist): copyText(HSU+q.artist_url+'-'+q.url,'Song link copied to clipboard');
-                return false;
-        },false);
-        
-        
-        
-
-        
-    }*/
-    
-    function AddPls(){
-            
-        const drs = OA(document.createElement("div"), {className: "download-dialog show_fadein"});
-        const cnt = OA(document.createElement("div"), {className: "content"});
-        const txt = OA(document.createElement("div"), {className: "texts"});
-        cnt.append(txt);
-        const tx1 = OA(document.createElement("div"), {className: "text1", innerHTML: "Add New Playlist"});
-        
-        const df4 = OA(document.createElement("div"), {className: "input-container"});
-        const iab = OA(document.createElement("input"), {className: "input" ,type: "text",id:"playlist" ,maxlength: 100, placeholder:"Playlist Name", autocorrect:"off", autocapitalize:"off", spellcheck:"false"});
-        df4.append(iab);
-
-        const btn = OA(document.createElement("div"), {className: "buttons m-top-1"});
-        const bta = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Done"});
-        const bca = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Cancel"});
-        btn.append(bta,bca);
-        txt.append(tx1,df4,btn);
-        drs.append(cnt);
-        MCLN.append(drs);
-        
-        const DRS = MCLN.querySelector(".download-dialog");
-        const BSA = MCLN.querySelector(".download-dialog a.btn-sm");
-        bta.addEventListener("click", ()=>{
-            setTimeout(function() {
-                drs.remove();
-            }, 500);
-        });
-
-        bca.addEventListener("click", ()=>{
-     /*               
-        const tms = OA(document.createElement("div"), {className: "toast-message show"});
-        const spn = OA(document.createElement("span"), {innerHTML:t});
-        tms.append(spn);
-        document.body.append(tms);*/
-            drs.className = drs.className.replace("show_fadein", "show_fadeout");
-            setTimeout(function() {
-               drs.remove();
-            }, 500);
-            
-        });
-        
-    }
 
     function SrtBot(){
             
@@ -14365,49 +13845,7 @@ const PROFILE_KEY = 'ha_profile';
         AA = [];
     }
 
-    function Cap(st) {
-        return st.split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
-    }
-
-    function Crsl() {
-    
-        const sections = document.querySelectorAll(
-            ".section-carousel-container"
-        );
-    
-        sections.forEach((section) => {
-    
-            if (section._carousel) {
-                return;
-            }
-    
-            const controller =
-                section.querySelector(
-                    ".carousel-controller"
-                );
-    
-            if (!controller) {
-                return;
-            }
-    
-            const container =
-                section.querySelector(
-                    ".carousel-container"
-                );
-    
-            if (!container) {
-                return;
-            }
-    
-            section._carousel = {
-                section: section,
-                container: container
-            };
-        });
-    }
-
     function ECN(e) {
-
         e.cloneNode(true);
     }
 
