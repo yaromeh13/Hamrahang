@@ -4372,18 +4372,19 @@ $stmt->execute();*/
                     }
 
                     if ($callerAct >= 9) {
+                        // Admin: rows removed from form (×) are hard-deleted.
+                        // Deactivated (act=0) rows stay in payload and are UPDATEd above.
                         if (!empty($keptIds)) {
                             $in = implode(',', array_map('intval', $keptIds));
                             $conn->query(
-                                "UPDATE link_song SET link_act = 0
+                                "DELETE FROM link_song
                                  WHERE id_song = " . (int)$realId . "
-                                   AND link_act != 0
                                    AND id_sng2lnk NOT IN ($in)"
                             );
                         } else {
                             $conn->query(
-                                "UPDATE link_song SET link_act = 0
-                                 WHERE id_song = " . (int)$realId . " AND link_act != 0"
+                                "DELETE FROM link_song
+                                 WHERE id_song = " . (int)$realId
                             );
                         }
                     } else {
@@ -5394,18 +5395,18 @@ $stmt->execute();*/
                     }
 
                     if ($callerAct >= 9) {
+                        // Admin: × removed rows → hard DELETE; act=0 rows remain via UPDATE
                         if (!empty($keptIds)) {
                             $in = implode(',', array_map('intval', $keptIds));
                             $conn->query(
-                                "UPDATE link_video SET link_act = 0
+                                "DELETE FROM link_video
                                  WHERE id_video = " . (int)$realId . "
-                                   AND link_act != 0
                                    AND id_vdo2lnk NOT IN ($in)"
                             );
                         } else {
                             $conn->query(
-                                "UPDATE link_video SET link_act = 0
-                                 WHERE id_video = " . (int)$realId . " AND link_act != 0"
+                                "DELETE FROM link_video
+                                 WHERE id_video = " . (int)$realId
                             );
                         }
                     } else {

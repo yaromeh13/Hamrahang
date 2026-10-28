@@ -4046,7 +4046,7 @@ function sourceRowHtml(s, index) {
   }
 
   html += (canEdit
-        ? '<button class="btn btn-ghost btn-sm src-del" type="button" data-src-del title="Remove / deactivate">&times;</button>'
+        ? '<button class="btn btn-ghost btn-sm src-del" type="button" data-src-del title="Delete source">&times;</button>'
         : '<span></span>') +
     '</div>' +
     '<div class="src-prog" data-src-prog>' +
@@ -6276,27 +6276,17 @@ function bindSourcesEditor() {
       return;
     }
 
+    // × = hard remove from form (act9 server DELETEs; act7 soft-offs own missing rows)
+    // Deactivate button (data-src-act=0) = keep row, set act=0
     const del = event.target.closest('[data-src-del]');
     if (del) {
       const row = del.closest('[data-src-row]');
       if (!row) return;
-      const id = Number(row.getAttribute('data-src-id')) || 0;
-      if (id > 0) {
-        row.setAttribute('data-src-row-act', '0');
-        collectDraft();
-        const box = $('#srcSection');
-        if (box && state.item) {
-          box.outerHTML = sourcesSectionHtml(state.item);
-          const nl = $('#srcList');
-          if (nl) nl.dataset.bound = '';
-          bindSourcesEditor();
-        }
-      } else {
-        if (row.getAttribute('data-src-key') === srcPlayingKey) stopSrc();
-        row.remove();
-        if (!$('#srcList [data-src-row]')) {
-          $('#srcList').innerHTML = '<div class="hint" id="srcEmpty">No sources yet — add a stream URL.</div>';
-        }
+      if (row.getAttribute('data-src-key') === srcPlayingKey) stopSrc();
+      row.remove();
+      collectDraft();
+      if (!$('#srcList [data-src-row]')) {
+        $('#srcList').innerHTML = '<div class="hint" id="srcEmpty">No sources yet — add a stream URL.</div>';
       }
       return;
     }
