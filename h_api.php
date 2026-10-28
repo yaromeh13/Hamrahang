@@ -650,13 +650,57 @@
     // Owners  →  ?_qjs=own
     // Resolve: ?_qjs=own&ids=11210700
     // Batch:   ?_qjs=own&ids=11210700,11210708
-    // Search:  ?_qjs=own&q=grok&min_act=7
+    // Search:  ?_qjs=own&q=grok&min_act=7   (sources: 7/8/9 only)
+    //          ?_qjs=own&q=name&min_act=0   (owner hub: all acts)
+    //
+    // Search JSON shape (always):
+    //   { "owners": [ { "id", "name", "act", "photo"? } ] }
+    // Resolve by ids keeps public OwnerCard shape (id, name, meta) — no act required.
     if ($QJS === 'own') {
         global $conn, $IDHM;
 
         $owners = [];
 
-        // ---- resolve by id(s) — single or list in one param "ids" ----
+        // Build one search/admin list row from a user table row (no u_photo column).
+        $ownRowToSearchCard = function (array $row) use ($IDHM) {
+            $act    = (int)($row['act'] ?? 0);
+            $u_name = trim((string)($row['u_name'] ?? ''));
+            $f_name = trim((string)($row['f_name'] ?? ''));
+            $l_name = trim((string)($row['l_name'] ?? ''));
+            $email  = trim((string)($row['u_email'] ?? ''));
+
+            $name = $u_name;
+            if ($name === '') {
+                if ($act >= 7 && preg_match('#^https?://#i', $f_name)) {
+                    $name = $l_name !== '' ? $l_name : $f_name;
+                } else {
+                    $name = trim($f_name . ' ' . $l_name);
+                }
+            }
+            if ($name === '') $name = $email;
+            if ($name === '') {
+                $name = 'User #' . ((int)$row['id_user'] + (int)$IDHM);
+            }
+
+            $photo = '';
+            if (!empty($row['u_data'])) {
+                $decoded = json_decode($row['u_data'], true);
+                if (is_array($decoded)) {
+                    if (!empty($decoded['photo'])) $photo = (string)$decoded['photo'];
+                    elseif (!empty($decoded['tmb'])) $photo = (string)$decoded['tmb'];
+                }
+            }
+
+            $card = [
+                'id'   => (int)$row['id_user'] + (int)$IDHM,
+                'name' => $name,
+                'act'  => $act,
+            ];
+            if ($photo !== '') $card['photo'] = $photo;
+            return $card;
+        };
+
+        // ---- resolve by id(s) — public cards for labels (no act filter) ----
         $idsParam = isset($_REQUEST['ids']) ? trim((string)$_REQUEST['ids']) : '';
 
         if ($idsParam !== '' && !isset($_REQUEST['q'])) {
@@ -687,7 +731,7 @@
             exit();
         }
 
-        // pure digits → treat as public id (or raw fallback)
+        // pure digits → public id (or raw id fallback) — read act from DB, not OwnerCard
         if (preg_match('/^\d+$/', $q)) {
             $pub = (int)$q;
             $real = function_exists('PublicIdToReal')
@@ -695,21 +739,35 @@
                 : max(0, $pub - (int)$IDHM);
             if ($real <= 0 && $pub > 0) $real = $pub;
 
-            $card = OwnerCard($real);
-            if ($card && (int)$card['act'] >= $minAct) {
-                $owners[] = $card;
-            }
-            if (!$owners && $pub > 0 && $real !== $pub) {
-                $card2 = OwnerCard($pub);
-                if ($card2 && (int)$card2['act'] >= $minAct) $owners[] = $card2;
+            $tryIds = [$real];
+            if ($pub > 0 && $pub !== $real) $tryIds[] = $pub;
+
+            $stmt = $conn->prepare(
+                'SELECT id_user, u_name, f_name, l_name, u_email, u_data, act
+                 FROM user WHERE id_user = ? LIMIT 1'
+            );
+            if ($stmt) {
+                foreach ($tryIds as $rid) {
+                    $rid = (int)$rid;
+                    if ($rid <= 0) continue;
+                    $stmt->bind_param('i', $rid);
+                    $stmt->execute();
+                    $row = $stmt->get_result()->fetch_assoc();
+                    if (!$row) continue;
+                    if ((int)$row['act'] < $minAct) continue;
+                    $owners[] = $ownRowToSearchCard($row);
+                    break;
+                }
+                $stmt->close();
             }
             echo json_encode(['owners' => $owners], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit();
         }
 
+        // name / email text search — no u_photo column (dropped; photo lives in u_data)
         $like = '%' . $conn->real_escape_string($q) . '%';
         $sql = "
-            SELECT id_user, u_name, f_name, l_name, u_email, u_photo, act
+            SELECT id_user, u_name, f_name, l_name, u_email, u_data, act
             FROM user
             WHERE act >= " . (int)$minAct . "
               AND (
@@ -724,31 +782,15 @@
         $res = $conn->query($sql);
         if ($res) {
             while ($row = $res->fetch_assoc()) {
-                $name = trim((string)($row['u_name'] ?? ''));
-                if ($name === '') {
-                    $name = trim(
-                        trim((string)($row['f_name'] ?? '')) . ' ' .
-                        trim((string)($row['l_name'] ?? ''))
-                    );
-                }
-                if ($name === '') $name = trim((string)($row['u_email'] ?? ''));
-                if ($name === '') {
-                    $name = 'User #' . ((int)$row['id_user'] + (int)$IDHM);
-                }
-                $owners[] = [
-                    'id'    => (int)$row['id_user'] + (int)$IDHM,
-                    'name'  => $name,
-                    'act'   => (int)$row['act'],
-                    'photo' => !empty($row['u_photo']) ? (string)$row['u_photo'] : '',
-                ];
+                $owners[] = $ownRowToSearchCard($row);
             }
         }
 
         echo json_encode(['owners' => $owners], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit();
     }
-    
-    function UserPublicId($realId) {
+
+        function UserPublicId($realId) {
         global $IDHM;
         return (int)$realId + (int)$IDHM;
     }
@@ -1687,7 +1729,7 @@
             $id_user = (int)$row['id_user'];
         
             // وجود کاربر + متا (tmb/join در u_data)
-            $userStmt = $conn->prepare("SELECT act, u_name, f_name, l_name, u_email, u_photo, u_data FROM user WHERE id_user = ?");
+            $userStmt = $conn->prepare("SELECT act, u_name, f_name, l_name, u_email, u_data FROM user WHERE id_user = ?");
             $userStmt->bind_param("i", $id_user);
             $userStmt->execute();
             $userResult = $userStmt->get_result();
@@ -1736,7 +1778,14 @@
                 'first_name'    => $userRow['f_name'] ?? null,
                 'last_name'     => $userRow['l_name'] ?? null,
                 'email'         => $userRow['u_email'] ?? null,
-                'photo'         => !empty($userRow['u_photo']) ? (string)$userRow['u_photo'] : null,
+                'photo'         => (function() use ($userRow) {
+                    if (!empty($userRow['u_data'])) {
+                        $d = json_decode($userRow['u_data'], true);
+                        if (is_array($d) && !empty($d['photo'])) return (string)$d['photo'];
+                        if (is_array($d) && !empty($d['tmb'])) return (string)$d['tmb'];
+                    }
+                    return null;
+                })(),
                 'meta'          => $meta
             ]);
             exit();
