@@ -11543,7 +11543,11 @@ const PROFILE_KEY = 'ha_profile';
                     UHERO(this._item, this._type);
             });
 
-            const ela = OA(document.createElement("a"), {href: url + e.id + '/' + (T !== "artist" ? primaryArtistUrl + "-" : "") + e.url});
+            const itemSlug = e.url || String(e.id);
+            const itemHref = (T === 'playlist' || T === 'artist')
+                ? (url + e.id + '/' + itemSlug)
+                : (url + e.id + '/' + (primaryArtistUrl ? primaryArtistUrl + '-' : '') + itemSlug);
+            const ela = OA(document.createElement("a"), {href: itemHref});
             const art = OA(document.createElement("div"), {className: "artwork ratio " + (isVideoish ? "ratio-16x9" : "ratio-1x1")});
             const sep = OA(document.createElement("span"), {className: "placeholder " + (T === "artist" ? "rounded-circle" : ""), innerHTML: TPS });
             art.append(sep);
@@ -11577,7 +11581,7 @@ const PROFILE_KEY = 'ha_profile';
     
             const dt1 = OA(document.createElement("div"), {className: "text1"});
     
-            const dta = OA(document.createElement("a"), {href: url + e.id + '/' + (T !== "artist" ? primaryArtistUrl + "-" : "") + e.url,innerHTML: e.name});
+            const dta = OA(document.createElement("a"), {href: itemHref, innerHTML: e.name});
     
             dt1.append(dta);
     
@@ -11675,7 +11679,11 @@ const PROFILE_KEY = 'ha_profile';
                     UHERO(e, T);
             });
 
-            const ela = OA(document.createElement("a"), {href: url + e.id + '/' + (T !== "artist" ? primaryArtistUrl + "-" : "") + e.url});
+            const itemSlug = e.url || String(e.id);
+            const itemHref = (T === 'playlist' || T === 'artist')
+                ? (url + e.id + '/' + itemSlug)
+                : (url + e.id + '/' + (primaryArtistUrl ? primaryArtistUrl + '-' : '') + itemSlug);
+            const ela = OA(document.createElement("a"), {href: itemHref});
             const art = OA(document.createElement("div"), {
                     className: "artwork ratio " + (isVideoish ? "ratio-16x9" : "ratio-1x1")
                 });
@@ -11713,7 +11721,7 @@ const PROFILE_KEY = 'ha_profile';
                 elb.append(mor, elp);
             }
             const dt1 = OA(document.createElement("div"), {className: "text1"});
-            const dta = OA(document.createElement("a"), {href: url + e.id + '/' + (T !== "artist" ? primaryArtistUrl + "-" : "") + e.url,innerHTML: e.name});
+            const dta = OA(document.createElement("a"), {href: itemHref, innerHTML: e.name});
     
             dt1.append(dta);
     
@@ -12487,48 +12495,103 @@ const PROFILE_KEY = 'ha_profile';
     var MENU = document.querySelector(".menu");
     var HERO = document.querySelector("#hero");
     
-    function UHERO(e,t){
-    
-        if(!e){return;}
-        // HERO_UPDATE
-        if(!MENU){return;}
-        MENU.classList.contains("row")?'':MENU.classList.add("row");
-        if(!HERO){return;}
-        HERO.innerHTML = "";
+    function UHERO(e, t) {
+        if (!e) return;
 
-        var dtn;
-        //console.log(e);
-        if(t=="artist"){
-            dtn = OA(document.createElement("div"), {className: "thumbail artwork rounded-circle"});
-        }else if(t=="musicvideo" || t=="video"){
-            dtn = OA(document.createElement("div"), {className: "thumbail artwork ratio-16x9"});
-        }else{
-            dtn = OA(document.createElement("div"), {className: "thumbail artwork ratio-1x1"});
+        // رفرنس‌ها ممکن است بعد از بازسازی سایدبار کهنه باشند
+        if (!MENU || !MENU.isConnected) {
+            MENU = document.querySelector('.sidebar-content nav.menu') || document.querySelector('nav.menu');
+        }
+        if (!HERO || !HERO.isConnected) {
+            HERO = document.querySelector('#hero');
+        }
+        if (!MENU || !HERO) return;
+
+        if (!MENU.classList.contains('row')) MENU.classList.add('row');
+        HERO.innerHTML = '';
+
+        t = String(t || (e.meta && e.meta.type) || e.type || 'song').toLowerCase();
+
+        // شکل باکس + آیکون placeholder مثل بقیهٔ اپ
+        let dtnClass = 'thumbail artwork ratio ratio-1x1';
+        let TPS = typeof svg_sng !== 'undefined' ? svg_sng : '';
+        if (t === 'artist') {
+            dtnClass = 'thumbail artwork rounded-circle';
+            TPS = typeof svg_usr !== 'undefined' ? svg_usr : TPS;
+        } else if (t === 'musicvideo' || t === 'video') {
+            dtnClass = 'thumbail artwork ratio ratio-16x9';
+        } else if (t === 'playlist') {
+            TPS = typeof svg_pls !== 'undefined' ? svg_pls : TPS;
+        } else if (t === 'album') {
+            TPS = typeof svg_pls !== 'undefined' ? svg_pls : TPS;
         }
 
-        var thumb = resolveThumb(e) || null;
-        var iep = OA(document.createElement("img"), {className: t == "artist" ? "ratio ratio-1x1 rounded-circle":"ratio ratio-1x1", src: thumb ? UT + thumb + ".jpg" : ""});
-        dtn.appendChild(iep);
+        const dtn = OA(document.createElement('div'), { className: dtnClass });
+        dtn.append(
+            OA(document.createElement('span'), {
+                className: 'placeholder' + (t === 'artist' ? ' rounded-circle' : ''),
+                innerHTML: TPS
+            })
+        );
 
-        const dct = OA(document.createElement("div"), {className: "content"});
-        const tlt = OA(document.createElement("div"), {className: "title", innerHTML: e.name});
-        dct.appendChild(tlt);
-
-        var art = CRAL(e.artists);
-        dct.appendChild(art);
-            
-        const dtl = OA(document.createElement("div"), {className: "detailes"});
-        dct.appendChild(dtl);
-        
-        HERO.append(dtn,dct);
-                
-        if (e.meta && (e.meta.des || e.meta.rls || e.meta.bd || e.meta.tlg || e.meta.ins || e.meta.ncp != null || e.meta.dur != null)) {
-            const abt = CRAB(e.meta);
-            HERO.appendChild(abt);
+        const thumb = resolveThumb(e) || null;
+        if (thumb) {
+            dtn.append(
+                OA(document.createElement('img'), {
+                    className: t === 'artist' ? 'rounded-circle' : '',
+                    src: UT + thumb + '.jpg',
+                    alt: ''
+                })
+            );
         }
-  
-        ADE();
 
+        const dct = OA(document.createElement('div'), { className: 'content' });
+        dct.append(
+            OA(document.createElement('div'), {
+                className: 'title',
+                innerHTML: e.name || e.name_fa || ''
+            })
+        );
+
+        // پلی‌لیست: بدون CRAL — تعداد آیتم / مالک
+        if (t === 'playlist') {
+            let sub = '';
+            const n =
+                (e.meta && (e.meta.nci || e.meta.ncs || e.meta.ncp)) ||
+                (Array.isArray(e.items) ? e.items.length : 0);
+            if (n) sub = n + (Number(n) === 1 ? ' item' : ' items');
+            if (e.owner_name) sub = (sub ? sub + ' · ' : '') + e.owner_name;
+            if (sub) {
+                dct.append(
+                    OA(document.createElement('div'), {
+                        className: 'text2',
+                        innerHTML: sub
+                    })
+                );
+            }
+        } else if (e.artists && e.artists.length) {
+            const art = CRAL(e.artists);
+            if (art) dct.append(art);
+        }
+
+        HERO.append(dtn, dct);
+
+        if (
+            e.meta &&
+            (e.meta.des ||
+                e.meta.rls ||
+                e.meta.bd ||
+                e.meta.tlg ||
+                e.meta.ins ||
+                e.meta.ncp != null ||
+                e.meta.dur != null)
+        ) {
+            HERO.append(CRAB(e.meta));
+        }
+
+        try {
+            ADE();
+        } catch (err) {}
     }
 
     function rebuildPlaylistPicker(dbs, itemId, itemType, RmvDBW) {
