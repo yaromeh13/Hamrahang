@@ -123,28 +123,61 @@ require_once __DIR__ . '/int/h_api.php';
     overflow-y: auto;
     scroll-behavior: smooth;
     scrollbar-width: none;
+    box-sizing: border-box;
 }
 
-#hero .artwork img {
-    background-color: transparent!important;
-    color: transparent!important;
-    border-radius: 10px;
-    pointer-events: none!important;
-    -webkit-user-drag: none!important
+/* تامب هیرو: داخل عرض سایدبار بماند */
+#hero .thumbail.artwork {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+#hero .thumbail.artwork.ratio-1x1,
+#hero .thumbail.artwork.rounded-circle {
+    aspect-ratio: 1 / 1;
+}
+#hero .thumbail.artwork.rounded-circle {
+    border-radius: 50%;
+}
+#hero .thumbail.artwork.ratio-16x9 {
+    aspect-ratio: 16 / 9;
+}
+#hero .thumbail.artwork .placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 0;
+}
+#hero .thumbail.artwork img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: transparent !important;
+    color: transparent !important;
+    pointer-events: none !important;
+    -webkit-user-drag: none !important;
+    z-index: 1;
 }
 
 #hero .content {
     margin-top: 10px;
     min-width: 0;
-    width: 50%;
+    width: 100%;
     padding: 5px;
-}
-#hero .content {
-    grid-area: headings;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    align-content: flex-start;
+    align-items: stretch;
     flex-wrap: nowrap;
 }
 
@@ -158,16 +191,12 @@ require_once __DIR__ . '/int/h_api.php';
     display: -webkit-box;
     text-overflow: ellipsis;
     white-space: normal;
-    align-items: center;
-
-    justify-self: center;
     text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    width: 100%;
 }
 
 #hero .artists-list .list {
-    max-width: 220px;
+    max-width: 100%;
     font-size: 1rem;
 }
 
