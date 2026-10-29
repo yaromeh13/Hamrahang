@@ -85,6 +85,7 @@ body {
 
 /* ---------------------------------------------------------
    2. BACKGROUND LAYERS
+   absolute fill + optional blur (-webkit for 2013 WebKit TVs)
    --------------------------------------------------------- */
 #main-bg,
 #stage-bg {
@@ -101,6 +102,7 @@ body {
     -webkit-filter: blur(20px);
     filter: blur(20px);
     -webkit-transition: opacity 0.5s ease;
+    -o-transition: opacity 0.5s ease;
     transition: opacity 0.5s ease;
     z-index: 0;
 }
@@ -111,7 +113,7 @@ body {
 }
 
 /* ---------------------------------------------------------
-   3. LAYOUT - SIDEBAR & MAIN
+   3. LAYOUT - SIDEBAR & MAIN (float, 110px rail — no flex/grid)
    --------------------------------------------------------- */
 .sidebar {
     float: left;
@@ -130,6 +132,62 @@ body {
     bottom: 0;
     width: 110px;
     height: 100%;
+    overflow: hidden;
+}
+
+.logo-container {
+    display: block;
+    width: 100%;
+    padding: 12px 8px 8px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.logo-container svg {
+    display: block;
+    width: 94px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+.sidebar-content .menu {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 8px 0 0;
+    list-style: none;
+}
+
+.sidebar-content .menu > div {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.sidebar-content .menu .item {
+    display: block;
+    width: 100%;
+    padding: 14px 0;
+    color: #b3b3b3;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+}
+
+.sidebar-content .menu .item svg {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    vertical-align: middle;
+}
+
+.sidebar-content .menu .item:hover,
+.sidebar-content .menu .item:focus,
+.sidebar-content .menu .item.active {
+    color: #ffffff;
+    background-color: #800000;
+    outline: none;
 }
 
 .main-container {
@@ -156,8 +214,6 @@ body {
     vertical-align: top;
     overflow-x: hidden;
     overflow-y: hidden;
-    scroll-behavior: smooth;
-    scrollbar-width: none;
 }
 
 /* ---------------------------------------------------------

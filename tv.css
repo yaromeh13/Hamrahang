@@ -395,53 +395,19 @@ textarea {
 .ratio-18x9 { --bs-aspect-ratio: 50%; }
 
 /* ---------------------------------------------------------
-   5. LAYOUT - ROOT / SIDEBAR / TOPBAR
+   5. LAYOUT - SIDEBAR / MAIN — modern polish only
+   Solid 110px float rail + menu live in index.html.
+   Do NOT widen to 200px / flex-grid desktop — that breaks TV.
    --------------------------------------------------------- */
-.root-container {
-    display: flex;
-    flex-direction: row;
-    position: relative;
-    height: auto;
-}
-
-.sidebar-container {
-    width: 200px;
-    min-width: 200px;
-    height: 100vh;
-    background-color: #1c1b21;
-    display: block;
-}
-
 .sidebar {
-    height: 100vh;
-    transition: 0.3s;
-}
-
-.sidebar-content {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto auto;
-    height: 100vh;
-}
-
-.sidebar-content .menu {
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    list-style: none;
-    padding-top: 26px;
+    -webkit-transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease;
 }
 
 .sidebar-content .menu .item {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    height: 50px;
-    padding: 0 1.5rem;
-    font-size: 1.3rem;
-    font-weight: 600;
     color: hsla(0, 0%, 100%, 0.7);
-    transition: all 0.3s ease;
+    -webkit-transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .sidebar-content .menu .item:hover {
@@ -449,13 +415,13 @@ textarea {
     color: #fff;
 }
 
-.sidebar-content .menu .active {
+.sidebar-content .menu .item.active {
     background-color: hsla(0, 0%, 100%, 0.08);
     color: #fff;
 }
 
-.sidebar-content .menu .focus,
-.sidebar-content .menu .item:focus {
+.sidebar-content .menu .item:focus,
+.sidebar-content .menu .focus {
     outline: none;
     background-color: hsl(0deg 100% 50% / 50%);
     color: #fff;
@@ -463,21 +429,25 @@ textarea {
 
 .sidebar-content .menu .item span {
     font-size: var(--mt-icon-size);
-    margin-right: 16px;
 }
 
 .sidebar-content .social-media {
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-flex-direction: row;
     flex-direction: row;
+    -webkit-flex-wrap: wrap;
     flex-wrap: wrap;
-    padding: 0 1.5rem 0.5rem;
-    gap: 10px;
+    padding: 0 0.5rem 0.5rem;
+    gap: 8px;
 }
 
 .sidebar-content .social-media a {
     font-size: var(--mt-icon-size);
     color: hsla(0, 0%, 100%, 0.5);
-    transition: all 0.3s ease;
+    -webkit-transition: color 0.25s ease;
+    transition: color 0.25s ease;
 }
 
 .sidebar-content .social-media a:hover {
@@ -485,23 +455,22 @@ textarea {
 }
 
 .sidebar-content .links {
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
-    flex-direction: row;
+    -webkit-flex-wrap: wrap;
     flex-wrap: wrap;
-    padding: 0 1.5rem;
-    column-gap: 10px;
+    padding: 0 0.5rem;
+    column-gap: 8px;
     row-gap: 2px;
-    font-size: 0.8rem;
-    font-weight: 400;
+    font-size: 0.7rem;
     color: #a7a7a7;
-    transition: all 0.3s ease;
 }
 
 .sidebar-content .links a {
-    font-size: 0.7rem;
-    font-weight: 400;
     color: hsla(0, 0%, 100%, 0.5);
-    transition: all 0.3s ease;
+    -webkit-transition: color 0.25s ease;
+    transition: color 0.25s ease;
 }
 
 .sidebar-content .links a:hover {
@@ -510,50 +479,28 @@ textarea {
 
 .sidebar-content .owner {
     display: block;
-    padding: 0 1.5rem 1.5rem;
-    font-size: 0.8rem;
-    font-weight: 400;
+    padding: 0 0.5rem 1rem;
+    font-size: 0.7rem;
     color: #a7a7a7;
-    transition: all 0.3s ease;
 }
 
 .sidebar-content .owner a,
 .sidebar-content .owner span {
-    font-size: 0.7rem;
-    font-weight: 400;
     color: hsla(0, 0%, 100%, 0.5);
-    transition: all 0.3s ease;
 }
 
 .sidebar-content .owner a:hover {
     color: #fff;
 }
 
-.logo-container {
-    display: block;
-    padding: 0.5rem 1.3rem;
+/* playlist smooth scroll (modern engines only) */
+.main-content .playlist-container {
+    scroll-behavior: smooth;
+    scrollbar-width: none;
 }
 
-.logo-container-d {
-    display: block;
-    padding: 1.5rem;
-}
-
-.logo-container-d svg {
-    display: block;
-    height: 35px;
-}
-
-.logo-container-m {
-    display: block;
-    text-align: -webkit-center;
-    justify-items: center;
-    padding-top: 7px;
-}
-
-.logo-container-m svg {
-    display: block;
-    height: 46px;
+.main-content .playlist-container::-webkit-scrollbar {
+    display: none;
 }
 
 .topbar-container {
