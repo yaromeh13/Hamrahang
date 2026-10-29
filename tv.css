@@ -91,14 +91,13 @@
 }
 
 /* ---------------------------------------------------------
-   3. GLOBAL RESET & BASE
+   3. GLOBAL RESET & BASE — modern enhancements only
+   Solid html/body + box-sizing live in index.html (2013 base).
+   Here: polish that needs modern engines (vars, vh, smoothing…).
    --------------------------------------------------------- */
 *,
 *::before,
 *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
     outline: none;
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -108,15 +107,12 @@ html,
 body {
     min-height: 100vh;
     min-height: -webkit-fill-available;
-    width: 100%;
     text-rendering: optimizeLegibility !important;
     -webkit-font-smoothing: antialiased !important;
 }
 
 body {
-    min-height: 100%;
     scroll-behavior: smooth;
-    cursor: default;
     font-family: var(--bs-body-font-family);
     font-size: var(--bs-body-font-size, 1rem);
     font-weight: var(--bs-body-font-weight);
@@ -126,6 +122,10 @@ body {
     -webkit-text-size-adjust: 100%;
     -webkit-overflow-scrolling: touch !important;
     --nv-gap: 4px;
+}
+
+.ln {
+    font-family: var(--bs-body-font-family);
 }
 
 @media (prefers-reduced-motion: no-preference) {
