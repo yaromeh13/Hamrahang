@@ -545,29 +545,198 @@ textarea {
     background-color: hsla(0, 0%, 100%, 0.05);
 }
 
-.main-tabs {
-    gap: 1rem;
-    width: 100%;
-    height: 40px;
+/* page-detail header — modern polish (base is float/block in index) */
+.page-detail-header-container .thumbail {
+    border-radius: 10px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.page-detail-header-container .thumbail .placeholder {
+    border-radius: 10px;
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    line-height: normal;
+    background-color: hsla(0, 0%, 100%, 0.1);
+    color: hsla(0, 0%, 100%, 0.2);
+}
+
+.page-detail-header-container .thumbail img {
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.page-detail-header-container .content .title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.page-detail-header-container .content .title h1 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    white-space: normal;
+}
+
+.page-detail-header-container .content .artists .list {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
     flex-direction: row;
-    justify-content: normal;
+    -webkit-flex-wrap: nowrap;
+    flex-wrap: nowrap;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+}
+
+.page-detail-header-container .content img {
+    border-radius: 10px;
+}
+
+.page-detail-header-container .content a:hover,
+.page-detail-header-container .content a:focus {
+    background-color: hsl(0deg 100% 50% / 50%);
+    -webkit-transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.page-detail-actions {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    column-gap: 7px;
+}
+
+.page-detail-actions .play {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    border-radius: 25px;
+    font-size: var(--mt-icon-size);
+    width: 3rem;
+    height: 3rem;
+    line-height: normal;
+    -webkit-transition: -webkit-transform 0.25s ease, background-color 0.25s ease;
+    transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.page-detail-actions .play:hover,
+.page-detail-actions .play:focus {
+    -webkit-transform: scale(0.9);
+    transform: scale(0.9);
+    background-color: #ff0000;
+    color: #fff;
+}
+
+.content-detail {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+}
+
+.content-detail > * {
+    display: block;
+    width: auto;
+    -webkit-box-flex: 1;
+    -webkit-flex: 1 1 0;
+    flex: 1 1 0;
+}
+
+.detailes-row {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    align-items: center;
+}
+
+.about-container {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+}
+
+.about-container .title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.about-container .text1 {
+    opacity: 0.5;
+    color: inherit;
+}
+
+/* main-tabs — soft polish; keep usable with table base underneath */
+.main-tabs {
+    height: 40px;
 }
 
 .main-tabs .item {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    text-wrap-mode: nowrap;
     color: hsla(0, 0%, 100%, 0.5);
-    transition: all 0.3s ease;
+    -webkit-transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .main-tabs .active {
     color: #000000;
     background-color: #ffffff;
+}
+
+.setting-tabs {
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+}
+
+.setting-tabs .item {
+    border-radius: 10px;
+    -webkit-transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.setting-tabs .item.active svg,
+.setting-tabs .item:hover svg,
+.setting-tabs .item:focus svg {
+    -webkit-transform: scale(2);
+    transform: scale(2);
+}
+
+.setting-tabs .item .icon svg {
+    -webkit-transition: width 0.25s ease, height 0.25s ease, -webkit-transform 0.25s ease;
+    transition: width 0.25s ease, height 0.25s ease, transform 0.25s ease;
 }
 
 .section-container {
