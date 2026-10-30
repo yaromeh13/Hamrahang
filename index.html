@@ -74,21 +74,8 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-.p-top-1 {
-    padding-top: 1rem;
-}
-.p-top-2 {
-    padding-top: 2rem;
-}
-.m-top-1 {
-    margin-top: 1rem;
-}
-.m-top-1-5 {
-    margin-top: 1.5rem;
-}
-.m-top-3 {
-    margin-top: 3rem;
-}
+/* spacing: UTILITIES at end of this style (px) */
+
 
 /* ---------------------------------------------------------
    2. BACKGROUND LAYERS
@@ -205,6 +192,7 @@ body {
 .main-content {
     position: relative;
     height: 100%;
+    overflow: hidden;
 }
 
 .main-content .detailes-container {
@@ -2356,6 +2344,28 @@ track {
 /* Toasts must stay visible above the popup */
 .toast-message {
     z-index: 3000;
+}
+
+
+/* ---------------------------------------------------------
+   UTILITIES — spacing (px base; win over component rules)
+   Prefer padding so height:100% shell does not grow from margins
+   --------------------------------------------------------- */
+.p-top-1,
+.ln .p-top-1 {
+    padding-top: 16px;
+}
+.p-top-1-5,
+.ln .p-top-1-5 {
+    padding-top: 24px;
+}
+.p-top-2,
+.ln .p-top-2 {
+    padding-top: 32px;
+}
+.p-top-3,
+.ln .p-top-3 {
+    padding-top: 48px;
 }
 
 </style>
@@ -4749,9 +4759,9 @@ track {
     function CRNF(){
         
         const dtx = OA(document.createElement("div"), {className: "error-message-container"});
-        const tx1 = OA(document.createElement("div"), {className: "text1 m-top-1-5", innerHTML: "Page not found!"});
+        const tx1 = OA(document.createElement("div"), {className: "text1 p-top-1-5", innerHTML: "Page not found!"});
         const tx2 = OA(document.createElement("div"), {className: "text2", innerHTML: "The requested page was not found"});
-        const btn = OA(document.createElement("button"), {className: "btn btn-sm btn-model-4 m-top-1-5", type:"button", innerHTML: "Back to home"});
+        const btn = OA(document.createElement("button"), {className: "btn btn-sm btn-model-4 p-top-1-5", type:"button", innerHTML: "Back to home"});
         dtx.appendChild(tx1);
         dtx.appendChild(tx2);
         dtx.appendChild(btn);
@@ -4792,7 +4802,7 @@ track {
             if (types[i].key === o.active) { index = i; break; }
         }
 
-        var bar = OA(document.createElement("div"), {className: o.barClass || "main-tabs m-top-1"});
+        var bar = OA(document.createElement("div"), {className: o.barClass || "main-tabs p-top-1"});
         host.appendChild(bar);
 
         if (mode === 'pane') {
@@ -5016,7 +5026,7 @@ track {
             MCNT.append(dsc);
     
             if (SN.search.q) {
-                var srd = OA(document.createElement("div"), {className: "page-header m-top-1"});
+                var srd = OA(document.createElement("div"), {className: "page-header p-top-1"});
                 var srh = OA(document.createElement("h1"), {className: "title", innerHTML: 'Search results for "' + SN.search.q + '"'});
                 ifs.value = SN.search.q;
                 srd.append(srh);
@@ -5075,7 +5085,7 @@ track {
     
             if (!hasAnyResult) {
                 var der = OA(document.createElement("div"), {className: "error-message-container"});
-                var dt1 = OA(document.createElement("div"), {className: "text1 m-top-1-5", innerHTML: "No Found!"});
+                var dt1 = OA(document.createElement("div"), {className: "text1 p-top-1-5", innerHTML: "No Found!"});
                 var dt2 = OA(document.createElement("div"), {className: "text2", innerHTML: "It is better to use short words and letters and numbers."});
                 der.append(dt1, dt2);
                 MCNT.append(der);
@@ -5320,7 +5330,7 @@ track {
         }
 
         // ---- سمت چپ: دکمه‌های حساب (مثل ha.php: خروج | بروزرسانی همه | پاک کردن محلی) ----
-        var accountActions = OA(document.createElement("div"), {className: "account-actions m-top-1"});
+        var accountActions = OA(document.createElement("div"), {className: "account-actions p-top-1"});
 
         var logoutBtn = OA(document.createElement("div"), {className: "btn btn-sm btn-model-3 focusable", innerHTML: "خروج از حساب"});
         logoutBtn.addEventListener("click", function () {
@@ -5367,7 +5377,7 @@ track {
         var favCounts = OA(document.createElement("div"), {className: "counts-list"});
         favCol.appendChild(favHeader);
         favCol.appendChild(favCounts);
-        var syncFavBtn = OA(document.createElement("div"), {className: "btn btn-sm btn-model-3 m-top-1 focusable", innerHTML: "همگام‌سازی علاقه‌مندی‌ها"});
+        var syncFavBtn = OA(document.createElement("div"), {className: "btn btn-sm btn-model-3 p-top-1 focusable", innerHTML: "همگام‌سازی علاقه‌مندی‌ها"});
         syncFavBtn.addEventListener("click", function () {
             syncFavBtn.innerHTML = "...";
             ManualSyncFavorites(function (ok) {
@@ -5380,7 +5390,7 @@ track {
         });
         
         var favActions = OA(document.createElement("div"), {className: "setting-row-btn"});
-        var SeeAllFavBtn = OA(document.createElement("a"), {className: "btn btn-sm btn-model-3 m-top-1 focusable", innerHTML: "Go To Library", href: "/library"});
+        var SeeAllFavBtn = OA(document.createElement("a"), {className: "btn btn-sm btn-model-3 p-top-1 focusable", innerHTML: "Go To Library", href: "/library"});
         favActions.appendChild(SeeAllFavBtn);
         favActions.appendChild(syncFavBtn);
         favCol.appendChild(favActions);
@@ -5395,7 +5405,7 @@ track {
 
         var plActions = OA(document.createElement("div"), {className: "setting-row-btn"});
 
-        var syncPlBtn = OA(document.createElement("div"), {className: "btn btn-sm btn-model-3 m-top-1 focusable", innerHTML: "همگام‌سازی پلی‌لیست‌ها"});
+        var syncPlBtn = OA(document.createElement("div"), {className: "btn btn-sm btn-model-3 p-top-1 focusable", innerHTML: "همگام‌سازی پلی‌لیست‌ها"});
         syncPlBtn.addEventListener("click", function () {
             syncPlBtn.innerHTML = "...";
             ManualSyncPlaylists(function (ok) {
@@ -5407,7 +5417,7 @@ track {
             });
         });
 
-        var addPlBtn = OA(document.createElement("div"), {className: "btn btn-sm btn-model-3 m-top-1 focusable", innerHTML: "ساخت پلی‌لیست"});
+        var addPlBtn = OA(document.createElement("div"), {className: "btn btn-sm btn-model-3 p-top-1 focusable", innerHTML: "ساخت پلی‌لیست"});
         addPlBtn.addEventListener("click", function () {
             AddPls(function () { renderPlaylistCounts(plCounts); });
         });
@@ -5711,7 +5721,7 @@ track {
             var hero = OA(document.createElement("div"), {className: "page-detail-header-container", id: "hero"});
             MCNT.append(hero);
     
-            var tab = OA(document.createElement("div"), {className: "main-tabs m-top-1"});
+            var tab = OA(document.createElement("div"), {className: "main-tabs p-top-1"});
             var ha1 = OA(document.createElement("a"), {className: "item" + (a == 1 ? ' active' : ''), href: "/video/top", innerHTML: "Top Video"});
             var ha2 = OA(document.createElement("a"), {className: "item" + (a == 2 ? ' active' : ''), href: "/video/latest", innerHTML: "New Video"});
             var ha3 = OA(document.createElement("a"), {className: "item" + (a == 3 ? ' active' : ''), href: "/song/top", innerHTML: "Top Song"});
@@ -5726,7 +5736,7 @@ track {
             if (P == 'artist') { CRAS(ar); }
     
             if (typeof SN.user.lp === 'object' && SN.user.lp !== null && SN.user.lp.length > 0) {
-                var hed1 = OA(document.createElement("div"), {className: "section-header m-top-3"});
+                var hed1 = OA(document.createElement("div"), {className: "section-header p-top-3"});
                 var ht1 = OA(document.createElement("h2"), {className: "title", innerHTML: "Recently Played"});
                 hed1.append(ht1);
                 MCNT.append(hed1);
@@ -5734,7 +5744,7 @@ track {
             }
     
             if (typeof SN.user.fv === 'object' && SN.user.fv.sng && SN.user.fv.sng.length > 0) {
-                var hed2 = OA(document.createElement("div"), {className: "section-header m-top-3"});
+                var hed2 = OA(document.createElement("div"), {className: "section-header p-top-3"});
                 var ht2 = OA(document.createElement("h2"), {className: "title", innerHTML: "Your Favorite"});
                 hed2.append(ht2);
                 MCNT.append(hed2);
@@ -5742,7 +5752,7 @@ track {
             }
     
             if (typeof SN.user.fv === 'object' && SN.user.fv.art && SN.user.fv.art.length > 0) {
-                var hed3 = OA(document.createElement("div"), {className: "section-header m-top-3"});
+                var hed3 = OA(document.createElement("div"), {className: "section-header p-top-3"});
                 var ht3 = OA(document.createElement("h2"), {className: "title", innerHTML: "Your followed"});
                 hed3.append(ht3);
                 MCNT.append(hed3);
@@ -5846,9 +5856,9 @@ track {
 
         if (!active.length) {
             var dtx = OA(document.createElement("div"), {className: "error-message-container"});
-            var tx1 = OA(document.createElement("div"), {className: "text1 m-top-1-5", innerHTML: "Library is empty"});
+            var tx1 = OA(document.createElement("div"), {className: "text1 p-top-1-5", innerHTML: "Library is empty"});
             var tx2 = OA(document.createElement("div"), {className: "text2", innerHTML: (SN.user && SN.user.loggedIn) ? "هنوز چیزی به کتابخانه اضافه نکرده‌اید" : "برای دیدن کتابخانه وارد حساب شوید"});
-            var btn = OA(document.createElement("button"), {className: "btn btn-sm btn-model-4 m-top-1-5", type: "button", innerHTML: "Back to home"});
+            var btn = OA(document.createElement("button"), {className: "btn btn-sm btn-model-4 p-top-1-5", type: "button", innerHTML: "Back to home"});
             dtx.appendChild(tx1);
             dtx.appendChild(tx2);
             dtx.appendChild(btn);
@@ -5873,7 +5883,7 @@ track {
         MCNT.appendChild(hero);
 
         // منوی افقی مثل main-tabs هوم — هر آیتم یک بخش از داده‌های کاربر
-        var tab = OA(document.createElement("div"), {className: "main-tabs m-top-1"});
+        var tab = OA(document.createElement("div"), {className: "main-tabs p-top-1"});
         for (i = 0; i < active.length; i++) {
             (function (sec) {
                 var item = OA(document.createElement("a"), {
@@ -5911,7 +5921,7 @@ track {
             }
 
             if (!any) {
-                var emptyEl = OA(document.createElement("div"), {className: "text2 m-top-1", innerHTML: "موردی یافت نشد"});
+                var emptyEl = OA(document.createElement("div"), {className: "text2 p-top-1", innerHTML: "موردی یافت نشد"});
                 MCNT.appendChild(emptyEl);
             }
 
@@ -5937,7 +5947,7 @@ track {
 
     function CRPL(ar,au,ul){
 
-        const sec = OA(document.createElement("div"), {className: "section-carousel-container m-top-1"});
+        const sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1"});
         const sec_div  = OA(document.createElement("div"), {className: "carousel-container"});
         const fs = (SN.user.fv.sng = SN.user.fv.sng || []);
         
@@ -6008,7 +6018,7 @@ track {
     
     function CRVT(ar, au, ul) {
 
-        var sec = OA(document.createElement("div"), {className: "section-carousel-container m-top-1"});
+        var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1"});
         var sec_div = OA(document.createElement("div"), {className: "carousel-container-top"});
     
         ar.forEach(function(e) {
@@ -6103,7 +6113,7 @@ track {
     
         if (!ar || !Array.isArray(ar)) { return; }
     
-        var sec = OA(document.createElement("div"), {className: "section-carousel-container m-top-1"});
+        var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1"});
         var sec_div = OA(document.createElement("div"), {className: "container video"});
     
         var i;
@@ -6214,7 +6224,7 @@ track {
 
         if (!ar || !Array.isArray(ar)) { return; }
 
-        var sec = OA(document.createElement("div"), {className: "section-carousel-container m-top-1"});
+        var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1"});
         var sec_div = OA(document.createElement("div"), {className: "container"});
     
         var i;
@@ -6330,7 +6340,7 @@ track {
     
     function CRAS(ar) {
 
-        var sec = OA(document.createElement("div"), {className: "section-carousel-container m-top-1"});
+        var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1"});
         var sec_div = OA(document.createElement("div"), {className: "container"});
     
         for (var i = 0; i < ar.length; i++) {
@@ -6438,7 +6448,7 @@ track {
 
         PlayList.innerHTML = "";
 
-        var sec = OA(document.createElement("div"), {className: "track-line-container m-top-1"});
+        var sec = OA(document.createElement("div"), {className: "track-line-container p-top-1"});
 
         var id;
         var e;
@@ -6871,7 +6881,7 @@ track {
     async function CRPS(QS){
 
         if(QS=='favorite'){
-            const hed = OA(document.createElement("div"), {className: "page-header m-top-1"});
+            const hed = OA(document.createElement("div"), {className: "page-header p-top-1"});
             const hh1 = OA(document.createElement("h1"), {className: "title", innerHTML:'Your Favorite Songs'});
             hed.append(hh1);
             MCNT.append(hed);
@@ -7148,7 +7158,7 @@ track {
 
         
 
-        // <span class="text1 m-top-1">Hometown</span><span class="text2">Tehran, Iran</span><span class="text1 m-top-1">Genre</span><span class="text2">Pop</span>
+        // <span class="text1 p-top-1">Hometown</span><span class="text2">Tehran, Iran</span><span class="text1 p-top-1">Genre</span><span class="text2">Pop</span>
 
         HERO.appendChild(dtn);
         HERO.appendChild(dct);
@@ -7845,7 +7855,7 @@ track {
         const iab = OA(document.createElement("input"), {className: "input" ,type: "text",id:"playlist" ,maxlength: 100, placeholder:"Playlist Name", autocorrect:"off", autocapitalize:"off", spellcheck:"false"});
         df4.append(iab);
 
-        const btn = OA(document.createElement("div"), {className: "buttons m-top-1"});
+        const btn = OA(document.createElement("div"), {className: "buttons p-top-1"});
         const bta = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Done"});
         const bca = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Cancel"});
         btn.append(bta,bca);
@@ -7902,7 +7912,7 @@ track {
         const txt = OA(document.createElement("div"), {className: "texts"});
         cnt.append(txt);
         const tx1 = OA(document.createElement("div"), {className: "text1", innerHTML: "Start The Hamrahang First"});
-        const btn = OA(document.createElement("div"), {className: "buttons m-top-1"});
+        const btn = OA(document.createElement("div"), {className: "buttons p-top-1"});
         const bta = OA(document.createElement("a"), {className: "btn btn-sm btn-model-4", href: "https://t.me/HamrahangBot", target: "_blank", innerHTML: "Start App"});
         btn.append(bta);
         txt.append(tx1,btn);
@@ -8055,7 +8065,7 @@ track {
 
    //var ppp1 = '<div class="progress-details">       <div class="progress-bar">         <span></span>       </div>       <div class="time">         <span class="current">0:00</span>         <span class="final">00:00</span>       </div>     </div>     <div class="control-btn">       <div class="button" id="repeat"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg></div>       <div class="button play-prev" id="prev"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M14.7,55.1V8.9H7v46.2H14.7z M57,55.1V8.9L22.4,32L57,55.1z"></path></svg></div>       <div class="play-pause"><span><svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 20px; height: 20px;"><path d="M18.4,57V7l39.3,25L18.4,57z"></path></svg></span><i class="wlap"></i></div>       <div class="button play-next" id="next"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div>       <div class="button" id="shuffle"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M18 4l3 3l-3 3"></path><path d="M18 20l3 -3l-3 -3"></path><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5"></path><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3"></path></svg></div>     </div>     <div class="control-btn">         <div class="button"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"></path></svg></div>         <div class="button"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><g stroke-width="0"></g><g stroke-linecap="round" stroke-linejoin="round"></g><g> <path d="M11.2691 4.41115C11.5006 3.89177 11.6164 3.63208 11.7776 3.55211C11.9176 3.48263 12.082 3.48263 12.222 3.55211C12.3832 3.63208 12.499 3.89177 12.7305 4.41115L14.5745 8.54808C14.643 8.70162 14.6772 8.77839 14.7302 8.83718C14.777 8.8892 14.8343 8.93081 14.8982 8.95929C14.9705 8.99149 15.0541 9.00031 15.2213 9.01795L19.7256 9.49336C20.2911 9.55304 20.5738 9.58288 20.6997 9.71147C20.809 9.82316 20.8598 9.97956 20.837 10.1342C20.8108 10.3122 20.5996 10.5025 20.1772 10.8832L16.8125 13.9154C16.6877 14.0279 16.6252 14.0842 16.5857 14.1527C16.5507 14.2134 16.5288 14.2807 16.5215 14.3503C16.5132 14.429 16.5306 14.5112 16.5655 14.6757L17.5053 19.1064C17.6233 19.6627 17.6823 19.9408 17.5989 20.1002C17.5264 20.2388 17.3934 20.3354 17.2393 20.3615C17.0619 20.3915 16.8156 20.2495 16.323 19.9654L12.3995 17.7024C12.2539 17.6184 12.1811 17.5765 12.1037 17.56C12.0352 17.5455 11.9644 17.5455 11.8959 17.56C11.8185 17.5765 11.7457 17.6184 11.6001 17.7024L7.67662 19.9654C7.18404 20.2495 6.93775 20.3915 6.76034 20.3615C6.60623 20.3354 6.47319 20.2388 6.40075 20.1002C6.31736 19.9408 6.37635 19.6627 6.49434 19.1064L7.4341 14.6757C7.46898 14.5112 7.48642 14.429 7.47814 14.3503C7.47081 14.2807 7.44894 14.2134 7.41394 14.1527C7.37439 14.0842 7.31195 14.0279 7.18708 13.9154L3.82246 10.8832C3.40005 10.5025 3.18884 10.3122 3.16258 10.1342C3.13978 9.97956 3.19059 9.82316 3.29993 9.71147C3.42581 9.58288 3.70856 9.55304 4.27406 9.49336L8.77835 9.01795C8.94553 9.00031 9.02911 8.99149 9.10139 8.95929C9.16534 8.93081 9.2226 8.8892 9.26946 8.83718C9.32241 8.77839 9.35663 8.70162 9.42508 8.54808L11.2691 4.41115Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg></div>         <div class="button"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16.5 19c.246 0 .45.183.492.412L17 19.5a.5.5 0 01-.5.5h-14a.5.5 0 010-1h14zm3-5c.245 0 .45.183.492.412L20 14.5c0 .276-.228.5-.5.5h-17a.505.505 0 01-.5-.5c0-.276.228-.5.5-.5h17zm2.006-5c.242 0 .444.183.486.412L22 9.5a.5.5 0 01-.494.5H2.494a.5.5 0 010-1h19.012zM19.5 4c.245 0 .45.183.492.412L20 4.5c0 .276-.228.5-.5.5h-17a.505.505 0 01-.5-.5c0-.276.228-.5.5-.5h17z"></path></svg></div>         <div class="button"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><path d="M7 11l5 5l5 -5"></path><path d="M12 4l0 12"></path></svg></div> 	    <div class="button"><svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M8.7 10.7l6.6 -3.4"></path><path d="M8.7 13.3l6.6 3.4"></path></svg> 	    </div>           </div>';
     //var ppp2 = '<div class="seekbar"></div>     <div class="artwork">         <span class="placeholder"><svg style="width:24px;height:24px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg></span>         <img alt="" src="">     </div>     <div class="texts"><div class="text1"></div><div class="text2"></div></div>     <div class="button"><svg style="width:14px;height:14px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M14.7,55.1V8.9H7v46.2H14.7z M57,55.1V8.9L22.4,32L57,55.1z"></path></svg></div>     <div class="button"><svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M18.4,57V7l39.3,25L18.4,57z"></path></svg></div>     <div class="button"><svg style="width:14px;height:14px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div>     <div class="button" title="Close"><svg style="width:18px;height:18px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg></div>';
-    //var ppp3 = '<div class="maximum-player-scroll-area">             <div style="width:100%;overflow: hidden !important;display: flex;align-items: stretch !important;flex-direction: row !important;flex-wrap: nowrap !important;scroll-behavior: auto !important;position: relative; overflow-y: scroll !important;overflow-x: hidden !important; scrollbar-width: none !important; ">                     <div class="maximum-player-container">                         <div class="maximum-player-mobile">                             <div class="minimize-close"><div class="minimize" title="Minimize"><svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" transform="rotate(90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></div></div>                             <div class="artwork ratio ratio-1x1"><span class="placeholder"><svg style="width:150px;height:150px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg></span><img draggable="false" src="/thumb/mohsen_ebrahimzadeh_doostam.jpg"></div><div class="plays-texts-likes"><div class="plays"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3,12c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S3,7,3,12"></path><path d="M10.5,15l5-3l-5-3V15z"></path></svg></span><span class="plays-count">undefined</span></div><div class="texts"><span class="text1">Doostam</span><span class="text2">Mohsen Ebrahimzadeh</span></div><div class="likes"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"></path></svg></span><span class="likes-count">6</span></div></div><div class="seekbar"><input type="range" class="form-range" min="0" max="100" step="0.1"></div><div class="times"><span>0:00</span><span>3:15</span></div>                             <div class="buttons m-top-1"><div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg></span></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M14.7,55.1V8.9H7v46.2H14.7z M57,55.1V8.9L22.4,32L57,55.1z"></path></svg></div><div class="button play-pause"><span><svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 20px; height: 20px;"><path d="M18.4,57V7l39.3,25L18.4,57z"></path></svg></span></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div><div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4l3 3l-3 3"></path><path d="M18 20l3 -3l-3 -3"></path><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5"></path><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3"></path></svg></span></div></div><div class="buttons m-top-1"><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path><path d="M9 12h6"></path><path d="M12 9v6"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7,7c0,2.2,1.8,4,4,4s4-1.8,4-4s-1.8-4-4-4S7,4.8,7,7"></path><path d="M5,21v-2c0-2.2,1.8-4,4-4h3"></path><path d="M14.8,18.5c0,1.4,1.2,2.6,2.6,2.6c1.4,0,2.6-1.2,2.6-2.6c0-1.4-1.2-2.6-2.6-2.6C16,15.9,14.8,17.1,14.8,18.5"></path><path d="M20,18.5V12"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><path d="M7 11l5 5l5 -5"></path><path d="M12 4l0 12"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M8.7 10.7l6.6 -3.4"></path><path d="M8.7 13.3l6.6 3.4"></path></svg></div></div></div>                                                         <div class="maximum-player-queue">                                 <div class="header"><div class="title">Next Playing (<!-- -->2<!-- -->)</div><div class="buttons"><div class="button" title="Minimize"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path></svg></div><div class="button" title="Close"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg></div></div></div>                                 <div class="track-line-queue-container"></div>                                 <div class="bottom-sheet-close">Close</div>                             </div>                     </div>                               </div></div>';
+    //var ppp3 = '<div class="maximum-player-scroll-area">             <div style="width:100%;overflow: hidden !important;display: flex;align-items: stretch !important;flex-direction: row !important;flex-wrap: nowrap !important;scroll-behavior: auto !important;position: relative; overflow-y: scroll !important;overflow-x: hidden !important; scrollbar-width: none !important; ">                     <div class="maximum-player-container">                         <div class="maximum-player-mobile">                             <div class="minimize-close"><div class="minimize" title="Minimize"><svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" transform="rotate(90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg></div></div>                             <div class="artwork ratio ratio-1x1"><span class="placeholder"><svg style="width:150px;height:150px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg></span><img draggable="false" src="/thumb/mohsen_ebrahimzadeh_doostam.jpg"></div><div class="plays-texts-likes"><div class="plays"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3,12c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S3,7,3,12"></path><path d="M10.5,15l5-3l-5-3V15z"></path></svg></span><span class="plays-count">undefined</span></div><div class="texts"><span class="text1">Doostam</span><span class="text2">Mohsen Ebrahimzadeh</span></div><div class="likes"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"></path></svg></span><span class="likes-count">6</span></div></div><div class="seekbar"><input type="range" class="form-range" min="0" max="100" step="0.1"></div><div class="times"><span>0:00</span><span>3:15</span></div>                             <div class="buttons p-top-1"><div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg></span></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M14.7,55.1V8.9H7v46.2H14.7z M57,55.1V8.9L22.4,32L57,55.1z"></path></svg></div><div class="button play-pause"><span><svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 20px; height: 20px;"><path d="M18.4,57V7l39.3,25L18.4,57z"></path></svg></span></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div><div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4l3 3l-3 3"></path><path d="M18 20l3 -3l-3 -3"></path><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5"></path><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3"></path></svg></span></div></div><div class="buttons p-top-1"><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path><path d="M9 12h6"></path><path d="M12 9v6"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7,7c0,2.2,1.8,4,4,4s4-1.8,4-4s-1.8-4-4-4S7,4.8,7,7"></path><path d="M5,21v-2c0-2.2,1.8-4,4-4h3"></path><path d="M14.8,18.5c0,1.4,1.2,2.6,2.6,2.6c1.4,0,2.6-1.2,2.6-2.6c0-1.4-1.2-2.6-2.6-2.6C16,15.9,14.8,17.1,14.8,18.5"></path><path d="M20,18.5V12"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><path d="M7 11l5 5l5 -5"></path><path d="M12 4l0 12"></path></svg></div><div class="button"><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path><path d="M8.7 10.7l6.6 -3.4"></path><path d="M8.7 13.3l6.6 3.4"></path></svg></div></div></div>                                                         <div class="maximum-player-queue">                                 <div class="header"><div class="title">Next Playing (<!-- -->2<!-- -->)</div><div class="buttons"><div class="button" title="Minimize"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path></svg></div><div class="button" title="Close"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg></div></div></div>                                 <div class="track-line-queue-container"></div>                                 <div class="bottom-sheet-close">Close</div>                             </div>                     </div>                               </div></div>';
     //var ppp4 = '<div class="playing-track"><div class="artwork"><span class="placeholder"><svg style="width:24px;height:24px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg></span><img alt="" src="/thumb/mohsen_ebrahimzadeh_doostam.jpg"></div><div class="details"><div class="text1">Doostam</div><div class="text2">Mohsen Ebrahimzadeh</div><div class="plays-likes"><div class="plays"><span><svg style="width:18px;height:18px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3,12c0,5,4,9,9,9s9-4,9-9s-4-9-9-9S3,7,3,12"></path><path d="M10.5,15l5-3l-5-3V15z"></path></svg></span><span class="plays-count">undefined</span></div><div class="likes"><span><svg style="width:18px;height:18px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"></path></svg></span><span class="likes-count">6</span></div></div></div></div><div class="controll"><div class="seekbar"><input type="range" class="form-range" min="0" max="100" step="0.1"></div><div class="buttons"><div><span class="current-time">0:00</span></div><div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg></span></div><div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M14.7,55.1V8.9H7v46.2H14.7z M57,55.1V8.9L22.4,32L57,55.1z"></path></svg></div><div class="button play-pause"><span><svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 45px; height: 45px;"><path d="M25.8,43.2L43.2,32L25.8,20.8V43.2z M32,57c-3.5,0-6.7-0.7-9.8-2s-5.7-3.1-7.9-5.3s-4-4.9-5.3-7.9c-1.3-3-2-6.3-2-9.8    s0.7-6.7,2-9.8s3.1-5.7,5.3-7.9s4.9-4,7.9-5.3s6.3-2,9.8-2s6.7,0.7,9.8,2s5.7,3.1,7.9,5.3s4,4.9,5.3,7.9s2,6.3,2,9.8s-0.7,6.7-2,9.8    c-1.3,3-3.1,5.7-5.3,7.9s-4.9,4-7.9,5.3S35.5,57,32,57z"></path></svg></span></div><div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M49.3,55.1V8.9H57v46.2H49.3z M7,55.1V8.9L41.6,32L7,55.1z"></path></svg></div><div class="button"><span><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 4l3 3l-3 3"></path><path d="M18 20l3 -3l-3 -3"></path><path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5"></path><path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3"></path></svg></span></div><div><span class="duration">3:15</span></div></div></div>                 <div class="details">                     <div class="buttons">                         <div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg> Play List</div> </div>                     <div class="buttons"><div class="button"><svg style="width:16px;height:16px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l16 0"></path><path d="M8 12l8 0"></path><path d="M6 18l12 0"></path></svg> Lyrics</div>                                                 </div>                         </div>';
     
     
