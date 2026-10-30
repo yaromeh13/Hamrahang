@@ -1974,18 +1974,12 @@ div.itm-controls {
     padding: 4px;
 }
 
-/* focus ring on <a> — not .artwork (overflow:hidden clips outline) */
-.track-box .box a:focus {
-    outline: 4px solid #fff;
+.track-box .box a:focus .artwork {
+    outline: 4px solid white;
 }
 
-.track-box .box a:hover {
-    outline: 4px solid #c00;
-}
-
-.track-box .box a:focus .artwork,
 .track-box .box a:hover .artwork {
-    outline: none;
+    outline: 4px solid red;
 }
 
 .track-box .box .artwork {
@@ -4299,21 +4293,14 @@ fieldset:disabled .btn {
     border-radius: 10px;
 }
 
-.track-box .box a:focus,
-.artist-box a:focus {
+.track-box .box a:focus .artwork,
+.artist-box a:focus .artwork {
     outline: 4px solid #fff;
 }
 
-.track-box .box a:hover,
-.artist-box a:hover {
-    outline: 4px solid #c00;
-}
-
-.track-box .box a:focus .artwork,
 .track-box .box a:hover .artwork,
-.artist-box a:focus .artwork,
 .artist-box a:hover .artwork {
-    outline: none;
+    outline: 4px solid #c00;
 }
 
 .carousel-controller {

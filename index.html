@@ -498,8 +498,7 @@ body {
     width: 100%;
     position: relative;
     margin: 0;
-    /* 4px vertical: outline sits outside the box and is clipped by overflow */
-    padding: 4px 8px;
+    padding: 0 8px;
     /* single row: do not wrap; scroll sideways */
     overflow-x: auto;
     overflow-y: hidden;
@@ -532,8 +531,6 @@ body {
     display: block;
     position: relative;
     cursor: pointer;
-    /* room so focus ring is not clipped by .container overflow */
-    padding: 4px;
 }
 
 .track-box .box a,
@@ -541,8 +538,6 @@ body {
     display: block;
     text-decoration: none;
     color: inherit;
-    /* ring on <a>, NOT on .artwork (artwork has overflow:hidden → clips outline) */
-    outline: none;
 }
 
 /* aspect ratio without CSS variables (padding-bottom trick) */
@@ -624,10 +619,10 @@ body {
     text-decoration: none;
 }
 
-.track-box .box a:focus,
-.track-box .box a:hover,
-.artist-box a:focus,
-.artist-box a:hover {
+.track-box .box a:focus .artwork,
+.track-box .box a:hover .artwork,
+.artist-box a:focus .artwork,
+.artist-box a:hover .artwork {
     outline: 3px solid #ffffff;
 }
 
