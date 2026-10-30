@@ -4248,7 +4248,8 @@ fieldset:disabled .btn {
     grid-gap: var(--grid-columns-gap);
     font-size: inherit;
     letter-spacing: normal;
-    overflow-x: hidden;
+    white-space: normal;
+    overflow-x: auto;
     overflow-y: hidden;
     scroll-behavior: smooth;
     scrollbar-width: none;
@@ -4258,14 +4259,22 @@ fieldset:disabled .btn {
     display: none;
 }
 
+/* beat index `.container.video .track-box { width:31% }` — was shrinking grid cells */
 .container .track-box,
-.container .artist-box {
+.container .artist-box,
+.container.video .track-box {
     width: auto;
+    max-width: 100%;
     margin: 0;
+    white-space: normal;
 }
 
 .container.video {
     grid-auto-columns: calc((100% - (var(--grid-columns-count-video, 3) - 1) * var(--grid-columns-gap)) / var(--grid-columns-count-video, 3));
+}
+
+.container .artwork.ratio {
+    width: 100%;
 }
 
 .track-box .box .artwork,
