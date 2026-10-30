@@ -484,35 +484,152 @@ body {
 }
 
 /* ---------------------------------------------------------
-   6. CONTAINER / SECTION
+   6. CONTAINER / SECTION / CARDS — 2013 base (no grid/vars)
+   Row via inline-block; modern CSS grid lives in tv.css
    --------------------------------------------------------- */
 .section-carousel-container,
-.section-container {
+.section-container,
+.track-line-container {
     position: relative;
+    display: block;
     width: 100%;
+    clear: both;
 }
 
 .container {
+    display: block;
     width: 100%;
     position: relative;
-    overflow-x: hidden;
-    overflow-y: hidden;
-    scroll-behavior: smooth;
-    scrollbar-width: none;
+    overflow: hidden;
     margin: 0;
     padding: 0 8px;
+    /* remove gaps between inline-block cards */
+    font-size: 0;
+    letter-spacing: 0;
 }
 
-.section-carousel-container .video {
-        grid-auto-columns: calc((100% - (var(--grid-columns-count-video) - 1) * var(--grid-columns-gap)) / var(--grid-columns-count-video));
-    }
+/* song / album / default — ~4 per row */
+.track-box,
+.artist-box {
+    display: inline-block;
+    vertical-align: top;
+    width: 23%;
+    margin: 0 2% 16px 0;
+    font-size: 16px;
+    letter-spacing: normal;
+    text-align: left;
+}
+
+/* video / musicvideo — ~3 per row (wider 16:9) */
+.container.video .track-box {
+    width: 31%;
+    margin: 0 2% 16px 0;
+}
+
+.track-box .box,
+.artist-box .box {
+    display: block;
+    position: relative;
+    cursor: pointer;
+}
+
+.track-box .box a,
+.artist-box a {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+/* aspect ratio without CSS variables (padding-bottom trick) */
+.ratio,
+.artwork {
+    position: relative;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    background-color: #2a2a2a;
+}
+
+.ratio-1x1 {
+    height: 0;
+    padding-bottom: 100%;
+}
+
+.ratio-16x9 {
+    height: 0;
+    padding-bottom: 56.25%;
+}
+
+.ratio-21x9 {
+    height: 0;
+    padding-bottom: 42.85%;
+}
+
+.ratio > img,
+.ratio > span,
+.artwork > img,
+.artwork > span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.artwork img {
+    display: block;
+    background-color: transparent !important;
+    color: transparent !important;
+}
+
+.artwork .placeholder {
+    background-color: #333333;
+    color: #555555;
+    font-size: 48px;
+    line-height: 1;
+    text-align: center;
+}
+
+.track-box .text1,
+.track-box .text2,
+.artist-box .text1,
+.artist-box .text2 {
+    display: block;
+    margin-top: 6px;
+    padding: 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.track-box .text2,
+.artist-box .text2 {
+    color: #a0a0a0;
+    font-size: 13px;
+}
+
+.track-box .text1 a,
+.track-box .text2 a,
+.artist-box .text1 a,
+.artist-box .text2 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.track-box .box a:focus .artwork,
+.track-box .box a:hover .artwork,
+.artist-box a:focus .artwork,
+.artist-box a:hover .artwork {
+    outline: 3px solid #ffffff;
+}
 
 /* ---------------------------------------------------------
    7. TRACK LINE
    --------------------------------------------------------- */
 .track-line .track-cnt {
-    align-content: center;
-    place-content: center;
     height: 60px;
 }
 
