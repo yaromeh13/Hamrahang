@@ -3285,6 +3285,15 @@ track {
     var OA = assignObject;
     var sn = SpatialNavigation;
 
+    /* TEMP DIAG stages for Samsung (remove later) */
+    function diagFlag(msg) {
+        var el = document.getElementById("js-flag");
+        if (el) {
+            try { el.innerHTML = String(msg); } catch (e) {}
+        }
+    }
+    diagFlag("MAIN");
+
     var SN = self._next;
     var e, a = {}, l = {};
     var BODY = document.body;
@@ -4279,6 +4288,8 @@ track {
     }
     
     function chp(u, callback) {
+        diagFlag("CHP");
+
 
         if (u) {
             var stateObj = {Page: u, Url: u, pageTitle: ''};
@@ -4406,6 +4417,7 @@ track {
     ];
     
     function SPA() {
+        diagFlag("SPA");
 
         if (SN.loginEnabled) {
             CheckLoginStatus(function () {
@@ -4510,8 +4522,10 @@ track {
         if (SN.thumbBase) { UT = SN.thumbBase; }
         if (SN.cdnBase) { CDN = SN.cdnBase; }
         if (SN.cdnMp3) { CDNMP3 = SN.cdnMp3; }
+        diagFlag("API-MODE:" + (SN.apiMode || "?") + " HP:" + String(HP || "").substring(0, 40));
         SPA();
     });
+    diagFlag("INIT-API");
     SN.initAPI();
     
     function LoadProfile() {
