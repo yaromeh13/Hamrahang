@@ -7,19 +7,12 @@
     <meta name="cleartype" content="on">
     <meta property="og:title" content="Hamrahang">
     <meta name="application-name" content="Hamrahang Tv">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Hamrahang Tv">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="manifest" href="/manifest.json">
 	<title>Hamrahang TV</title>
 	<link rel="icon" href="/favicon.png" type="image/png" sizes="16x16">
 	<link rel="icon" href="/icon.png" type="image/png" sizes="256x256">
 	<link rel="apple-touch-icon" href="/apple-icon.png" type="image/png" sizes="256x256">
 	<script src="/js/spatial_navigation.js"></script>
-
-
-	
 <style>
 /* =========================================================
    BASE CSS — 2013–2015 safe (no vars, no vh-only, no modern APIs)
@@ -110,11 +103,10 @@ body {
    3. LAYOUT - SIDEBAR & MAIN (float, 110px rail — no flex/grid)
    --------------------------------------------------------- */
 .sidebar {
-    float: left;
+    position: absolute;
     width: 110px;
     min-width: 110px;
     height: 100%;
-    background-color: #1c1b21;
     display: block;
 }
 
@@ -157,6 +149,12 @@ body {
     display: block;
     width: 100%;
     text-align: center;
+}
+
+.sidebar-content .menu img {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
 }
 
 .sidebar-content .menu .item {
@@ -216,7 +214,7 @@ body {
    --------------------------------------------------------- */
 .page-detail-header-container {
     position: relative;
-    display: block;
+    display: inline-block;
     width: 100%;
     height: 50%;
     margin: 0;
@@ -508,7 +506,7 @@ body {
 }
 
 /* song / album / default — ~4 visible; rest scroll horizontally */
-.track-box,
+.item-box,
 .artist-box {
     display: inline-block;
     vertical-align: top;
@@ -521,19 +519,19 @@ body {
 }
 
 /* video / musicvideo — ~3 visible (wider 16:9) */
-.container.video .track-box {
+.container.video .item-box {
     width: 31%;
     margin: 0 2% 0 0;
 }
 
-.track-box .box,
+.item-box .box,
 .artist-box .box {
     display: block;
     position: relative;
     cursor: pointer;
 }
 
-.track-box .box a,
+.item-box .box a,
 .artist-box a {
     display: block;
     text-decoration: none;
@@ -591,8 +589,8 @@ body {
     text-align: center;
 }
 
-.track-box .text1,
-.track-box .text2,
+.item-box .text1,
+.item-box .text2,
 .artist-box .text1,
 .artist-box .text2 {
     display: block;
@@ -605,22 +603,22 @@ body {
     color: #ffffff;
 }
 
-.track-box .text2,
+.item-box .text2,
 .artist-box .text2 {
     color: #a0a0a0;
     font-size: 13px;
 }
 
-.track-box .text1 a,
-.track-box .text2 a,
+.item-box .text1 a,
+.item-box .text2 a,
 .artist-box .text1 a,
 .artist-box .text2 a {
     color: inherit;
     text-decoration: none;
 }
 
-.track-box .box a:focus .artwork,
-.track-box .box a:hover .artwork,
+.item-box .box a:focus .artwork,
+.item-box .box a:hover .artwork,
 .artist-box a:focus .artwork,
 .artist-box a:hover .artwork {
     outline: 3px solid #ffffff;
@@ -642,11 +640,12 @@ body {
    8. NAV (bottom)
    --------------------------------------------------------- */
 #nav {
-    position: fixed;
+    position: absolute;
     left: 3px;
     bottom: 3px;
-    justify-items: center;
-    text-align: -webkit-center;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
 }
 
 #nav td {
@@ -2369,9 +2368,7 @@ track {
 }
 
 </style>
-
 </head>
-
 <body>
 <div class="ln">
     <div id="main-bg"></div>
@@ -2379,45 +2376,34 @@ track {
         <div class="sidebar-content">
             <span class="logo-container" aria-label="Hamrahang Web Player" ><svg fill="currentColor" version="1.1" viewBox="0 0 302.45 104.79"><defs><style>.cls-1,.cls-3{fill:#fff;}.cls-1{fill-rule:evenodd;}.cls-2{fill:#1a1b1c;}</style></defs><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><g id="radio"><polygon class="cls-1" points="30.55 0 61.09 30.55 259.22 30.55 302.45 73.75 271.91 104.29 241.36 73.75 43.22 73.75 0 30.55 30.55 0 30.55 0"/><path class="cls-2" d="M82.18,66.67H74.67V53.47H64.49v13.2H57V36.86h7.51V47.77H74.67V36.86h7.51V66.67Zm163.29,0H238V53.47H227.79v13.2h-7.51V36.86h7.51V47.77H238V36.86h7.51V66.67ZM104,59.37V53.51c-1.47.15-2.66.28-3.56.39a11.3,11.3,0,0,0-2.67.64A3.7,3.7,0,0,0,96,55.75a3.42,3.42,0,0,0-.63,2.16,3.09,3.09,0,0,0,1,2.71,5.32,5.32,0,0,0,3.1.74,5.68,5.68,0,0,0,2.32-.52A7.39,7.39,0,0,0,104,59.37Zm0,4.33c-.6.5-1.14,1-1.6,1.35a10.44,10.44,0,0,1-1.91,1.19,12.67,12.67,0,0,1-2.27.89,12.31,12.31,0,0,1-3.09.3A8.19,8.19,0,0,1,89,64.93a8.6,8.6,0,0,1-2.45-6.29,9.22,9.22,0,0,1,1.24-5,8.6,8.6,0,0,1,3.57-3.05A19,19,0,0,1,97,49q3.29-.44,7.06-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.45,11.45,0,0,0-5.1-.89,14.09,14.09,0,0,0-3.6.56,30.51,30.51,0,0,0-4,1.43h-.74V39.25c.86-.25,2.25-.55,4.18-.89a33.51,33.51,0,0,1,5.83-.51q7.23,0,10.52,2.41c2.21,1.61,3.3,4.05,3.3,7.35V66.67H104v-3Zm48.62,3v-14c0-1.38,0-2.54-.07-3.48a7.06,7.06,0,0,0-.45-2.32,2.55,2.55,0,0,0-1.17-1.31,4.93,4.93,0,0,0-2.21-.4,4.81,4.81,0,0,0-2,.43,14.45,14.45,0,0,0-2.13,1.23V66.67h-8.73v-14c0-1.36,0-2.51-.08-3.47a7.29,7.29,0,0,0-.47-2.33,2.55,2.55,0,0,0-1.17-1.31,4.82,4.82,0,0,0-2.18-.4,4.73,4.73,0,0,0-2.1.5,14.51,14.51,0,0,0-2,1.16V66.67h-8.73V38.72h8.73v3.09a23.44,23.44,0,0,1,4-2.83,8.88,8.88,0,0,1,4.26-1,8.32,8.32,0,0,1,4.51,1.21,7.68,7.68,0,0,1,3,3.64,25.3,25.3,0,0,1,4.75-3.6,9.3,9.3,0,0,1,8-.63A6.55,6.55,0,0,1,159,40.45a8.61,8.61,0,0,1,1.76,3.19,16.48,16.48,0,0,1,.58,4.84V66.67Zm34-19.69h-.73a6.15,6.15,0,0,0-1.45-.27c-.63-.06-1.34-.08-2.1-.08a11.58,11.58,0,0,0-2.89.39,28,28,0,0,0-2.94.95v18.7h-8.73V38.72h8.73v4c.4-.36.95-.82,1.67-1.37A15.21,15.21,0,0,1,180.15,40a11.41,11.41,0,0,1,2.22-1,7.51,7.51,0,0,1,2.39-.41l.94,0,1,.08V47Zm18.71,12.39V53.51c-1.46.15-2.65.28-3.55.39a11.49,11.49,0,0,0-2.68.64,3.79,3.79,0,0,0-1.77,1.21,3.48,3.48,0,0,0-.62,2.16,3.08,3.08,0,0,0,1,2.71,5.37,5.37,0,0,0,3.11.74,5.68,5.68,0,0,0,2.32-.52,7.22,7.22,0,0,0,2.15-1.47Zm0,4.33-1.6,1.35a10,10,0,0,1-1.9,1.19,13,13,0,0,1-2.27.89,12.41,12.41,0,0,1-3.09.3,8.23,8.23,0,0,1-6.15-2.5,8.6,8.6,0,0,1-2.45-6.29,9.13,9.13,0,0,1,1.25-5,8.47,8.47,0,0,1,3.57-3.05,18.78,18.78,0,0,1,5.64-1.6q3.28-.44,7-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.38,11.38,0,0,0-5.09-.89,14.09,14.09,0,0,0-3.6.56A30.65,30.65,0,0,0,191,46h-.74V39.25c.87-.25,2.26-.55,4.19-.89a33.43,33.43,0,0,1,5.83-.51q7.22,0,10.52,2.41c2.2,1.61,3.3,4.05,3.3,7.35V66.67h-8.73v-3Z"/><path class="cls-3" d="M109.91,104.29h-5.83l-1.52-4.85h-8.1l-1.53,4.85H87.24l8.09-24h6.5ZM101.2,95l-2.69-8.59L95.81,95Z"/><path class="cls-3" d="M132.69,104.29H127V93.72h-8.33v10.57h-5.65v-24h5.65v8.78H127V80.3h5.65Z"/><path class="cls-3" d="M158.51,104.29h-5.84l-1.52-4.85h-8.1l-1.53,4.85h-5.69l8.09-24h6.5ZM149.79,95l-2.69-8.59L144.41,95Z"/><path class="cls-3" d="M181.56,104.29h-5.44l-9.29-16.46v16.46h-5.18v-24h6.75l8,13.75V80.3h5.18Z"/><path class="cls-3" d="M206.51,102.92a27,27,0,0,1-3.9,1.25,19.13,19.13,0,0,1-4.84.62q-5.58,0-8.74-3.32t-3.16-9.2a12.67,12.67,0,0,1,3.19-9q3.18-3.42,8.89-3.43a19.57,19.57,0,0,1,4.12.43,17.6,17.6,0,0,1,4.35,1.7v5.62h-.63l-1.21-1a13.73,13.73,0,0,0-1.53-1.06,9.93,9.93,0,0,0-2-.89,8,8,0,0,0-2.42-.37,7.2,7.2,0,0,0-2.72.49,6.2,6.2,0,0,0-2.19,1.48,6.76,6.76,0,0,0-1.46,2.46,10.06,10.06,0,0,0-.54,3.44,8.71,8.71,0,0,0,1.93,6.09,7.34,7.34,0,0,0,5.69,2.11l.71,0c.26,0,.5,0,.71,0v-4.7h-4.36V91.08h10.1Z"/></g></g></g></svg></span>
             <div id="menu" class="menu">
-                <div><a class="item back" href="#" ><svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0"></path><path d="M5 12l6 6"></path><path d="M5 12l6 -6"></path></svg></a></div>
-                <div><a class="item active" href="/"><svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21,21.9h-5c-0.5,0-0.9-0.4-0.9-0.9v-4c0-1.7-1.4-3.1-3.1-3.1c-1.7,0-3.1,1.4-3.1,3.1v4c0,0.5-0.4,0.9-0.9,0.9H3    c-0.5,0-0.9-0.4-0.9-0.9v-9.6c0-0.5,0.2-1,0.6-1.3l8-7.1c0,0,0,0,0.1,0c0.7-0.5,1.8-0.5,2.5,0l8,7.1c0.4,0.3,0.7,0.8,0.7,1.4V21    C21.9,21.5,21.5,21.9,21,21.9z M3.9,21L3.9,21L3.9,21z"></path></svg></a></div>
-                <div><a class="item" href="/search"><svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg></a></div>
-                <div><a class="item" href="/library"><svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path></svg></a></div>
-                <div><a class="item" href="/setting"><svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22"  height="22" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><title>Account Settings</title><path d="M9.6,3.32a3.86,3.86,0,1,0,3.86,3.85A3.85,3.85,0,0,0,9.6,3.32M16.35,11a.26.26,0,0,0-.25.21l-.18,1.27a4.63,4.63,0,0,0-.82.45l-1.2-.48a.3.3,0,0,0-.3.13l-1,1.66a.24.24,0,0,0,.06.31l1,.79a3.94,3.94,0,0,0,0,1l-1,.79a.23.23,0,0,0-.06.3l1,1.67c.06.13.19.13.3.13l1.2-.49a3.85,3.85,0,0,0,.82.46l.18,1.27a.24.24,0,0,0,.25.2h1.93a.24.24,0,0,0,.23-.2l.18-1.27a5,5,0,0,0,.81-.46l1.19.49c.12,0,.25,0,.32-.13l1-1.67a.23.23,0,0,0-.06-.3l-1-.79a4,4,0,0,0,0-.49,2.67,2.67,0,0,0,0-.48l1-.79a.25.25,0,0,0,.06-.31l-1-1.66c-.06-.13-.19-.13-.31-.13L19.5,13a4.07,4.07,0,0,0-.82-.45l-.18-1.27a.23.23,0,0,0-.22-.21H16.46M9.71,13C5.45,13,2,14.7,2,16.83v1.92h9.33a6.65,6.65,0,0,1,0-5.69A13.56,13.56,0,0,0,9.71,13m7.6,1.43a1.45,1.45,0,1,1,0,2.89,1.45,1.45,0,0,1,0-2.89Z"></path></g></svg></a></div>
+                <div><a class="item back" href="#" ><img src="/assets/back-left.png" ></a></div>
+                <div><a class="item active" href="/"><img src="/assets/home.png" ></a></div>
+                <div><a class="item" href="/search"><img src="/assets/search.png" ></a></div>
+                <div><a class="item" href="/library"><img src="/assets/account.png" ></a></div>
+                <div><a class="item" href="/setting"><img src="/assets/account.png" ></a></div>
                 <div id="mini-player" class="focusable"></div>
             </div><!-- /#menu -->
-
         </div>
-        
-        
-        
     </div> 
     <div id="main" class="main-container">
-        <div id="main-content" class="main-content" >
+        <div id="main-content" class="main-content" ><div id="js-flag" class="js-flag">NOJS</div>
             <div class="gradient-color-container vis-none"><div class="ratio ratio-21x9" style="background-image: radial-gradient(ellipse at center, #e4f5fc 0%,#bfe8f9 50%,#2ab0ed 100%);;"></div></div>
-
-
         </div>
-  
-
         <div class="main-footer" style="display: none;">
             <div class="links"><a href="https://hamrahang.ir/app" target="_blank" rel="noopener noreferrer">Download App</a><a href="https://hamrahang.ir/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a><a href="https://hamrahang.ir/terms-of-use" target="_blank" rel="noopener noreferrer">Terms of Use</a><a href="https://hamrahang.ir/help" target="_blank" rel="noopener noreferrer">Help</a>
             <a href="https://hamrahang.ir/contact" target="_blank" rel="noopener noreferrer">Contact</a>
             <span>@ 2024 Hamrahang, Moments Music Service.</span>
             </div>
         </div><!-- /.main-footer -->
-    
-        </div>
-
     </div>
-            <div id="nav" class="">
-                <table id="dpad" class="css-1ojq7oi ">
-                    <tbody>
-                        <tr><td></td><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-up" id="sn-up" readonly  ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></span></div></td><td></td></tr>
-                        <tr><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-left" id="sn-left" readonly ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></span></div></td><td><div class="css-1klrgra e1xzjd3a1" data="data-sn-ok" id="sn-ok" readonly  ><span class="css-11ee1sb e1cooyvd1"></span></div></td><td><div class="css-lc3isr e1xzjd3a2" data="data-sn-right" id="sn-right" readonly  ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span></div></td></tr><tr><td></td><td><div class="css-lc3isr e1xzjd3a2" id="sn-down" ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span></div></td><td></td></tr></tbody></table>
-            </div>
+    <div id="nav" class="">
+        <table id="dpad" class="css-1ojq7oi ">
+            <tbody>
+                <tr><td></td><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-up" id="sn-up" readonly  ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></span></div></td><td></td></tr>
+                <tr><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-left" id="sn-left" readonly ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></span></div></td><td><div class="css-1klrgra e1xzjd3a1" data="data-sn-ok" id="sn-ok" readonly  ><span class="css-11ee1sb e1cooyvd1"></span></div></td><td><div class="css-lc3isr e1xzjd3a2" data="data-sn-right" id="sn-right" readonly  ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span></div></td></tr><tr><td></td><td><div class="css-lc3isr e1xzjd3a2" id="sn-down" ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span></div></td><td></td></tr></tbody></table>
+    </div>
 </div><!-- /.ln -->
-    <div id="player" class="vis-none">
+<div id="player" class="vis-none">
         <video id="vply"></video>
         <div id="audio-stage" class="detailes-container vis-none">
             <div id="stage-bg"></div>
@@ -2606,7 +2592,7 @@ track {
     </div>
 <script type="text/javascript">
 (function () {
-
+    // ADD Modern CSS
     var test = document.createElement("div");
     var style = test.style;
 
@@ -2638,14 +2624,11 @@ track {
         supportsFilter
     ) {
         var css = document.createElement("link");
-
         css.rel = "stylesheet";
         css.type = "text/css";
         css.href = "/tv.css?005";
-
         document.getElementsByTagName("head")[0].appendChild(css);
     }
-
 })();
 </script>
 <script>
@@ -2656,14 +2639,106 @@ track {
     SN.user = SN.user || [];
     SN.user.fv = SN.user.fv || [];
 
-    var HP = (/(^|\.)hamrahang\.ir$/.test(location.hostname)) ? "https://hamrahang.ir/" : "/api/"; 
-    
+    /* API Helper: اول سرور اصلی را با Ping بررسی می‌کند؛ در صورت شکست، API جایگزین Web TV */
+    SN.apiBase = "";
+    SN.apiMode = "checking";
+    SN.loginEnabled = true;
+    SN.apiReady = false;
+    SN.apiReadyCallbacks = [];
+
+    SN.onAPIReady = function (callback) {
+        if (SN.apiReady) { callback(); }
+        else { SN.apiReadyCallbacks.push(callback); }
+    };
+
+    SN.initAPI = function () {
+        var mainPing = "https://hamrahang.ir/app/pinga";
+        var mainBase = "https://hamrahang.ir/";
+        var fallbackBase = "http://tv.hamrahang.ir/tv-api.php/";
+        var finished = false;
+        var xhr = new XMLHttpRequest();
+        var timer = null;
+
+        function finish(useMain) {
+            if (finished) { return; }
+            finished = true;
+            if (timer) { clearTimeout(timer); }
+
+            if (useMain) {
+                SN.apiBase = mainBase;
+                SN.apiMode = "main";
+                SN.loginEnabled = true;
+            } else {
+                SN.apiBase = fallbackBase;
+                SN.apiMode = "fallback";
+                SN.loginEnabled = false;
+                try {
+                    if (document.body.className.indexOf("api-fallback") < 0) {
+                        document.body.className += " api-fallback";
+                    }
+                } catch (e) {}
+            }
+
+            SN.apiReady = true;
+            console.log("API mode:", SN.apiMode, SN.apiBase);
+            var callbacks = SN.apiReadyCallbacks || [];
+            SN.apiReadyCallbacks = [];
+            for (var i = 0; i < callbacks.length; i++) {
+                try { callbacks[i](); } catch (e) { console.log(e); }
+            }
+        }
+
+        /* خارج از دامنه اصلی، رفتار قبلی حفظ می‌شود */
+        if (!/(^|\.)hamrahang\.ir$/i.test(location.hostname)) {
+            SN.apiBase = "/api/";
+            SN.apiMode = "local";
+            SN.loginEnabled = true;
+            SN.apiReady = true;
+            var localCallbacks = SN.apiReadyCallbacks || [];
+            SN.apiReadyCallbacks = [];
+            for (var li = 0; li < localCallbacks.length; li++) {
+                try { localCallbacks[li](); } catch (e) { console.log(e); }
+            }
+            return;
+        }
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4 || finished) { return; }
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    var ping = JSON.parse(xhr.responseText);
+                    if (ping && ping.status === "ok") {
+                        finish(true);
+                        return;
+                    }
+                } catch (e) {}
+            }
+            finish(false);
+        };
+        xhr.onerror = function () { finish(false); };
+        timer = setTimeout(function () {
+            try { xhr.abort(); } catch (e) {}
+            finish(false);
+        }, 6000);
+
+        try {
+            xhr.open("GET", mainPing, true);
+            xhr.send(null);
+        } catch (e) {
+            finish(false);
+        }
+    };
+
     function gu(td) {
+        if (!SN.apiReady || !SN.loginEnabled) {
+            console.log("User API unavailable:", SN.apiMode);
+            return;
+        }
         var xhr = new XMLHttpRequest();
 
         xhr.open(
             "GET",
-            HP + "?_qjs=ui&" + td,
+            SN.apiBase + "?_qjs=ui&" + td,
             true
         );
 
@@ -2714,30 +2789,31 @@ track {
 
         xhr.send(null);
     }
-
-    //console.log(self); 
-  
+    document.getElementById("js-flag").innerHTML = "JS-OK";
 })(); 
-
-
 </script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        
+(function () {
+    var readyDone = false;
+
+    function onReady() {
+        if (readyDone) { return; }
+        readyDone = true;
+
         var sn = SpatialNavigation;
         sn.init();
-    
+
         sn.add({
             id: 'menu',
             selector: '.menu a, .menu #mini-player',
             enterTo: 'last-focused'
         });
-        
+
         sn.add({
             id: 'nav',
             disabled: true
         });
-        
+
         sn.add({
             id: 'main',
             //selector: 'a, .focusable',
@@ -2745,7 +2821,7 @@ track {
             // Focus the last focused element first then entering this section.
             enterTo: 'last-focused'
         });
-        
+
         sn.add({
             id: 'player-box',
             selector: '#player-box .btn, #player-box .focusable',
@@ -2753,7 +2829,7 @@ track {
             defaultElement: '#play',
             enterTo: 'default-element'
         });
-        
+
         sn.add({
             id: 'modal',
             selector: '#modal .btn, #modal .focusable',
@@ -2761,12 +2837,12 @@ track {
             defaultElement: '#default-view',
             enterTo: 'default-element'
         });
-        
+
         /*
         document.addEventListener('sn:willmove', function (e) {
             console.log('Moving', e.detail.direction, 'from', e.target);
         }, true);
-        
+
         document.addEventListener('sn:focused', function (e) {
             console.log(
                 '%cFOCUSED:',
@@ -2782,229 +2858,273 @@ track {
 
         // D-Pad
         var dpad = document.getElementById('dpad');
-        
+
         if (dpad) {
-        
+
             // Do not let virtual D-Pad steal focus
-            dpad.onmousedown = function(e) {
+            dpad.onmousedown = function (e) {
                 e.preventDefault();
                 return false;
             };
-        
+
             function dpadKey(keyCode) {
                 var evt = document.createEvent('Event');
-        
+
                 evt.initEvent('keydown', true, true);
                 evt.keyCode = keyCode;
                 evt.which = keyCode;
-        
+
                 var target = document.activeElement || window;
                 target.dispatchEvent(evt);
             }
-        
-            dpad.onclick = function(e) {
-        
+
+            dpad.onclick = function (e) {
+
                 var target = e.target;
-        
+
                 while (target && target !== this && !target.id) {
                     target = target.parentNode;
                 }
-        
+
                 if (!target || !target.id) {
                     return;
                 }
-        
+
                 switch (target.id) {
-        
+
                     case 'sn-up':
                         dpadKey(38);
                         break;
-        
+
                     case 'sn-down':
                         dpadKey(40);
                         break;
-        
+
                     case 'sn-left':
                         dpadKey(37);
                         break;
-        
+
                     case 'sn-right':
                         dpadKey(39);
                         break;
-        
+
                     case 'sn-ok':
-        
+
                         var current = document.activeElement;
-                    
+
                         if (!current || current === document.body) {
                             sn.focus();
                             break;
                         }
-                        
+
                         //if (current.classList && current.classList.contains('progress-details')) {break;}
-                    
+
                         dpadKeyDown(13);
                         dpadKeyUp(13);
-                    
+
                         current.click();
-                    
+
                         break;
                 }
             };
         }
-        
+
         function dpadKeyDown(keyCode) {
             var evt = document.createEvent('Event');
-        
+
             evt.initEvent('keydown', true, true);
             evt.keyCode = keyCode;
             evt.which = keyCode;
-        
+
             window.dispatchEvent(evt);
         }
-        
+
         function dpadKeyUp(keyCode) {
             var evt = document.createEvent('Event');
-        
+
             evt.initEvent('keyup', true, true);
             evt.keyCode = keyCode;
             evt.which = keyCode;
-        
+
             window.dispatchEvent(evt);
         }
-        
+
         /*
         var dpad = document.getElementById('dpad');
-        
+
         if (dpad) {
-        
+
             dpad.onmousedown = function(e) {
                 e.preventDefault();
                 return false;
             };
-        
+
             dpad.onclick = function(e) {
-        
+
                 var target = e.target;
-        
+
                 while (target && target !== this && !target.id) {
                     target = target.parentNode;
                 }
-        
+
                 if (!target || !target.id) {
                     return;
                 }
-        
+
                 switch (target.id) {
-        
+
                     case 'sn-up':
                         sn.move('up');
                         break;
-        
+
                     case 'sn-down':
                         sn.move('down');
                         break;
-        
+
                     case 'sn-left':
                         sn.move('left');
                         break;
-        
+
                     case 'sn-right':
                         sn.move('right');
                         break;
-        
+
                     case 'sn-ok':
                         var current = document.activeElement;
-        
+
                         if (current) {
                             var evt = document.createEvent('CustomEvent');
-        
+
                             evt.initCustomEvent(
                                 'sn:enter-down',
                                 true,
                                 true,
                                 {}
                             );
-        
+
                             current.dispatchEvent(evt);
-        
+
                             evt = document.createEvent('CustomEvent');
-        
+
                             evt.initCustomEvent(
                                 'sn:enter-up',
                                 true,
                                 true,
                                 {}
                             );
-        
+
                             current.dispatchEvent(evt);
                         }
                         break;
                 }
             };
         }*/
-        
-        
+    }
 
-    });
+    /* بوت سازگار با Maple: اگر DOM از قبل آماده باشد DOMContentLoaded دیگر نمی‌آید */
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", onReady, false);
+    } else {
+        onReady();
+    }
+    if (window.addEventListener) {
+        window.addEventListener("load", onReady, false);
+    }
+})();
 </script>
 <script>
+    // Helpers
+    // Class Selector: Modern + Legacy Browser Support
+    function getByClass(className) {
+        var el;
+
+        if (typeof document.querySelector === "function") {
+            try {
+                el = document.querySelector("." + className);
+                if (el) return el;
+            } catch (e) {}
+        }
+
+        var elements = document.getElementsByTagName("*");
+
+        for (var i = 0; i < elements.length; i++) {
+            if ((" " + elements[i].className + " ").indexOf(" " + className + " ") !== -1) {
+                return elements[i];
+            }
+        }
+
+        return null;
+    }
+
+    // Object Assign: Native + Legacy Fallback
+    var assignObject = Object.assign;
+    if (typeof assignObject !== "function") {
+        assignObject = function(target) {
+            if (target == null) {
+                throw new TypeError('Cannot convert undefined or null to object');
+            }
+
+            var to = Object(target);
+
+            for (var i = 1; i < arguments.length; i++) {
+                var source = arguments[i];
+                if (source == null) {continue;}
+
+                for (var key in Object(source)) {
+                    if (Object.prototype.hasOwnProperty.call(source, key)) {
+                        to[key] = source[key];
+                    }
+                }
+            }
+
+            return to;
+        };
+    }
     
-    var BTNback = document.querySelector(".back");
-    var BTNforward = document.querySelector(".forward");
-    
+    // Array Checker: Modern + Legacy Browser Support
+    var isArray = Array.isArray;
+    if (typeof isArray !== "function") {
+        isArray = function(value) {
+            return Object.prototype.toString.call(value) === "[object Array]";
+        };
+    }
+
+    // Back / Forward
+    var BTNback = getByClass("back");
+    var BTNforward = getByClass("forward");
+
     if (BTNback) {
         BTNback.addEventListener("click", function () {
             window.history.back();
         });
     }
-    
+
     if (BTNforward) {
         BTNforward.addEventListener("click", function () {
             window.history.forward();
         });
-    }    
-    
-
-        
-!function(){"use strict";        
-
- 
-    // Helper
-    
-    function assignObject(target) {
-        if (target == null) {throw new TypeError('Cannot convert undefined or null to object');}
-        var to = Object(target);
-        for (var i = 1; i < arguments.length; i++) {
-            var source = arguments[i];
-            if (source == null) {continue;}
-            for (var key in Object(source)) {
-                if (Object.prototype.hasOwnProperty.call(source, key)) {
-                    to[key] = source[key];
-                }
-            }
-        }
-        return to;
     }
-    
+
+// Main Application
+!function(){"use strict";
+
+    // Main Variables
     var OA = assignObject;
     var sn = SpatialNavigation;
 
-    var SN=self._next;    
-    var e,a={},l={};
+    var SN = self._next;
+    var e, a = {}, l = {};
     var BODY = document.body;
-    var MCLN = document.querySelector(".ln");
-    var MCTR = document.querySelector(".main-container");
-    var MCNT = document.querySelector(".main-content");
-    var MPDT = MCTR.querySelector(".player-container-desktop");
-    var MSBR = document.querySelector(".sidebar");
-    var MFOT = document.querySelector(".main-footer");
+
+    var MCLN = getByClass("ln");
+    var MCTR = getByClass("main-container");
+    var MCNT = getByClass("main-content");
+    var MPDT = getByClass("player-container-desktop");
+    var MSBR = getByClass("sidebar");
+    var MFOT = getByClass("main-footer");
     var MAPL = document.getElementById("player");
 
-    //var Video = videojs('vply', { controls: false });
-
-    
-    var HP = (/(^|\.)hamrahang\.ir$/.test(location.hostname)) ? "https://hamrahang.ir/" : "/api/";
+    var HP = SN.apiBase;
     var HT = "https://tv.hamrahang.ir/";
     var CDN = "https://cdn.hamrahang.ir";
     var CDNMP3 = "https://cdn.hamrahang.ir/mp3/"; 
@@ -3018,6 +3138,12 @@ track {
     var HPL = "/playlist/";
     var HPLU = "https://hamrahang.ir/playlist/";
     var aaa = ["New Tracks"];
+    
+    var svg_back = '<svg style="width:20px;height:20px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M5 12l7 7"></path><path d="M5 12l7 -7"></path></svg>';
+    var svg_home = '<svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21,21.9h-5c-0.5,0-0.9-0.4-0.9-0.9v-4c0-1.7-1.4-3.1-3.1-3.1c-1.7,0-3.1,1.4-3.1,3.1v4c0,0.5-0.4,0.9-0.9,0.9H3    c-0.5,0-0.9-0.4-0.9-0.9v-9.6c0-0.5,0.2-1,0.6-1.3l8-7.1c0,0,0,0,0.1,0c0.7-0.5,1.8-0.5,2.5,0l8,7.1c0.4,0.3,0.7,0.8,0.7,1.4V21    C21.9,21.5,21.5,21.9,21,21.9z M3.9,21L3.9,21L3.9,21z"></path></svg>';
+    var svg_search = '<svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>';
+    var svg_account = '<svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22" height="22" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><title>Account Settings</title><path d="M9.6,3.32a3.86,3.86,0,1,0,3.86,3.85A3.85,3.85,0,0,0,9.6,3.32M16.35,11a.26.26,0,0,0-.25.21l-.18,1.27a4.63,4.63,0,0,0-.82.45l-1.2-.48a.3.3,0,0,0-.3.13l-1,1.66a.24.24,0,0,0,.06.31l1,.79a3.94,3.94,0,0,0,0,1l-1,.79a.23.23,0,0,0-.06.3l1,1.67c.06.13.19.13.3.13l1.2-.49a3.85,3.85,0,0,0,.82.46l.18,1.27a.24.24,0,0,0,.25.2h1.93a.24.24,0,0,0,.23-.2l.18-1.27a5,5,0,0,0,.81-.46l1.19.49c.12,0,.25,0,.32-.13l1-1.67a.23.23,0,0,0-.06-.3l-1-.79a4,4,0,0,0,0-.49,2.67,2.67,0,0,0,0-.48l1-.79a.25.25,0,0,0,.06-.31l-1-1.66c-.06-.13-.19-.13-.31-.13L19.5,13a4.07,4.07,0,0,0-.82-.45l-.18-1.27a.23.23,0,0,0-.22-.21H16.46M9.71,13C5.45,13,2,14.7,2,16.83v1.92h9.33a6.65,6.65,0,0,1,0-5.69A13.56,13.56,0,0,0,9.71,13m7.6,1.43a1.45,1.45,0,1,1,0,2.89,1.45,1.45,0,0,1,0-2.89Z"></path></g></svg>';
+    
     var svg_dot = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path></svg>';
     var svg_rdo = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 26px; height: 26px;"><path d="M12 12l0 .01"></path><path d="M14.828 9.172a4 4 0 0 1 0 5.656"></path><path d="M17.657 6.343a8 8 0 0 1 0 11.314"></path><path d="M9.168 14.828a4 4 0 0 1 0 -5.656"></path><path d="M6.337 17.657a8 8 0 0 1 0 -11.314"></path></svg>';
     var svg_ply = '<svg style="width:22x;height:22px" version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor"><path d="M18.4,57V7l39.3,25L18.4,57z"></path></svg>';
@@ -3076,23 +3202,9 @@ track {
     var AduLst = [];
     var VdoLst = [];
     var SrcLst = [];
-    //var SN['song'] = [];
+
     var LOAD_PAGE = '<div class="page-loading-container"><div class="spinner-large"></div></div>';
     var spn_lrg = OA(document.createElement("div"), {className: "spinner-large"});
-
-    console.log(sn);
-   // var hhhhh = last-focused;
-    var ffffff = document.getElementById("sn-down");
-/*
-    var kkkk = document.getElementById("sn-up");
-    kkkk.addEventListener('click', (e)=>{
-        kkkk.blur();
-    //    e.preventDefault();
-    //e.stopPropagation();
- //   sn.focus(hhhhh);
-        sn.move('down');
-    }, false);
-*/
 
     function UARDB(type, ar) {
     
@@ -3103,11 +3215,8 @@ track {
     
         if (typeof SN === 'undefined' || !SN) { return ids; }
         if (!type || typeof type !== 'string') { return ids; }
-        if (!ar || !Array.isArray(ar)) { return ids; }
-    
-        if (!SN[type] || typeof SN[type] !== 'object' || Array.isArray(SN[type])) {
-            SN[type] = {};
-        }
+        if (!ar || !isArray(ar)) { return ids; }
+        if (!SN[type] || typeof SN[type] !== 'object' || isArray(SN[type])) { SN[type] = {}; }
     
         for (i = 0; i < ar.length; i++) {
     
@@ -3150,7 +3259,7 @@ track {
         var id = Q[1];
         var found = null;
     
-        if (!SN.artist || typeof SN.artist !== 'object' || Array.isArray(SN.artist)) {SN.artist = {};}
+        if (!SN.artist || typeof SN.artist !== 'object' || isArray(SN.artist)) { SN.artist = {}; }
     
         // Q[1] = Artist Object
         if (typeof id === 'object' && id !== null) {
@@ -3159,24 +3268,24 @@ track {
             id = found.id;
             found.full = true;
     
-            if (found.songs && Array.isArray(found.songs)) {
+            if (found.songs && isArray(found.songs)) {
                 found.songs = UARDB('song',found.songs);
             }
     
     
-            if (found.albums && Array.isArray(found.albums)) {
+            if (found.albums && isArray(found.albums)) {
                 found.albums = UARDB('album',found.albums);
             }
     
-            if (found.videos && Array.isArray(found.videos)) {
+            if (found.videos && isArray(found.videos)) {
                 found.videos = UARDB('video',found.videos);
             }
     
-            if (found.musicvideos && Array.isArray(found.musicvideos)) {
+            if (found.musicvideos && isArray(found.musicvideos)) {
                 found.musicvideos = UARDB('musicvideo',found.musicvideos);
             }
     
-            if (found.podcasts && Array.isArray(found.podcasts)) {
+            if (found.podcasts && isArray(found.podcasts)) {
                 found.podcasts = UARDB('podcast',found.podcasts);
             }
     
@@ -3226,18 +3335,18 @@ track {
         var found = null;
         var id = Q[1];
     
-        if (!SN.album || Array.isArray(SN.album)) {SN.album = {};}
+        if (!SN.album || isArray(SN.album)) {SN.album = {};}
     
         if (typeof id === 'object' && id !== null) {
     
             id = id.id;
             Q[1].full = true;
     
-            if (Q[1].songs && Array.isArray(Q[1].songs)) {
+            if (Q[1].songs && isArray(Q[1].songs)) {
                 Q[1].songs = UARDB('song', Q[1].songs);
             }
     
-            if (Q[1].artists && Array.isArray(Q[1].artists)) {
+            if (Q[1].artists && isArray(Q[1].artists)) {
                 Q[1].artists = UARDB('artist', Q[1].artists);
             }
     
@@ -3287,8 +3396,8 @@ track {
         var id = Q[1];
         var table = null;
     
-        if (!SN.song || typeof SN.song !== 'object' || Array.isArray(SN.song)) {SN.song = {};}
-        if (!SN.podcast || typeof SN.podcast !== 'object' || Array.isArray(SN.podcast)) {SN.podcast = {};}
+        if (!SN.song || typeof SN.song !== 'object' || isArray(SN.song)) {SN.song = {};}
+        if (!SN.podcast || typeof SN.podcast !== 'object' || isArray(SN.podcast)) {SN.podcast = {};}
     
         // Q[1] = Song/Podcast Object
         if (typeof id === 'object' && id !== null) {
@@ -3299,7 +3408,7 @@ track {
             id = found.id;
             found.full = true;
     
-            if (found.artists && Array.isArray(found.artists)) {
+            if (found.artists && isArray(found.artists)) {
                 found.artists = UARDB('artist', found.artists);
             }
     
@@ -3369,8 +3478,8 @@ track {
         var id = Q[1];
         var table = null;
     
-        if (!SN.video || typeof SN.video !== 'object' || Array.isArray(SN.video)) {SN.video = {};}
-        if (!SN.musicvideo || typeof SN.musicvideo !== 'object' || Array.isArray(SN.musicvideo)) {SN.musicvideo = {};}
+        if (!SN.video || typeof SN.video !== 'object' || isArray(SN.video)) {SN.video = {};}
+        if (!SN.musicvideo || typeof SN.musicvideo !== 'object' || isArray(SN.musicvideo)) {SN.musicvideo = {};}
     
         // Q[1] = Video/MusicVideo Object (داده‌ی کامل از API)
         if (typeof id === 'object' && id !== null) {
@@ -3379,7 +3488,7 @@ track {
             id = found.id;
             found.full = true;
     
-            if (found.artists && Array.isArray(found.artists)) {
+            if (found.artists && isArray(found.artists)) {
                 found.artists = UARDB('artist', found.artists);
             }
     
@@ -3452,7 +3561,7 @@ track {
         var k;
         var item;
         
-        if (!ar || !Array.isArray(ar)) { return; }
+        if (!ar || !isArray(ar)) { return; }
         
         if (p == 'song') {
 
@@ -3463,7 +3572,7 @@ track {
 
                 item = ar[i];
             
-                if (item.artists && Array.isArray(item.artists)) {
+                if (item.artists && isArray(item.artists)) {
                     item.artists = UARDB('artist', item.artists);
                 }
     
@@ -3483,7 +3592,7 @@ track {
     
                 item = ar[i];
     
-                if (item.artists && Array.isArray(item.artists)) {
+                if (item.artists && isArray(item.artists)) {
                     item.artists = UARDB('artist', item.artists);
                 }
     
@@ -3517,7 +3626,7 @@ track {
         var found = null;
         var q = Q[1];
     
-        if (!SN.search || typeof SN.search !== 'object' || Array.isArray(SN.search)) {SN.search = {};}
+        if (!SN.search || typeof SN.search !== 'object' || isArray(SN.search)) {SN.search = {};}
     
         if (typeof q === 'object' && q !== null) {
     
@@ -3535,7 +3644,7 @@ track {
             var i;
             for (i = 0; i < searchDbTypes.length; i++) {
                 var st = searchDbTypes[i];
-                if (found[st.key] && Array.isArray(found[st.key])) {
+                if (found[st.key] && isArray(found[st.key])) {
                     found[st.key] = UARDB(st.type, found[st.key]);
                 }
             }
@@ -3567,7 +3676,7 @@ track {
 
     function gjs(U, callback) {
     
-        if (!U || !Array.isArray(U) || U.length < 2) {
+        if (!U || !isArray(U) || U.length < 2) {
             console.error('gjs: Invalid request params', U);
             if (callback) {callback(false, null);}
             return;
@@ -3667,6 +3776,13 @@ track {
     
     function CheckLoginStatus(onUpdate) {
 
+        if (!SN.loginEnabled) {
+            SN.user = { loggedIn: false, fv: { sng: [], art: [], alb: [] }, playlists: [] };
+            SN.accessToken = null;
+            if (onUpdate) { onUpdate(); }
+            return;
+        }
+
         var did = GetOrCreateDeviceId();
         var refreshToken = null;
         var cachedUser = null;
@@ -3753,6 +3869,11 @@ track {
     
     function gja(q, callback) {
 
+        if (!SN.loginEnabled) {
+            if (callback) { callback(false, { error: 'login_unavailable' }); }
+            return;
+        }
+
         var xhr = new XMLHttpRequest();
         var url = HP + '?_qjs=uac';
     
@@ -3807,6 +3928,11 @@ track {
 
     function gjl(q, callback) {
 
+        if (!SN.loginEnabled) {
+            if (callback) { callback(false, { error: 'login_unavailable' }); }
+            return;
+        }
+
         var xhr = new XMLHttpRequest();
         var url = HP + '?_qjs=ual';
     
@@ -3856,6 +3982,11 @@ track {
     var currentLoginPoll = null;
     
     function StartTVLogin(onSuccess, onDisplay) {
+
+        if (!SN.loginEnabled) {
+            console.log("TV login disabled: fallback API mode");
+            return;
+        }
 
         gjl({ a: 'request_code' }, function (success, j) {
     
@@ -4059,11 +4190,18 @@ track {
         }
     
         switch (LPS[1]) {
+            case 'setting':
+                if (!SN.loginEnabled) {
+                    if (window.history && window.history.replaceState) {
+                        window.history.replaceState({}, "", "/");
+                    }
+                    CRHP('', '', done);
+                    break;
+                }
+                CRSA(LPS[2], LPS[3], done);
+                break;
             case 'search':
                 CRSR(LPS[2], LPS[3], done);
-                break;
-            case 'setting':
-                CRSA(LPS[2], LPS[3], done);
                 break;
             case 'library':
                 CRLB(LPS[2], LPS[3], done);
@@ -4084,7 +4222,7 @@ track {
     
     function CFAV(q,j){
         if(q.p=='artist'){SN.user.fv.art = j;}
-        if(q.p=='song'){if(j.unfav == true){ let qj = SN.user.fv.sng.findIndex( r => r.name === j.name );SN.user.fv.sng.splice(qj,1);}else{SN.user.fv.sng.unshift(j[0]);}}
+        if(q.p=='song'){if(j.unfav == true){ var qj = SN.user.fv.sng.findIndex( r => r.name === j.name );SN.user.fv.sng.splice(qj,1);}else{SN.user.fv.sng.unshift(j[0]);}}
     }
     
     var Arr_sm = [
@@ -4096,10 +4234,15 @@ track {
     ];
     
     function SPA() {
-        
-        CheckLoginStatus(function () {
-            RefreshLoginDependentUI();
-        });
+
+        if (SN.loginEnabled) {
+            CheckLoginStatus(function () {
+                RefreshLoginDependentUI();
+            });
+        } else {
+            SN.user = { loggedIn: false, fv: { sng: [], art: [], alb: [] }, playlists: [] };
+            SN.accessToken = null;
+        }
     
         // بارگذاری صفحه‌ی فعلی بلافاصله و بدون انتظار برای preload
         var search = window.location.search;
@@ -4119,9 +4262,6 @@ track {
         } else {
             chp();
         }
-    
-
-
     }
     
     function RefreshLoginDependentUI() {
@@ -4136,6 +4276,11 @@ track {
     }
     
     function RequireLogin(onAuthenticated) {
+
+        if (!SN.loginEnabled) {
+            console.log("This feature requires the main API server");
+            return;
+        }
 
         if (SN.user && SN.user.loggedIn) {
             onAuthenticated();
@@ -4187,8 +4332,12 @@ track {
     var HAS_LOCAL = CanUseLocalStorage();
     var PROFILE_KEY = 'ha_profile';
     
-    // start app
-    SPA();   
+    // ابتدا Ping؛ سپس فقط یک بار برنامه با API انتخاب‌شده اجرا می‌شود
+    SN.onAPIReady(function () {
+        HP = SN.apiBase;
+        SPA();
+    });
+    SN.initAPI();
     
     function LoadProfile() {
 
@@ -4934,7 +5083,6 @@ track {
 
             if (cfg.layout === 'tabs') {
                 CREP_tabs(cfg, e, kind);
-                Cmor();
             } else {
                 CREP_detail(cfg, e, kind);
             }
@@ -5572,8 +5720,7 @@ track {
     
         pane.appendChild(list);
     }
-    
-    
+
     function RenderSettingTab(pane) {
     
         var stgTab = OA(document.createElement("div"), {className: "", innerHTML: "TODO"});
@@ -5637,6 +5784,11 @@ track {
     }
 
     async function gsa(q) {
+        
+        if (!SN.apiReady || !SN.loginEnabled) {
+            console.log("Admin API unavailable:", SN.apiMode);
+            return;
+        }
  
         try {
             const res = await fetch(HP+'?_qjs=adm&q='+q);
@@ -5759,7 +5911,6 @@ track {
                 CRAS(SN.user.fv.art);
             }
     
-            Cmor();
             ADE();
     
             sn.makeFocusable("main");
@@ -5952,7 +6103,7 @@ track {
         const fs = (SN.user.fv.sng = SN.user.fv.sng || []);
         
         if(fs.length>0){
-            const el = OA(document.createElement("div"), {className: "track-box"});
+            const el = OA(document.createElement("div"), {className: "item-box"});
             const elb = OA(document.createElement("div"), {className: "box"});
             const ela = OA(document.createElement("a"), {href:HPL+'favorite'});
             elb.append(ela);
@@ -5972,7 +6123,7 @@ track {
             ar.forEach((e) =>{
                 e.artist = e.artist || Cap(au.replace("_", " "));
                 e.artist_url = e.artist_url || au;
-                const el = OA(document.createElement("div"), {className: "track-box"});
+                const el = OA(document.createElement("div"), {className: "item-box"});
                 const elb = OA(document.createElement("div"), {className: "box"});
                 const ela = OA(document.createElement("a"), {href: ul+e.artist_url+'-'+e.url});
                 var elm = OA(document.createElement("div"), {className: "menu", innerHTML: svg_dot});
@@ -5996,7 +6147,7 @@ track {
         }
     //    ADE();
         
-        const el = OA(document.createElement("div"), {className: "track-box"});
+        const el = OA(document.createElement("div"), {className: "item-box"});
         const elb = OA(document.createElement("div"), {className: "box"});
         const ela = OA(document.createElement("a"), {});
         elb.append(ela);
@@ -6037,7 +6188,7 @@ track {
             }
     
             var el = OA(document.createElement("div"), {
-                className: "track-box"
+                className: "item-box"
             });
     
             var elb = OA(document.createElement("div"), {
@@ -6158,7 +6309,7 @@ track {
                 artistName = artist.name || "";
             }
     
-            var el = OA(document.createElement("div"), {className: "track-box"});
+            var el = OA(document.createElement("div"), {className: "item-box"});
             el._item = e;
             el._type = T;
     
@@ -6271,7 +6422,7 @@ track {
             }
     
             var el = OA(document.createElement("div"), {
-                className: "track-box",
+                className: "item-box",
                 "data-type": T,
                 "data-id": e.id
             });
@@ -6794,8 +6945,6 @@ track {
         }
         
         ADE();
-        //LoadAction(e);
-
         sn.makeFocusable();
         var first = document.querySelector(".play-pause");
 
@@ -6876,35 +7025,6 @@ track {
             },false);
         }
         
-    }
-    
-    async function CRPS(QS){
-
-        if(QS=='favorite'){
-            const hed = OA(document.createElement("div"), {className: "page-header p-top-1"});
-            const hh1 = OA(document.createElement("h1"), {className: "title", innerHTML:'Your Favorite Songs'});
-            hed.append(hh1);
-            MCNT.append(hed);
-            CRTL(SN.user.fv.sng);
-            ADE();
-            
-        }else{
-            // get playlist with json
-            
-        }
-
-    }
-    
-    
-    function CARD_FOCUS(el) {
-
-        var item = el._item;
-    
-        /*HERO_UPDATE({
-            type: el._type,
-            id: item.id,
-            item: item
-        });*/
     }
     
     /* =========================================================
@@ -7174,153 +7294,6 @@ track {
         detail.innerHTML = "";
         var tlt = OA(document.createElement("div"),{className: "title",innerHTML: e.name || "" });
         detail.appendChild(tlt);
-    }
-    
-    function Cmor(){
-        const eM = MCNT.querySelectorAll(".menu");
-        for (const e of eM) {
-                e.addEventListener("click", (h)=>{
-                     CRBW(e);
-                },false);
-        }
-    }
-
-    // LEGACY (old bottom-sheet CRBW, kept until migration ends). Not called anymore: see the new CRBW + HPOP below.
-    async function CRBW_legacy(e,l){
-        
-        (l=='href')?'':e = e.parentElement.querySelector("a").href;
-
-        const LPS = e.split("/");
-        LPS[4] = LPS[4]?LPS[4]:'';
-        const QS = LPS[4]?LPS[4]:'';
-        
-        
-        await gjs(['song',QS]);
-        const q = SN.song;
-       
-        const dbw = OA(document.createElement("div"), {className: "bottom-sheet-wrapper"});
-        const dbc = OA(document.createElement("div"), {className: "bottom-sheet-container"});
-        const hed = OA(document.createElement("div"), {className: "bottom-sheet-header"});
-        
-        const daw = OA(document.createElement("div"), {className: "artwork"});
-        const dph = OA(document.createElement("div"), {className: "placeholder", innerHTML: svg_g2s});
-        const its = OA(document.createElement("img"), {src: UT+q.thumb+".jpg"});
-        daw.append(dph,its);
-        const dtx = OA(document.createElement("div"), {className: "texts"});
-        const tx1 = OA(document.createElement("div"), {innerHTML: q.name});
-        const tx2 = OA(document.createElement("div"), {innerHTML: q.artist});
-        dtx.append(tx1,tx2)
-
-        hed.append(daw,dtx);
-        
-        const cnt = OA(document.createElement("div"), {className: "bottom-sheet-content"});
-        const d10 = OA(document.createElement("div"), {style: "width: 100%; height: 100%;"});
-        cnt.append(d10);
-        const dbs = OA(document.createElement("div"), {className: "bottom-sheet-menu"});
-        d10.append(dbs);
-        const tm1 = OA(document.createElement("div"), {className: "item", innerHTML: svg_cpl+q.np+' Plays'});
-        const tm2 = OA(document.createElement("div"), {className: "item", innerHTML: svg_a2p+'Add to Playlist'});
-        const tm3 = OA(document.createElement("div"), {className: "item", innerHTML: svg_g2a+'Go to artist'});
-        const tm4 = OA(document.createElement("div"), {className: "item", innerHTML: svg_g2s+'Go to song'});
-        const tm5 = OA(document.createElement("div"), {className: "item", innerHTML: svg_don+'Download'});
-        const tm6 = OA(document.createElement("div"), {className: "vis-none", innerHTML: svg_cmt+'View Comments'});
-        const tm7 = OA(document.createElement("div"), {className: "item", innerHTML: svg_lik+'View Likes'});
-        const tm8 = OA(document.createElement("div"), {className: "item", innerHTML: svg_shr+'Share'});
-        const tm9 = OA(document.createElement("div"), {className: "item", innerHTML: svg_inf+'Report'});
-        const tm10 = OA(document.createElement("div"), {className: "vis-none", innerHTML: svg_app+'Open in app'});
-        
-        const dbr = OA(document.createElement("div"), {className: "download-bar vis-nt"});
-        const bar = OA(document.createElement("div"), {className: "download-bar-content"});
-        const s128 = OA(document.createElement("div"), {className: "down-item",innerHTML: '128'});
-        const s320 = OA(document.createElement("div"), {className: "down-item",innerHTML: '320'});
-        const stlg = OA(document.createElement("div"), {className: "down-item",innerHTML: '<span style="margin-right:10px" >To</span>'+svg_tl2});
-        bar.append(s128,s320,stlg);
-        dbr.append(bar);
-        dbs.append(tm1,tm2,tm3,tm4,dbr,tm5,tm7,tm8,tm9);
-
-        
-        const btc = OA(document.createElement("div"), {className: "bottom-sheet-close", innerHTML: "Close" });
-
-        dbc.append(hed,cnt,btc);
-        dbw.append(dbc);
-        
-        /*
-        ar.forEach((e) =>{
-            e.artist = e.artist || Cap(au.replace("_", " "));
-            e.artist_url = e.artist_url || au;
-            
-            const tla = OA(document.createElement("a"), {draggable: "false", href: HS+e.artist_url+'-'+e.url});
-            
-            const dtb = OA(document.createElement("div"), {className: "artwork"});
-            tla.append(dtb);
-            const dmg = OA(document.createElement("img"), {src: UT+e.thumb+".jpg"});
-            dtb.append(dmg);
-            const dpl = OA(document.createElement("div"), {className: "play", innerHTML: svg_ply});     
-            const dst = OA(document.createElement("div"), {className: "texts"});
-                const dstt = OA(document.createElement("div"), {className: "title"}); 
-                    const tta = OA(document.createElement("a"), {draggable: "false", href: HS+e.artist_url+'-'+e.url, innerHTML: e.name});
-            dstt.append(tta);      
-            const dsa = OA(document.createElement("div"), {className: "artist", innerHTML: e.artist});
-            const dat = OA(document.createElement("div"), {className: "date", innerHTML: e.bd});
-            const dur = OA(document.createElement("div"), {className: "duration"});
-            const mor = OA(document.createElement("div"), {className: "more", innerHTML: svg_dot});
-            
-            
-            dst.append(dstt,dsa);
-            dtl.append(tla,dpl,dst,dat,dur,mor);
-            sec.append(dtl);
-        });
-        */
-        
-
-        
-        MCLN.append(dbw);
-
-
-        const DBW = MCLN.querySelector(".bottom-sheet-wrapper");
-        const BWC = DBW.querySelector(".bottom-sheet-close");
-        const BMI = DBW.querySelectorAll(".bottom-sheet-menu .item");
-        const BDB = DBW.querySelector(".bottom-sheet-menu .download-bar");
-        const BDI = DBW.querySelectorAll(".download-bar-content .down-item");
-       //  href: HS+e.artist_url+'-'+e.url, 
-
-        BMI[2].addEventListener("click", ()=>{
-                RmvDBW(DBW);
-                chp(HA+q.artist_url);
-                return false;
-        },false);
-
-        BMI[3].addEventListener("click", ()=>{
-                RmvDBW(DBW);
-                chp(HS+q.artist_url+'-'+q.url);
-                return false;
-        },false);
-        
-        BWC.addEventListener("click", ()=>{
-            RmvDBW(DBW);
-        });
-     
-        BDI[0].addEventListener("click", ()=>{
-                downloadFile(q.audio[0].url,q.artist+' - '+q.name,'.mp3');
-                return false;
-        },false);
-
-        
-        BMI[6].addEventListener("click", ()=>{
-
-                (SN.user.id)?(parent.location.href = 'https://t.me/share/url?url=https://t.me/HamrahangBot?startapp='+q.artist_url+'-'+q.url+'==ref'+SN.user.id+'&text=Listen To '+q.name+' By '+q.artist): copyText(HSU+q.artist_url+'-'+q.url,'Song link copied to clipboard');
-                return false;
-        },false);
-        
-        
-        
-        function RmvDBW(e){
-            e.classList.add("translate-to-down");
-            setTimeout(function() {
-                e.remove();
-            }, 500);
-        }
-        
     }
     
     /* ====================================================================
@@ -7932,7 +7905,7 @@ track {
     
     function downloadFile(data, name = 'file', type = 'audio/mpeg') {
 
-        const anchor = document.createElement('a');
+        var anchor = document.createElement('a');
         anchor.setAttribute('href', CDNMP3+name+type);
         anchor.setAttribute('download', name);
         anchor.style.display = 'none';
@@ -7947,41 +7920,16 @@ track {
         anchor.click();*/
     }
     
-    function Res(j){
-        
-        if(j.ok==true){
-            
-            console.log(j);
-            CTMS('Downloaded In Telegram');
-            const DBW = MCLN.querySelector(".bottom-sheet-wrapper");
-            DBW.classList.add("translate-to-down");
-            setTimeout(function() {
-                DBW.remove();
-            }, 500);
-            
-            
-            const drs = OA(document.createElement("div"), {className: "response-wrapper"});
-            const spn = OA(document.createElement("span"), {innerHTML: "Sent to Telegram"});
-            drs.append(spn);
-            MCLN.append(drs);
-            
-            setTimeout(function() {
-                drs.remove();
-            }, 2000);
-        }
-        
-    }    
-
     function ADE(){
         var AA = [];
-        const ABox = document.querySelectorAll(".artist-box a");
-        const ALnk = document.querySelectorAll(".artists a");
-        const TBox = document.querySelectorAll(".track-box a");
-        const TLin = document.querySelectorAll(".track-line a");
-        const SAll = document.querySelectorAll(".section-header a");
-        const MTab = document.querySelectorAll(".main-tabs a");
-        const MENA = document.querySelectorAll(".menu a");
-        const STab = document.querySelectorAll(".setting-tabs a");
+        var ABox = document.querySelectorAll(".artist-box a");
+        var ALnk = document.querySelectorAll(".artists a");
+        var TBox = document.querySelectorAll(".item-box a");
+        var TLin = document.querySelectorAll(".track-line a");
+        var SAll = document.querySelectorAll(".section-header a");
+        var MTab = document.querySelectorAll(".main-tabs a");
+        var MENA = document.querySelectorAll(".menu a");
+        var STab = document.querySelectorAll(".setting-tabs a");
         
         AA.push.apply(AA, MENA);
         AA.push.apply(AA, ABox);
@@ -7991,10 +7939,8 @@ track {
         AA.push.apply(AA, MTab);
         AA.push.apply(AA, SAll);
         AA.push.apply(AA, STab);
-        
-        
 
-         for (const e of AA) {
+        for (const e of AA) {
              
         //     e.removeEventListener("click", chp(), false); // Succeeds
              
@@ -8005,21 +7951,15 @@ track {
                 chp(e.href);
                 return false;
                 },false);
-
             }
         }
-       
+
         AA = [];
-        
         FSRC();
-        //LoadPlayer();   
         //sn.makeFocusable('main');
         //sn.focus('main');
         //sn.makeFocusable('main');
         //sn.focus('main-content');
-        
-        
-
     }
 
     function Cap(st) {
@@ -8143,7 +8083,6 @@ track {
     Backward10.addEventListener("click", function() { ToggleMainBackward10();});
     var Shuffle = document.getElementById("shuffle");
     Shuffle.addEventListener("click", function() { ToggleShuffleMode();});
-
 
     SN.NowPlaying = null;
     SN.RepeatMode = 'off';
@@ -8273,7 +8212,6 @@ track {
         console.log("PlayVideo: Could not play video, skipping:", SN.NowPlaying.item.name);
         // منطق مشابه HandleAllSourcesFailed صوتی — می‌تونیم بعداً یکی‌سازی کنیم
     }
-    
 
     function InitMainProgressKeydown() {
     
@@ -8342,6 +8280,7 @@ track {
         UpdateMainProgressBar();
         
     }
+    
     function ToggleMainBackward10(){
         if (!SN.NowPlaying) { return; }
         var media = GetActiveMediaElement();
@@ -8376,8 +8315,7 @@ track {
     
         icon.src = isPlaying ? "/assets/pause.png" : "/assets/play.png";
     }
-    
-    
+
     function OpenMainPlayer() {
 
         if (!SN.NowPlaying) { return; }
@@ -8561,11 +8499,8 @@ track {
           InitMainPlayer();
     });
 
-    
-    
     function PlayItem(id, list, T) {
-        
-        
+
         T = T || 'song';
 
         var audioTypes = ['song', 'album', 'podcast'];
@@ -8658,36 +8593,25 @@ track {
         });
     }
     
-
-    /*function pickBestSource(sources) {
-        var best = sources[0];
-        for (var i = 1; i < sources.length; i++) {
-            if (parseInt(sources[i].bit, 10) > parseInt(best.bit, 10)) {
-                best = sources[i];
-            }
-        }
-        return best;
-    }*/
-    
     function pickBestSource(sources, preferredQuality) {
 
-    preferredQuality = preferredQuality || 'high';
-
-    var sorted = sources.slice().sort(function (a, b) {
-        return parseInt(b.bit, 10) - parseInt(a.bit, 10);
-    });
-
-    if (preferredQuality === 'high') {
-        return sorted[0];
+        preferredQuality = preferredQuality || 'high';
+    
+        var sorted = sources.slice().sort(function (a, b) {
+            return parseInt(b.bit, 10) - parseInt(a.bit, 10);
+        });
+    
+        if (preferredQuality === 'high') {
+            return sorted[0];
+        }
+    
+        if (preferredQuality === 'low') {
+            return sorted[sorted.length - 1];
+        }
+    
+        // medium: نزدیک‌ترین به وسط لیست
+        return sorted[Math.floor(sorted.length / 2)];
     }
-
-    if (preferredQuality === 'low') {
-        return sorted[sorted.length - 1];
-    }
-
-    // medium: نزدیک‌ترین به وسط لیست
-    return sorted[Math.floor(sorted.length / 2)];
-}
     
     function PlaySourceAt(index) {
 
@@ -9218,127 +9142,8 @@ track {
             HeaderContainer.classList.remove("vis-none");
         }
     }
-    
-    
-    function LoadPlayer(){
-        
-//        MPDT.innerHTML = ppp1;
-//        MinPly.innerHTML = ppp2;
-//        MaxPly.innerHTML = PPP3;
-//        MaxPlyDsk.INNERhtml = PPP4;
-    
-        console.log('LoadPlayer');console.log('AduLst',AduLst);
-        
-        /*if (PlyLst === undefined || PlyLst.length == 0) {
-                PlyLst = AduLst;console.log(PlyLst[0]);console.log('PlyLst',PlyLst);
-                Audio.src = PlyLst[0].audio[0].url;
-                PlyLst[0].play = true;
-                MinPly.classList.add("translate-to-up");
-                MaxDskTmb.src = MaxTmb.src = MinTmb.src =  "/thumb/"+PlyLst[0].thumb+".jpg" ;
-                MaxDskTx1.innerHTML = MinTx1.innerHTML = MaxTx1.innerHTML = PlyLst[0].name;
-                MaxDskTx2.innerHTML = MinTx2.innerHTML = MaxTx2.innerHTML = PlyLst[0].artist;
-                MaxPlyCnt.forEach((e) =>{e.innerHTML=PlyLst[0].np;});
-                TimeUpdt();
-        }
-        */
-        if (PlyLst === undefined || PlyLst.length == 0) {
-    
-            // پر کردن PlyLst با آبجکت‌های کامل از دیتابیس، بر اساس آرایه‌ی id ها در AduLst
-            PlyLst = [];
-    
-            if (AduLst && Array.isArray(AduLst)) {
-                for (var i = 0; i < AduLst.length; i++) {
-                    var songId = (typeof AduLst[i] === 'object') ? AduLst[i].id : AduLst[i];
-                    var songObj = SN.song ? SN.song[songId] : null;
-    
-                    if (songObj) {
-                        PlyLst.push(songObj);
-                    } else {
-                        console.log("LoadPlayer: Song not found in DB:", songId);
-                    }
-                }
-            }
-    
-            if (PlyLst.length === 0) {
-                console.log("LoadPlayer: No valid songs to play");
-                return;
-            }
-    
-            console.log(PlyLst[0]);
-            console.log('PlyLst', PlyLst);
-    
-            Audio.src = PlyLst[0].audio[0].url;
-            PlyLst[0].play = true;
-    
-            MinPly.classList.add("translate-to-up");
-    
-            var thumb = (PlyLst[0].meta && PlyLst[0].meta.tmb) ? PlyLst[0].meta.tmb : "undefined";
-            MaxDskTmb.src = MaxTmb.src = MinTmb.src = UT + thumb + ".jpg";
-    
-            MaxDskTx1.innerHTML = MinTx1.innerHTML = MaxTx1.innerHTML = PlyLst[0].name;
-    
-            // اسم artist از SN.artist بر اساس PlyLst[0].artists[0] گرفته می‌شه
-            var artistName = "";
-            if (PlyLst[0].artists && Array.isArray(PlyLst[0].artists) && PlyLst[0].artists.length > 0) {
-                var firstArtistId = (typeof PlyLst[0].artists[0] === 'object') ? PlyLst[0].artists[0].id : PlyLst[0].artists[0];
-                var firstArtist = SN.artist ? SN.artist[firstArtistId] : null;
-                if (firstArtist) {
-                    artistName = firstArtist.name || "";
-                }
-            }
-            MaxDskTx2.innerHTML = MinTx2.innerHTML = MaxTx2.innerHTML = artistName;
-    
-            MaxPlyCnt.forEach(function (e) { e.innerHTML = PlyLst[0].np; });
-    
-            TimeUpdt();
-        }
 
-    }
-    
-    let 
-    //    Video = document.querySelector("#vdoply"),
-       // Audio = document.querySelector(".main-song"),
-/*        MinPly = document.querySelector(".minimize-player-wrapper"),
-        MinPlyBtn = MinPly.querySelectorAll(".button"),
-        MinArt = MinPly.querySelector(".artwork"),
-        MinTmb = MinArt.querySelector("img"),
-        MinTxs = MinPly.querySelector(".texts"),
-        MinTx1 = MinPly.querySelector(".text1"),
-        MinTx2 = MinPly.querySelector(".text2"),
-        MinSkb = MinPly.querySelector(".seekbar"),
-    
-        MaxPly = document.querySelector(".maximum-player-wrapper"),        
-
-        MaxMobPly = MaxPly.querySelector(".maximum-player-mobile"), 
-        MaxMin = MaxMobPly.querySelector(".minimize"),
-        MaxArt = MaxMobPly.querySelector(".artwork"),
-        MaxTmb = MaxMobPly.querySelector("img"),
-        MaxTxs = MaxMobPly.querySelector(".texts"),
-        MaxTx1 = MaxMobPly.querySelector(".text1"),
-        MaxTx2 = MaxMobPly.querySelector(".text2"),
-        MaxSkb = MaxMobPly.querySelector(".seekbar input"),
-        MaxBtn = MaxMobPly.querySelectorAll(".button"),
-        MaxTim = MaxMobPly.querySelectorAll(".times span"),
-        
-        MaxPlyCnt = document.querySelectorAll(".plays-count"),
-
-        
-        MaxPlyDsk = document.querySelector(".maximum-player-desktop"),
-        MaxDskArt = MaxPlyDsk.querySelector(".artwork"),
-        MaxDskTmb = MaxDskArt.querySelector("img"),
-        MaxDskTx1 = MaxPlyDsk.querySelector(".text1"),
-        MaxDskTx2 = MaxPlyDsk.querySelector(".text2"),
-        MaxBtnPly = MaxPlyDsk.querySelector(".play-pause"),
-        MaxDskBtn = MaxPlyDsk.querySelectorAll(".controll .button"),
-        MaxDskBDT = MaxPlyDsk.querySelectorAll(".maximum-player-desktop .details .buttons"),
-        MaxDskSkb = MaxPlyDsk.querySelector(".controll .seekbar input"),
-        
-        MaxQue    = document.querySelector(".maximum-player-queue"),
-        MaxQueHdt = MaxQue.querySelector(".header .title"),
-        MaxQueBDT = MaxQue.querySelectorAll(".header .buttons"),
-        MaxQueSng = MaxQue.querySelector(".track-line-queue-container"),
-        MaxQueCls = MaxQue.querySelector(".bottom-sheet-close"),
-*/
+    var 
         svg_spn_sml = '<div class="spinner-small" role="status"></div>',
         svg_spn_wlp = '<i class="wlap"></i>',
         svg_min_pus = '<svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 28px; height: 28px;"><path d="M24.5,42h5V22h-5V42z M34.5,42h5V22h-5V42z M32,57c-3.5,0-6.7-0.7-9.8-2s-5.7-3.1-7.9-5.3s-4-4.9-5.3-7.9    c-1.3-3-2-6.3-2-9.8s0.7-6.7,2-9.8s3.1-5.7,5.3-7.9s4.9-4,7.9-5.3s6.3-2,9.8-2s6.7,0.7,9.8,2s5.7,3.1,7.9,5.3s4,4.9,5.3,7.9    s2,6.3,2,9.8s-0.7,6.7-2,9.8c-1.3,3-3.1,5.7-5.3,7.9s-4.9,4-7.9,5.3S35.5,57,32,57z"></path></svg>',
@@ -9349,36 +9154,6 @@ track {
         svg_max_pus = '<svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 20px; height: 20px;"><path d="M39.1,57V7h14.3v50H39.1z M10.6,57V7h14.3v50H10.6z"></path></svg>'
 
         ;
-    
-    function LoadAction(e){
-
-        const
-        
-        cntAct = document.querySelector(".page-detail-actions"),
-        actbtn = cntAct.querySelectorAll(".btn"), 
-        playActBtn = cntAct.querySelector(".play-pause");
-        
-        playActBtn.addEventListener("click", (e)=>{
-            playSong(playActBtn);
-
-        });
-    
-        actbtn[0].addEventListener("click", async ()=>{
-            const q = {'p':'song','a':'follow','q':[e.artist,e.name]};
-
-            if(SN.user.fv.sng.find( r => r.name === e.name)){
-              //  console.log(r);
-                actbtn[0].innerHTML = svg_str;
-            }else{
-                actbtn[0].innerHTML = svg_st2;
-            }
-        });
-        
-        actbtn[3].addEventListener("click", ()=>{console.log(window.location.href);
-            CRBW(window.location.href,'href');
-        },false);
-    
-    }
     
     function ChkAudio(){
         Audio.addEventListener("abort", () => {
@@ -9400,278 +9175,7 @@ track {
         
     SN.log = {};
     SN.log.ply = [];
-    async function PlyCunt(q){
-        
-        await fetch(HP+'?_qjs=csp', {
-            method: "POST",
-            body: JSON.stringify({
-                id:SN.user.id,
-                q
-            }),
-            headers: {
-                "Content-type": "application/json; charset=UTF-8"
-            }
-        })
-        .then((response) => response.json())
-        .then((j) => {(j.length)?SN.user.lp = j:''; });
-        
 
-        SN.log.ply.push(e);
-        console.log(SN);
-        
-        
-    }
-    
-    function playSong(e){
-    /*    if(content.classList.contains("vis-none")){content.classList.remove("vis-none");}
-        content.classList.add("paused");
-        playBtnIcon.innerHTML = '<svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 20px; height: 20px;"><path d="M39.1,57V7h14.3v50H39.1z M10.6,57V7h14.3v50H10.6z"></path></svg>';
-        index_s.innerHTML=IconEQ;
-        thumbail.classList.add("rounded-circle");
-        thumb_spn.classList.add("rounded-circle");
-        thumb_img.classList.add("rounded-circle");
-        thumbail.classList.add("spin-thumb");
-
-*/
-        PlyLst = [];
-        PlyLst = AduLst;
-        
-        if (PlyLst[0].play === undefined ) {
-            
-            Audio.src = PlyLst[0].audio[0].url;
-            PlyLst[0].play = true;
-            if(MinPly.classList.contains("translate-to-down")){MinPly.classList.remove("translate-to-down");}
-            MinPly.classList.add("translate-to-up");
-            MaxDskTmb.src = MaxTmb.src = MinTmb.src =  "/thumb/"+PlyLst[0].thumb+".jpg" ;
-            MaxDskTmb.classList.add("spin-thumb");MinTmb.classList.add("spin-thumb");
-            MaxDskTx1.innerHTML = MinTx1.innerHTML = MaxTx1.innerHTML = PlyLst[0].name;
-            MaxDskTx2.innerHTML = MinTx2.innerHTML = MaxTx2.innerHTML = PlyLst[0].artist;
-            MaxPlyCnt.forEach((e) =>{e.innerHTML=PlyLst[0].np;});
-            MinPlyBtn[1].innerHTML = svg_min_pus;
-            MaxBtnPly.querySelector("span").innerHTML = svg_dsk_pus;
-            Audio.play();
-            PlyCunt(PlyLst[0]);
-            e.innerHTML = svg_dsk_pus;
-            
-        }else if(PlyLst[0].play == true){
-            ChkPlyPus();
-        }
-        
-    //    ChkAudio();
-        
-        
-
-    }
-
-    
-    function ChkPlyPus(){
-
-        if(Audio.paused){
-            Audio.play();
-            MaxBtnPly.innerHTML = '<span>'+svg_dsk_pus+'</span>';
-            MaxBtn[2].innerHTML = '<span>'+svg_max_pus+'</span>';
-            MinPlyBtn[1].innerHTML = svg_pus;
-            MinTmb.classList.add("spin-thumb");
-            MaxTmb.classList.add("spin-thumb");
-            MaxDskTmb.classList.add("spin-thumb");
-            PlyCunt(PlyLst[0]);
-        }else{
-            Audio.pause();
-            MaxBtnPly.innerHTML = '<span>'+svg_dsk_ply+'</span>';
-            MaxBtn[2].innerHTML = '<span>'+svg_max_ply+'</span>';
-            MinPlyBtn[1].innerHTML = svg_ply;
-            MinTmb.classList.remove("spin-thumb");
-            MaxTmb.classList.remove("spin-thumb");
-            MaxDskTmb.classList.remove("spin-thumb");
-            
-        }
-    }
-    
-    function PlyRpl(){
-        
-        PlyLst[0].play = true;
-        CRTQ(PlyLst,'',MaxQueSng);
-        ChkPlyPus();
-        MaxDskTmb.classList.contains("spin-thumb")?MaxDskTmb.classList.remove("spin-thumb"):'';
-        MinTmb.classList.contains("spin-thumb")?MinTmb.classList.remove("spin-thumb"):'';
-        if (PlyLst[0].audio[0].url) {
-            MaxDskTmb.src = MaxTmb.src = MinTmb.src =  "/thumb/"+PlyLst[0].thumb+".jpg" ;
-            MaxDskTx1.innerHTML = MinTx1.innerHTML = MaxTx1.innerHTML = PlyLst[0].name;
-            MaxDskTx2.innerHTML = MinTx2.innerHTML = MaxTx2.innerHTML = PlyLst[0].artist;
-            MaxPlyCnt.forEach((e) =>{e.innerHTML=PlyLst[0].np;});
-            Audio.src = PlyLst[0].audio[0].url;
-            // تاریخچهٔ دائم (مسیر قدیمی پلیر) — اگه آیتم id داشت ثبت کن
-            if (PlyLst[0] && PlyLst[0].id != null) {
-                PushPlayHistory(PlyLst[0].id, (PlyLst[0].meta && PlyLst[0].meta.type === 'podcast') ? 'podcast' : 'song');
-            }
-            MinPlyBtn[1].innerHTML = svg_spn_wlp;
-            MaxBtnPly.innerHTML = svg_spn_wlp;
-            Audio.oncanplay = function() {
-                MaxDskTmb.classList.add("spin-thumb");
-                MinTmb.classList.add("spin-thumb");
-                ChkPlyPus();
-            };
-        }
-    }
-    
-    function TimeUpdt(){
-        Audio.addEventListener("timeupdate", (e)=>{
-            const initialTime = e.target.currentTime; // Get current music time
-            const finalTime = e.target.duration; // Get music duration
-            let BarWidth = (initialTime / finalTime) * 100;
-            
-            
-            var p = Math.pow(10, 1);
-            let SWidth =  Math.round((initialTime*100/finalTime) * p)/p ;
-            
-            
-   //         console.log(SWidth);
-            MaxDskSkb.value = MaxSkb.value = SWidth;
-            
-            MaxDskSkb.addEventListener("change", (e)=>{
-                Audio.currentTime = (MaxDskSkb.value * finalTime)/100;
-            });
-            
-            MinSkb.style.transform = "translateX(calc(" + (SWidth-100) + "%))";
-        
-            
-   //         progressBar.style.width = BarWidth+"%";
-    //        Wlap.style.display = "none";
-    /*        progressDetails.addEventListener("click", (e)=>{
-                let progressValue = progressDetails.clientWidth; // Get width of Progress Bar
-                let clickedOffsetX = e.offsetX; // get offset x value
-                let MusicDuration = Audio.duration; // get total music duration
-                
-                Audio.currentTime = (clickedOffsetX / progressValue) * MusicDuration;
-            });
-    */
-            //Timer Logic
-            Audio.addEventListener("loadeddata", (e)=>{console.log(e);
-            
-    //            Wlap.style.display = "none";
-                  
-                let MaxDskDur = MaxPlyDsk.querySelector(".controll .duration");
-            
-                //Update finalDuration
-                let AudioDuration = Audio.duration;
-                let finalMinutes = Math.floor(AudioDuration / 60);
-                let finalSeconds = Math.floor(AudioDuration % 60);
-                if(finalSeconds < 10){
-                  finalSeconds = "0"+finalSeconds;
-                }
-                MaxDskDur.innerText = finalMinutes+":"+finalSeconds;
-                MaxTim[1].innerText = finalMinutes+":"+finalSeconds;
-            });
-        
-            //Update Current Duration
-            let currentTimeData = MaxPlyDsk.querySelector(".current-time");
-            let CurrentTime = Audio.currentTime;
-            let currentMinutes = Math.floor(CurrentTime / 60);
-            let currentSeconds = Math.floor(CurrentTime % 60);
-            if(currentSeconds < 10){
-            currentSeconds = "0"+currentSeconds;
-            }
-            currentTimeData.innerText = currentMinutes+":"+currentSeconds;
-            MaxTim[0].innerText = currentMinutes+":"+currentSeconds;
-    
-        });
-    }
-/*    
-    MaxBtnPly.addEventListener("click", ()=>{
-        ChkPlyPus();
-    });
-    
-    MinPlyBtn[1].addEventListener("click", ()=>{
-        ChkPlyPus();
-    });
-    
-    MaxBtn[2].addEventListener("click", ()=>{
-        ChkPlyPus();
-    });
-    
-
-   
-    MinPlyBtn[0].addEventListener("click", ()=>{
-        PlyLst[0].play = false;
-        PlyLst.unshift(PlyLst[PlyLst.length-1]);
-        PlyLst.pop();
-        PlyRpl();
-    });
-
-    MaxDskBtn[1].addEventListener("click", ()=>{
-        PlyLst[0].play = false;
-        PlyLst[PlyLst.length-1].play
-        PlyLst.unshift(PlyLst[PlyLst.length-1]);
-        PlyLst.pop();
-        PlyRpl();
-    });
-    
-    MinPlyBtn[2].addEventListener("click", ()=>{
-        PlyLst[0].play = false;
-        PlyLst.push(PlyLst[0]);
-        PlyLst.shift();
-        PlyRpl();
-    });
-    
-    MaxDskBtn[3].addEventListener("click", ()=>{
-        PlyLst[0].play = false;
-        PlyLst.push(PlyLst[0]);
-        PlyLst.shift();
-        PlyRpl();
-    });
-    
-    MinPlyBtn[3].addEventListener("click", ()=>{
-        if(MinPly.classList.contains("translate-to-up")){MinPly.classList.remove("translate-to-up");}
-        MinPly.classList.add("translate-to-down");
-        Audio.pause();
-        
-    });
-    
-    MinArt.addEventListener("click", ()=>{
-        CQSL();
-        MaxMiz(MaxPly);
-        MinMiz(MinPly);
-    });
-    
-    MinTxs.addEventListener("click", ()=>{
-        CQSL();
-        MaxMiz(MaxPly);
-        MinMiz(MinPly);
-    });
-    
-    MaxMin.addEventListener("click", ()=>{
-        MinMiz(MaxPly);
-        MaxMiz(MinPly);
-    });
-    
-    MaxDskBDT[0].addEventListener("click", ()=>{
-        if(MaxPly.classList.contains("translate-to-down")){
-            CQSL();
-            MaxPly.classList.remove("translate-to-down");
-            MaxPly.classList.add("translate-to-up");
-            MinMiz(MinPly);
-        }else if(MaxPly.classList.contains("translate-to-up")){
-            CQSL();
-            MaxPly.classList.remove("translate-to-up");
-            MaxPly.classList.add("translate-to-down");
-            MaxMiz(MinPly);
-        }else{
-            CQSL();
-            MaxPly.classList.add("translate-to-up");
-            MinMiz(MinPly);
-        }
-
-    });
-    
-    
-    MaxQueBDT[0].addEventListener("click", ()=>{
-        MinMiz(MaxPly);MaxMiz(MinPly);
-    });
-    
-    MaxQueCls.addEventListener("click", ()=>{
-        MinMiz(MaxPly);MaxMiz(MinPly);
-    });
-*/    
     function MinMiz(e){
         if(e.classList.contains("translate-to-up")){e.classList.remove("translate-to-up");}
         e.classList.add("translate-to-down");
@@ -9685,13 +9189,11 @@ track {
     function CQSL(){
         CRTQ(PlyLst,'',MaxQueSng);
     }
-    
 
     function CTMS(t){
-        
-        const tms = OA(document.createElement("div"), {className: "toast-message show"});
-        const spn = OA(document.createElement("span"), {innerHTML:t});
-        tms.append(spn);
+        var tms = OA(document.createElement("div"), {className: "toast-message show"});
+        var spnt = OA(document.createElement("span"), {innerHTML:t});
+        tms.append(spnt);
         document.body.append(tms);
         setTimeout(() => {
             tms.className = tms.className.replace("show", "");
@@ -9699,21 +9201,6 @@ track {
           }, 3000);
     }
 
-    async function copyText(l,t) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            try{
-              await navigator.clipboard.writeText(l);
-              CTMS(t);
-              console.log('copied to clipboard');
-            }catch (err){
-              console.error('Failed to copy: ', err);
-              copyTextFallback(l);
-            }
-        }else{
-            copyTextFallback(l);
-        }
-    }
-    
     function copyTextFallback(l){
         
         document.body.appendChild(dummy);
@@ -9727,21 +9214,8 @@ track {
         }
         document.body.removeChild(dummy);
     }
-    
-    
+
     function handleAttachments () {
-    
-
-    //  setupVideoSource();
-    //  setupSubtitles();
-
-    //  initilaTrafficWarrnig("play");
-    //  movefocus(37);
-
-    /*  if (currentContent.ZoneID === 4 || nextEpisode.episode === 0) {
-        nextEpisodeEl.style.display = "none";
-      }
-*/
 
       setInterval(function () {
         
@@ -9762,8 +9236,6 @@ track {
             }
             
             */
-            
-            
             progressBar.style.opacity = 1;
             Timer.innerHTML =
               formatTime(playerTime.current) +
@@ -9776,53 +9248,7 @@ track {
         
       }, 1000);
       
-    /*  
-      var title;
-      if (currentAttachment.SeasonTitle && currentContent) {
-        title =
-          currentContent.Title +
-          " - " +
-          currentAttachment.SeasonTitle +
-          " - " +
-          currentAttachment.Title;
-      } else title = currentAttachment.Title;
-      document.getElementById("content-title").innerHTML = title;
-
-      if (!subtitles.length) {
-        subtitleBtn.parentNode.removeChild(subtitleBtn);
-        playBtn.classList.remove("g-22");
-        playBtn.classList.add("g-21");
-      } else {
-        subtitles.unshift({
-          id: -1,
-          active: false,
-          title: "خاموش",
-        });
-      }
-      var subtitlesTarget;
-      for (var i = 0; i < subtitles.length; i++) {
-        subtitlesTarget = subtitles[i];
-        if (!currentAttachment.IsDubbed && subtitlesTarget.title === "فارسی") {
-          subtitlesTarget.active = true;
-        } else if (currentAttachment.IsDubbed) {
-          subtitlesTarget.active = subtitlesTarget.id === -1;
-        }
-      }
-
-      var cq = find(mp4Source, function (item) {
-        return item.quality === 5 || item.quality === 4 || item.quality === 2;
-      });
-      currentQuality = cq.quality;
-    */
-        
-        
-    
   };
-
-
-// handle user active
-
-
 
     function changePlay(State) {
 
@@ -9850,7 +9276,6 @@ track {
             changePlay("play");
           }
     };
-    
 
     function back2home(){
         Video.pause();
@@ -9933,11 +9358,7 @@ track {
       document[events.exitFullscreen]();
     }
   }
-  
 
-
-
-      
     function handleChangeTime (duration, current, watched) {
         playerTime.duration = Math.round(duration);
         playerTime.current = Math.round(current);
@@ -9985,10 +9406,6 @@ track {
     document.addEventListener("keydown", seek); 
     document.addEventListener("keypress", ()=>{ document.activeElement.click(); return; });
       
-    //progressBar.addEventListener("input", (e)=> {VPLY.currentTime = e.target.value;}); 
-    
-
-      
     function formatTime(seconds) {
         var hrs = Math.floor(seconds / 3600);
         var mins = Math.floor((seconds % 3600) / 60);
@@ -10009,411 +9426,7 @@ track {
         }
     }
     
-
- 
-    
-
 }();  
-
-
 </script>
-
-<script>
-
-
-
-
-
-function player(){
-
-
-    let songs = '';
-      
-      
-    //songs = [{id:"0",audio:["https://dl.aba-music.ir/music/1401/15/EmamAli-Banifatemeh-01.mp3","https://abrehamrahi.ir/o/public/UcHh0vPW/",]},] ; 
-
-
-
-
-    const thumbail = document.querySelector(".thumbail"),
-        thumb_img = thumbail.querySelector("img"),
-        thumb_spn = thumbail.querySelector("span")
-        ;
-
-    const   cntAct = document.querySelector(".page-detail-actions"),
-            playActBtn = cntAct.querySelector(".play-pause"),
-
-
-    content = document.querySelector(".player-container-mobile"),
-    Audio = document.querySelector(".main-song"),
-    playBtn = content.querySelector(".play-pause"),
-    playBtnIcon = content.querySelector(".play-pause span"),
-    prevBtn = content.querySelector(".play-prev"),
-    nextBtn = content.querySelector(".play-next"),
-    progressBar = content.querySelector(".progress-bar"),
-    progressDetails = content.querySelector(".progress-details"),
-    repeatBtn = content.querySelector("#repeat"),
-    MaxMinBtn = content.querySelector(".maxminplayer"),
-    Wlap = content.querySelector(".wlap"),
-    Shuffle = content.querySelector("#shuffle");
-    
-//    playBtn.id = songs[0].id;
-    const IconPlay = '<svg version="1.1" width="32" height="32" viewBox="0 0 64 64" fill="currentColor"><path d="M16,57V7l39.3,25L18.4,57z"></path></svg>';
-    const IconEQ = '<svg viewBox="0 0 450 500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="fill-current"><g class="bars" transform="scale(1,-1) translate(0,-500)" fill="white"><rect height="50" width="100" x="0" y="0"><animate attributeName="height" from="50" to="50" values="50; 450; 50" keyTimes="0; 0.5; 1" dur="0.9s" fill="freeze" repeatCount="indefinite"/></rect><rect height="50" width="100" x="150" y="0"><animate attributeName="height" from="50" to="50" values="50; 450; 50" keyTimes="0; 0.5; 1" dur="1.2s" fill="freeze" repeatCount="indefinite"/></rect><rect height="50" width="100" x="300" y="0"><animate attributeName="height" from="50" to="50" values="50; 450; 50" keyTimes="0; 0.5; 1" dur="1s" fill="freeze" repeatCount="indefinite"/></rect></g></svg>';
-    
-    let index = 0;
-    let index_src = 0;
-    let index_s = 0; //document.getElementById(songs[0].id);
-
-
-
-/*
-    // Example usage
-//    const filePath = 'https://abrehamrahi.ir/o/public/UcHh0vPW'; // Replace with your file path
-/*
-    // Function to fetch file content and check for a term
-    function checkFileContent(filePath) {   console.log(filePath);
-            fetch(filePath)
-            .then((response) => {
-                if (response.ok) {
-                    Audio.src = filePath;
-                }else{
-                    console.log("else");
-                    changeSRC();
-                }
-
-            })
-            .catch((error) => {
-                console.log("Could not find Audio SRC");
-                changeSRC();
-            });
-    }
-   
-
-
-        var http = new XMLHttpRequest();
-
-        function checkFileExist(url) {
-            if (url.length === 0) {
-                console.log("Please enter File URL");
-            } else {
-                http.open('HEAD', url, false);
-                http.send();
-                if (http.status === 200) {
-                   console.log("File exists");
-                } else {
-                   console.log("File doesn't exists");
-                }
-            }
-        }
-
-    // Function to fetch file content and check for a term
-    async function checkFileContent(filePath) {  console.log(filePath);
-        try {
-            const response = await fetch(filePath, {
-  mode: 'no-cors',
-});
-
-            // Check if the fetch was successful (status code 200)
-            if (!response.ok) {
-                console.log("Could not find Audio SRC");
-                changeSRC();
-            }else{
-                 Audio.src = filePath;
-               
-            }
-            
-            
-
-        //  Audio Buffer    
-        //    const arrayBuffer = await response.arrayBuffer();
-        //    console.log(arrayBuffer);
-
-        } catch (error) {
-            console.log("Could not connect to server");
-            
-        }
-    }
-
-
-
-    
-    function changeSRC() {
-        
-        
-        checkFileContent('https://abrehamrahi.ir/o/public/UcHh0vPW/');
-        
-    }
-//checkFileContent('https://dl.aba-music.ir/music/1401/15/EmamAli-Banifatemeh-01.mp3');
-checkFileExist('https://dl.aba-music.ir/music/1401/15/EmamAli-Banifatemeh-01.mp3');
-
-async function getData() {
-  const url = "https://dl.aba-music.ir/music/1401/15/EmamAli-Banifatemeh-01.mp3";
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    }
-    // ...
-  } catch (error) {
-    console.error(error.message);
-  }
-}
-
-
-getData();
-
-*/
-
-
-    window.addEventListener("load", ()=>{
-    /*        
-        async function checkFileExist(url) {
-            let response = await fetch(url); 
-          
-            if (response.ok) {
-                console.log(url);
-                loadData(index,index_src);
-                //alert( response.status);
-            }
-            //await new Promise(resolve => setTimeout(resolve, 5000));
-            //throw new Error(response);
-        }
-        
-        checkFileExist(songs[index].audio[index_src])
-        .catch(changeSRC(),checkFileExist(songs[index].audio[index_src]));*/
-          loadData(index,index_src);
-    });
-
-    function loadData(i,s){
-        Audio.src = songs[i].audio[s];
-    }
-     
-    function changeSRC() {
-        console.log(2222);
-        if(index_src+1 < songs[index].audio.length){
-            index_src ++;
-        }else{
-            //index_src = songs[index].audio.length-1;
-            //loadData(index,(songs[index].audio[index_src]));
-        }
-        
-    }
-    
-
-    Audio.addEventListener("abort", () => {
-      console.log("Abort loading");
-    });
-
-    Audio.addEventListener("error", (e) => {
-        console.log("COULD NOT LOAD AUDIO = " + e.target.error.MEDIA_ERR_ABORTED);
-        console.log("MEDIA ERR NETWORK = " + e.target.error.MEDIA_ERR_NETWORK);
-        console.log("COULD NOT LOAD DECODE = " + e.target.error.MEDIA_ERR_DECODE);
-        console.log("COULD NOT LOAD AUDIO = " + e.target.error.MEDIA_ERR_SRC_NOT_SUPPORTED);
-       // changeSRC();
-    });
-
-    Audio.addEventListener("canplay", function () {
-         //console.log('The file is loaded and ready to play!');
-        }, false);
-
-
-    
-    function ItmPlayPause(a){
-        
-        if(songs[index].id != a.id){
-            
-            pauseSong();
-            index_s=a;
-
-            for (let i = 0; i < songs.length; i++) {
-            	if (songs[i].id==a.id){
-                index = i;
-                }
-            }
-              loadData(index);
-        }
-
-        const isMusicPaused = content.classList.contains("paused");
-        if(isMusicPaused){
-            pauseSong();
-        }else{
-            playSong();
-        }
-        
-        
-    }
-
-    playActBtn.addEventListener("click", ()=>{
-        
-        cntAct.classList.add("vis-none");
-        if(content.classList.contains("vis-none")){content.classList.remove("vis-none");}
-        
-        const isMusicPaused = content.classList.contains("paused");
-        if(isMusicPaused){
-        pauseSong();
-        }
-        else{
-        playSong();
-        }
-    });
-    
-    playBtn.addEventListener("click", ()=>{alert();
-        const isMusicPaused = content.classList.contains("paused");
-        if(isMusicPaused){
-        pauseSong();
-        }
-        else{
-        playSong();
-        }
-    });
-
-    function playSong(){
-        if(content.classList.contains("vis-none")){content.classList.remove("vis-none");}
-        content.classList.add("paused");
-        playBtnIcon.innerHTML = '<svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 20px; height: 20px;"><path d="M39.1,57V7h14.3v50H39.1z M10.6,57V7h14.3v50H10.6z"></path></svg>';
-        index_s.innerHTML=IconEQ;
-        thumbail.classList.add("rounded-circle");
-        thumb_spn.classList.add("rounded-circle");
-        thumb_img.classList.add("rounded-circle");
-        thumbail.classList.add("spin-thumb");
-        Audio.play();
-    }
-
-    function pauseSong(){
-        content.classList.remove("paused");
-        thumbail.classList.remove("spin-thumb");
-        index_s.innerHTML=IconPlay;
-        Audio.pause();
-    }
-    
-    function ChekPlay(i){
-          index_s = document.getElementById(songs[i].id);
-        
-    }
-/*
-    nextBtn.addEventListener("click", ()=>{
-      nextSong();
-    });
-    
-    prevBtn.addEventListener("click", ()=>{
-      prevSong();
-    });
-*/
-    function nextSong(){
-        pauseSong();
-      index++;
-      if(index+1 > songs.length){
-        index = 0;
-      }else{
-        index = index;
-      }
-      ChekPlay(index);
-      loadData(index);
-      playSong();
-    } 
-
-    function prevSong(){
-        pauseSong();
-      index--;
-      if(index <= -1){
-        index = songs.length-1;
-      }
-      else{
-        index = index;
-      }
-      ChekPlay(index);
-      loadData(index);
-      playSong();
-    }
-
-      //repeat button logic
-      let isRepeat = 0;
-      
-      repeatBtn.addEventListener("click", ()=>{
-    
-          
-        if(repeatBtn.classList.contains("is-repeat")){
-            repeatBtn.classList.remove("is-repeat");
-            repeatBtn.innerHTML = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>';
-            isRepeat = 0;
-        }
-        else{ 
-          repeatBtn.classList.add("is-repeat");
-          repeatBtn.innerHTML = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M4,12V9c0-1.7,1.3-3,3-3h13 M17,3l3,3"></path><path d="M20,12v3c0,1.7-1.3,3-3,3H4 M7,21l-3-3"></path><path d="M11.3,10H13v4"></path></svg>';
-          isRepeat = 1;
-        }  
-
-    //    Audio.currentTime = 0;
-      });
-      
-
-Audio.addEventListener('waiting', ()=> {
-    Wlap.style.display = "flex";
-
-});
-
-Audio.addEventListener("timeupdate", (e)=>{
-      const initialTime = e.target.currentTime; // Get current music time
-      const finalTime = e.target.duration; // Get music duration
-      let BarWidth = (initialTime / finalTime) * 100;
-      progressBar.style.width = BarWidth+"%";
-     Wlap.style.display = "none";
-      progressDetails.addEventListener("click", (e)=>{
-        let progressValue = progressDetails.clientWidth; // Get width of Progress Bar
-        let clickedOffsetX = e.offsetX; // get offset x value
-        let MusicDuration = Audio.duration; // get total music duration
-    
-        Audio.currentTime = (clickedOffsetX / progressValue) * MusicDuration;
-      });
-
-    //Timer Logic
-    Audio.addEventListener("loadeddata", ()=>{
-    
-   //     Wlap.style.display = "none";
-          
-        let finalTimeData = content.querySelector(".final");
-    
-        //Update finalDuration
-        let AudioDuration = Audio.duration;
-        let finalMinutes = Math.floor(AudioDuration / 60);
-        let finalSeconds = Math.floor(AudioDuration % 60);
-        if(finalSeconds < 10){
-          finalSeconds = "0"+finalSeconds;
-        }
-        finalTimeData.innerText = finalMinutes+":"+finalSeconds;
-    });
-
-    //Update Current Duration
-    let currentTimeData = content.querySelector(".current");
-    let CurrentTime = Audio.currentTime;
-    let currentMinutes = Math.floor(CurrentTime / 60);
-    let currentSeconds = Math.floor(CurrentTime % 60);
-    if(currentSeconds < 10){
-    currentSeconds = "0"+currentSeconds;
-    }
-    currentTimeData.innerText = currentMinutes+":"+currentSeconds;
-
-    }); 
-
-    //Shuffle Logic
-    Shuffle.addEventListener("click", ()=>{
-      var randIndex = Math.floor(Math.random() * songs.length); // Select random betwn 1 and song array length
-      pauseSong();
-      loadData(randIndex);
-      ChekPlay(randIndex);
-      playSong();
-    });
-    
-    Audio.addEventListener("ended", ()=>{
-      if(isRepeat==1){
-            playSong();
-        }else{
-            nextSong();
-        }
-    });
-}
-</script>
-
 </body>
 </html>
