@@ -81,12 +81,101 @@
       if (this.oMatchesSelector) { return this.oMatchesSelector(selector); }
     } catch (e) {}
     try {
-      matchedNodes = (this.parentNode || this.ownerDocument || document).querySelectorAll(selector);
-      return [].slice.call(matchedNodes).indexOf(this) >= 0;
+      matchedNodes = queryAll(selector, this.parentNode || this.ownerDocument || document);
+      return matchedNodes.indexOf(this) >= 0;
     } catch (e2) {
       return false;
     }
   };
+
+  /* Array helpers — Maple may lack filter/find/forEach/map/Object.keys */
+  function arrayFilter(arr, fn) {
+    var out = [], i, n = arr ? arr.length : 0;
+    for (i = 0; i < n; i++) {
+      if (fn(arr[i], i, arr)) { out.push(arr[i]); }
+    }
+    return out;
+  }
+
+  function arrayFind(arr, fn) {
+    var i, n = arr ? arr.length : 0;
+    for (i = 0; i < n; i++) {
+      if (fn(arr[i], i, arr)) { return arr[i]; }
+    }
+    return undefined;
+  }
+
+  function arrayForEach(arr, fn) {
+    var i, n = arr ? arr.length : 0;
+    for (i = 0; i < n; i++) {
+      fn(arr[i], i, arr);
+    }
+  }
+
+  function arrayMap(arr, fn) {
+    var out = [], i, n = arr ? arr.length : 0;
+    for (i = 0; i < n; i++) {
+      out.push(fn(arr[i], i, arr));
+    }
+    return out;
+  }
+
+  function objectKeys(obj) {
+    var k, out = [];
+    if (typeof Object.keys === 'function') {
+      try { return Object.keys(obj); } catch (e) {}
+    }
+    for (k in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, k)) {
+        out.push(k);
+      }
+    }
+    return out;
+  }
+
+  /* queryAll: querySelectorAll when present; else simple #id / .class / tag (comma-separated) */
+  function queryAll(selector, root) {
+    var result = [];
+    var ctx = root || document;
+    var parts, p, i, j, el, nodes, cls, acc;
+
+    if (!selector) { return result; }
+
+    try {
+      if (ctx.querySelectorAll) {
+        return [].slice.call(ctx.querySelectorAll(selector));
+      }
+    } catch (e1) {}
+
+    parts = String(selector).split(',');
+    for (i = 0; i < parts.length; i++) {
+      p = parts[i].replace(/^\s+|\s+$/g, '');
+      if (!p) { continue; }
+      try {
+        if (p.charAt(0) === '#' && p.indexOf(' ') < 0 && p.indexOf('.') < 0) {
+          el = document.getElementById(p.slice(1));
+          if (el) { result.push(el); }
+        } else if (p.charAt(0) === '.' && p.indexOf(' ') < 0 && p.indexOf('#') < 0) {
+          cls = p.slice(1);
+          if (ctx.getElementsByClassName) {
+            nodes = ctx.getElementsByClassName(cls);
+            for (j = 0; j < nodes.length; j++) { result.push(nodes[j]); }
+          } else {
+            nodes = ctx.getElementsByTagName('*');
+            for (j = 0; j < nodes.length; j++) {
+              if ((' ' + nodes[j].className + ' ').indexOf(' ' + cls + ' ') !== -1) {
+                result.push(nodes[j]);
+              }
+            }
+          }
+        } else if (/^[a-zA-Z][\w-]*$/.test(p)) {
+          nodes = ctx.getElementsByTagName(p);
+          for (j = 0; j < nodes.length; j++) { result.push(nodes[j]); }
+        }
+      } catch (e2) {}
+    }
+    return result;
+  }
 
   /*****************/
   /* Core Function */
@@ -460,7 +549,7 @@
         if ($) {
           result = $(selector).get();
         } else if (typeof selector === 'string') {
-          result = [].slice.call(document.querySelectorAll(selector));
+          result = queryAll(selector, document);
         } else if (typeof selector === 'object' && selector.length) {
           result = [].slice.call(selector);
         } else if (typeof selector === 'object' && selector.nodeType === 1) {
@@ -557,13 +646,13 @@
   }
 
   function getSectionNavigableElements(sectionId) {
-    return parseSelector(_sections[sectionId].selector).filter(function(elem) {
+    return arrayFilter(parseSelector(_sections[sectionId].selector), function(elem) {
       return isNavigable(elem, sectionId);
     });
   }
 
   function getSectionDefaultElement(sectionId) {
-    var defaultElement = parseSelector(_sections[sectionId].defaultElement).find(function(elem) {
+    var defaultElement = arrayFind(parseSelector(_sections[sectionId].defaultElement), function(elem) {
       return isNavigable(elem, sectionId, true);
     });
     if (!defaultElement) {
@@ -716,7 +805,7 @@
     } else {
       addRange(_defaultSectionId);
       addRange(_lastSectionId);
-      Object.keys(_sections).map(addRange);
+      arrayMap(objectKeys(_sections), addRange);
     }
 
     for (var i = 0; i < range.length; i++) {
@@ -1202,7 +1291,7 @@
       var doMakeFocusable = function(section) {
         var tabIndexIgnoreList = section.tabIndexIgnoreList !== undefined ?
           section.tabIndexIgnoreList : GlobalConfig.tabIndexIgnoreList;
-        parseSelector(section.selector).forEach(function(elem) {
+        arrayForEach(parseSelector(section.selector), function(elem) {
           if (!matchSelector(elem, tabIndexIgnoreList)) {
             if (!elem.getAttribute('tabindex')) {
               elem.setAttribute('tabindex', '-1');
