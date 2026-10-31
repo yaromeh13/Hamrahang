@@ -2861,7 +2861,7 @@ track {
 
         if (dpad) {
 
-            // Do not let virtual D-Pad steal focus
+            // Do not var virtual D-Pad steal focus
             dpad.onmousedown = function (e) {
                 e.preventDefault();
                 return false;
@@ -3910,13 +3910,12 @@ track {
     }
 
     function syncFavoriteToServer(type, id, isAdd) {
-        gja(
-            {
+        gja({
                 p: type,
                 a: isAdd ? 'fav_add' : 'fav_remove',
                 q: [id]
             },
-            (success, j) => {
+            function (success, j) {
                 if (!success || (j && j.error)) {
                     console.warn('syncFavoriteToServer failed:', type, id, j);
                     // اختیاری: rollback محلی
@@ -4222,7 +4221,7 @@ track {
     
     function CFAV(q,j){
         if(q.p=='artist'){SN.user.fv.art = j;}
-        if(q.p=='song'){if(j.unfav == true){ var qj = SN.user.fv.sng.findIndex( r => r.name === j.name );SN.user.fv.sng.splice(qj,1);}else{SN.user.fv.sng.unshift(j[0]);}}
+        if(q.p=='song'){if(j.unfav == true){ var qj = SN.user.fv.sng.findIndex( function (r) { return r.name === j.name; });SN.user.fv.sng.splice(qj,1);}else{SN.user.fv.sng.unshift(j[0]);}}
     }
     
     var Arr_sm = [
@@ -4907,15 +4906,15 @@ track {
     
     function CRNF(){
         
-        const dtx = OA(document.createElement("div"), {className: "error-message-container"});
-        const tx1 = OA(document.createElement("div"), {className: "text1 p-top-1-5", innerHTML: "Page not found!"});
-        const tx2 = OA(document.createElement("div"), {className: "text2", innerHTML: "The requested page was not found"});
-        const btn = OA(document.createElement("button"), {className: "btn btn-sm btn-model-4 p-top-1-5", type:"button", innerHTML: "Back to home"});
+        var dtx = OA(document.createElement("div"), {className: "error-message-container"});
+        var tx1 = OA(document.createElement("div"), {className: "text1 p-top-1-5", innerHTML: "Page not found!"});
+        var tx2 = OA(document.createElement("div"), {className: "text2", innerHTML: "The requested page was not found"});
+        var btn = OA(document.createElement("button"), {className: "btn btn-sm btn-model-4 p-top-1-5", type:"button", innerHTML: "Back to home"});
         dtx.appendChild(tx1);
         dtx.appendChild(tx2);
         dtx.appendChild(btn);
         MCNT.appendChild(dtx);
-        btn.addEventListener("click", ()=>{
+        btn.addEventListener("click", function () {
             chp(HP);
             });
     }
@@ -5783,30 +5782,38 @@ track {
 
     }
 
-    async function gsa(q) {
+    function gsa(q) {
         
         if (!SN.apiReady || !SN.loginEnabled) {
             console.log("Admin API unavailable:", SN.apiMode);
             return;
         }
- 
-        try {
-            const res = await fetch(HP+'?_qjs=adm&q='+q);
-            if (!res.ok) {
-              throw new Error(`Response status: ${response.status}`);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", HP + "?_qjs=adm&q=" + encodeURIComponent(q), true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) { return; }
+            if (xhr.status < 200 || xhr.status >= 300) {
+                console.error("Response status: " + xhr.status);
+                return;
             }
-            const jd = await res.json();
-
-            if(jd.ok==true){
-                SN['add']=jd;
-                if(SN.add.add_artist=='success' || SN.add.add_album=='success' || SN.add.add==true){CRAD();}
+            try {
+                var jd = JSON.parse(xhr.responseText);
+                if (jd && jd.ok == true) {
+                    SN['add'] = jd;
+                    if (SN.add.add_artist == 'success' || SN.add.add_album == 'success' || SN.add.add == true) {
+                        CRAD();
+                    }
+                }
+                console.log(SN);
+            } catch (error) {
+                console.error(error.message || error);
             }
-            console.log(SN);
-
-        } catch (error) {
-            console.error(error.message);
-        }
-
+        };
+        xhr.onerror = function () {
+            console.error("Network error");
+        };
+        xhr.send(null);
     }
     
     function CRHP(P, QS, callback) {
@@ -6098,21 +6105,21 @@ track {
 
     function CRPL(ar,au,ul){
 
-        const sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1"});
-        const sec_div  = OA(document.createElement("div"), {className: "carousel-container"});
-        const fs = (SN.user.fv.sng = SN.user.fv.sng || []);
+        var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1"});
+        var sec_div  = OA(document.createElement("div"), {className: "carousel-container"});
+        var fs = (SN.user.fv.sng = SN.user.fv.sng || []);
         
         if(fs.length>0){
-            const el = OA(document.createElement("div"), {className: "item-box"});
-            const elb = OA(document.createElement("div"), {className: "box"});
-            const ela = OA(document.createElement("a"), {href:HPL+'favorite'});
+            var el = OA(document.createElement("div"), {className: "item-box"});
+            var elb = OA(document.createElement("div"), {className: "box"});
+            var ela = OA(document.createElement("a"), {href:HPL+'favorite'});
             elb.append(ela);
-            const art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
+            var art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
             ela.append(art);
-            const iep = OA(document.createElement("img"), {src: UT+fs[0].thumb+".jpg"});
+            var iep = OA(document.createElement("img"), {src: UT+fs[0].thumb+".jpg"});
             art.append(iep);
-            const dt1 = OA(document.createElement("div"), {className: "text1"});
-            const dta = OA(document.createElement("a"), {href:HPL+'favorite', innerHTML: 'Your Favorite'});
+            var dt1 = OA(document.createElement("div"), {className: "text1"});
+            var dta = OA(document.createElement("a"), {href:HPL+'favorite', innerHTML: 'Your Favorite'});
             dt1.append(dta);
             el.append(elb,dt1);
             sec_div.append(el);
@@ -6120,24 +6127,24 @@ track {
         }
         
         if(SN.user.pl){
-            ar.forEach((e) =>{
+            ar.forEach(function (e) {
                 e.artist = e.artist || Cap(au.replace("_", " "));
                 e.artist_url = e.artist_url || au;
-                const el = OA(document.createElement("div"), {className: "item-box"});
-                const elb = OA(document.createElement("div"), {className: "box"});
-                const ela = OA(document.createElement("a"), {href: ul+e.artist_url+'-'+e.url});
+                var el = OA(document.createElement("div"), {className: "item-box"});
+                var elb = OA(document.createElement("div"), {className: "box"});
+                var ela = OA(document.createElement("a"), {href: ul+e.artist_url+'-'+e.url});
                 var elm = OA(document.createElement("div"), {className: "menu", innerHTML: svg_dot});
-                const elp = OA(document.createElement("div"), {className: "play", innerHTML: svg_ply});
+                var elp = OA(document.createElement("div"), {className: "play", innerHTML: svg_ply});
                 elb.append(ela,elm,elp);
-                const art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
+                var art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
                 ela.append(art);
-                const sep = OA(document.createElement("span"), {className: "placeholder", innerHTML: svg_a2p});
-                const iep = OA(document.createElement("img"), {src: UT+e.thumb+".jpg"});
+                var sep = OA(document.createElement("span"), {className: "placeholder", innerHTML: svg_a2p});
+                var iep = OA(document.createElement("img"), {src: UT+e.thumb+".jpg"});
                 art.append(sep,iep);
-                const dt1 = OA(document.createElement("div"), {className: "text1"});
-                const dta = OA(document.createElement("a"), {href: ul+e.artist_url+'-'+e.url,innerHTML: e.name});
+                var dt1 = OA(document.createElement("div"), {className: "text1"});
+                var dta = OA(document.createElement("a"), {href: ul+e.artist_url+'-'+e.url,innerHTML: e.name});
                 dt1.append(dta);
-                const dt2 = OA(document.createElement("div"), {className: "text2" ,innerHTML: e.artist});
+                var dt2 = OA(document.createElement("div"), {className: "text2" ,innerHTML: e.artist});
                 el.append(elb,dt1,dt2);
                 sec_div.append(el);
             });
@@ -6147,24 +6154,24 @@ track {
         }
     //    ADE();
         
-        const el = OA(document.createElement("div"), {className: "item-box"});
-        const elb = OA(document.createElement("div"), {className: "box"});
-        const ela = OA(document.createElement("a"), {});
+        var el = OA(document.createElement("div"), {className: "item-box"});
+        var elb = OA(document.createElement("div"), {className: "box"});
+        var ela = OA(document.createElement("a"), {});
         elb.append(ela);
-        const art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
+        var art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
         ela.append(art);
-        const sep = OA(document.createElement("span"), {className: "placeholder", innerHTML: svg_adp});
+        var sep = OA(document.createElement("span"), {className: "placeholder", innerHTML: svg_adp});
         art.append(sep);
-        const dt1 = OA(document.createElement("div"), {className: "text1"});
-        const dta = OA(document.createElement("a"), {innerHTML: 'Add New Playlist'});
+        var dt1 = OA(document.createElement("div"), {className: "text1"});
+        var dta = OA(document.createElement("a"), {innerHTML: 'Add New Playlist'});
         dt1.append(dta);
         el.append(elb,dt1);
         sec_div.append(el);
         sec.append(sec_div);
         MCNT.append(sec);
     
-        elb.addEventListener('click', ()=> {AddPls();});
-        dta.addEventListener('click', ()=> {AddPls();});
+        elb.addEventListener("click", function () {AddPls();});
+        dta.addEventListener("click", function () {AddPls();});
     }
     
     function CRVT(ar, au, ul) {
@@ -6981,25 +6988,25 @@ track {
     function CRTQ(ar,au,ps){
         ps.innerHTML = '';
         MaxQueHdt.innerHTML = "Next Playing ("+ar.length+")";
-        ar.forEach((e) =>{
+        ar.forEach(function (e) {
             e.artist = e.artist || Cap(au.replace("_", " "));
             e.artist_url = e.artist_url || au;
-            const dtl = OA(document.createElement("div"), {className: "track-line-queue"+((e.play==true)?" playing":"")  });
-            const tla = OA(document.createElement("a"), {draggable: "false", href: HS+e.artist_url+'-'+e.url});
+            var dtl = OA(document.createElement("div"), {className: "track-line-queue"+((e.play==true)?" playing":"")  });
+            var tla = OA(document.createElement("a"), {draggable: "false", href: HS+e.artist_url+'-'+e.url});
         
-            const dtb = OA(document.createElement("div"), {className: "artwork"});
+            var dtb = OA(document.createElement("div"), {className: "artwork"});
             tla.append(dtb);
-            const dmg = OA(document.createElement("img"), {src: UT+e.thumb+".jpg"});
+            var dmg = OA(document.createElement("img"), {src: UT+e.thumb+".jpg"});
             dtb.append(dmg);
-            const dpl = OA(document.createElement("div"), {className: "play", innerHTML: (e.play==true)?svg_eql:svg_ply });     
-            const dst = OA(document.createElement("div"), {className: "texts"});
-                const dstt = OA(document.createElement("div"), {className: "title"}); 
-                    const tta = OA(document.createElement("a"), {draggable: "false", href: HS+e.artist_url+'-'+e.url, innerHTML: e.name});
+            var dpl = OA(document.createElement("div"), {className: "play", innerHTML: (e.play==true)?svg_eql:svg_ply });     
+            var dst = OA(document.createElement("div"), {className: "texts"});
+                var dstt = OA(document.createElement("div"), {className: "title"}); 
+                    var tta = OA(document.createElement("a"), {draggable: "false", href: HS+e.artist_url+'-'+e.url, innerHTML: e.name});
             dstt.append(tta);      
-            const dsa = OA(document.createElement("div"), {className: "artist", innerHTML: e.artist});
-            const dat = OA(document.createElement("div"), {className: "date", innerHTML: e.bd});
-            const dur = OA(document.createElement("div"), {className: "duration", innerHTML:"00:00"});
-            const mor = OA(document.createElement("div"), {className: "more", innerHTML: svg_dot});
+            var dsa = OA(document.createElement("div"), {className: "artist", innerHTML: e.artist});
+            var dat = OA(document.createElement("div"), {className: "date", innerHTML: e.bd});
+            var dur = OA(document.createElement("div"), {className: "duration", innerHTML:"00:00"});
+            var mor = OA(document.createElement("div"), {className: "more", innerHTML: svg_dot});
             
             
             dst.append(dstt,dsa);
@@ -7007,18 +7014,18 @@ track {
             ps.append(dtl);
         });
         
-        const eM = ps.querySelectorAll(".more");
-        const eT = ps.querySelectorAll(".title a");
+        var eM = ps.querySelectorAll(".more");
+        var eT = ps.querySelectorAll(".title a");
         
-        for (const e of eM) {
-                e.addEventListener("click", (h)=>{
+        for (var __i_e = 0; __i_e < (eM).length; __i_e++) { var e = (eM)[__i_e];
+                e.addEventListener("click", function (h) {
                      CRBW(e);
                 },false);
         }
         
     
-        for (const e of eT) {
-            e.addEventListener("click", (h)=>{
+        for (var __i_e = 0; __i_e < (eT).length; __i_e++) { var e = (eT)[__i_e];
+            e.addEventListener("click", function (h) {
                 h.preventDefault();
                 chp(e.href);
                 return false;
@@ -7480,7 +7487,7 @@ track {
                 setTimeout(function () { if (wrap) { addCls(wrap, 'hpop-show'); } }, 20);
             }
 
-            // Popup reused for new content: let the previous content release its nodes first
+            // Popup reused for new content: var the previous content release its nodes first
             if (userOnClose) {
                 var prevCb = userOnClose;
                 userOnClose = null;
@@ -7818,27 +7825,27 @@ track {
 
     function AddPls(onCreated){
             
-        const drs = OA(document.createElement("div"), {className: "download-dialog show_fadein"});
-        const cnt = OA(document.createElement("div"), {className: "content"});
-        const txt = OA(document.createElement("div"), {className: "texts"});
+        var drs = OA(document.createElement("div"), {className: "download-dialog show_fadein"});
+        var cnt = OA(document.createElement("div"), {className: "content"});
+        var txt = OA(document.createElement("div"), {className: "texts"});
         cnt.append(txt);
-        const tx1 = OA(document.createElement("div"), {className: "text1", innerHTML: "Add New Playlist"});
+        var tx1 = OA(document.createElement("div"), {className: "text1", innerHTML: "Add New Playlist"});
         
-        const df4 = OA(document.createElement("div"), {className: "input-container"});
-        const iab = OA(document.createElement("input"), {className: "input" ,type: "text",id:"playlist" ,maxlength: 100, placeholder:"Playlist Name", autocorrect:"off", autocapitalize:"off", spellcheck:"false"});
+        var df4 = OA(document.createElement("div"), {className: "input-container"});
+        var iab = OA(document.createElement("input"), {className: "input" ,type: "text",id:"playlist" ,maxlength: 100, placeholder:"Playlist Name", autocorrect:"off", autocapitalize:"off", spellcheck:"false"});
         df4.append(iab);
 
-        const btn = OA(document.createElement("div"), {className: "buttons p-top-1"});
-        const bta = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Done"});
-        const bca = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Cancel"});
+        var btn = OA(document.createElement("div"), {className: "buttons p-top-1"});
+        var bta = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Done"});
+        var bca = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Cancel"});
         btn.append(bta,bca);
         txt.append(tx1,df4,btn);
         drs.append(cnt);
         MCLN.append(drs);
         
-        const DRS = MCLN.querySelector(".download-dialog");
-        const BSA = MCLN.querySelector(".download-dialog a.btn-sm");
-        bta.addEventListener("click", ()=>{
+        var DRS = MCLN.querySelector(".download-dialog");
+        var BSA = MCLN.querySelector(".download-dialog a.btn-sm");
+        bta.addEventListener("click", function () {
             var name = (iab.value || "").trim();
             if (!name) {
                 tx1.innerHTML = "Playlist Name";
@@ -7863,10 +7870,10 @@ track {
             });
         });
 
-        bca.addEventListener("click", ()=>{
+        bca.addEventListener("click", function () {
      /*               
-        const tms = OA(document.createElement("div"), {className: "toast-message show"});
-        const spn = OA(document.createElement("span"), {innerHTML:t});
+        var tms = OA(document.createElement("div"), {className: "toast-message show"});
+        var spn = OA(document.createElement("span"), {innerHTML:t});
         tms.append(spn);
         document.body.append(tms);*/
             drs.className = drs.className.replace("show_fadein", "show_fadeout");
@@ -7880,21 +7887,21 @@ track {
 
     function SrtBot(){
             
-        const drs = OA(document.createElement("div"), {className: "download-dialog show_fadein"});
-        const cnt = OA(document.createElement("div"), {className: "content"});
-        const txt = OA(document.createElement("div"), {className: "texts"});
+        var drs = OA(document.createElement("div"), {className: "download-dialog show_fadein"});
+        var cnt = OA(document.createElement("div"), {className: "content"});
+        var txt = OA(document.createElement("div"), {className: "texts"});
         cnt.append(txt);
-        const tx1 = OA(document.createElement("div"), {className: "text1", innerHTML: "Start The Hamrahang First"});
-        const btn = OA(document.createElement("div"), {className: "buttons p-top-1"});
-        const bta = OA(document.createElement("a"), {className: "btn btn-sm btn-model-4", href: "https://t.me/HamrahangBot", target: "_blank", innerHTML: "Start App"});
+        var tx1 = OA(document.createElement("div"), {className: "text1", innerHTML: "Start The Hamrahang First"});
+        var btn = OA(document.createElement("div"), {className: "buttons p-top-1"});
+        var bta = OA(document.createElement("a"), {className: "btn btn-sm btn-model-4", href: "https://t.me/HamrahangBot", target: "_blank", innerHTML: "Start App"});
         btn.append(bta);
         txt.append(tx1,btn);
         drs.append(cnt);
         MCLN.append(drs);
         
-        const DRS = MCLN.querySelector(".download-dialog");
-        const BSA = MCLN.querySelector(".download-dialog a.btn-sm");
-        BSA.addEventListener("click", ()=>{
+        var DRS = MCLN.querySelector(".download-dialog");
+        var BSA = MCLN.querySelector(".download-dialog a.btn-sm");
+        BSA.addEventListener("click", function () {
             setTimeout(function() {
                 DRS.remove();
                 window.Telegram.WebApp.close();
@@ -7914,7 +7921,7 @@ track {
          
         /*
         
-        const anchor = document.createElement('a');
+        var anchor = document.createElement('a');
         anchor.href = window.URL.createObjectURL(new Blob([data], { type }));
         anchor.download = name;
         anchor.click();*/
@@ -7940,13 +7947,13 @@ track {
         AA.push.apply(AA, SAll);
         AA.push.apply(AA, STab);
 
-        for (const e of AA) {
+        for (var __i_e = 0; __i_e < (AA).length; __i_e++) { var e = (AA)[__i_e];
              
         //     e.removeEventListener("click", chp(), false); // Succeeds
              
             if (e.getAttribute('listener') !== 'true') {
                 e.setAttribute('listener', 'true');
-                e.addEventListener("click", (h)=>{
+                e.addEventListener("click", function (h) {
                 h.preventDefault();
                 chp(e.href);
                 return false;
@@ -7963,7 +7970,9 @@ track {
     }
 
     function Cap(st) {
-        return st.split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+        return st.split(' ').map(function (s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }).join(' ');
     }
 
     function FSRC() {    // SEARCH //
@@ -8066,15 +8075,15 @@ track {
     var lyricBtn = document.getElementById("lyric");
 
     var FullScreen = document.getElementById("fullscreen");
-    FullScreen.addEventListener("click", ()=>{ toggleFullScreen();});
+    FullScreen.addEventListener("click", function () { toggleFullScreen();});
     var playBtn = document.getElementById("play");
     playBtn.addEventListener("click", function () {ToggleMainPlayPause();});
-    //playBtn.addEventListener("click", ()=>{ togglePlay();});
+    //playBtn.addEventListener("click", function () { togglePlay();});
     var playerBox = document.getElementById("player-box");
     var Timer = document.getElementById("timer");
     var BackToHome = document.getElementById("BackToHome");
     BackToHome.addEventListener("click", function () {MinimizeMainPlayer();});
-    //BackToHome.addEventListener("click", ()=>{ back2home();});
+    //BackToHome.addEventListener("click", function () { back2home();});
     var backdrop = document.getElementById("backdrop");
     backdrop.addEventListener("click", function() { ToggleMainPlayPause();});
     var Forward10 = document.getElementById("forward-10");
@@ -8494,7 +8503,7 @@ track {
         });
     }
         
-    window.addEventListener("load", ()=>{
+    window.addEventListener("load", function () {
           InitAudioPlayer();
           InitMainPlayer();
     });
@@ -9156,11 +9165,11 @@ track {
         ;
     
     function ChkAudio(){
-        Audio.addEventListener("abort", () => {
+        Audio.addEventListener("abort", function () {
           console.log("Abort loading");
         });
     
-        Audio.addEventListener("error", (e) => {
+        Audio.addEventListener("error", function (e) {
             console.log("COULD NOT LOAD AUDIO = " + e.target.error.MEDIA_ERR_ABORTED);
             console.log("MEDIA ERR NETWORK = " + e.target.error.MEDIA_ERR_NETWORK);
             console.log("COULD NOT LOAD DECODE = " + e.target.error.MEDIA_ERR_DECODE);
@@ -9195,7 +9204,7 @@ track {
         var spnt = OA(document.createElement("span"), {innerHTML:t});
         tms.append(spnt);
         document.body.append(tms);
-        setTimeout(() => {
+        setTimeout(function () {
             tms.className = tms.className.replace("show", "");
             tms.remove();
           }, 3000);
@@ -9404,7 +9413,7 @@ track {
     };
         
     document.addEventListener("keydown", seek); 
-    document.addEventListener("keypress", ()=>{ document.activeElement.click(); return; });
+    document.addEventListener("keypress", function () { document.activeElement.click(); return; });
       
     function formatTime(seconds) {
         var hrs = Math.floor(seconds / 3600);
