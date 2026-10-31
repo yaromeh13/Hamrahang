@@ -737,7 +737,7 @@ body {
     margin: 10px;
     width: 90px;
     height: 90px;
-    background: url("https://hamrahang.ir/thumb/undefined.jpg") center center no-repeat;
+    background: url("http://cdn.hamrahang.ir/thumb/undefined.jpg") center center no-repeat;
     background-size: cover;
     border-radius: 50%;
 }
@@ -2644,6 +2644,9 @@ track {
     SN.apiMode = "checking";
     SN.loginEnabled = true;
     SN.apiReady = false;
+    SN.thumbBase = "https://hamrahang.ir/thumb/";
+    SN.cdnBase = "https://cdn.hamrahang.ir";
+    SN.cdnMp3 = "https://cdn.hamrahang.ir/mp3/";
     SN.apiReadyCallbacks = [];
 
     SN.onAPIReady = function (callback) {
@@ -2668,10 +2671,18 @@ track {
                 SN.apiBase = mainBase;
                 SN.apiMode = "main";
                 SN.loginEnabled = true;
+                /* media over HTTPS (modern path) */
+                SN.thumbBase = "https://hamrahang.ir/thumb/";
+                SN.cdnBase = "https://cdn.hamrahang.ir";
+                SN.cdnMp3 = "https://cdn.hamrahang.ir/mp3/";
             } else {
                 SN.apiBase = fallbackBase;
                 SN.apiMode = "fallback";
                 SN.loginEnabled = false;
+                /* Maple / no-TLS: thumbs & media via HTTP CDN */
+                SN.thumbBase = "http://cdn.hamrahang.ir/thumb/";
+                SN.cdnBase = "http://cdn.hamrahang.ir";
+                SN.cdnMp3 = "http://cdn.hamrahang.ir/mp3/";
                 try {
                     if (document.body.className.indexOf("api-fallback") < 0) {
                         document.body.className += " api-fallback";
@@ -2680,7 +2691,7 @@ track {
             }
 
             SN.apiReady = true;
-            console.log("API mode:", SN.apiMode, SN.apiBase);
+            console.log("API mode:", SN.apiMode, SN.apiBase, "thumb:", SN.thumbBase);
             var callbacks = SN.apiReadyCallbacks || [];
             SN.apiReadyCallbacks = [];
             for (var i = 0; i < callbacks.length; i++) {
@@ -2693,6 +2704,9 @@ track {
             SN.apiBase = "/api/";
             SN.apiMode = "local";
             SN.loginEnabled = true;
+            SN.thumbBase = "https://hamrahang.ir/thumb/";
+            SN.cdnBase = "https://cdn.hamrahang.ir";
+            SN.cdnMp3 = "https://cdn.hamrahang.ir/mp3/";
             SN.apiReady = true;
             var localCallbacks = SN.apiReadyCallbacks || [];
             SN.apiReadyCallbacks = [];
@@ -4334,6 +4348,9 @@ track {
     // ابتدا Ping؛ سپس فقط یک بار برنامه با API انتخاب‌شده اجرا می‌شود
     SN.onAPIReady(function () {
         HP = SN.apiBase;
+        if (SN.thumbBase) { UT = SN.thumbBase; }
+        if (SN.cdnBase) { CDN = SN.cdnBase; }
+        if (SN.cdnMp3) { CDNMP3 = SN.cdnMp3; }
         SPA();
     });
     SN.initAPI();
