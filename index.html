@@ -7034,19 +7034,23 @@ track {
         var eM = ps.querySelectorAll(".more");
         var eT = ps.querySelectorAll(".title a");
         
-        for (var __i_e = 0; __i_e < (eM).length; __i_e++) { var e = (eM)[__i_e];
-                e.addEventListener("click", function (h) {
-                     CRBW(e);
-                },false);
+        for (var __i_e = 0; __i_e < eM.length; __i_e++) {
+            (function (el) {
+                el.addEventListener("click", function () {
+                    CRBW(el);
+                }, false);
+            })(eM[__i_e]);
         }
         
     
-        for (var __i_e = 0; __i_e < (eT).length; __i_e++) { var e = (eT)[__i_e];
-            e.addEventListener("click", function (h) {
-                h.preventDefault();
-                chp(e.href);
-                return false;
-            },false);
+        for (var __i_e = 0; __i_e < eT.length; __i_e++) {
+            (function (el) {
+                el.addEventListener("click", function (h) {
+                    h.preventDefault();
+                    chp(el.href);
+                    return false;
+                }, false);
+            })(eT[__i_e]);
         }
         
     }
@@ -7964,18 +7968,17 @@ track {
         AA.push.apply(AA, SAll);
         AA.push.apply(AA, STab);
 
-        for (var __i_e = 0; __i_e < (AA).length; __i_e++) { var e = (AA)[__i_e];
-             
-        //     e.removeEventListener("click", chp(), false); // Succeeds
-             
-            if (e.getAttribute('listener') !== 'true') {
-                e.setAttribute('listener', 'true');
-                e.addEventListener("click", function (h) {
-                h.preventDefault();
-                chp(e.href);
-                return false;
-                },false);
-            }
+        for (var __i_e = 0; __i_e < AA.length; __i_e++) {
+            (function (el) {
+                if (el.getAttribute('listener') !== 'true') {
+                    el.setAttribute('listener', 'true');
+                    el.addEventListener("click", function (h) {
+                        h.preventDefault();
+                        chp(el.href);
+                        return false;
+                    }, false);
+                }
+            })(AA[__i_e]);
         }
 
         AA = [];
