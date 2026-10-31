@@ -4148,7 +4148,7 @@ track {
                 // اسم اولین artist رو برای عنوان صفحه بگیر
                 var artistName = '';
                 var artistNameFa = '';
-                if (song.artists && Array.isArray(song.artists) && song.artists.length > 0) {
+                if (song.artists && isArray(song.artists) && song.artists.length > 0) {
                     var firstArtistId = (typeof song.artists[0] === 'object') ? song.artists[0].id : song.artists[0];
                     var firstArtist = SN.artist ? SN.artist[firstArtistId] : null;
                     if (firstArtist) {
@@ -4373,15 +4373,15 @@ track {
     
             for (var i = 0; i < types.length; i++) {
                 var t = types[i];
-                if (Array.isArray(data.favorite[t])) {
+                if (isArray(data.favorite[t])) {
                     SN.profile.favorite[t] = data.favorite[t];
                 }
             }
         }
     
-        if (data && Array.isArray(data.playlist)) { SN.profile.playlist = data.playlist; }
-        if (data && Array.isArray(data.history)) { SN.profile.history = data.history; }
-        if (data && data.playlistEntities && typeof data.playlistEntities === 'object' && !Array.isArray(data.playlistEntities)) {
+        if (data && isArray(data.playlist)) { SN.profile.playlist = data.playlist; }
+        if (data && isArray(data.history)) { SN.profile.history = data.history; }
+        if (data && data.playlistEntities && typeof data.playlistEntities === 'object' && !isArray(data.playlistEntities)) {
             SN.profile.playlistEntities = data.playlistEntities;
         }
     
@@ -4404,7 +4404,7 @@ track {
         LoadProfile();
     
         var list = SN.profile.favorite[type];
-        return !!(Array.isArray(list) && list.indexOf(id) !== -1);
+        return !!(isArray(list) && list.indexOf(id) !== -1);
     }
     
     function ToggleFavorite(type, id) {
@@ -4473,8 +4473,8 @@ track {
 
         for (var i = 0; i < types.length; i++) {
             var t = types[i];
-            var serverList = Array.isArray(serverFav[t]) ? serverFav[t] : [];
-            if (!Array.isArray(SN.profile.favorite[t])) { SN.profile.favorite[t] = []; }
+            var serverList = isArray(serverFav[t]) ? serverFav[t] : [];
+            if (!isArray(SN.profile.favorite[t])) { SN.profile.favorite[t] = []; }
             var local = SN.profile.favorite[t];
 
             for (var k = 0; k < serverList.length; k++) {
@@ -4491,15 +4491,15 @@ track {
 
     function FetchServerHistory(cb) {
         gja({ a: 'get_history' }, function (success, j) {
-            cb((success && j && !j.error && Array.isArray(j.history)) ? j.history : null);
+            cb((success && j && !j.error && isArray(j.history)) ? j.history : null);
         });
     }
 
     // merge تاریخچه: جدیدترین برنده، سقف ۵۰ ردیف هر type (مثل ha.php)
     function MergeServerHistoryIntoLocal(serverList) {
-        if (!Array.isArray(serverList)) { return; }
+        if (!isArray(serverList)) { return; }
         LoadProfile();
-        if (!Array.isArray(SN.profile.history)) { SN.profile.history = []; }
+        if (!isArray(SN.profile.history)) { SN.profile.history = []; }
 
         var map = {};
         var order = [];
@@ -4554,12 +4554,12 @@ track {
 
         var fav = SN.profile.favorite || {};
         for (var t in fav) {
-            if (fav.hasOwnProperty(t) && Array.isArray(fav[t]) && fav[t].length) {
+            if (fav.hasOwnProperty(t) && isArray(fav[t]) && fav[t].length) {
                 return true;
             }
         }
 
-        if (Array.isArray(SN.profile.history) && SN.profile.history.length) {
+        if (isArray(SN.profile.history) && SN.profile.history.length) {
             return true;
         }
 
@@ -4585,7 +4585,7 @@ track {
 
     function PushLocalHistoryToServer(cb) {
         LoadProfile();
-        var hist = Array.isArray(SN.profile.history) ? SN.profile.history : [];
+        var hist = isArray(SN.profile.history) ? SN.profile.history : [];
         var items = [];
         var now = Math.floor(Date.now() / 1000);
 
@@ -4663,7 +4663,7 @@ track {
         var at = Math.floor(Date.now() / 1000);
 
         LoadProfile();
-        if (!Array.isArray(SN.profile.history)) { SN.profile.history = []; }
+        if (!isArray(SN.profile.history)) { SN.profile.history = []; }
 
         var out = [];
         var i;
@@ -4711,7 +4711,7 @@ track {
         if (!SN.user || !SN.user.loggedIn || !SN.accessToken) { cb(false); return; }
 
         gja({ a: 'get_playlists' }, function (success, j) {
-            if (success && j && !j.error && Array.isArray(j.playlists)) {
+            if (success && j && !j.error && isArray(j.playlists)) {
                 for (var i = 0; i < j.playlists.length; i++) {
                     PutServerPlaylist(j.playlists[i]);
                 }
@@ -4786,7 +4786,7 @@ track {
         var rows = [];
         for (var i = 0; i < types.length; i++) {
             var list = SN.profile.favorite[types[i]];
-            if (Array.isArray(list) && list.length) {
+            if (isArray(list) && list.length) {
                 rows.push({ type: types[i], count: list.length });
             }
         }
@@ -4795,17 +4795,17 @@ track {
 
     function renderPlaylistCounts(container) {
         LoadProfile();
-        var n = Array.isArray(SN.profile.playlist) ? SN.profile.playlist.length : 0;
+        var n = isArray(SN.profile.playlist) ? SN.profile.playlist.length : 0;
         renderTypeCountList(container, n ? [{ type: "playlist", count: n }] : [], "هنوز پلی‌لیستی ندارید");
     }
 
     /* ---- resolve آیتم‌های گمشده مثل EnsureItems در ha.php (ES5/callback) ---- */
     function MergeResolvedItems(endpoint, items) {
-        if (!Array.isArray(items)) { return; }
+        if (!isArray(items)) { return; }
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
             if (!item || item.id == null) { continue; }
-            if (Array.isArray(item.artists)) { item.artists = UARDB('artist', item.artists); }
+            if (isArray(item.artists)) { item.artists = UARDB('artist', item.artists); }
 
             if (endpoint === 'song') {
                 UARDB((item.meta && item.meta.type === 'podcast') ? 'podcast' : 'song', [item]);
@@ -5037,7 +5037,7 @@ track {
             return {
                 load: USNG, layout: 'detail', focus: '.play-pause',
                 list: function (e) {
-                    if (!AduLst || !Array.isArray(AduLst) || AduLst.length === 0) { AduLst = [e.id]; }
+                    if (!AduLst || !isArray(AduLst) || AduLst.length === 0) { AduLst = [e.id]; }
                 }
             };
         }
@@ -5153,10 +5153,10 @@ track {
         q = (typeof q !== "undefined") ? q : '';
         a = (typeof a !== "undefined" && a !== '' && a !== null) ? a : 1;
     
-        if (!SN.search || typeof SN.search !== 'object' || Array.isArray(SN.search)) {SN.search = {};}
+        if (!SN.search || typeof SN.search !== 'object' || isArray(SN.search)) {SN.search = {};}
     
         function hasContent(key) {
-            return SN.search[key] && Array.isArray(SN.search[key]) && SN.search[key].length > 0;
+            return SN.search[key] && isArray(SN.search[key]) && SN.search[key].length > 0;
         }
     
         function renderUI() {
@@ -5773,7 +5773,7 @@ track {
     
     function CRVP(q, callback) {
     
-        if (!VdoLst || !Array.isArray(VdoLst) || VdoLst.length === 0) {
+        if (!VdoLst || !isArray(VdoLst) || VdoLst.length === 0) {
             VdoLst = [parseInt(q, 10) || q];
         }
 
@@ -5924,7 +5924,7 @@ track {
         if (!SN.profile) { return null; }
 
         if (source === 'history') {
-            var list = Array.isArray(SN.profile.history) ? SN.profile.history : [];
+            var list = isArray(SN.profile.history) ? SN.profile.history : [];
             var out = [];
             for (var i = 0; i < list.length; i++) {
                 var row = list[i];
@@ -5937,13 +5937,13 @@ track {
         }
 
         if (source === 'favorite') {
-            return (SN.profile.favorite && Array.isArray(SN.profile.favorite[itemType])) ? SN.profile.favorite[itemType] : [];
+            return (SN.profile.favorite && isArray(SN.profile.favorite[itemType])) ? SN.profile.favorite[itemType] : [];
         }
 
         // سازگاری با فرمت قدیمی 'favorite.song'
         if (source.indexOf('favorite.') === 0) {
             var t = source.slice(9);
-            return (SN.profile.favorite && Array.isArray(SN.profile.favorite[t])) ? SN.profile.favorite[t] : [];
+            return (SN.profile.favorite && isArray(SN.profile.favorite[t])) ? SN.profile.favorite[t] : [];
         }
 
         return null;
@@ -6262,7 +6262,7 @@ track {
 
         T = T || 'musicvideo';
     
-        if (!ar || !Array.isArray(ar)) { return; }
+        if (!ar || !isArray(ar)) { return; }
     
         var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1"});
         var sec_div = OA(document.createElement("div"), {className: "container video"});
@@ -6292,7 +6292,7 @@ track {
             }
     
             if (!artist) {
-                var artists = (e.artists && Array.isArray(e.artists)) ? e.artists : [];
+                var artists = (e.artists && isArray(e.artists)) ? e.artists : [];
                 if (artists.length > 0) {
                     var artistRef = artists[0];
                     var aId = (typeof artistRef == "object") ? artistRef.id : artistRef;
@@ -6373,7 +6373,7 @@ track {
     
     function CRSS(ar, T, ART, ctx) {
 
-        if (!ar || !Array.isArray(ar)) { return; }
+        if (!ar || !isArray(ar)) { return; }
 
         var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1"});
         var sec_div = OA(document.createElement("div"), {className: "container"});
@@ -6407,7 +6407,7 @@ track {
                 artistList.push(SN.artist[ART]);
                 primaryArtistUrl = SN.artist[ART].url || "";
             } else {
-                var artistRefs = (e.artists && Array.isArray(e.artists)) ? e.artists : [];
+                var artistRefs = (e.artists && isArray(e.artists)) ? e.artists : [];
                 for (j = 0; j < artistRefs.length; j++) {
                     var artistRef = artistRefs[j];
                     var artistId = (typeof artistRef == "object") ? artistRef.id : artistRef;
@@ -6558,7 +6558,7 @@ track {
     function CRAL(artists) {
 
         var art = OA(document.createElement("div"), {className: "artists"});
-        var list = (artists && Array.isArray(artists)) ? artists : [];
+        var list = (artists && isArray(artists)) ? artists : [];
     
         for (var ai = 0; ai < list.length; ai++) {
     
@@ -6588,7 +6588,7 @@ track {
 
     function CRTL(ar, au) {
         
-        if (!ar || !Array.isArray(ar) || ar.length === 0) {
+        if (!ar || !isArray(ar) || ar.length === 0) {
             console.log("CRTL: No songs:", ar);
             return;
         }
@@ -6642,7 +6642,7 @@ track {
             
             var artistList = [];
             var primaryArtistUrl = "";
-            var artistRefs = (e.artists && Array.isArray(e.artists)) ? e.artists : [];
+            var artistRefs = (e.artists && isArray(e.artists)) ? e.artists : [];
             
             for (j = 0; j < artistRefs.length; j++) {
                 var artistRef = artistRefs[j];
@@ -7060,7 +7060,7 @@ track {
             if (a0.meta && a0.meta.tmb) { return a0.meta.tmb; }
         }
 
-        var refs = (e && Array.isArray(e.artists)) ? e.artists : [];
+        var refs = (e && isArray(e.artists)) ? e.artists : [];
         var i, aid, a;
         for (i = 0; i < refs.length; i++) {
             aid = (typeof refs[i] === "object") ? refs[i].id : refs[i];
@@ -7182,7 +7182,7 @@ track {
     // Returns null when the item has no song list (e.g. a bare album card).
     function UHPLY(e) {
 
-        var list = (e.songs && Array.isArray(e.songs)) ? e.songs : [];
+        var list = (e.songs && isArray(e.songs)) ? e.songs : [];
         if (!list.length) { return null; }
 
         var btn = OA(document.createElement("div"), {className: "play focusable", innerHTML: svg_rdo});
@@ -7571,7 +7571,7 @@ track {
 
     function CRBW_artists(e) {
         var out = [];
-        var refs = (e && Array.isArray(e.artists)) ? e.artists : [];
+        var refs = (e && isArray(e.artists)) ? e.artists : [];
         for (var i = 0; i < refs.length; i++) {
             var ref = refs[i];
             var aid = (typeof ref === 'object' && ref !== null) ? ref.id : ref;
@@ -8102,13 +8102,13 @@ track {
         }
     
         if (SN.NowPlaying && SN.NowPlaying.id === id && SN.NowPlaying.player === 'video') {
-            SN.NowPlaying.list = (list && Array.isArray(list)) ? list : SN.NowPlaying.list;
+            SN.NowPlaying.list = (list && isArray(list)) ? list : SN.NowPlaying.list;
             ToggleMainPlayPause();
             OpenMainPlayer();
             return;
         }
     
-        var playlist = (list && Array.isArray(list)) ? list : VdoLst;
+        var playlist = (list && isArray(list)) ? list : VdoLst;
         VdoLst = playlist;
     
         UVID(['video', id], function (success, e) {
@@ -8149,7 +8149,7 @@ track {
             console.log("PlayVideo: Now Playing:", SN.NowPlaying);
         
             var artistUrls = [];
-            var artistRefs = (e.artists && Array.isArray(e.artists)) ? e.artists : [];
+            var artistRefs = (e.artists && isArray(e.artists)) ? e.artists : [];
         
             for (var j = 0; j < artistRefs.length; j++) {
                 var artistRef = artistRefs[j];
@@ -8178,7 +8178,7 @@ track {
     
         if (!SN.NowPlaying || SN.NowPlaying.player !== 'video') { return; }
     
-        var sources = (SN.NowPlaying.item && Array.isArray(SN.NowPlaying.item.sources)) ? SN.NowPlaying.item.sources : [];
+        var sources = (SN.NowPlaying.item && isArray(SN.NowPlaying.item.sources)) ? SN.NowPlaying.item.sources : [];
     
         if (sources.length === 0 || index >= sources.length) {
             console.log("PlayVideo: All sources failed for video:", SN.NowPlaying.id);
@@ -8516,7 +8516,7 @@ track {
             return;
         }
     
-        var playlist = (list && Array.isArray(list)) ? list : AduLst;
+        var playlist = (list && isArray(list)) ? list : AduLst;
         PlyLst = playlist;
     
         USNG(['song', id], function (success, song) {
@@ -8559,7 +8559,7 @@ track {
             
             var artistUrls = [];
             var ArtistUrl = "";
-            var artistRefs = (song.artists && Array.isArray(song.artists)) ? song.artists : [];
+            var artistRefs = (song.artists && isArray(song.artists)) ? song.artists : [];
         
             for (var j = 0; j < artistRefs.length; j++) {
                 var artistRef = artistRefs[j];
@@ -8617,7 +8617,7 @@ track {
 
         if (!SN.NowPlaying) { return; }
     
-        var sources = (SN.NowPlaying.item && Array.isArray(SN.NowPlaying.item.sources)) ? SN.NowPlaying.item.sources : [];
+        var sources = (SN.NowPlaying.item && isArray(SN.NowPlaying.item.sources)) ? SN.NowPlaying.item.sources : [];
     
         if (sources.length === 0 || index >= sources.length) {
     
@@ -8879,7 +8879,7 @@ track {
     
     function GetNextSongId() {
 
-        if (!SN.NowPlaying || !SN.NowPlaying.list || !Array.isArray(SN.NowPlaying.list)) {
+        if (!SN.NowPlaying || !SN.NowPlaying.list || !isArray(SN.NowPlaying.list)) {
             return null;
         }
     
