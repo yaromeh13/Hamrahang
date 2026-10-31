@@ -3103,6 +3103,19 @@ track {
         };
     }
 
+    /* Push array-like (NodeList, arguments, array) into target without Function.apply.
+       Maple/old engines often fail on Array.prototype.push.apply(arr, nodeList). */
+    function pushAll(target, source) {
+        var i, n;
+        if (!target || source == null) { return target; }
+        n = source.length;
+        if (typeof n !== "number") { return target; }
+        for (i = 0; i < n; i++) {
+            target.push(source[i]);
+        }
+        return target;
+    }
+
     // Back / Forward
     var BTNback = getByClass("back");
     var BTNforward = getByClass("forward");
@@ -7943,14 +7956,14 @@ track {
         var MENA = document.querySelectorAll(".menu a");
         var STab = document.querySelectorAll(".setting-tabs a");
         
-        AA.push.apply(AA, MENA);
-        AA.push.apply(AA, ABox);
-        AA.push.apply(AA, ALnk);
-        AA.push.apply(AA, TBox);
-        AA.push.apply(AA, TLin);
-        AA.push.apply(AA, MTab);
-        AA.push.apply(AA, SAll);
-        AA.push.apply(AA, STab);
+        pushAll(AA, MENA);
+        pushAll(AA, ABox);
+        pushAll(AA, ALnk);
+        pushAll(AA, TBox);
+        pushAll(AA, TLin);
+        pushAll(AA, MTab);
+        pushAll(AA, SAll);
+        pushAll(AA, STab);
 
         for (var __i_e = 0; __i_e < AA.length; __i_e++) {
             (function (el) {
