@@ -7280,8 +7280,8 @@ track {
         }
 
         // hero background-image: ONLY for video / musicvideo → art then tmv; else empty
-        // skip on API fallback / HTTP path (same gate as updateMainBg)
-        if (isVideoish && canSetPageBackground()) {
+        // hero keeps bg even in fallback; full-page main/stage bg still gated
+        if (isVideoish) {
             var heroBg = resolveHeroBgUrl(e);
             HERO.style.backgroundImage = heroBg ? ("url('" + heroBg + "')") : "";
         } else {
