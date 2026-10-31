@@ -7140,9 +7140,19 @@ track {
         return t ? (UT + t + ".jpg") : "";
     }
 
+    /* Heavy full-page bg images: skip on HTTP/fallback (Maple dies on hover swaps) */
+    function canSetPageBackground() {
+        return SN.apiMode !== "fallback";
+    }
+
     function updateMainBg(url) {
         var bg = document.getElementById("main-bg");
-        if (!bg) {return;}
+        if (!bg) { return; }
+        if (!canSetPageBackground()) {
+            bg.style.backgroundImage = "";
+            bg.style.opacity = "0";
+            return;
+        }
         bg.style.opacity = "0";
         setTimeout(function () {
             if (url) {
@@ -7156,7 +7166,12 @@ track {
 
     function updateStageBg(url) {
         var bg = document.getElementById("stage-bg");
-        if (!bg) {return;}
+        if (!bg) { return; }
+        if (!canSetPageBackground()) {
+            bg.style.backgroundImage = "";
+            bg.style.opacity = "0";
+            return;
+        }
         bg.style.opacity = "0";
         setTimeout(function () {
             if (url) {
@@ -7265,7 +7280,8 @@ track {
         }
 
         // hero background-image: ONLY for video / musicvideo → art then tmv; else empty
-        if (isVideoish) {
+        // skip on API fallback / HTTP path (same gate as updateMainBg)
+        if (isVideoish && canSetPageBackground()) {
             var heroBg = resolveHeroBgUrl(e);
             HERO.style.backgroundImage = heroBg ? ("url('" + heroBg + "')") : "";
         } else {
