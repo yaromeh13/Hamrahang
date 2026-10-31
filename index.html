@@ -3285,9 +3285,24 @@ track {
             window.history.forward();
         });
     }
-
+</script>
+<script type="text/javascript">
+/* TEMP: reached after helpers, before main app body */
+(function () {
+    var el = document.getElementById("js-flag");
+    if (el) {
+        try {
+            var cur = String(el.innerHTML || "");
+            if (cur.indexOf("MAIN") < 0 && cur.indexOf("SPA") < 0) {
+                el.innerHTML = "PRE-MAIN";
+            }
+        } catch (e) {}
+    }
+})();
+</script>
+<script type="text/javascript">
 // Main Application
-!function(){"use strict";
+!function(){
 
     // Main Variables
     var OA = assignObject;
@@ -9648,5 +9663,23 @@ track {
     
 }();  
 </script>
+<script type="text/javascript">
+/* TEMP: only runs if main script parsed fully */
+(function () {
+    var el = document.getElementById("js-flag");
+    if (el) {
+        try {
+            var cur = String(el.innerHTML || "");
+            if (cur.indexOf("MAIN") === 0 || cur.indexOf("PRE-MAIN") === 0 ||
+                cur.indexOf("INIT-API") === 0 || cur.indexOf("API-MODE") === 0 ||
+                cur.indexOf("SPA") === 0 || cur.indexOf("CHP") === 0) {
+                el.innerHTML = cur + " > POST-MAIN";
+            } else if (cur.indexOf("POST-MAIN") < 0) {
+                el.innerHTML = "POST-MAIN-ONLY";
+            }
+        } catch (e) {}
+    }
+})();
+
 </body>
 </html>
