@@ -5179,22 +5179,22 @@ track {
     
             var dsc = OA(document.createElement("div"), {className: "search-container"});
             var dcc = OA(document.createElement("div"), {className: "content"});
-            dsc.append(dcc);
+            dsc.appendChild(dcc);
     
             var dci = OA(document.createElement("div"), {className: "icon", innerHTML: svg_src});
             var dsf = OA(document.createElement("form"));
             var ifs = OA(document.createElement("input"), {className: "input focusable", type: "text", id: "search", maxlength: 100, placeholder: "Search songs, artists, albums ...", autocorrect: "off", autocapitalize: "off", spellcheck: "false"});
-            dsf.append(ifs);
+            dsf.appendChild(ifs);
             var dsb = OA(document.createElement("button"), {className: "clear btn btn-model-2 focusable", type: "submit", innerHTML: svg_sfb});
-            dcc.append(dci, dsf, dsb);
-            MCNT.append(dsc);
+            dcc.appendChild(dci); dcc.appendChild(dsf); dcc.appendChild(dsb);
+            MCNT.appendChild(dsc);
     
             if (SN.search.q) {
                 var srd = OA(document.createElement("div"), {className: "page-header p-top-1"});
                 var srh = OA(document.createElement("h1"), {className: "title", innerHTML: 'Search results for "' + SN.search.q + '"'});
                 ifs.value = SN.search.q;
-                srd.append(srh);
-                MCNT.append(srd);
+                srd.appendChild(srh);
+                MCNT.appendChild(srd);
             }
     
             var searchTypes = [
@@ -5237,7 +5237,7 @@ track {
             }
     
             if (hasAnyResult) {
-                MCNT.append(hed);
+                MCNT.appendChild(hed);
             }
     
             for (i = 0; i < searchTypes.length; i++) {
@@ -5251,8 +5251,8 @@ track {
                 var der = OA(document.createElement("div"), {className: "error-message-container"});
                 var dt1 = OA(document.createElement("div"), {className: "text1 p-top-1-5", innerHTML: "No Found!"});
                 var dt2 = OA(document.createElement("div"), {className: "text2", innerHTML: "It is better to use short words and letters and numbers."});
-                der.append(dt1, dt2);
-                MCNT.append(der);
+                der.appendChild(dt1); der.appendChild(dt2);
+                MCNT.appendChild(der);
             }
     
             ADE();
@@ -5895,7 +5895,7 @@ track {
             if (P == 'song') { AduLst = ar; }
     
             var hero = OA(document.createElement("div"), {className: "page-detail-header-container", id: "hero"});
-            MCNT.append(hero);
+            MCNT.appendChild(hero);
     
             var tab = OA(document.createElement("div"), {className: "main-tabs p-top-1"});
             var ha1 = OA(document.createElement("a"), {className: "item" + (a == 1 ? ' active' : ''), href: "/video/top", innerHTML: "Top Video"});
@@ -5904,8 +5904,8 @@ track {
             var ha5 = OA(document.createElement("a"), {className: "item" + (a == 5 ? ' active' : ''), href: "/song/latest", innerHTML: "Latest Song"});
             var ha6 = OA(document.createElement("a"), {className: "item" + (a == 6 ? ' active' : ''), href: "/artist/top", innerHTML: "Top Artist"});
     
-            tab.append(ha1, ha2, ha3, ha5, ha6);
-            MCNT.append(tab);
+            tab.appendChild(ha1); tab.appendChild(ha2); tab.appendChild(ha3); tab.appendChild(ha5); tab.appendChild(ha6);
+            MCNT.appendChild(tab);
     
             if (P == 'video') { CRVN(ar, null, HV); }
             if (P == 'song')  { CRSS(ar, 'song'); }
@@ -5914,24 +5914,24 @@ track {
             if (typeof SN.user.lp === 'object' && SN.user.lp !== null && SN.user.lp.length > 0) {
                 var hed1 = OA(document.createElement("div"), {className: "section-header p-top-3"});
                 var ht1 = OA(document.createElement("h2"), {className: "title", innerHTML: "Recently Played"});
-                hed1.append(ht1);
-                MCNT.append(hed1);
+                hed1.appendChild(ht1);
+                MCNT.appendChild(hed1);
                 CRSS(SN.user.lp, 'song');
             }
     
             if (typeof SN.user.fv === 'object' && SN.user.fv.sng && SN.user.fv.sng.length > 0) {
                 var hed2 = OA(document.createElement("div"), {className: "section-header p-top-3"});
                 var ht2 = OA(document.createElement("h2"), {className: "title", innerHTML: "Your Favorite"});
-                hed2.append(ht2);
-                MCNT.append(hed2);
+                hed2.appendChild(ht2);
+                MCNT.appendChild(hed2);
                 CRSS(SN.user.fv.sng, 'song');
             }
     
             if (typeof SN.user.fv === 'object' && SN.user.fv.art && SN.user.fv.art.length > 0) {
                 var hed3 = OA(document.createElement("div"), {className: "section-header p-top-3"});
                 var ht3 = OA(document.createElement("h2"), {className: "title", innerHTML: "Your followed"});
-                hed3.append(ht3);
-                MCNT.append(hed3);
+                hed3.appendChild(ht3);
+                MCNT.appendChild(hed3);
                 CRAS(SN.user.fv.art);
             }
     
@@ -6130,16 +6130,16 @@ track {
             var el = OA(document.createElement("div"), {className: "item-box"});
             var elb = OA(document.createElement("div"), {className: "box"});
             var ela = OA(document.createElement("a"), {href:HPL+'favorite'});
-            elb.append(ela);
+            elb.appendChild(ela);
             var art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
-            ela.append(art);
+            ela.appendChild(art);
             var iep = OA(document.createElement("img"), {src: UT+fs[0].thumb+".jpg"});
-            art.append(iep);
+            art.appendChild(iep);
             var dt1 = OA(document.createElement("div"), {className: "text1"});
             var dta = OA(document.createElement("a"), {href:HPL+'favorite', innerHTML: 'Your Favorite'});
-            dt1.append(dta);
-            el.append(elb,dt1);
-            sec_div.append(el);
+            dt1.appendChild(dta);
+            el.appendChild(elb); el.appendChild(dt1);
+            sec_div.appendChild(el);
             
         }
         
@@ -6152,21 +6152,21 @@ track {
                 var ela = OA(document.createElement("a"), {href: ul+e.artist_url+'-'+e.url});
                 var elm = OA(document.createElement("div"), {className: "menu", innerHTML: svg_dot});
                 var elp = OA(document.createElement("div"), {className: "play", innerHTML: svg_ply});
-                elb.append(ela,elm,elp);
+                elb.appendChild(ela); elb.appendChild(elm); elb.appendChild(elp);
                 var art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
-                ela.append(art);
+                ela.appendChild(art);
                 var sep = OA(document.createElement("span"), {className: "placeholder", innerHTML: svg_a2p});
                 var iep = OA(document.createElement("img"), {src: UT+e.thumb+".jpg"});
-                art.append(sep,iep);
+                art.appendChild(sep); art.appendChild(iep);
                 var dt1 = OA(document.createElement("div"), {className: "text1"});
                 var dta = OA(document.createElement("a"), {href: ul+e.artist_url+'-'+e.url,innerHTML: e.name});
-                dt1.append(dta);
+                dt1.appendChild(dta);
                 var dt2 = OA(document.createElement("div"), {className: "text2" ,innerHTML: e.artist});
-                el.append(elb,dt1,dt2);
-                sec_div.append(el);
+                el.appendChild(elb); el.appendChild(dt1); el.appendChild(dt2);
+                sec_div.appendChild(el);
             });
         
-            sec.append(sec_div);
+            sec.appendChild(sec_div);
 
         }
     //    ADE();
@@ -6174,18 +6174,18 @@ track {
         var el = OA(document.createElement("div"), {className: "item-box"});
         var elb = OA(document.createElement("div"), {className: "box"});
         var ela = OA(document.createElement("a"), {});
-        elb.append(ela);
+        elb.appendChild(ela);
         var art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
-        ela.append(art);
+        ela.appendChild(art);
         var sep = OA(document.createElement("span"), {className: "placeholder", innerHTML: svg_adp});
-        art.append(sep);
+        art.appendChild(sep);
         var dt1 = OA(document.createElement("div"), {className: "text1"});
         var dta = OA(document.createElement("a"), {innerHTML: 'Add New Playlist'});
-        dt1.append(dta);
-        el.append(elb,dt1);
-        sec_div.append(el);
-        sec.append(sec_div);
-        MCNT.append(sec);
+        dt1.appendChild(dta);
+        el.appendChild(elb); el.appendChild(dt1);
+        sec_div.appendChild(el);
+        sec.appendChild(sec_div);
+        MCNT.appendChild(sec);
     
         elb.addEventListener("click", function () {AddPls();});
         dta.addEventListener("click", function () {AddPls();});
@@ -6223,13 +6223,13 @@ track {
                 href: HV + e.id + "/" + artist_url + "-" + e.url
             });
     
-            elb.append(ela);
+            elb.appendChild(ela);
     
             var art = OA(document.createElement("div"), {
                 className: "artwork ratio ratio-16x9"
             });
     
-            ela.append(art);
+            ela.appendChild(art);
     
             var sep = OA(document.createElement("span"), {
                 className: "placeholder"
@@ -6258,7 +6258,7 @@ track {
                     innerHTML: artist
                 });
     
-                dt2.append(dta);
+                dt2.appendChild(dta);
     
             } else {
     
@@ -6266,14 +6266,14 @@ track {
     
             }
     
-            el.append(elb, dt1, dt2);
+            el.appendChild(elb); el.appendChild(dt1); el.appendChild(dt2);
     
-            sec_div.append(el);
+            sec_div.appendChild(el);
         });
     
-        sec.append(sec_div);
+        sec.appendChild(sec_div);
     
-        MCNT.append(sec);
+        MCNT.appendChild(sec);
     }
 
     // true when a list lives inside an artist/album page: focus then fills the
@@ -6779,9 +6779,9 @@ track {
             dbm.addEventListener("click", function () {
                 CRBW(e.id, T);
             });
-            dcp.append(dbF, dbp, dbl, dbm);
+            dcp.appendChild(dbF); dcp.appendChild(dbp); dcp.appendChild(dbl); dcp.appendChild(dbm);
             
-            plr.append(dac);
+            plr.appendChild(dac);
 
         }else{
 
@@ -6818,7 +6818,7 @@ track {
                 OpenMainPlayer();
             });
 
-            dcp.append(dbF, dbb, dbp, dbn, dbfs);
+            dcp.appendChild(dbF); dcp.appendChild(dbb); dcp.appendChild(dbp); dcp.appendChild(dbn); dcp.appendChild(dbfs);
             
             var dac2 = OA(document.createElement("div"), {className: "page-detail-actions"});
             var dcp2 = OA(document.createElement("div"), {className: "control-btn"});
@@ -6852,7 +6852,7 @@ track {
             dbm.addEventListener("click", function () {
                 CRBW(e.id, T);
             });
-            dcp2.append(dbs, dbd, dbl, dbph, dbm);
+            dcp2.appendChild(dbs); dcp2.appendChild(dbd); dcp2.appendChild(dbl); dcp2.appendChild(dbph); dcp2.appendChild(dbm);
             
             var dac3 = OA(document.createElement("div"), {className: "page-detail-actions"});
             var dpd = OA(document.createElement("div"), {className: "progress-details focusable"});
@@ -6906,8 +6906,8 @@ track {
             
     
     
-            //dac2.append(dsk);
-            plr.append(dac,dac3,dac2);
+            //dac2.appendChild(dsk);
+            plr.appendChild(dac); plr.appendChild(dac3); plr.appendChild(dac2);
         }
 
     
@@ -6955,7 +6955,7 @@ track {
         var dtl = OA(document.createElement("div"), {className: "detailes"});
         var tlt = OA(document.createElement("div"), {className: "title"});
         var th1 = OA(document.createElement("h1"), {title: e.name_fa, innerHTML: e.name});
-        tlt.append(th1);
+        tlt.appendChild(th1);
         dtl.appendChild(tlt);
         dcs.appendChild(dtl);
 
@@ -7012,23 +7012,23 @@ track {
             var tla = OA(document.createElement("a"), {draggable: "false", href: HS+e.artist_url+'-'+e.url});
         
             var dtb = OA(document.createElement("div"), {className: "artwork"});
-            tla.append(dtb);
+            tla.appendChild(dtb);
             var dmg = OA(document.createElement("img"), {src: UT+e.thumb+".jpg"});
-            dtb.append(dmg);
+            dtb.appendChild(dmg);
             var dpl = OA(document.createElement("div"), {className: "play", innerHTML: (e.play==true)?svg_eql:svg_ply });     
             var dst = OA(document.createElement("div"), {className: "texts"});
                 var dstt = OA(document.createElement("div"), {className: "title"}); 
                     var tta = OA(document.createElement("a"), {draggable: "false", href: HS+e.artist_url+'-'+e.url, innerHTML: e.name});
-            dstt.append(tta);      
+            dstt.appendChild(tta);      
             var dsa = OA(document.createElement("div"), {className: "artist", innerHTML: e.artist});
             var dat = OA(document.createElement("div"), {className: "date", innerHTML: e.bd});
             var dur = OA(document.createElement("div"), {className: "duration", innerHTML:"00:00"});
             var mor = OA(document.createElement("div"), {className: "more", innerHTML: svg_dot});
             
             
-            dst.append(dstt,dsa);
-            dtl.append(tla,dpl,dst,dat,dur,mor);
-            ps.append(dtl);
+            dst.appendChild(dstt); dst.appendChild(dsa);
+            dtl.appendChild(tla); dtl.appendChild(dpl); dtl.appendChild(dst); dtl.appendChild(dat); dtl.appendChild(dur); dtl.appendChild(mor);
+            ps.appendChild(dtl);
         });
         
         var eM = ps.querySelectorAll(".more");
@@ -7849,20 +7849,20 @@ track {
         var drs = OA(document.createElement("div"), {className: "download-dialog show_fadein"});
         var cnt = OA(document.createElement("div"), {className: "content"});
         var txt = OA(document.createElement("div"), {className: "texts"});
-        cnt.append(txt);
+        cnt.appendChild(txt);
         var tx1 = OA(document.createElement("div"), {className: "text1", innerHTML: "Add New Playlist"});
         
         var df4 = OA(document.createElement("div"), {className: "input-container"});
         var iab = OA(document.createElement("input"), {className: "input" ,type: "text",id:"playlist" ,maxlength: 100, placeholder:"Playlist Name", autocorrect:"off", autocapitalize:"off", spellcheck:"false"});
-        df4.append(iab);
+        df4.appendChild(iab);
 
         var btn = OA(document.createElement("div"), {className: "buttons p-top-1"});
         var bta = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Done"});
         var bca = OA(document.createElement("span"), {className: "btn btn-sm btn-model-4", innerHTML: "Cancel"});
-        btn.append(bta,bca);
-        txt.append(tx1,df4,btn);
-        drs.append(cnt);
-        MCLN.append(drs);
+        btn.appendChild(bta); btn.appendChild(bca);
+        txt.appendChild(tx1); txt.appendChild(df4); txt.appendChild(btn);
+        drs.appendChild(cnt);
+        MCLN.appendChild(drs);
         
         var DRS = MCLN.querySelector(".download-dialog");
         var BSA = MCLN.querySelector(".download-dialog a.btn-sm");
@@ -7895,8 +7895,8 @@ track {
      /*               
         var tms = OA(document.createElement("div"), {className: "toast-message show"});
         var spn = OA(document.createElement("span"), {innerHTML:t});
-        tms.append(spn);
-        document.body.append(tms);*/
+        tms.appendChild(spn);
+        document.body.appendChild(tms);*/
             drs.className = drs.className.replace("show_fadein", "show_fadeout");
             setTimeout(function() {
                drs.remove();
@@ -7911,14 +7911,14 @@ track {
         var drs = OA(document.createElement("div"), {className: "download-dialog show_fadein"});
         var cnt = OA(document.createElement("div"), {className: "content"});
         var txt = OA(document.createElement("div"), {className: "texts"});
-        cnt.append(txt);
+        cnt.appendChild(txt);
         var tx1 = OA(document.createElement("div"), {className: "text1", innerHTML: "Start The Hamrahang First"});
         var btn = OA(document.createElement("div"), {className: "buttons p-top-1"});
         var bta = OA(document.createElement("a"), {className: "btn btn-sm btn-model-4", href: "https://t.me/HamrahangBot", target: "_blank", innerHTML: "Start App"});
-        btn.append(bta);
-        txt.append(tx1,btn);
-        drs.append(cnt);
-        MCLN.append(drs);
+        btn.appendChild(bta);
+        txt.appendChild(tx1); txt.appendChild(btn);
+        drs.appendChild(cnt);
+        MCLN.appendChild(drs);
         
         var DRS = MCLN.querySelector(".download-dialog");
         var BSA = MCLN.querySelector(".download-dialog a.btn-sm");
@@ -9206,8 +9206,8 @@ track {
     function CTMS(t){
         var tms = OA(document.createElement("div"), {className: "toast-message show"});
         var spnt = OA(document.createElement("span"), {innerHTML:t});
-        tms.append(spnt);
-        document.body.append(tms);
+        tms.appendChild(spnt);
+        document.body.appendChild(tms);
         setTimeout(function () {
             tms.className = tms.className.replace("show", "");
             tms.remove();
