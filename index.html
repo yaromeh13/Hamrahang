@@ -3313,10 +3313,6 @@ track {
 // Main Application
 !function(){
 
-    // Main Variables
-    var OA = assignObject;
-    var sn = SpatialNavigation;
-
     /* TEMP DIAG stages for Samsung (remove later) */
     function diagFlag(msg) {
         var el = document.getElementById("js-flag");
@@ -3324,7 +3320,7 @@ track {
             try {
                 var prev = String(el.innerHTML || "");
                 if (prev.indexOf("API-OK") === 0 || prev.indexOf("API-TEST") === 0 ||
-                    prev === "JS-OK" || prev === "NOJS") {
+                    prev === "JS-OK" || prev === "NOJS" || prev === "PRE-MAIN") {
                     el.innerHTML = String(msg);
                 } else if (prev.indexOf(String(msg)) < 0) {
                     el.innerHTML = prev + " > " + String(msg);
@@ -3336,22 +3332,61 @@ track {
     }
     diagFlag("MAIN");
 
-    var SN = self._next;
-    if (!SN) {
+    var OA = (typeof assignObject === "function") ? assignObject : function (t) { return t; };
+    var sn = (typeof SpatialNavigation !== "undefined") ? SpatialNavigation : null;
+
+    var SN;
+    try {
+        SN = (typeof self !== "undefined" && self._next) ? self._next : (window._next || {});
+    } catch (e0) {
+        SN = {};
+    }
+    if (!SN || typeof SN !== "object") {
         diagFlag("ERR-NO-SN");
         return;
     }
+    diagFlag("MAIN-SN");
+
     var e, a = {}, l = {};
     var BODY = document.body;
+    var MCLN, MCTR, MCNT, MPDT, MSBR, MFOT, MAPL;
 
-    var MCLN = getByClass("ln");
-    var MCTR = getByClass("main-container");
-    var MCNT = getByClass("main-content");
-    var MPDT = getByClass("player-container-desktop");
-    var MSBR = getByClass("sidebar");
-    var MFOT = getByClass("main-footer");
-    var MAPL = document.getElementById("player");
-    diagFlag("MAIN-1");
+    function localByClass(className) {
+        var el, elements, i;
+        if (typeof getByClass === "function") {
+            try { return getByClass(className); } catch (e1) {}
+        }
+        if (document.getElementById && className) {
+            /* try id-ish common hooks */
+        }
+        try {
+            if (document.querySelector) {
+                el = document.querySelector("." + className);
+                if (el) { return el; }
+            }
+        } catch (e2) {}
+        elements = document.getElementsByTagName("*");
+        for (i = 0; i < elements.length; i++) {
+            if ((" " + elements[i].className + " ").indexOf(" " + className + " ") !== -1) {
+                return elements[i];
+            }
+        }
+        return null;
+    }
+
+    try {
+        MCLN = localByClass("ln");
+        MCTR = localByClass("main-container");
+        MCNT = localByClass("main-content");
+        MPDT = localByClass("player-container-desktop");
+        MSBR = localByClass("sidebar");
+        MFOT = localByClass("main-footer");
+        MAPL = document.getElementById("player");
+        diagFlag("MAIN-1");
+    } catch (e3) {
+        diagFlag("ERR-DOM:" + (e3 && e3.message ? e3.message : e3));
+        return;
+    }
 
     var HP = SN.apiBase;
     var HT = "https://tv.hamrahang.ir/";
