@@ -2886,9 +2886,17 @@ track {
 (function () {
     var flag = document.getElementById("js-flag");
     function show(msg) {
-        if (flag) {
-            try { flag.innerHTML = String(msg); } catch (e) {}
-        }
+        if (!flag) { return; }
+        try {
+            var cur = String(flag.innerHTML || "");
+            /* Do not wipe MAIN / INIT-API / SPA / CHP if main script already ran */
+            if (cur.indexOf("MAIN") === 0 || cur.indexOf("INIT-API") === 0 ||
+                cur.indexOf("API-MODE") === 0 || cur.indexOf("SPA") === 0 ||
+                cur.indexOf("CHP") === 0) {
+                return;
+            }
+            flag.innerHTML = String(msg);
+        } catch (e) {}
     }
     show("API-TEST");
     var url = "http://tv.hamrahang.ir/tv-api.php/song/11210778?_qjs=ep";
@@ -3289,7 +3297,17 @@ track {
     function diagFlag(msg) {
         var el = document.getElementById("js-flag");
         if (el) {
-            try { el.innerHTML = String(msg); } catch (e) {}
+            try {
+                var prev = String(el.innerHTML || "");
+                if (prev.indexOf("API-OK") === 0 || prev.indexOf("API-TEST") === 0 ||
+                    prev === "JS-OK" || prev === "NOJS") {
+                    el.innerHTML = String(msg);
+                } else if (prev.indexOf(String(msg)) < 0) {
+                    el.innerHTML = prev + " > " + String(msg);
+                } else {
+                    el.innerHTML = String(msg);
+                }
+            } catch (e) {}
         }
     }
     diagFlag("MAIN");
