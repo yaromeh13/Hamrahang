@@ -7931,22 +7931,6 @@ track {
         
     }
     
-    function downloadFile(data, name = 'file', type = 'audio/mpeg') {
-
-        var anchor = document.createElement('a');
-        anchor.setAttribute('href', CDNMP3+name+type);
-        anchor.setAttribute('download', name);
-        anchor.style.display = 'none';
-        anchor.click();
-        //delete anchor;
-         
-        /*
-        
-        var anchor = document.createElement('a');
-        anchor.href = window.URL.createObjectURL(new Blob([data], { type }));
-        anchor.download = name;
-        anchor.click();*/
-    }
     
     function ADE(){
         var AA = [];

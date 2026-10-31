@@ -70,18 +70,23 @@
   /************/
   /* Polyfill */
   /************/
-  var elementMatchesSelector =
-    Element.prototype.matches ||
-    Element.prototype.matchesSelector ||
-    Element.prototype.mozMatchesSelector ||
-    Element.prototype.webkitMatchesSelector ||
-    Element.prototype.msMatchesSelector ||
-    Element.prototype.oMatchesSelector ||
-    function (selector) {
-      var matchedNodes =
-        (this.parentNode || this.document).querySelectorAll(selector);
+  var elementMatchesSelector = function (selector) {
+    var matchedNodes;
+    try {
+      if (this.matches) { return this.matches(selector); }
+      if (this.matchesSelector) { return this.matchesSelector(selector); }
+      if (this.mozMatchesSelector) { return this.mozMatchesSelector(selector); }
+      if (this.webkitMatchesSelector) { return this.webkitMatchesSelector(selector); }
+      if (this.msMatchesSelector) { return this.msMatchesSelector(selector); }
+      if (this.oMatchesSelector) { return this.oMatchesSelector(selector); }
+    } catch (e) {}
+    try {
+      matchedNodes = (this.parentNode || this.ownerDocument || document).querySelectorAll(selector);
       return [].slice.call(matchedNodes).indexOf(this) >= 0;
-    };
+    } catch (e2) {
+      return false;
+    }
+  };
 
   /*****************/
   /* Core Function */
@@ -579,9 +584,30 @@
     if (arguments.length < 4) {
       cancelable = true;
     }
-    var evt = document.createEvent('CustomEvent');
-    evt.initCustomEvent(EVENT_PREFIX + type, true, cancelable, details);
-    return elem.dispatchEvent(evt);
+    var evt;
+    var name = EVENT_PREFIX + type;
+    try {
+      evt = document.createEvent('CustomEvent');
+      if (evt.initCustomEvent) {
+        evt.initCustomEvent(name, true, cancelable, details);
+      } else {
+        evt.initEvent(name, true, cancelable);
+        evt.detail = details;
+      }
+    } catch (e) {
+      try {
+        evt = document.createEvent('Event');
+        evt.initEvent(name, true, cancelable);
+        evt.detail = details;
+      } catch (e2) {
+        return true;
+      }
+    }
+    try {
+      return elem.dispatchEvent(evt);
+    } catch (e3) {
+      return true;
+    }
   }
 
   function focusElement(elem, sectionId, direction) {
