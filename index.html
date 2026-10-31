@@ -13,6 +13,73 @@
 	<link rel="icon" href="/icon.png" type="image/png" sizes="256x256">
 	<link rel="apple-touch-icon" href="/apple-icon.png" type="image/png" sizes="256x256">
 	<script src="/js/spatial_navigation.js"></script>
+<script type="text/javascript">
+/* JSON helper — native when present; ES3 fallback for Maple (no JSON global) */
+(function (g) {
+    function quoteStr(s) {
+        return '"' + String(s)
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\r/g, '\\r')
+            .replace(/\n/g, '\\n')
+            .replace(/\t/g, '\\t')
+            + '"';
+    }
+
+    function stringifyJSON(value) {
+        var i, k, out, t;
+        if (typeof JSON !== 'undefined' && typeof JSON.stringify === 'function') {
+            try { return JSON.stringify(value); } catch (e0) {}
+        }
+        if (value === null) { return 'null'; }
+        t = typeof value;
+        if (t === 'number') { return isFinite(value) ? String(value) : 'null'; }
+        if (t === 'boolean') { return value ? 'true' : 'false'; }
+        if (t === 'string') { return quoteStr(value); }
+        if (t === 'object') {
+            if (Object.prototype.toString.call(value) === '[object Array]') {
+                out = [];
+                for (i = 0; i < value.length; i++) {
+                    out.push(stringifyJSON(value[i]) || 'null');
+                }
+                return '[' + out.join(',') + ']';
+            }
+            out = [];
+            for (k in value) {
+                if (Object.prototype.hasOwnProperty.call(value, k) &&
+                    typeof value[k] !== 'undefined' &&
+                    typeof value[k] !== 'function') {
+                    out.push(quoteStr(k) + ':' + stringifyJSON(value[k]));
+                }
+            }
+            return '{' + out.join(',') + '}';
+        }
+        return undefined;
+    }
+
+    function parseJSON(text) {
+        var s;
+        if (text == null || text === '') { return null; }
+        if (typeof JSON !== 'undefined' && typeof JSON.parse === 'function') {
+            return JSON.parse(text);
+        }
+        s = String(text);
+        /* Crockford-style sanity check then Function (trusted API body only) */
+        if (/^[\],:{}\s]*$/.test(
+            s.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
+             .replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
+             .replace(/(?:^|:|,)(?:\s*\[)+/g, '')
+        )) {
+            return (new Function('return (' + s + ');'))();
+        }
+        throw new Error('parseJSON: invalid JSON');
+    }
+
+    g.parseJSON = parseJSON;
+    g.stringifyJSON = stringifyJSON;
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
 <style>
 /* =========================================================
    BASE CSS — 2013–2015 safe (no vars, no vh-only, no modern APIs)
@@ -2720,7 +2787,7 @@ track {
             if (xhr.readyState !== 4 || finished) { return; }
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
-                    var ping = JSON.parse(xhr.responseText);
+                    var ping = parseJSON(xhr.responseText);
                     if (ping && ping.status === "ok") {
                         finish(true);
                         return;
@@ -2768,7 +2835,7 @@ track {
 
                 try {
 
-                    jd = JSON.parse(
+                    jd = parseJSON(
                         xhr.responseText
                     );
 
@@ -3729,7 +3796,7 @@ track {
             if (xhr.status >= 200 && xhr.status < 300) {
     
                 try {
-                    var jd = JSON.parse(xhr.responseText);
+                    var jd = parseJSON(xhr.responseText);
                     
                     if (!jd || typeof jd !== 'object') {
                         console.error('gjs: Invalid JSON response', jd);
@@ -3828,7 +3895,7 @@ track {
             refreshToken = localStorage.getItem('hamrahang_refresh_token');
             var cachedUserRaw = localStorage.getItem('hamrahang_user');
             if (cachedUserRaw) {
-                cachedUser = JSON.parse(cachedUserRaw);
+                cachedUser = parseJSON(cachedUserRaw);
             }
         } catch (e) {}
     
@@ -3897,7 +3964,7 @@ track {
         SN.accessToken = accessToken;
     
         try {
-            localStorage.setItem('hamrahang_user', JSON.stringify(userData));
+            localStorage.setItem('hamrahang_user', stringifyJSON(userData));
             localStorage.setItem('hamrahang_refresh_token', refreshToken);
         } catch (e) {
             console.log("PersistUserSession: localStorage failed:", e.message);
@@ -3925,7 +3992,7 @@ track {
             if (xhr.readyState !== 4) { return; }
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
-                    var j = JSON.parse(xhr.responseText);
+                    var j = parseJSON(xhr.responseText);
                     CFAV(q, j);
                     if (callback) { callback(true, j); }
                 } catch (error) {
@@ -3943,7 +4010,7 @@ track {
             if (callback) { callback(false, null); }
         };
     
-        xhr.send(JSON.stringify({ q: q }));   // ← id دیگه اینجا فرستاده نمی‌شه
+        xhr.send(stringifyJSON({ q: q }));   // ← id دیگه اینجا فرستاده نمی‌شه
     }
 
     function syncFavoriteToServer(type, id, isAdd) {
@@ -3983,7 +4050,7 @@ track {
             if (xhr.readyState !== 4) { return; }
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
-                    var j = JSON.parse(xhr.responseText);
+                    var j = parseJSON(xhr.responseText);
                     if (callback) { callback(true, j); }
                 } catch (error) {
                     console.error(error.message || error);
@@ -4000,7 +4067,7 @@ track {
             if (callback) { callback(false, null); }
         };
     
-        xhr.send(JSON.stringify(q));
+        xhr.send(stringifyJSON(q));
     }
     
     function RenderQRCode(container, base64ImageData) {
@@ -4104,7 +4171,7 @@ track {
     
     function SaveSettingsToStorage() {
         try {
-            localStorage.setItem('hamrahang_settings', JSON.stringify(SN.settings));
+            localStorage.setItem('hamrahang_settings', stringifyJSON(SN.settings));
         } catch (e) {
             console.log("SaveSettingsToStorage failed:", e.message);
         }
@@ -4126,7 +4193,7 @@ track {
         try {
             var saved = localStorage.getItem('hamrahang_settings');
             if (saved) {
-                var parsed = JSON.parse(saved);
+                var parsed = parseJSON(saved);
                 for (var key in defaults) {
                     if (parsed[key] === undefined) {
                         parsed[key] = defaults[key];
@@ -4387,7 +4454,7 @@ track {
         if (HAS_LOCAL) {
             try {
                 var raw = localStorage.getItem(PROFILE_KEY);
-                if (raw) { data = JSON.parse(raw); }
+                if (raw) { data = parseJSON(raw); }
             } catch (e) {}
         }
     
@@ -4432,7 +4499,7 @@ track {
         if (!SN.profile || !HAS_LOCAL) { return; }
     
         try {
-            localStorage.setItem(PROFILE_KEY, JSON.stringify(SN.profile));
+            localStorage.setItem(PROFILE_KEY, stringifyJSON(SN.profile));
         } catch (e) {
             console.log('SaveProfile failed:', e.message);
         }
@@ -4927,7 +4994,7 @@ track {
                 if (xhr.readyState !== 4) { return; }
                 if (xhr.status >= 200 && xhr.status < 300) {
                     try {
-                        MergeResolvedItems(endpoint, JSON.parse(xhr.responseText));
+                        MergeResolvedItems(endpoint, parseJSON(xhr.responseText));
                         finish();
                     } catch (e) {
                         console.log('ResolveItems: parse failed', e.message);
@@ -4938,7 +5005,7 @@ track {
                 }
             };
             xhr.onerror = function () { retryOrFinish(); };
-            xhr.send(JSON.stringify({ ids: missing }));
+            xhr.send(stringifyJSON({ ids: missing }));
         }
 
         send();
@@ -5838,7 +5905,7 @@ track {
                 return;
             }
             try {
-                var jd = JSON.parse(xhr.responseText);
+                var jd = parseJSON(xhr.responseText);
                 if (jd && jd.ok == true) {
                     SN['add'] = jd;
                     if (SN.add.add_artist == 'success' || SN.add.add_album == 'success' || SN.add.add == true) {
@@ -6131,11 +6198,11 @@ track {
             if (callback) { callback(); }
         }
 
-        console.log('[CRLB] render', P, 'cur=', current.key, 'types=', JSON.stringify(typesToResolve), 'idsByType=', JSON.stringify(current.idsByType));
+        console.log('[CRLB] render', P, 'cur=', current.key, 'types=', stringifyJSON(typesToResolve), 'idsByType=', stringifyJSON(current.idsByType));
         for (t = 0; t < typesToResolve.length; t++) {
             (function (tt) {
                 ResolveItems(tt, current.idsByType[tt], function (ready) {
-                    console.log('[CRLB] resolved', tt, 'ready=', JSON.stringify(ready));
+                    console.log('[CRLB] resolved', tt, 'ready=', stringifyJSON(ready));
                     readyByType[tt] = ready;
                     onAllResolved();
                 });
