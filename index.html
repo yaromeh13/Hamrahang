@@ -2072,6 +2072,14 @@ track {
     display: none;
     visibility: hidden;
 }
+.js-flag {
+    position: relative;
+    z-index: 9999;
+    color: #0f0;
+    font-size: 18px;
+    padding: 8px;
+    background: #000;
+}
     
 
 /* ---------------------------------------------------------
@@ -2872,6 +2880,67 @@ track {
     }
     document.getElementById("js-flag").innerHTML = "JS-OK";
 })(); 
+</script>
+<script type="text/javascript">
+/* TEMP DIAG — Samsung: probe tv-api song JSON into #js-flag; remove after test */
+(function () {
+    var flag = document.getElementById("js-flag");
+    function show(msg) {
+        if (flag) {
+            try { flag.innerHTML = String(msg); } catch (e) {}
+        }
+    }
+    show("API-TEST");
+    var url = "http://tv.hamrahang.ir/tv-api.php/song/11210778?_qjs=ep";
+    var xhr;
+    try {
+        xhr = new XMLHttpRequest();
+    } catch (e0) {
+        show("API-NO-XHR");
+        return;
+    }
+    try {
+        xhr.open("GET", url, true);
+    } catch (e1) {
+        show("API-OPEN-ERR");
+        return;
+    }
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) { return; }
+        var st = xhr.status;
+        var body = xhr.responseText || "";
+        var head = body.length > 60 ? body.substring(0, 60) : body;
+        head = String(head).replace(/</g, "[").replace(/>/g, "]");
+        if (st >= 200 && st < 300) {
+            try {
+                if (typeof parseJSON !== "function") {
+                    show("API-NO-PARSEFN " + st);
+                    return;
+                }
+                var j = parseJSON(body);
+                var label = "API-OK " + st;
+                if (j) {
+                    if (j.song) { label += " song"; }
+                    else if (j.error) { label += " err:" + j.error; }
+                    else { label += " keys"; }
+                }
+                show(label + " len:" + body.length);
+            } catch (e2) {
+                show("API-PARSE-FAIL " + st + " " + head);
+            }
+        } else {
+            show("API-HTTP " + st + " " + head);
+        }
+    };
+    xhr.onerror = function () {
+        show("API-NET-ERR");
+    };
+    try {
+        xhr.send(null);
+    } catch (e3) {
+        show("API-SEND-ERR");
+    }
+})();
 </script>
 <script>
 (function () {
