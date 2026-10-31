@@ -3103,13 +3103,23 @@ track {
         };
     }
 
-    /* Push array-like (NodeList, arguments, array) into target without Function.apply.
-       Maple/old engines often fail on Array.prototype.push.apply(arr, nodeList). */
+    /* Push array-like into target. Prefer push.apply for real arrays;
+       always loop for NodeList / host objects / failures (Maple-safe). */
     function pushAll(target, source) {
         var i, n;
         if (!target || source == null) { return target; }
         n = source.length;
         if (typeof n !== "number") { return target; }
+
+        if (isArray(source) && typeof target.push === "function") {
+            try {
+                if (n > 0) {
+                    target.push.apply(target, source);
+                }
+                return target;
+            } catch (e) {}
+        }
+
         for (i = 0; i < n; i++) {
             target.push(source[i]);
         }
