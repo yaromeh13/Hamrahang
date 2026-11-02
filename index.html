@@ -4422,6 +4422,11 @@ try {
         if (u) {
             path = normalizeRoutePath(u);
             if (path) {
+                /* Same route already showing — avoid blanking MCNT for no reason */
+                if (path === SN.routePath && MCNT && MCNT.getElementsByTagName("a").length) {
+                    if (callback) { callback(); }
+                    return;
+                }
                 SN.routePath = path;
                 stateObj = { Page: path, Url: path, pageTitle: "" };
                 try {
@@ -9715,13 +9720,15 @@ try {
     };  
      
     var seek = function (e) {
-        
-        if (e.keyCode === 13 ) {
-            document.activeElement.click();
+        var code = e.keyCode || e.which;
+
+        /* Enter/OK: do NOT click here — SpatialNavigation + ADE handle once.
+           Double click was clearing MCNT mid-render → black screen on tab change. */
+        if (code === 13 || code === 29443 || code === 23) {
             return;
         }
         
-        if (e.keyCode === 8 || e.keyCode === 461 ) {
+        if (code === 8 || code === 461 ) {
             back2home();
             return;
         }
