@@ -71,66 +71,133 @@
   /* Polyfill */
   /************/
   /*
-   * element.matches dual-path:
-   * 1) native matches / *MatchesSelector
-   * 2) polyfill: document.querySelectorAll(selector) + reference check
-   *
-   * IMPORTANT: do NOT run complex selectors (e.g. "#main-content a") via
-   * parentNode.querySelectorAll — #main-content is an ancestor of the <a>,
-   * so parent-scoped QSA returns empty and SpatialNavigation focus() fails.
-   * Always evaluate string selectors in document (or ownerDocument) scope.
-   * Works when library is loaded via <script src="..."> — no need to inline in index.
+   * element.matches — modern + legacy (Maple / broken native matches)
+   * 1) native matches* — only trust TRUE (some TVs return false wrongly)
+   * 2) document.querySelectorAll + reference
+   * 3) manual "#id tag" / "#id .class" / ".class" / "tag" (no QSA needed)
+   * Never use parentNode QSA for "#main-content a".
    */
+  function nodeContains(root, el) {
+    var n;
+    if (!root || !el) { return false; }
+    if (typeof root.contains === 'function') {
+      try { return root.contains(el); } catch (e) {}
+    }
+    n = el;
+    while (n) {
+      if (n === root) { return true; }
+      n = n.parentNode;
+    }
+    return false;
+  }
+
+  function trimSel(str) {
+    return String(str || '').replace(/^\s+|\s+$/g, '');
+  }
+
+  function matchOneSelector(el, sel) {
+    var doc, root, list, i, id, tag, cls, m, parts, cur, t;
+    sel = trimSel(sel);
+    if (!sel || !el || el.nodeType !== 1) { return false; }
+    doc = el.ownerDocument || document;
+
+    /* #id tag   e.g. #main-content a */
+    m = sel.match(/^#([\w\-]+)\s+([a-zA-Z][\w\-]*)$/);
+    if (m) {
+      root = doc.getElementById(m[1]);
+      if (!root) { return false; }
+      if ((el.tagName || '').toLowerCase() !== m[2].toLowerCase()) { return false; }
+      return nodeContains(root, el);
+    }
+
+    /* #id .class   e.g. #main-content .focusable */
+    m = sel.match(/^#([\w\-]+)\s+\.([\w\-]+)$/);
+    if (m) {
+      root = doc.getElementById(m[1]);
+      if (!root) { return false; }
+      cls = m[2];
+      if ((' ' + (el.className || '') + ' ').indexOf(' ' + cls + ' ') < 0) { return false; }
+      return nodeContains(root, el);
+    }
+
+    /* #id only */
+    m = sel.match(/^#([\w\-]+)$/);
+    if (m) {
+      return el.id === m[1];
+    }
+
+    /* .class only */
+    m = sel.match(/^\.([\w\-]+)$/);
+    if (m) {
+      return (' ' + (el.className || '') + ' ').indexOf(' ' + m[1] + ' ') >= 0;
+    }
+
+    /* tag only */
+    m = sel.match(/^([a-zA-Z][\w\-]*)$/);
+    if (m) {
+      return (el.tagName || '').toLowerCase() === m[1].toLowerCase();
+    }
+
+    /* tag.class */
+    m = sel.match(/^([a-zA-Z][\w\-]*)\.([\w\-]+)$/);
+    if (m) {
+      if ((el.tagName || '').toLowerCase() !== m[1].toLowerCase()) { return false; }
+      return (' ' + (el.className || '') + ' ').indexOf(' ' + m[2] + ' ') >= 0;
+    }
+
+    /* last: document QSA for this single selector */
+    try {
+      if (doc.querySelectorAll) {
+        list = doc.querySelectorAll(sel);
+        for (i = 0; i < list.length; i++) {
+          if (list[i] === el) { return true; }
+        }
+      }
+    } catch (eQ) {}
+    return false;
+  }
+
   var elementMatchesSelector = function (selector) {
     var el = this;
-    var list, i, doc, n;
+    var parts, i, ok;
 
     if (!selector || !el || el.nodeType !== 1) {
       return false;
     }
 
-    /* --- modern / native --- */
+    /* native: only accept true; ignore false (broken TV engines) */
     try {
       if (typeof el.matches === 'function') {
-        return el.matches(selector);
-      }
-      if (typeof el.matchesSelector === 'function') {
-        return el.matchesSelector(selector);
-      }
-      if (typeof el.webkitMatchesSelector === 'function') {
-        return el.webkitMatchesSelector(selector);
-      }
-      if (typeof el.mozMatchesSelector === 'function') {
-        return el.mozMatchesSelector(selector);
-      }
-      if (typeof el.msMatchesSelector === 'function') {
-        return el.msMatchesSelector(selector);
-      }
-      if (typeof el.oMatchesSelector === 'function') {
-        return el.oMatchesSelector(selector);
+        if (el.matches(selector) === true) { return true; }
+      } else if (typeof el.matchesSelector === 'function') {
+        if (el.matchesSelector(selector) === true) { return true; }
+      } else if (typeof el.webkitMatchesSelector === 'function') {
+        if (el.webkitMatchesSelector(selector) === true) { return true; }
+      } else if (typeof el.mozMatchesSelector === 'function') {
+        if (el.mozMatchesSelector(selector) === true) { return true; }
+      } else if (typeof el.msMatchesSelector === 'function') {
+        if (el.msMatchesSelector(selector) === true) { return true; }
+      } else if (typeof el.oMatchesSelector === 'function') {
+        if (el.oMatchesSelector(selector) === true) { return true; }
       }
     } catch (eNative) {}
 
-    /* --- polyfill: document-scoped QSA --- */
+    /* full selector via QSA once */
     try {
-      doc = el.ownerDocument || document;
-      if (!doc || !doc.querySelectorAll) {
-        /* last resort: simple queryAll helpers (id/class/tag only) */
-        list = queryAll(selector, doc || document);
+      if (document.querySelectorAll) {
+        var list = document.querySelectorAll(selector);
         for (i = 0; i < list.length; i++) {
           if (list[i] === el) { return true; }
         }
-        return false;
       }
-      list = doc.querySelectorAll(selector);
-      n = list.length;
-      for (i = 0; i < n; i++) {
-        if (list[i] === el) {
-          return true;
-        }
+    } catch (eFull) {}
+
+    /* comma-separated parts — manual / simple patterns */
+    parts = String(selector).split(',');
+    for (i = 0; i < parts.length; i++) {
+      if (matchOneSelector(el, parts[i])) {
+        return true;
       }
-    } catch (ePoly) {
-      return false;
     }
     return false;
   };
@@ -185,26 +252,56 @@
   function queryAll(selector, root) {
     var result = [];
     var ctx = root || document;
-    var parts, p, i, j, el, nodes, cls, acc;
+    var parts, p, i, j, el, nodes, cls, acc, m, rootEl, tag;
     var doc;
 
     if (!selector) { return result; }
 
-    /* If root is an element, still try native QSA on that root first;
-       for absolute selectors like "#main-content a" callers should pass document. */
+    /* Prefer document for absolute "#id …" selectors */
     try {
-      if (ctx.querySelectorAll) {
-        return [].slice.call(ctx.querySelectorAll(selector));
+      doc = (ctx && ctx.nodeType === 9) ? ctx : (document);
+      if (doc.querySelectorAll) {
+        result = [].slice.call(doc.querySelectorAll(selector));
+        if (result.length) { return result; }
       }
     } catch (e1) {}
 
-    /* If root had no QSA, try document-level QSA once more */
     try {
-      doc = (ctx.nodeType === 9) ? ctx : (ctx.ownerDocument || document);
-      if (doc && doc.querySelectorAll && doc !== ctx) {
-        return [].slice.call(doc.querySelectorAll(selector));
+      if (ctx.querySelectorAll && ctx !== doc) {
+        result = [].slice.call(ctx.querySelectorAll(selector));
+        if (result.length) { return result; }
       }
     } catch (e1b) {}
+
+    /* Manual "#id tag" / "#id .class" when QSA empty or missing */
+    parts = String(selector).split(',');
+    for (i = 0; i < parts.length; i++) {
+      p = trimSel(parts[i]);
+      if (!p) { continue; }
+      m = p.match(/^#([\w\-]+)\s+([a-zA-Z][\w\-]*)$/);
+      if (m) {
+        rootEl = document.getElementById(m[1]);
+        if (!rootEl) { continue; }
+        tag = m[2].toUpperCase();
+        nodes = rootEl.getElementsByTagName(m[2]);
+        for (j = 0; j < nodes.length; j++) { result.push(nodes[j]); }
+        continue;
+      }
+      m = p.match(/^#([\w\-]+)\s+\.([\w\-]+)$/);
+      if (m) {
+        rootEl = document.getElementById(m[1]);
+        if (!rootEl) { continue; }
+        cls = m[2];
+        nodes = rootEl.getElementsByTagName('*');
+        for (j = 0; j < nodes.length; j++) {
+          if ((' ' + (nodes[j].className || '') + ' ').indexOf(' ' + cls + ' ') >= 0) {
+            result.push(nodes[j]);
+          }
+        }
+        continue;
+      }
+    }
+    if (result.length) { return result; }
 
     parts = String(selector).split(',');
     for (i = 0; i < parts.length; i++) {
