@@ -42,7 +42,16 @@
     '37': 'left',
     '38': 'up',
     '39': 'right',
-    '40': 'down'
+    '40': 'down',
+    /* Samsung / Orsay / some Maple remotes */
+    '4': 'left',
+    '5': 'right',
+    '21': 'left',
+    '22': 'right',
+    '19': 'up',
+    '20': 'down',
+    '29460': 'up',
+    '29461': 'down'
   };
 
   var REVERSE = {
@@ -733,9 +742,22 @@
 
   function getCurrentFocusedElement() {
     var activeElement = document.activeElement;
-    if (activeElement && activeElement !== document.body) {
+    var id, last;
+    if (activeElement &&
+        activeElement !== document.body &&
+        activeElement !== document.documentElement) {
       return activeElement;
     }
+    /* Maple/Samsung: activeElement often resets to body while SN still
+       has lastFocusedElement — without this, move() always returns false. */
+    for (id in _sections) {
+      if (!_sections[id] || _sections[id].disabled) { continue; }
+      last = _sections[id].lastFocusedElement;
+      if (last && last.nodeType === 1) {
+        return last;
+      }
+    }
+    return null;
   }
 
   function extend(out) {
