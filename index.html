@@ -8335,11 +8335,14 @@ try {
                 if (!el || el.getAttribute("listener") === "true") { return; }
                 el.setAttribute("listener", "true");
                 el.addEventListener("click", function (h) {
-                    var href;
+                    var href, cls;
                     if (h && h.preventDefault) { h.preventDefault(); }
-                    /* attribute = "/song/latest"; property .href is absolute and breaks pushState on some TVs */
-                    href = el.getAttribute("href") || el.href || "";
-                    if (href) { chp(href); }
+                    cls = " " + (el.className || "") + " ";
+                    /* Menu Back is SN.goBack only — not chp */
+                    if (cls.indexOf(" back ") >= 0) { return false; }
+                    href = el.getAttribute("href") || "";
+                    if (!href || href === "#") { return false; }
+                    chp(href);
                     return false;
                 }, false);
             })(AA[__i_e]);
