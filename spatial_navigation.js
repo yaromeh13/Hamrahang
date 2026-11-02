@@ -1152,13 +1152,21 @@
 
     var direction = KEYMAPPING[evt.keyCode];
     if (!direction) {
-      if (evt.keyCode == 13) {
+      /* 13 = Enter; 29443 = Samsung OK/Enter on many Orsay/Maple sets */
+      if (evt.keyCode == 13 || evt.keyCode == 29443 || evt.keyCode == 23) {
         currentFocusedElement = getCurrentFocusedElement();
         if (currentFocusedElement && getSectionId(currentFocusedElement)) {
           if (!fireEvent(currentFocusedElement, 'enter-down')) {
             return preventDefault();
           }
+          /* SPA uses click listeners (ADE) — synthesize click after enter-down */
+          try {
+            if (typeof currentFocusedElement.click === 'function') {
+              currentFocusedElement.click();
+            }
+          } catch (eClick) {}
         }
+        return preventDefault();
       }
       return;
     }

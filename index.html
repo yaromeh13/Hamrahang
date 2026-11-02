@@ -128,6 +128,11 @@ body {
     overflow-x: hidden;
 }
 
+a {
+    color: #ffffff;
+    text-decoration: none;
+}
+
 .ln {
     display: block;
     position: relative;
@@ -2472,22 +2477,17 @@ track {
     margin-left: -130px;
     margin-top: -90px;
 }
-#main-content a:focus,
-#main-content .focusable:focus,
-.item-box .box a:focus,
-.item-box .box a:focus .artwork,
-.artist-box a:focus,
+
 .artist-box a:focus .artwork,
-.main-tabs .item:focus,
-.sidebar-content .menu a:focus,
 .track-line a:focus {
-    outline: 3px solid #ffffff !important;
-    border: 3px solid #ffcc00 !important;
+    outline: none;
+    border: 3px solid #ffffff;
 }
 
 /* if focus lands on outer box but style was only on artwork */
 .item-box .box a:focus {
-    border: 3px solid #ffcc00 !important;
+    outline: none;
+    border: 3px solid #ffffff;
 }
 </style>
 </head>
@@ -4385,20 +4385,63 @@ try {
         SN.settings = defaults;
     }
     
+    /* Path-only route for SPA. TV/Maple often ignore pushState with full http(s) URLs
+       or lack history API — keep SN.routePath as source of truth. */
+    function normalizeRoutePath(u) {
+        var s, i, path;
+        if (u == null || u === "") { return ""; }
+        s = String(u);
+        try {
+            i = s.indexOf("://");
+            if (i >= 0) {
+                i = s.indexOf("/", i + 3);
+                path = (i >= 0) ? s.substring(i) : "/";
+            } else {
+                path = s;
+            }
+        } catch (e0) {
+            path = s;
+        }
+        if (!path || path.charAt(0) !== "/") {
+            path = "/" + path;
+        }
+        i = path.indexOf("?");
+        if (i >= 0) { path = path.substring(0, i); }
+        i = path.indexOf("#");
+        if (i >= 0) { path = path.substring(0, i); }
+        return path;
+    }
+
     function chp(u, callback) {
+        var path, stateObj, LP, LPS, QS;
 
         if (u) {
-            var stateObj = {Page: u, Url: u, pageTitle: ''};
-            if (window.history && window.history.pushState) {
-                window.history.pushState(stateObj, stateObj.Page, stateObj.Url);
+            path = normalizeRoutePath(u);
+            if (path) {
+                SN.routePath = path;
+                stateObj = { Page: path, Url: path, pageTitle: "" };
+                try {
+                    if (window.history && typeof window.history.pushState === "function") {
+                        window.history.pushState(stateObj, path, path);
+                    }
+                } catch (ePush) {
+                    if (typeof tvlog === "function") {
+                        try { tvlog("pushState fail " + (ePush.message || ePush)); } catch (eL) {}
+                    }
+                }
             }
         }
-    
-        var LP = window.location.pathname;
-        var LPS = LP.split("/");
-        LPS[2] = LPS[2] ? LPS[2] : '';
-        LPS[3] = LPS[3] ? LPS[3] : '';
-        var QS = LPS[2] ? LPS[2] : '';
+
+        /* Prefer internal route (works when history/pushState is broken on TV) */
+        LP = SN.routePath || "";
+        if (!LP) {
+            try { LP = window.location.pathname || "/"; } catch (eLoc) { LP = "/"; }
+            SN.routePath = LP;
+        }
+        LPS = LP.split("/");
+        LPS[2] = LPS[2] ? LPS[2] : "";
+        LPS[3] = LPS[3] ? LPS[3] : "";
+        QS = LPS[2] ? LPS[2] : "";
     
         // Clear main content
         MCNT.innerHTML = '';
@@ -4489,6 +4532,9 @@ try {
     if (window.addEventListener) {
         try {
             window.addEventListener("popstate", function () {
+                try {
+                    SN.routePath = window.location.pathname || SN.routePath || "/";
+                } catch (ePop) {}
                 chp();
             }, false);
         } catch (e) {
@@ -8241,8 +8287,11 @@ try {
                 if (!el || el.getAttribute("listener") === "true") { return; }
                 el.setAttribute("listener", "true");
                 el.addEventListener("click", function (h) {
+                    var href;
                     if (h && h.preventDefault) { h.preventDefault(); }
-                    if (el.href) { chp(el.href); }
+                    /* attribute = "/song/latest"; property .href is absolute and breaks pushState on some TVs */
+                    href = el.getAttribute("href") || el.href || "";
+                    if (href) { chp(href); }
                     return false;
                 }, false);
             })(AA[__i_e]);
