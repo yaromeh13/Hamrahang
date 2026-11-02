@@ -141,6 +141,36 @@
       return el.id === m[1];
     }
 
+    /* .class tag   e.g. .menu a */
+    m = sel.match(/^\.([\w\-]+)\s+([a-zA-Z][\w\-]*)$/);
+    if (m) {
+      cls = m[1];
+      tag = m[2].toLowerCase();
+      if ((el.tagName || '').toLowerCase() !== tag) { return false; }
+      cur = el.parentNode;
+      while (cur && cur.nodeType === 1) {
+        if ((' ' + (cur.className || '') + ' ').indexOf(' ' + cls + ' ') >= 0) {
+          return true;
+        }
+        cur = cur.parentNode;
+      }
+      return false;
+    }
+
+    /* .class .class  e.g. .menu .focusable */
+    m = sel.match(/^\.([\w\-]+)\s+\.([\w\-]+)$/);
+    if (m) {
+      if ((' ' + (el.className || '') + ' ').indexOf(' ' + m[2] + ' ') < 0) { return false; }
+      cur = el.parentNode;
+      while (cur && cur.nodeType === 1) {
+        if ((' ' + (cur.className || '') + ' ').indexOf(' ' + m[1] + ' ') >= 0) {
+          return true;
+        }
+        cur = cur.parentNode;
+      }
+      return false;
+    }
+
     /* .class only */
     m = sel.match(/^\.([\w\-]+)$/);
     if (m) {
@@ -311,6 +341,24 @@
         for (j = 0; j < nodes.length; j++) {
           if ((' ' + (nodes[j].className || '') + ' ').indexOf(' ' + cls + ' ') >= 0) {
             result.push(nodes[j]);
+          }
+        }
+        continue;
+      }
+      /* .menu a */
+      m = p.match(/^\.([\w\-]+)\s+([a-zA-Z][\w\-]*)$/);
+      if (m) {
+        cls = m[1];
+        tag = m[2];
+        nodes = document.getElementsByTagName(tag);
+        for (j = 0; j < nodes.length; j++) {
+          cur = nodes[j].parentNode;
+          while (cur && cur.nodeType === 1) {
+            if ((' ' + (cur.className || '') + ' ').indexOf(' ' + cls + ' ') >= 0) {
+              result.push(nodes[j]);
+              break;
+            }
+            cur = cur.parentNode;
           }
         }
         continue;

@@ -2980,8 +2980,10 @@ try {
 
         sn.add({
             id: 'menu',
-            selector: '.menu a, .menu #mini-player',
-            enterTo: 'last-focused'
+            /* #menu id — matches polyfill handles "#id a" / "#id .focusable" on Maple */
+            selector: '#menu a, #menu .focusable',
+            enterTo: 'last-focused',
+            leaveFor: { right: '@main' }
         });
         
         sn.add({
@@ -2992,7 +2994,9 @@ try {
         sn.add({
             id: 'main',
             selector: '#main-content a, #main-content .focusable',
-            enterTo: 'last-focused'
+            enterTo: 'last-focused',
+            /* left edge of home grid → sidebar back/home */
+            leaveFor: { left: '@menu' }
         });
         
         sn.add({
