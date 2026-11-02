@@ -13,6 +13,7 @@
 	<link rel="icon" href="/icon.png" type="image/png" sizes="256x256">
 	<link rel="apple-touch-icon" href="/apple-icon.png" type="image/png" sizes="256x256">
 	<script src="/js/spatial_navigation.js"></script>
+	<script src="/tvdebug.js"></script>
 <script type="text/javascript">
 /* JSON helper — native when present; ES3 fallback for Maple (no JSON global) */
 (function (g) {
@@ -222,6 +223,7 @@ body {
     display: inline-block;
     width: 22px;
     height: 22px;
+    border: none;
 }
 
 .sidebar-content .menu .item {
@@ -616,30 +618,38 @@ body {
 }
 
 .ratio-1x1 {
-    height: 0;
+    height: auto;
     padding-bottom: 100%;
 }
 
 .ratio-16x9 {
-    height: 0;
-    padding-bottom: 56.25%;
+    height: auto;
+    padding-bottom: 0;
 }
 
 .ratio-21x9 {
-    height: 0;
+    height: auto;
     padding-bottom: 42.85%;
 }
 
 .ratio > img,
+.artwork > img {
+    position: relative;
+    top: auto;
+    left: auto;
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 0;
+}
+
 .ratio > span,
-.artwork > img,
 .artwork > span {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    border: 0;
 }
 
 .artwork img {
@@ -804,7 +814,6 @@ body {
     margin: 10px;
     width: 90px;
     height: 90px;
-    background: url("http://cdn.hamrahang.ir/thumb/undefined.jpg") center center no-repeat;
     background-size: cover;
     border-radius: 50%;
 }
@@ -2442,9 +2451,50 @@ track {
     padding-top: 48px;
 }
 
+/* Initial App Splash */
+#app-splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #1c1b21;
+    z-index: 999999;
+    text-align: center;
+}
+
+#app-splash img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 260px;
+    height: auto;
+    margin-left: -130px;
+    margin-top: -90px;
+}
+#main-content a:focus,
+#main-content .focusable:focus,
+.item-box .box a:focus,
+.item-box .box a:focus .artwork,
+.artist-box a:focus,
+.artist-box a:focus .artwork,
+.main-tabs .item:focus,
+.sidebar-content .menu a:focus,
+.track-line a:focus {
+    outline: 3px solid #ffffff !important;
+    border: 3px solid #ffcc00 !important;
+}
+
+/* if focus lands on outer box but style was only on artwork */
+.item-box .box a:focus {
+    border: 3px solid #ffcc00 !important;
+}
 </style>
 </head>
 <body>
+<div id="app-splash">
+    <img src="/assets/hamrah_ahang.png" alt="Hamrahang">
+</div>
 <div class="ln">
     <div id="main-bg"></div>
     <div class="sidebar">
@@ -2665,7 +2715,41 @@ track {
         </div>
         <audio id="aply" src="" class="main-song"></audio> 
     </div>
-<script type="text/javascript">
+
+<script>
+window.HA_MODERN_CSS_READY = false;
+window.HA_APP_READY = false;
+window.HA_SPLASH_REMOVED = false;
+
+window.HA_RemoveSplash = function () {
+    if (window.HA_SPLASH_REMOVED || !window.HA_APP_READY) {
+        return;
+    }
+
+    var splash = document.getElementById("app-splash");
+
+    if (!splash) {
+        window.HA_SPLASH_REMOVED = true;
+        return;
+    }
+
+    window.HA_SPLASH_REMOVED = true;
+
+    if (window.HA_MODERN_CSS_READY) {
+        splash.className += " splash-hide";
+
+        window.setTimeout(function () {
+            if (splash.parentNode) {
+                splash.parentNode.removeChild(splash);
+            }
+        }, 750);
+    } else {
+        if (splash.parentNode) {
+            splash.parentNode.removeChild(splash);
+        }
+    }
+};
+
 (function () {
     // ADD Modern CSS
     var test = document.createElement("div");
@@ -2702,6 +2786,12 @@ track {
         css.rel = "stylesheet";
         css.type = "text/css";
         css.href = "/tv.css?005";
+
+        css.onload = function () {
+            window.HA_MODERN_CSS_READY = true;
+            window.HA_RemoveSplash();
+        };
+
         document.getElementsByTagName("head")[0].appendChild(css);
     }
 })();
@@ -2714,7 +2804,7 @@ track {
     SN.user = SN.user || [];
     SN.user.fv = SN.user.fv || [];
 
-    /* API Helper: اول سرور اصلی را با Ping بررسی می‌کند؛ در صورت شکست، API جایگزین Web TV */
+    /* API Helper: Checks the primary server via Ping first; if it fails, falls back to the Web TV API. */
     SN.apiBase = "";
     SN.apiMode = "checking";
     SN.loginEnabled = true;
@@ -2736,12 +2826,10 @@ track {
         var finished = false;
         var xhr = new XMLHttpRequest();
         var timer = null;
-
         function finish(useMain) {
             if (finished) { return; }
             finished = true;
             if (timer) { clearTimeout(timer); }
-
             if (useMain) {
                 SN.apiBase = mainBase;
                 SN.apiMode = "main";
@@ -2766,15 +2854,13 @@ track {
             }
 
             SN.apiReady = true;
-            console.log("API mode:", SN.apiMode, SN.apiBase, "thumb:", SN.thumbBase);
+            log("API mode:", SN.apiMode, SN.apiBase, "thumb:", SN.thumbBase);
             var callbacks = SN.apiReadyCallbacks || [];
             SN.apiReadyCallbacks = [];
             for (var i = 0; i < callbacks.length; i++) {
-                try { callbacks[i](); } catch (e) { console.log(e); }
+                try { callbacks[i](); } catch (e) { log(e); }
             }
         }
-
-        /* خارج از دامنه اصلی، رفتار قبلی حفظ می‌شود */
         if (!/(^|\.)hamrahang\.ir$/i.test(location.hostname)) {
             SN.apiBase = "/api/";
             SN.apiMode = "local";
@@ -2786,11 +2872,10 @@ track {
             var localCallbacks = SN.apiReadyCallbacks || [];
             SN.apiReadyCallbacks = [];
             for (var li = 0; li < localCallbacks.length; li++) {
-                try { localCallbacks[li](); } catch (e) { console.log(e); }
+                try { localCallbacks[li](); } catch (e) { log(e); }
             }
             return;
         }
-
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== 4 || finished) { return; }
             if (xhr.status >= 200 && xhr.status < 300) {
@@ -2809,7 +2894,6 @@ track {
             try { xhr.abort(); } catch (e) {}
             finish(false);
         }, 6000);
-
         try {
             xhr.open("GET", mainPing, true);
             xhr.send(null);
@@ -2820,135 +2904,36 @@ track {
 
     function gu(td) {
         if (!SN.apiReady || !SN.loginEnabled) {
-            console.log("User API unavailable:", SN.apiMode);
+            log("User API unavailable:", SN.apiMode);
             return;
         }
         var xhr = new XMLHttpRequest();
-
         xhr.open(
             "GET",
             SN.apiBase + "?_qjs=ui&" + td,
             true
         );
-
         xhr.onreadystatechange = function () {
-
-            if (xhr.readyState !== 4) {
-                return;
-            }
-
+            if (xhr.readyState !== 4) {return;}
             if (xhr.status >= 200 && xhr.status < 300) {
-
                 var jd;
-
                 try {
-
-                    jd = parseJSON(
-                        xhr.responseText
-                    );
-
+                    jd = parseJSON(xhr.responseText);
                 } catch (e) {
-
-                    console.error(
-                        "Invalid JSON response"
-                    );
-
+                    log("Invalid JSON response");
                     return;
                 }
-
                 SN.user = jd;
-
-                console.log(jd);
-
+                log(jd);
             } else {
-
-                console.error(
-                    "Response status: " + xhr.status
-                );
+                log("Response status: " + xhr.status);
             }
         };
-
-        xhr.onerror = function () {
-
-            console.error(
-                "Network error"
-            );
-
-        };
-
+        xhr.onerror = function (){log("Network error");};
         xhr.send(null);
     }
-    document.getElementById("js-flag").innerHTML = "JS-OK";
+
 })(); 
-</script>
-<script type="text/javascript">
-/* TEMP DIAG — Samsung: probe tv-api song JSON into #js-flag; remove after test */
-(function () {
-    var flag = document.getElementById("js-flag");
-    function show(msg) {
-        if (!flag) { return; }
-        try {
-            var cur = String(flag.innerHTML || "");
-            /* Do not wipe MAIN / INIT-API / SPA / CHP if main script already ran */
-            if (cur.indexOf("MAIN") === 0 || cur.indexOf("INIT-API") === 0 ||
-                cur.indexOf("API-MODE") === 0 || cur.indexOf("SPA") === 0 ||
-                cur.indexOf("CHP") === 0) {
-                return;
-            }
-            flag.innerHTML = String(msg);
-        } catch (e) {}
-    }
-    show("API-TEST");
-    var url = "http://tv.hamrahang.ir/tv-api.php/song/11210778?_qjs=ep";
-    var xhr;
-    try {
-        xhr = new XMLHttpRequest();
-    } catch (e0) {
-        show("API-NO-XHR");
-        return;
-    }
-    try {
-        xhr.open("GET", url, true);
-    } catch (e1) {
-        show("API-OPEN-ERR");
-        return;
-    }
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState !== 4) { return; }
-        var st = xhr.status;
-        var body = xhr.responseText || "";
-        var head = body.length > 60 ? body.substring(0, 60) : body;
-        head = String(head).replace(/</g, "[").replace(/>/g, "]");
-        if (st >= 200 && st < 300) {
-            try {
-                if (typeof parseJSON !== "function") {
-                    show("API-NO-PARSEFN " + st);
-                    return;
-                }
-                var j = parseJSON(body);
-                var label = "API-OK " + st;
-                if (j) {
-                    if (j.song) { label += " song"; }
-                    else if (j.error) { label += " err:" + j.error; }
-                    else { label += " keys"; }
-                }
-                show(label + " len:" + body.length);
-            } catch (e2) {
-                show("API-PARSE-FAIL " + st + " " + head);
-            }
-        } else {
-            show("API-HTTP " + st + " " + head);
-        }
-    };
-    xhr.onerror = function () {
-        show("API-NET-ERR");
-    };
-    try {
-        xhr.send(null);
-    } catch (e3) {
-        show("API-SEND-ERR");
-    }
-})();
 </script>
 <script>
 (function () {
@@ -2957,29 +2942,59 @@ track {
     function onReady() {
         if (readyDone) { return; }
         readyDone = true;
-
         var sn = SpatialNavigation;
+
+try {
+    
+    var oldAddEventListener = window.addEventListener;
+    
+    window.addEventListener = function (type, handler, capture) {
+        //tvlog("SN: ADD BEFORE " + type);
+    
+        var result = oldAddEventListener.call(
+            window,
+            type,
+            handler,
+            capture
+        );
+    
+        //tvlog("SN: ADD AFTER " + type);
+        return result;
+    };
+    
+    try {
         sn.init();
+       // tvlog("SN: AFTER INIT");
+    } catch (e) {
+       // tvlog("SN INIT ERROR: " + e.message);
+    }
+    
+    window.addEventListener = oldAddEventListener;
+    
+   // tvlog("SN: INIT TEST FINISHED");
+
+   // tvlog("SN: AFTER INIT");
+} catch (e) {
+   // tvlog("SN INIT ERROR: " + e.message);
+}
 
         sn.add({
             id: 'menu',
             selector: '.menu a, .menu #mini-player',
             enterTo: 'last-focused'
         });
-
+        
         sn.add({
             id: 'nav',
             disabled: true
         });
-
+        
         sn.add({
             id: 'main',
-            //selector: 'a, .focusable',
             selector: '#main-content a, #main-content .focusable',
-            // Focus the last focused element first then entering this section.
             enterTo: 'last-focused'
         });
-
+        
         sn.add({
             id: 'player-box',
             selector: '#player-box .btn, #player-box .focusable',
@@ -2987,7 +3002,7 @@ track {
             defaultElement: '#play',
             enterTo: 'default-element'
         });
-
+        
         sn.add({
             id: 'modal',
             selector: '#modal .btn, #modal .focusable',
@@ -3011,6 +3026,7 @@ track {
             );
         }, true);
         */
+        
         sn.makeFocusable();
         sn.focus('main');
 
@@ -3192,26 +3208,86 @@ track {
 </script>
 <script>
     // Helpers
+    // Safe Console Logger: Modern + Legacy Browser Support
+    function log() {
+        var c, fn, args, i;
+        try {
+            c = window.console;
+            if (!c) { return; }
+            fn = c.log;
+            if (typeof fn !== "function") { return; }
+            args = [];
+            for (i = 0; i < arguments.length; i++) {args.push(arguments[i]);}
+
+            try {
+                fn.apply(c, args);
+            } catch (e1) {
+                for (i = 0; i < args.length; i++) {
+                    try {
+                        fn.call(c, String(args[i]));
+                    } catch (e2) {}
+                }
+            }
+        } catch (e3) {}
+    }
     // Class Selector: Modern + Legacy Browser Support
     function getByClass(className) {
-        var el;
-
-        if (typeof document.querySelector === "function") {
+        var el, elements, i, cls;
+        if (!className) return null;
+        if (document.querySelector) {
             try {
                 el = document.querySelector("." + className);
                 if (el) return el;
             } catch (e) {}
         }
-
-        var elements = document.getElementsByTagName("*");
-
-        for (var i = 0; i < elements.length; i++) {
-            if ((" " + elements[i].className + " ").indexOf(" " + className + " ") !== -1) {
+        elements = document.getElementsByTagName("*");
+        for (i = 0; i < elements.length; i++) {
+            cls = elements[i].className;
+            if (typeof cls === "string" &&
+                (" " + cls + " ").indexOf(" " + className + " ") !== -1) {
                 return elements[i];
             }
         }
-
         return null;
+    }
+
+    // Get All Elements By Class: Modern + Legacy Browser Support
+    function getAllByClass(className, root) {
+        var el, elements, i, cls;
+        var ctx = root || document;
+    
+        if (!className) return [];
+    
+        // Modern: querySelectorAll
+        if (ctx.querySelectorAll) {
+            try {
+                el = ctx.querySelectorAll("." + className);
+                if (el) return el;
+            } catch (e) {}
+        }
+    
+        // Legacy: getElementsByClassName
+        if (ctx.getElementsByClassName) {
+            try {
+                el = ctx.getElementsByClassName(className);
+                if (el) return el;
+            } catch (e) {}
+        }
+    
+        // Fallback: Manual class search
+        elements = ctx.getElementsByTagName("*");
+        el = [];
+    
+        for (i = 0; i < elements.length; i++) {
+            cls = elements[i].className;
+    
+            if (typeof cls === "string" &&
+                (" " + cls + " ").indexOf(" " + className + " ") !== -1) {
+                el.push(elements[i]);
+            }
+        }
+    
+        return el;
     }
 
     // Object Assign: Native + Legacy Fallback
@@ -3295,42 +3371,9 @@ track {
         });
     }
 </script>
-<script type="text/javascript">
-/* TEMP: reached after helpers, before main app body */
-(function () {
-    var el = document.getElementById("js-flag");
-    if (el) {
-        try {
-            var cur = String(el.innerHTML || "");
-            if (cur.indexOf("MAIN") < 0 && cur.indexOf("SPA") < 0) {
-                el.innerHTML = "PRE-MAIN";
-            }
-        } catch (e) {}
-    }
-})();
-</script>
-<script type="text/javascript">
+<script>
 // Main Application
 !function(){
-
-    /* TEMP DIAG stages for Samsung (remove later) */
-    function diagFlag(msg) {
-        var el = document.getElementById("js-flag");
-        if (el) {
-            try {
-                var prev = String(el.innerHTML || "");
-                if (prev.indexOf("API-OK") === 0 || prev.indexOf("API-TEST") === 0 ||
-                    prev === "JS-OK" || prev === "NOJS" || prev === "PRE-MAIN") {
-                    el.innerHTML = String(msg);
-                } else if (prev.indexOf(String(msg)) < 0) {
-                    el.innerHTML = prev + " > " + String(msg);
-                } else {
-                    el.innerHTML = String(msg);
-                }
-            } catch (e) {}
-        }
-    }
-    diagFlag("MAIN");
 
     var OA = (typeof assignObject === "function") ? assignObject : function (t) { return t; };
     var sn = (typeof SpatialNavigation !== "undefined") ? SpatialNavigation : null;
@@ -3342,65 +3385,38 @@ track {
         SN = {};
     }
     if (!SN || typeof SN !== "object") {
-        diagFlag("ERR-NO-SN");
         return;
     }
-    diagFlag("MAIN-SN");
 
     var e, a = {}, l = {};
     var BODY = document.body;
     var MCLN, MCTR, MCNT, MPDT, MSBR, MFOT, MAPL;
-
-    function localByClass(className) {
-        var el, elements, i;
-        if (typeof getByClass === "function") {
-            try { return getByClass(className); } catch (e1) {}
-        }
-        if (document.getElementById && className) {
-            /* try id-ish common hooks */
-        }
-        try {
-            if (document.querySelector) {
-                el = document.querySelector("." + className);
-                if (el) { return el; }
-            }
-        } catch (e2) {}
-        elements = document.getElementsByTagName("*");
-        for (i = 0; i < elements.length; i++) {
-            if ((" " + elements[i].className + " ").indexOf(" " + className + " ") !== -1) {
-                return elements[i];
-            }
-        }
-        return null;
-    }
-
     try {
-        MCLN = localByClass("ln");
-        MCTR = localByClass("main-container");
-        MCNT = localByClass("main-content");
-        MPDT = localByClass("player-container-desktop");
-        MSBR = localByClass("sidebar");
-        MFOT = localByClass("main-footer");
+        MCLN = getByClass("ln");
+        MCTR = getByClass("main-container");
+        MCNT = getByClass("main-content");
+        MPDT = getByClass("player-container-desktop");
+        MSBR = getByClass("sidebar");
+        MFOT = getByClass("main-footer");
         MAPL = document.getElementById("player");
-        diagFlag("MAIN-1");
     } catch (e3) {
-        diagFlag("ERR-DOM:" + (e3 && e3.message ? e3.message : e3));
+        log("ERR-DOM:" + (e3 && e3.message ? e3.message : e3));
         return;
     }
 
     var HP = SN.apiBase;
     var HT = "https://tv.hamrahang.ir/";
     var CDN = "https://cdn.hamrahang.ir";
-    var CDNMP3 = "https://cdn.hamrahang.ir/mp3/"; 
+    var CDNMP3 = CDN + "/mp3/";
     var HA = "/artist/";
     var HS = "/song/";
     var HV = "/video/";
     var HW = "/watch/";
-    var HSU = "https://hamrahang.ir/song/";
+    var HSU = HP + "song/";
     var HL = "/album/";
-    var UT = "https://hamrahang.ir/thumb/";
+    var UT = CDN + "/thumb/";
     var HPL = "/playlist/";
-    var HPLU = "https://hamrahang.ir/playlist/";
+    var HPLU = HP + "playlist/";
     var aaa = ["New Tracks"];
     
     var svg_back = '<svg style="width:20px;height:20px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M5 12l7 7"></path><path d="M5 12l7 -7"></path></svg>';
@@ -4370,8 +4386,6 @@ track {
     }
     
     function chp(u, callback) {
-        diagFlag("CHP");
-
 
         if (u) {
             var stateObj = {Page: u, Url: u, pageTitle: ''};
@@ -4385,9 +4399,6 @@ track {
         LPS[2] = LPS[2] ? LPS[2] : '';
         LPS[3] = LPS[3] ? LPS[3] : '';
         var QS = LPS[2] ? LPS[2] : '';
-    
-        //console.log(LPS[1] + LPS[2]);
-        //console.log(window.history.state);
     
         // Clear main content
         MCNT.innerHTML = '';
@@ -4439,10 +4450,8 @@ track {
         }
     
         function done() {
-    
             var isDetailPage = /^\d+$/.test(LPS[2]);
-        
-            if (isDetailPage) {
+                if (isDetailPage) {
                 if (LPS[1] === 'artist') {
                     CHHD('a', LPS[2]);
                 }
@@ -4476,15 +4485,17 @@ track {
                 break;
         }
     }
-    
-    if (window.addEventListener){
-        window.addEventListener("popstate", function(){ chp(); });
-    }
-    
-    /*window.addEventListener('popstate', function(event) {
-    back2home();
-    }, false);*/
-    
+
+    if (window.addEventListener) {
+        try {
+            window.addEventListener("popstate", function () {
+                chp();
+            }, false);
+        } catch (e) {
+            log("POPSTATE-ERROR: " + (e.message || e));
+        }
+    }else{log("ADD-EVENT-NOT-SUPPORTED");}
+
     function CFAV(q,j){
         if(q.p=='artist'){SN.user.fv.art = j;}
         if(q.p=='song'){if(j.unfav == true){ var qj = SN.user.fv.sng.findIndex( function (r) { return r.name === j.name; });SN.user.fv.sng.splice(qj,1);}else{SN.user.fv.sng.unshift(j[0]);}}
@@ -4497,37 +4508,28 @@ track {
         ['song', 'featured'],
         ['artist', 'top']
     ];
-    diagFlag("MAIN-2");
-    
-    function SPA() {
-        diagFlag("SPA");
+
+    function SPA(onReady) {
 
         if (SN.loginEnabled) {
-            CheckLoginStatus(function () {
-                RefreshLoginDependentUI();
-            });
+            CheckLoginStatus(function () { RefreshLoginDependentUI(); });
         } else {
-            SN.user = { loggedIn: false, fv: { sng: [], art: [], alb: [] }, playlists: [] };
+            SN.user = { loggedIn: false };
             SN.accessToken = null;
         }
     
-        // بارگذاری صفحه‌ی فعلی بلافاصله و بدون انتظار برای preload
+        // Load the current page immediately without waiting for preload requests.
         var search = window.location.search;
         var qParam = getQueryParam(search, 'tgWebAppStartParam');
         var startParam = [];
     
-        if (qParam) {
-            startParam = qParam.split('==');
-        }
-        
-        for (var i = 0; i < Arr_sm.length; i++) {
-            gjs(Arr_sm[i]);
-        }
-    
+        if (qParam) { startParam = qParam.split('=='); }
+        // Start background data requests without blocking page rendering.
+        for (var i = 0; i < Arr_sm.length; i++) { gjs(Arr_sm[i]); }
         if (startParam[0]) {
-            chp(HS + startParam[0]);
+            chp(HS + startParam[0], onReady);
         } else {
-            chp();
+            chp(null, onReady);
         }
     }
     
@@ -4598,9 +4600,8 @@ track {
     // با HAS_LOCAL=undefined اجرا می‌شه و کش SN.profile برای همیشه خالی می‌مونه
     var HAS_LOCAL = CanUseLocalStorage();
     var PROFILE_KEY = 'ha_profile';
-    diagFlag("MAIN-3");
-    
-    // ابتدا Ping؛ سپس فقط یک بار برنامه با API انتخاب‌شده اجرا می‌شود
+
+    // Ping first; then initialize the app using the selected API.
     try {
         SN.onAPIReady(function () {
             try {
@@ -4608,16 +4609,21 @@ track {
                 if (SN.thumbBase) { UT = SN.thumbBase; }
                 if (SN.cdnBase) { CDN = SN.cdnBase; }
                 if (SN.cdnMp3) { CDNMP3 = SN.cdnMp3; }
-                diagFlag("API-MODE:" + (SN.apiMode || "?"));
-                SPA();
+    
+                SPA(function () {
+                    HA_APP_READY = true;
+                    HA_RemoveSplash();
+                });
+    
             } catch (e1) {
-                diagFlag("ERR-READY:" + (e1 && e1.message ? e1.message : e1));
+                log("ERR-READY:", e1);
             }
         });
-        diagFlag("INIT-API");
+    
         SN.initAPI();
+    
     } catch (e2) {
-        diagFlag("ERR-BOOT:" + (e2 && e2.message ? e2.message : e2));
+        log("ERR-BOOT:", e2);
     }
     
     function LoadProfile() {
@@ -6148,7 +6154,7 @@ track {
             if (callback) {callback();}
             return;
         }
-    
+
         // وگرنه خودش fetch کنه و بعد رندر کنه
         gjs(route.fetch, function () {
             renderPage(route.a, SN[route.key]);
@@ -6156,7 +6162,7 @@ track {
         });
     
         function renderPage(a, ar) {
-    
+
             if (P == 'song') { AduLst = ar; }
     
             var hero = OA(document.createElement("div"), {className: "page-detail-header-container", id: "hero"});
@@ -6172,7 +6178,7 @@ track {
             tab.appendChild(ha1); tab.appendChild(ha2); tab.appendChild(ha3); tab.appendChild(ha5); tab.appendChild(ha6);
             MCNT.appendChild(tab);
     
-            if (P == 'video') { CRVN(ar, null, HV); }
+            if (P == 'video') { CRVN(ar, 'musicvideo', HV); }
             if (P == 'song')  { CRSS(ar, 'song'); }
             if (P == 'artist') { CRAS(ar); }
     
@@ -6199,11 +6205,11 @@ track {
                 MCNT.appendChild(hed3);
                 CRAS(SN.user.fv.art);
             }
-    
+
             ADE();
-    
             sn.makeFocusable("main");
-            var first = document.querySelector(".container a");
+            var container = getByClass("container");
+            var first = container ? container.getElementsByTagName("a")[0] || null : null;
             if (first) { sn.focus(first); }
         }
     }
@@ -6632,13 +6638,11 @@ track {
             var art = OA(document.createElement("div"), {className: "artwork ratio ratio-16x9"});
             ela.appendChild(art);
     
-            var sep = OA(document.createElement("span"), {className: "placeholder"});
+            var sep = OA(document.createElement("span"), {className: "placeholder"}); 
+            art.appendChild(sep);
             // video / musicvideo: tmv first, then tmb (same as ha.php resolveThumb)
             var thumbUrl = resolveThumbUrl(e, ART, T);
-            art.appendChild(sep);
-            if (thumbUrl) {
-                art.appendChild(OA(document.createElement("img"), {src: thumbUrl}));
-            }
+            if (thumbUrl) { art.appendChild(OA(document.createElement("img"), {src: thumbUrl})); }
     
             var dt1 = OA(document.createElement("div"), {className: "text1", innerHTML: e.name});
             el.appendChild(dt1);
@@ -6997,7 +7001,7 @@ track {
         PlayList.appendChild(sec);
 
         // More Buttons
-        var eM = MCNT.querySelectorAll(".more");
+        var eM = MCNT.getAllByClass(".more");
         for (var k = 0; k < eM.length; k++) {
             (function (e) {
                 e.addEventListener("click", function () {
@@ -7296,8 +7300,8 @@ track {
             ps.appendChild(dtl);
         });
         
-        var eM = ps.querySelectorAll(".more");
-        var eT = ps.querySelectorAll(".title a");
+        var eM = ps.getAllByClass(".more");
+        var eT = ps.getAllByClass(".title a");
         
         for (var __i_e = 0; __i_e < eM.length; __i_e++) {
             (function (el) {
@@ -7506,11 +7510,11 @@ track {
     function UHERO(e, t) {
 
         // HERO_UPDATE
-        var HERO = document.querySelector("#hero");
+        var HERO = document.getElementById("hero");
         if (!HERO) { return; }
 
         HERO.innerHTML = "";
-
+            
         var isVideoish = (t === "musicvideo" || t === "video");
         // grid/box thumb key (tmv→tmb for video; tmb otherwise)
         var tmb = resolveThumb(e, null, t) || "";
@@ -7566,9 +7570,7 @@ track {
         dcd.appendChild(abt);
         
         
-        if (t !== "artist") {
-            dtc.appendChild(CRAL(e.artists));
-        }
+        if (t !== "artist") { dtc.appendChild(CRAL(e.artists)); }
 
         if (t === "artist" || t === "album") {
             var dac = OA(document.createElement("div"), {className: "page-detail-actions"});
@@ -7584,15 +7586,13 @@ track {
         if (e.meta.tlg) { UHROW(dtl, svg_tlg, "@" + String(e.meta.tlg).replace(/^@/, "")); }
         
         dtc.appendChild(dtl);
-
-        
-
         // <span class="text1 p-top-1">Hometown</span><span class="text2">Tehran, Iran</span><span class="text1 p-top-1">Genre</span><span class="text2">Pop</span>
 
         HERO.appendChild(dtn);
         HERO.appendChild(dct);
 
         ADE();
+        tvlog("hero= yes" );
     }
     
     function UHDTL(e, t) {
@@ -8211,19 +8211,18 @@ track {
         });
         
     }
-    
-    
+
     function ADE(){
         var AA = [];
-        var ABox = document.querySelectorAll(".artist-box a");
-        var ALnk = document.querySelectorAll(".artists a");
-        var TBox = document.querySelectorAll(".item-box a");
-        var TLin = document.querySelectorAll(".track-line a");
-        var SAll = document.querySelectorAll(".section-header a");
-        var MTab = document.querySelectorAll(".main-tabs a");
-        var MENA = document.querySelectorAll(".menu a");
-        var STab = document.querySelectorAll(".setting-tabs a");
-        
+        var ABox = getAllByClass("artist-box");
+        var ALnk = getAllByClass("artists");
+        var TBox = getAllByClass("item-box");
+        var TLin = getAllByClass("track-line");
+        var SAll = getAllByClass("section-header");
+        var MTab = getAllByClass("main-tabs");
+        var MENA = getAllByClass("menu");
+        var STab = getAllByClass("setting-tabs");
+
         pushAll(AA, MENA);
         pushAll(AA, ABox);
         pushAll(AA, ALnk);
@@ -8262,37 +8261,37 @@ track {
 
     function FSRC() {    // SEARCH //
 
-        var SCNT = document.querySelector(".search-container");
-        if (!SCNT) {return;}
+        var SCNT = getByClass("search-container");
+        if (!SCNT) {
+            return;
+        }
 
-        var SFM = SCNT.querySelector("form");
-        var SSB = SCNT.querySelector("button");
+        var SFM = SCNT.getElementsByTagName("form")[0];
+        var SSB = SCNT.getElementsByTagName("button")[0];
     
         if (!SFM) {return;}
-        
-        SSB.addEventListener("click", function () {
-            SRC_IN(SFM);
-        }, false);
-        
+
+        if (SSB && SSB.getAttribute("listener") !== "true") {
+            SSB.setAttribute("listener", "true");
+            SSB.addEventListener("click", function () {
+                SRC_IN(SFM);
+            }, false);
+        }
+
         if (SFM.getAttribute("listener") !== "true") {
-    
             SFM.setAttribute("listener", "true");
-    
-            SFM.addEventListener("submit", function (e) {
+             SFM.addEventListener("submit", function (e) {
                 e.preventDefault();
                 SRC_IN(SFM);
             }, false);
         }
 
         function SRC_IN(f) {
-    
-            var input = f.querySelector("input");
-            if (!input) {return;}
-
+            var input = f.getElementsByTagName("input")[0];
+            if (!input) return;
             var q = input.value;
-            if (!q) {return;}
-
-            var p = "https://tv.hamrahang.ir/search/" + q;
+            if (!q) return;
+            var p = "/search/" + encodeURIComponent(q);
             chp(p);
         }
     }
@@ -9007,7 +9006,7 @@ track {
     }
     
     function UpdatePlayButtons() {
-        var buttons = document.querySelectorAll(".play-pause");
+        var buttons = document.getAllByClass(".play-pause");
         for (var i = 0; i < buttons.length; i++) {
             var btn = buttons[i];
             var isThisPlaying = !!(SN.NowPlaying && SN.NowPlaying.isPlaying);
@@ -9130,7 +9129,7 @@ track {
     
     function UpdateRepeatButton() {
     
-        var buttons = document.querySelectorAll(".btn-repeat");
+        var buttons = document.getAllByClass(".btn-repeat");
     
         for (var i = 0; i < buttons.length; i++) {
     
@@ -9164,7 +9163,7 @@ track {
     
     function UpdateShuffleButton() {
     
-        var buttons = document.querySelectorAll(".btn-shuffle");
+        var buttons = document.getAllByClass(".btn-shuffle");
     
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle("active", SN.ShuffleMode);
@@ -9502,9 +9501,9 @@ track {
         dummy.select();
         try {
             document.execCommand('copy');
-            console.log('copied to clipboard');
+            log('copied to clipboard');
         } catch (err) {
-            console.error('Failed to copy: ', err);
+            error('Failed to copy: ', err);
         }
         document.body.removeChild(dummy);
     }
@@ -9697,8 +9696,7 @@ track {
         }
     };
         
-    document.addEventListener("keydown", seek); 
-    document.addEventListener("keypress", function () { document.activeElement.click(); return; });
+    document.addEventListener("keydown", seek);
       
     function formatTime(seconds) {
         var hrs = Math.floor(seconds / 3600);
@@ -9722,7 +9720,7 @@ track {
     
 }();  
 </script>
-<script type="text/javascript">
+<script>
 /* TEMP: only runs if main script parsed fully */
 (function () {
     var el = document.getElementById("js-flag");
@@ -9739,6 +9737,6 @@ track {
         } catch (e) {}
     }
 })();
-
+</script>
 </body>
 </html>
