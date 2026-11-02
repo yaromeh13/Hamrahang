@@ -8214,43 +8214,42 @@ try {
 
     function ADE(){
         var AA = [];
-        var ABox = getAllByClass("artist-box");
-        var ALnk = getAllByClass("artists");
-        var TBox = getAllByClass("item-box");
-        var TLin = getAllByClass("track-line");
-        var SAll = getAllByClass("section-header");
-        var MTab = getAllByClass("main-tabs");
-        var MENA = getAllByClass("menu");
-        var STab = getAllByClass("setting-tabs");
+        var i, j, roots, links;
 
-        pushAll(AA, MENA);
-        pushAll(AA, ABox);
-        pushAll(AA, ALnk);
-        pushAll(AA, TBox);
-        pushAll(AA, TLin);
-        pushAll(AA, MTab);
-        pushAll(AA, SAll);
-        pushAll(AA, STab);
+        /* Collect <a> inside each region — not the containers themselves
+           (containers have no href; clicking them was calling chp(undefined) → stay on home). */
+        function collectLinks(className) {
+            roots = getAllByClass(className);
+            if (!roots || !roots.length) { return; }
+            for (i = 0; i < roots.length; i++) {
+                links = roots[i].getElementsByTagName("a");
+                pushAll(AA, links);
+            }
+        }
+
+        collectLinks("artist-box");
+        collectLinks("artists");
+        collectLinks("item-box");
+        collectLinks("track-line");
+        collectLinks("section-header");
+        collectLinks("main-tabs");
+        collectLinks("menu");
+        collectLinks("setting-tabs");
 
         for (var __i_e = 0; __i_e < AA.length; __i_e++) {
             (function (el) {
-                if (el.getAttribute('listener') !== 'true') {
-                    el.setAttribute('listener', 'true');
-                    el.addEventListener("click", function (h) {
-                        h.preventDefault();
-                        chp(el.href);
-                        return false;
-                    }, false);
-                }
+                if (!el || el.getAttribute("listener") === "true") { return; }
+                el.setAttribute("listener", "true");
+                el.addEventListener("click", function (h) {
+                    if (h && h.preventDefault) { h.preventDefault(); }
+                    if (el.href) { chp(el.href); }
+                    return false;
+                }, false);
             })(AA[__i_e]);
         }
 
         AA = [];
         FSRC();
-        //sn.makeFocusable('main');
-        //sn.focus('main');
-        //sn.makeFocusable('main');
-        //sn.focus('main-content');
     }
 
     function Cap(st) {
