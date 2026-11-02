@@ -3364,15 +3364,23 @@ try {
     var BTNforward = getByClass("forward");
 
     if (BTNback) {
-        BTNback.addEventListener("click", function () {
-            window.history.back();
-        });
+        BTNback.addEventListener("click", function (ev) {
+            if (ev) {
+                if (ev.preventDefault) { ev.preventDefault(); }
+                if (ev.stopPropagation) { ev.stopPropagation(); }
+            }
+            /* In-app stack only — never window.history.back() (exits TV widget) */
+            var store = (typeof self !== "undefined" && self._next) ? self._next : (window._next || null);
+            if (store && typeof store.goBack === "function") {
+                store.goBack();
+            }
+            return false;
+        }, false);
     }
 
+    /* No forward control on TV UI */
     if (BTNforward) {
-        BTNforward.addEventListener("click", function () {
-            window.history.forward();
-        });
+        BTNforward.style.display = "none";
     }
 </script>
 <script>
@@ -4389,8 +4397,7 @@ try {
         SN.settings = defaults;
     }
     
-    /* Path-only route for SPA. TV/Maple often ignore pushState with full http(s) URLs
-       or lack history API — keep SN.routePath as source of truth. */
+    /* Path-only route for SPA. Internal SN.navStack is the back stack (not window.history). */
     function normalizeRoutePath(u) {
         var s, i, path;
         if (u == null || u === "") { return ""; }
@@ -4413,11 +4420,45 @@ try {
         if (i >= 0) { path = path.substring(0, i); }
         i = path.indexOf("#");
         if (i >= 0) { path = path.substring(0, i); }
+        if (path === "" || path === "/#") { path = "/"; }
         return path;
     }
 
-    function chp(u, callback) {
-        var path, stateObj, LP, LPS, QS;
+    if (!SN.navStack) { SN.navStack = []; }
+    if (!SN.routePath) { SN.routePath = ""; }
+
+    function navStackPush(path) {
+        if (!path) { return; }
+        if (!SN.navStack) { SN.navStack = []; }
+        /* avoid consecutive duplicates */
+        if (SN.navStack.length > 0 && SN.navStack[SN.navStack.length - 1] === path) {
+            return;
+        }
+        SN.navStack.push(path);
+    }
+
+    /* Menu Back: pop last entry and render it. Empty stack = landing — no-op (stay in app). */
+    SN.goBack = function () {
+        var prev;
+        if (!SN.navStack || SN.navStack.length < 1) {
+            if (typeof tvlog === "function") {
+                try { tvlog("goBack: empty stack (landing)"); } catch (e0) {}
+            }
+            return false;
+        }
+        prev = SN.navStack.pop();
+        if (!prev) { return false; }
+        chp(prev, null, true);
+        return true;
+    };
+
+    /**
+     * @param {string} [u] route
+     * @param {Function} [callback]
+     * @param {boolean} [skipStack] true when going back (do not push current)
+     */
+    function chp(u, callback, skipStack) {
+        var path, LP, LPS, QS, prevPath;
 
         if (u) {
             path = normalizeRoutePath(u);
@@ -4427,21 +4468,21 @@ try {
                     if (callback) { callback(); }
                     return;
                 }
-                SN.routePath = path;
-                stateObj = { Page: path, Url: path, pageTitle: "" };
-                try {
-                    if (window.history && typeof window.history.pushState === "function") {
-                        window.history.pushState(stateObj, path, path);
-                    }
-                } catch (ePush) {
-                    if (typeof tvlog === "function") {
-                        try { tvlog("pushState fail " + (ePush.message || ePush)); } catch (eL) {}
-                    }
+                prevPath = SN.routePath || "";
+                /* Forward navigation: remember where we were */
+                if (!skipStack && prevPath && prevPath !== path) {
+                    navStackPush(prevPath);
                 }
+                SN.routePath = path;
+                /* Optional: mirror path in address bar only; never rely on it for Back */
+                try {
+                    if (window.history && typeof window.history.replaceState === "function") {
+                        window.history.replaceState({ Page: path, Url: path }, path, path);
+                    }
+                } catch (ePush) {}
             }
         }
 
-        /* Prefer internal route (works when history/pushState is broken on TV) */
         LP = SN.routePath || "";
         if (!LP) {
             try { LP = window.location.pathname || "/"; } catch (eLoc) { LP = "/"; }
@@ -4541,10 +4582,8 @@ try {
     if (window.addEventListener) {
         try {
             window.addEventListener("popstate", function () {
-                try {
-                    SN.routePath = window.location.pathname || SN.routePath || "/";
-                } catch (ePop) {}
-                chp();
+                /* Browser/TV hardware back is not our stack. Ignore URL pops for in-app nav;
+                   menu Back uses SN.goBack only. */
             }, false);
         } catch (e) {
             log("POPSTATE-ERROR: " + (e.message || e));
