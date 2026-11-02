@@ -13,7 +13,7 @@
 /* ------------------------------- configuration --------------------------- */
 const HRH_API_URL   = 'https://hamrahang.ir/ha.php';   // JSON endpoint of the main app
 const HRH_WEB_URL   = 'https://hamrahang.ir/';         // public site (outbound links)
-const HRH_THUMB_URL = 'https://hamrahang.ir/thumb/';   // thumbnails live on the main host
+const HRH_THUMB_URL = 'https://cdn.hamrahang.ir/thumb/'; // thumbnails on CDN host
 const HRH_IDHM      = 11210700;                        // public id offset ($IDHM in ha.php)
 const HRH_MIN_ACT   = 7;                               // user.act >= 7 => administrator
 const HRH_TIMEOUT   = 20;                              // upstream timeout (seconds)
@@ -1379,7 +1379,7 @@ const state = {
   admin     : BOOT.admin === true,
   user      : BOOT.user || null,
   token     : BOOT.token || '',
-  thumbBase : BOOT.thumb_base || 'https://hamrahang.ir/thumb/',
+  thumbBase : BOOT.thumb_base || 'https://cdn.hamrahang.ir/thumb/',
   idOffset  : Number(BOOT.id_offset) || 0,
   busy      : false,
   selected  : null,

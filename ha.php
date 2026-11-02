@@ -2754,7 +2754,7 @@ if (!empty($_SESSION['loggedin'])) {
     var HL = "/album/";
     var HPL = "/playlist/";
     var HSR = "/search/";
-    var UT = "https://hamrahang.ir/thumb/";
+    var UT = "https://cdn.hamrahang.ir/thumb/";
     var HPLU = "https://hamrahang.ir/playlist/";
     var aaa = ["New Tracks"];
 
@@ -10077,19 +10077,19 @@ const PROFILE_KEY = 'ha_profile';
         const STA = ADF.querySelector("#artist_thumb");
         STA.addEventListener("focusout", (e) => {
             const IMS = ADF.querySelector("#img_artist_thumb");
-            IMS.src = (STA.value)?STA.value:'/thumb/remove-image.svg';
+            IMS.src = (STA.value)?STA.value:'https://cdn.hamrahang.ir/thumb/remove-image.svg';
         }, false);
         
         const STL = ADF.querySelector("#album_thumb");
         STL.addEventListener("focusout", (e) => {
             const IMS = ADF.querySelector("#img_album_thumb");
-            IMS.src = (STL.value)?STL.value:'/thumb/remove-image.svg';
+            IMS.src = (STL.value)?STL.value:'https://cdn.hamrahang.ir/thumb/remove-image.svg';
         }, false);
         
         const STB = ADF.querySelector("#song_thumb");
         STB.addEventListener("focusout", (e) => {
             const IMS = ADF.querySelector("#img_song_thumb");
-            IMS.src = (STB.value)?STB.value:'/thumb/remove-image.svg';
+            IMS.src = (STB.value)?STB.value:'https://cdn.hamrahang.ir/thumb/remove-image.svg';
         }, false);
 
         const SFL = ADF.querySelector("#song_file");

@@ -511,7 +511,7 @@
         $AR    = isset($JSQ->artist)     ? $JSQ->artist     : '';
 
         $QURL   = $A_URL . '-' . $S_URL;
-        $THUMB  = urlencode('https://hamrahang.ir/thumb/' . $TMB . '.jpg');
+        $THUMB  = urlencode('https://cdn.hamrahang.ir/thumb/' . $TMB . '.jpg');
         $TITLE  = urlencode($NAME);
         $PERFORMER = urlencode($AR);
 
@@ -1969,13 +1969,31 @@ $stmt->execute();*/
                 $b64 = 'data:image/jpeg;base64,' . base64_encode($bin);
                 $saved = IngestThumbFromSource($conn, $b64, $id_img, MediaRoleToAct('tmb'));
 
-                // اگر ingest شکست خورد، مستقیم بنویس (همان مسیر thumb)
+                // اگر ingest شکست خورد، مستقیم بنویس (cdn/thumb با fallback به /thumb)
                 if ($saved === '') {
-                    $dir = dirname(__DIR__) . '/thumb';
-                    if (!is_dir($dir) && !empty($_SERVER['DOCUMENT_ROOT'])) {
-                        $dir = rtrim((string)$_SERVER['DOCUMENT_ROOT'], '/\\') . '/thumb';
+                    $dir = '';
+                    $candidates = [];
+                    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+                        $root = rtrim((string)$_SERVER['DOCUMENT_ROOT'], "/\\");
+                        $candidates[] = $root . '/cdn/thumb';
+                        $candidates[] = $root . '/thumb';
                     }
-                    if (!is_dir($dir)) {
+                    $candidates[] = dirname(__DIR__) . '/cdn/thumb';
+                    $candidates[] = dirname(__DIR__) . '/thumb';
+                    foreach ($candidates as $cand) {
+                        if (!is_dir($cand)) {
+                            @mkdir($cand, 0755, true);
+                        }
+                        if (is_dir($cand) && is_writable($cand)) {
+                            $dir = $cand;
+                            break;
+                        }
+                        if ($dir === '' && is_dir($cand)) {
+                            $dir = $cand;
+                        }
+                    }
+                    if ($dir === '') {
+                        $dir = dirname(__DIR__) . '/cdn/thumb';
                         @mkdir($dir, 0755, true);
                     }
                     $path = $dir . '/' . $id_img . '.jpg';
@@ -3077,10 +3095,15 @@ $stmt->execute();*/
                 }
 
                 $dirs = [];
+                // Prefer cdn/thumb; keep legacy /thumb as fallback
                 if (!empty($_SERVER['DOCUMENT_ROOT'])) {
-                    $dirs[] = rtrim((string)$_SERVER['DOCUMENT_ROOT'], "/\\") . DIRECTORY_SEPARATOR . 'thumb';
+                    $root = rtrim((string)$_SERVER['DOCUMENT_ROOT'], "/\\");
+                    $dirs[] = $root . DIRECTORY_SEPARATOR . 'cdn' . DIRECTORY_SEPARATOR . 'thumb';
+                    $dirs[] = $root . DIRECTORY_SEPARATOR . 'thumb';
                 }
+                $dirs[] = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'cdn' . DIRECTORY_SEPARATOR . 'thumb';
                 $dirs[] = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'thumb';
+                $dirs[] = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cdn' . DIRECTORY_SEPARATOR . 'thumb';
                 $dirs[] = __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'thumb';
                 $dirs[] = __DIR__ . DIRECTORY_SEPARATOR . 'thumb';
 
@@ -8527,7 +8550,7 @@ $stmt->execute();*/
     // Returns id_img on success, '' on failure.
     // $source = https URL or data:image/...;base64,...
         /**
-     * Save image to /thumb and register thumb.id_img.
+     * Save image under cdn/thumb (URL https://cdn.hamrahang.ir/thumb/) and register thumb.id_img.
      *
      * JPG:  file = {key}.jpg      , id_img = {key}
      * PNG:  file = {key}.png      , id_img = {key}png
@@ -8679,9 +8702,33 @@ $stmt->execute();*/
             }
         }
 
-        // h_api lives in /int/ — public thumbs stay at site root /thumb/
-        $dir = dirname(__DIR__) . '/thumb';
-        if (!is_dir($dir)) {
+        // Public URL: https://cdn.hamrahang.ir/thumb/{file}
+        // Prefer physical cdn/thumb; fall back to legacy /thumb so old deploys keep working.
+        $dir = '';
+        $candidates = [];
+        if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+            $root = rtrim((string)$_SERVER['DOCUMENT_ROOT'], "/\\");
+            $candidates[] = $root . '/cdn/thumb';
+            $candidates[] = $root . '/thumb';
+        }
+        $candidates[] = dirname(__DIR__) . '/cdn/thumb';
+        $candidates[] = dirname(__DIR__) . '/thumb';
+        $candidates[] = __DIR__ . '/../cdn/thumb';
+        $candidates[] = __DIR__ . '/../thumb';
+        foreach ($candidates as $cand) {
+            if (!is_dir($cand)) {
+                @mkdir($cand, 0755, true);
+            }
+            if (is_dir($cand) && is_writable($cand)) {
+                $dir = $cand;
+                break;
+            }
+            if ($dir === '' && is_dir($cand)) {
+                $dir = $cand;
+            }
+        }
+        if ($dir === '') {
+            $dir = dirname(__DIR__) . '/cdn/thumb';
             @mkdir($dir, 0755, true);
         }
         $path = $dir . '/' . $filename;
