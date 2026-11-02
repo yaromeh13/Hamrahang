@@ -79,6 +79,12 @@
   /************/
   /* Polyfill */
   /************/
+  if (typeof Array.isArray !== 'function') {
+    Array.isArray = function (arg) {
+      return Object.prototype.toString.call(arg) === '[object Array]';
+    };
+  }
+
   /*
    * element.matches — modern + legacy (Maple / broken native matches)
    * 1) native matches* — only trust TRUE (some TVs return false wrongly)
