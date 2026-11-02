@@ -70,22 +70,69 @@
   /************/
   /* Polyfill */
   /************/
+  /*
+   * element.matches dual-path:
+   * 1) native matches / *MatchesSelector
+   * 2) polyfill: document.querySelectorAll(selector) + reference check
+   *
+   * IMPORTANT: do NOT run complex selectors (e.g. "#main-content a") via
+   * parentNode.querySelectorAll — #main-content is an ancestor of the <a>,
+   * so parent-scoped QSA returns empty and SpatialNavigation focus() fails.
+   * Always evaluate string selectors in document (or ownerDocument) scope.
+   * Works when library is loaded via <script src="..."> — no need to inline in index.
+   */
   var elementMatchesSelector = function (selector) {
-    var matchedNodes;
-    try {
-      if (this.matches) { return this.matches(selector); }
-      if (this.matchesSelector) { return this.matchesSelector(selector); }
-      if (this.mozMatchesSelector) { return this.mozMatchesSelector(selector); }
-      if (this.webkitMatchesSelector) { return this.webkitMatchesSelector(selector); }
-      if (this.msMatchesSelector) { return this.msMatchesSelector(selector); }
-      if (this.oMatchesSelector) { return this.oMatchesSelector(selector); }
-    } catch (e) {}
-    try {
-      matchedNodes = queryAll(selector, this.parentNode || this.ownerDocument || document);
-      return matchedNodes.indexOf(this) >= 0;
-    } catch (e2) {
+    var el = this;
+    var list, i, doc, n;
+
+    if (!selector || !el || el.nodeType !== 1) {
       return false;
     }
+
+    /* --- modern / native --- */
+    try {
+      if (typeof el.matches === 'function') {
+        return el.matches(selector);
+      }
+      if (typeof el.matchesSelector === 'function') {
+        return el.matchesSelector(selector);
+      }
+      if (typeof el.webkitMatchesSelector === 'function') {
+        return el.webkitMatchesSelector(selector);
+      }
+      if (typeof el.mozMatchesSelector === 'function') {
+        return el.mozMatchesSelector(selector);
+      }
+      if (typeof el.msMatchesSelector === 'function') {
+        return el.msMatchesSelector(selector);
+      }
+      if (typeof el.oMatchesSelector === 'function') {
+        return el.oMatchesSelector(selector);
+      }
+    } catch (eNative) {}
+
+    /* --- polyfill: document-scoped QSA --- */
+    try {
+      doc = el.ownerDocument || document;
+      if (!doc || !doc.querySelectorAll) {
+        /* last resort: simple queryAll helpers (id/class/tag only) */
+        list = queryAll(selector, doc || document);
+        for (i = 0; i < list.length; i++) {
+          if (list[i] === el) { return true; }
+        }
+        return false;
+      }
+      list = doc.querySelectorAll(selector);
+      n = list.length;
+      for (i = 0; i < n; i++) {
+        if (list[i] === el) {
+          return true;
+        }
+      }
+    } catch (ePoly) {
+      return false;
+    }
+    return false;
   };
 
   /* Array helpers — Maple may lack filter/find/forEach/map/Object.keys */
@@ -133,19 +180,31 @@
     return out;
   }
 
-  /* queryAll: querySelectorAll when present; else simple #id / .class / tag (comma-separated) */
+  /* queryAll: prefer querySelectorAll (modern); else simple #id / .class / tag.
+     For section selectors always call with document as root (see parseSelector). */
   function queryAll(selector, root) {
     var result = [];
     var ctx = root || document;
     var parts, p, i, j, el, nodes, cls, acc;
+    var doc;
 
     if (!selector) { return result; }
 
+    /* If root is an element, still try native QSA on that root first;
+       for absolute selectors like "#main-content a" callers should pass document. */
     try {
       if (ctx.querySelectorAll) {
         return [].slice.call(ctx.querySelectorAll(selector));
       }
     } catch (e1) {}
+
+    /* If root had no QSA, try document-level QSA once more */
+    try {
+      doc = (ctx.nodeType === 9) ? ctx : (ctx.ownerDocument || document);
+      if (doc && doc.querySelectorAll && doc !== ctx) {
+        return [].slice.call(doc.querySelectorAll(selector));
+      }
+    } catch (e1b) {}
 
     parts = String(selector).split(',');
     for (i = 0; i < parts.length; i++) {
