@@ -6544,9 +6544,13 @@ try {
             }
 
             ADE();
-            sn.makeFocusable("main");
-            var first = document.querySelector(".container a") || document.querySelector(".main-tabs .item.active");
-            if (first) { sn.focus(first); }
+            setTimeout(function () {
+                try {
+                    sn.makeFocusable("main");
+                    var first = document.querySelector(".container a") || document.querySelector(".main-tabs .item.active");
+                    if (first) { sn.focus(first); }
+                } catch (eL) {}
+            }, 50);
 
             if (callback) { callback(); }
         }
