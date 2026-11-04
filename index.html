@@ -44,82 +44,7 @@
         return style ? style[name] : "unknown";
     }
 
-    function getPosition(el) {
-        var x = 0;
-        var y = 0;
-        var parent = el;
-
-        if (el.getBoundingClientRect) {
-            var rect = el.getBoundingClientRect();
-
-            return {
-                x: rect.left,
-                y: rect.top,
-                width: rect.right - rect.left,
-                height: rect.bottom - rect.top
-            };
-        }
-
-        while (parent) {
-            x += parent.offsetLeft || 0;
-            y += parent.offsetTop || 0;
-            parent = parent.offsetParent;
-        }
-
-        return {
-            x: x,
-            y: y,
-            width: el.offsetWidth || 0,
-            height: el.offsetHeight || 0
-        };
-    }
-
-    function inspect(name, el) {
-        var p;
-
-        if (!el) {
-            tvlog(name + ": NOT FOUND");
-            return;
-        }
-
-        p = getPosition(el);
-
-        tvlog(
-            name +
-            " | x:" + p.x +
-            " y:" + p.y +
-            " w:" + p.width +
-            " h:" + p.height +
-            " | margin:" + getStyle(el, "margin") +
-            " | padding:" + getStyle(el, "padding") +
-            " | position:" + getStyle(el, "position")
-        );
-    }
-
-    var html = document.documentElement;
-    var body = document.body;
-
-    inspect("HTML", html);
-    inspect("BODY", body);
-    inspect(".ln", getByClass("ln"));
-    inspect(".sidebar-content", getByClass("sidebar-content"));
-    inspect(".main-container", getByClass("main-container"));
-
-    tvlog(
-        "Viewport: " +
-        (window.innerWidth || html.clientWidth || body.clientWidth) +
-        "x" +
-        (window.innerHeight || html.clientHeight || body.clientHeight)
-    );
-
-    tvlog(
-        "Screen: " +
-        screen.width + "x" + screen.height
-    );
 })();
-
-
-
 
 /* JSON helper — native when present; ES3 fallback for Maple (no JSON global) */
 (function (g) {
@@ -209,8 +134,9 @@
    1. HTML / BODY — solid base (works without tv.css)
    height:100% chain for full-screen TV shells (avoid vh alone)
    --------------------------------------------------------- */
-html {
+html, body {
     display: block;
+    background-color: #1c1b21;
     width: 100% !important;
     height: 100% !important;
     margin: 0 !important;
@@ -219,12 +145,6 @@ html {
 }
 
 body {
-    display: block;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
     cursor: default;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 16px;
@@ -314,6 +234,13 @@ a {
     display: block;
     width: 94px;
     max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+.logo-container img {
+    display: block;
+    width: 94px;
     height: auto;
     margin: 0 auto;
 }
@@ -842,6 +769,8 @@ a {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
+    width: 104px;
+    height: 104px;
 }
 
 #nav td {
@@ -873,6 +802,10 @@ a {
 }
 
 .css-11ee1sb svg {
+    width: 100%;
+    height: 100%;
+}
+.css-11ee1sb img {
     width: 100%;
     height: 100%;
 }
@@ -2629,7 +2562,7 @@ document.body.style.padding = "0";
     <div id="main-bg"></div>
     <div class="sidebar">
         <div class="sidebar-content">
-            <span class="logo-container" aria-label="Hamrahang Web Player" ><svg fill="currentColor" version="1.1" viewBox="0 0 302.45 104.79"><defs><style>.cls-1,.cls-3{fill:#fff;}.cls-1{fill-rule:evenodd;}.cls-2{fill:#1a1b1c;}</style></defs><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><g id="radio"><polygon class="cls-1" points="30.55 0 61.09 30.55 259.22 30.55 302.45 73.75 271.91 104.29 241.36 73.75 43.22 73.75 0 30.55 30.55 0 30.55 0"/><path class="cls-2" d="M82.18,66.67H74.67V53.47H64.49v13.2H57V36.86h7.51V47.77H74.67V36.86h7.51V66.67Zm163.29,0H238V53.47H227.79v13.2h-7.51V36.86h7.51V47.77H238V36.86h7.51V66.67ZM104,59.37V53.51c-1.47.15-2.66.28-3.56.39a11.3,11.3,0,0,0-2.67.64A3.7,3.7,0,0,0,96,55.75a3.42,3.42,0,0,0-.63,2.16,3.09,3.09,0,0,0,1,2.71,5.32,5.32,0,0,0,3.1.74,5.68,5.68,0,0,0,2.32-.52A7.39,7.39,0,0,0,104,59.37Zm0,4.33c-.6.5-1.14,1-1.6,1.35a10.44,10.44,0,0,1-1.91,1.19,12.67,12.67,0,0,1-2.27.89,12.31,12.31,0,0,1-3.09.3A8.19,8.19,0,0,1,89,64.93a8.6,8.6,0,0,1-2.45-6.29,9.22,9.22,0,0,1,1.24-5,8.6,8.6,0,0,1,3.57-3.05A19,19,0,0,1,97,49q3.29-.44,7.06-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.45,11.45,0,0,0-5.1-.89,14.09,14.09,0,0,0-3.6.56,30.51,30.51,0,0,0-4,1.43h-.74V39.25c.86-.25,2.25-.55,4.18-.89a33.51,33.51,0,0,1,5.83-.51q7.23,0,10.52,2.41c2.21,1.61,3.3,4.05,3.3,7.35V66.67H104v-3Zm48.62,3v-14c0-1.38,0-2.54-.07-3.48a7.06,7.06,0,0,0-.45-2.32,2.55,2.55,0,0,0-1.17-1.31,4.93,4.93,0,0,0-2.21-.4,4.81,4.81,0,0,0-2,.43,14.45,14.45,0,0,0-2.13,1.23V66.67h-8.73v-14c0-1.36,0-2.51-.08-3.47a7.29,7.29,0,0,0-.47-2.33,2.55,2.55,0,0,0-1.17-1.31,4.82,4.82,0,0,0-2.18-.4,4.73,4.73,0,0,0-2.1.5,14.51,14.51,0,0,0-2,1.16V66.67h-8.73V38.72h8.73v3.09a23.44,23.44,0,0,1,4-2.83,8.88,8.88,0,0,1,4.26-1,8.32,8.32,0,0,1,4.51,1.21,7.68,7.68,0,0,1,3,3.64,25.3,25.3,0,0,1,4.75-3.6,9.3,9.3,0,0,1,8-.63A6.55,6.55,0,0,1,159,40.45a8.61,8.61,0,0,1,1.76,3.19,16.48,16.48,0,0,1,.58,4.84V66.67Zm34-19.69h-.73a6.15,6.15,0,0,0-1.45-.27c-.63-.06-1.34-.08-2.1-.08a11.58,11.58,0,0,0-2.89.39,28,28,0,0,0-2.94.95v18.7h-8.73V38.72h8.73v4c.4-.36.95-.82,1.67-1.37A15.21,15.21,0,0,1,180.15,40a11.41,11.41,0,0,1,2.22-1,7.51,7.51,0,0,1,2.39-.41l.94,0,1,.08V47Zm18.71,12.39V53.51c-1.46.15-2.65.28-3.55.39a11.49,11.49,0,0,0-2.68.64,3.79,3.79,0,0,0-1.77,1.21,3.48,3.48,0,0,0-.62,2.16,3.08,3.08,0,0,0,1,2.71,5.37,5.37,0,0,0,3.11.74,5.68,5.68,0,0,0,2.32-.52,7.22,7.22,0,0,0,2.15-1.47Zm0,4.33-1.6,1.35a10,10,0,0,1-1.9,1.19,13,13,0,0,1-2.27.89,12.41,12.41,0,0,1-3.09.3,8.23,8.23,0,0,1-6.15-2.5,8.6,8.6,0,0,1-2.45-6.29,9.13,9.13,0,0,1,1.25-5,8.47,8.47,0,0,1,3.57-3.05,18.78,18.78,0,0,1,5.64-1.6q3.28-.44,7-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.38,11.38,0,0,0-5.09-.89,14.09,14.09,0,0,0-3.6.56A30.65,30.65,0,0,0,191,46h-.74V39.25c.87-.25,2.26-.55,4.19-.89a33.43,33.43,0,0,1,5.83-.51q7.22,0,10.52,2.41c2.2,1.61,3.3,4.05,3.3,7.35V66.67h-8.73v-3Z"/><path class="cls-3" d="M109.91,104.29h-5.83l-1.52-4.85h-8.1l-1.53,4.85H87.24l8.09-24h6.5ZM101.2,95l-2.69-8.59L95.81,95Z"/><path class="cls-3" d="M132.69,104.29H127V93.72h-8.33v10.57h-5.65v-24h5.65v8.78H127V80.3h5.65Z"/><path class="cls-3" d="M158.51,104.29h-5.84l-1.52-4.85h-8.1l-1.53,4.85h-5.69l8.09-24h6.5ZM149.79,95l-2.69-8.59L144.41,95Z"/><path class="cls-3" d="M181.56,104.29h-5.44l-9.29-16.46v16.46h-5.18v-24h6.75l8,13.75V80.3h5.18Z"/><path class="cls-3" d="M206.51,102.92a27,27,0,0,1-3.9,1.25,19.13,19.13,0,0,1-4.84.62q-5.58,0-8.74-3.32t-3.16-9.2a12.67,12.67,0,0,1,3.19-9q3.18-3.42,8.89-3.43a19.57,19.57,0,0,1,4.12.43,17.6,17.6,0,0,1,4.35,1.7v5.62h-.63l-1.21-1a13.73,13.73,0,0,0-1.53-1.06,9.93,9.93,0,0,0-2-.89,8,8,0,0,0-2.42-.37,7.2,7.2,0,0,0-2.72.49,6.2,6.2,0,0,0-2.19,1.48,6.76,6.76,0,0,0-1.46,2.46,10.06,10.06,0,0,0-.54,3.44,8.71,8.71,0,0,0,1.93,6.09,7.34,7.34,0,0,0,5.69,2.11l.71,0c.26,0,.5,0,.71,0v-4.7h-4.36V91.08h10.1Z"/></g></g></g></svg></span>
+            <span class="logo-container" aria-label="Hamrahang Web Player" ><img src="/assets/hamrah_ahang.png" alt="Hamrahang"></span>
             <div id="menu" class="menu">
                 <div><a class="item back" href="#" ><img src="/assets/back-left.png" ></a></div>
                 <div><a class="item home active" href="/"><img src="/assets/home.png" ></a></div>
@@ -2654,8 +2587,9 @@ document.body.style.padding = "0";
     <div id="nav" class="">
         <table id="dpad" class="css-1ojq7oi ">
             <tbody>
-                <tr><td></td><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-up" id="sn-up" readonly  ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg></span></div></td><td></td></tr>
-                <tr><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-left" id="sn-left" readonly ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></span></div></td><td><div class="css-1klrgra e1xzjd3a1" data="data-sn-ok" id="sn-ok" readonly  ><span class="css-11ee1sb e1cooyvd1"></span></div></td><td><div class="css-lc3isr e1xzjd3a2" data="data-sn-right" id="sn-right" readonly  ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></span></div></td></tr><tr><td></td><td><div class="css-lc3isr e1xzjd3a2" id="sn-down" ><span class="css-11ee1sb e1cooyvd1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span></div></td><td></td></tr></tbody></table>
+                <tr><td></td><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-up" id="sn-up" readonly  ><span class="css-11ee1sb e1cooyvd1"><img src="/assets/arrow-up.png" ></span></div></td><td></td></tr>
+                <tr><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-left" id="sn-left" readonly ><span class="css-11ee1sb e1cooyvd1"><img src="/assets/arrow-left.png" ></span></div></td><td><div class="css-1klrgra e1xzjd3a1" data="data-sn-ok" id="sn-ok" readonly  ><span class="css-11ee1sb e1cooyvd1"></span></div></td><td><div class="css-lc3isr e1xzjd3a2" data="data-sn-right" id="sn-right" readonly  ><span class="css-11ee1sb e1cooyvd1"><img src="/assets/arrow-right.png" >
+                </span></div></td></tr><tr><td></td><td><div class="css-lc3isr e1xzjd3a2" id="sn-down" ><span class="css-11ee1sb e1cooyvd1"><img src="/assets/arrow-down.png" ></span></div></td><td></td></tr></tbody></table>
     </div>
 </div><!-- /.ln -->
 <div id="player" class="vis-none">
@@ -3147,11 +3081,11 @@ try {
 
         /*
         document.addEventListener('sn:willmove', function (e) {
-            console.log('Moving', e.detail.direction, 'from', e.target);
+            log('Moving', e.detail.direction, 'from', e.target);
         }, true);
 
         document.addEventListener('sn:focused', function (e) {
-            console.log(
+            log(
                 '%cFOCUSED:',
                 'color: lime; font-weight: bold;',
                 e.target,
@@ -3561,10 +3495,15 @@ try {
     var HPLU = HP + "playlist/";
     var aaa = ["New Tracks"];
     
+    var svg_logo = '<svg fill="currentColor" version="1.1" viewBox="0 0 302.45 104.79"><defs><style>.cls-1,.cls-3{fill:#fff;}.cls-1{fill-rule:evenodd;}.cls-2{fill:#1a1b1c;}</style></defs><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><g id="radio"><polygon class="cls-1" points="30.55 0 61.09 30.55 259.22 30.55 302.45 73.75 271.91 104.29 241.36 73.75 43.22 73.75 0 30.55 30.55 0 30.55 0"/><path class="cls-2" d="M82.18,66.67H74.67V53.47H64.49v13.2H57V36.86h7.51V47.77H74.67V36.86h7.51V66.67Zm163.29,0H238V53.47H227.79v13.2h-7.51V36.86h7.51V47.77H238V36.86h7.51V66.67ZM104,59.37V53.51c-1.47.15-2.66.28-3.56.39a11.3,11.3,0,0,0-2.67.64A3.7,3.7,0,0,0,96,55.75a3.42,3.42,0,0,0-.63,2.16,3.09,3.09,0,0,0,1,2.71,5.32,5.32,0,0,0,3.1.74,5.68,5.68,0,0,0,2.32-.52A7.39,7.39,0,0,0,104,59.37Zm0,4.33c-.6.5-1.14,1-1.6,1.35a10.44,10.44,0,0,1-1.91,1.19,12.67,12.67,0,0,1-2.27.89,12.31,12.31,0,0,1-3.09.3A8.19,8.19,0,0,1,89,64.93a8.6,8.6,0,0,1-2.45-6.29,9.22,9.22,0,0,1,1.24-5,8.6,8.6,0,0,1,3.57-3.05A19,19,0,0,1,97,49q3.29-.44,7.06-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.45,11.45,0,0,0-5.1-.89,14.09,14.09,0,0,0-3.6.56,30.51,30.51,0,0,0-4,1.43h-.74V39.25c.86-.25,2.25-.55,4.18-.89a33.51,33.51,0,0,1,5.83-.51q7.23,0,10.52,2.41c2.21,1.61,3.3,4.05,3.3,7.35V66.67H104v-3Zm48.62,3v-14c0-1.38,0-2.54-.07-3.48a7.06,7.06,0,0,0-.45-2.32,2.55,2.55,0,0,0-1.17-1.31,4.93,4.93,0,0,0-2.21-.4,4.81,4.81,0,0,0-2,.43,14.45,14.45,0,0,0-2.13,1.23V66.67h-8.73v-14c0-1.36,0-2.51-.08-3.47a7.29,7.29,0,0,0-.47-2.33,2.55,2.55,0,0,0-1.17-1.31,4.82,4.82,0,0,0-2.18-.4,4.73,4.73,0,0,0-2.1.5,14.51,14.51,0,0,0-2,1.16V66.67h-8.73V38.72h8.73v3.09a23.44,23.44,0,0,1,4-2.83,8.88,8.88,0,0,1,4.26-1,8.32,8.32,0,0,1,4.51,1.21,7.68,7.68,0,0,1,3,3.64,25.3,25.3,0,0,1,4.75-3.6,9.3,9.3,0,0,1,8-.63A6.55,6.55,0,0,1,159,40.45a8.61,8.61,0,0,1,1.76,3.19,16.48,16.48,0,0,1,.58,4.84V66.67Zm34-19.69h-.73a6.15,6.15,0,0,0-1.45-.27c-.63-.06-1.34-.08-2.1-.08a11.58,11.58,0,0,0-2.89.39,28,28,0,0,0-2.94.95v18.7h-8.73V38.72h8.73v4c.4-.36.95-.82,1.67-1.37A15.21,15.21,0,0,1,180.15,40a11.41,11.41,0,0,1,2.22-1,7.51,7.51,0,0,1,2.39-.41l.94,0,1,.08V47Zm18.71,12.39V53.51c-1.46.15-2.65.28-3.55.39a11.49,11.49,0,0,0-2.68.64,3.79,3.79,0,0,0-1.77,1.21,3.48,3.48,0,0,0-.62,2.16,3.08,3.08,0,0,0,1,2.71,5.37,5.37,0,0,0,3.11.74,5.68,5.68,0,0,0,2.32-.52,7.22,7.22,0,0,0,2.15-1.47Zm0,4.33-1.6,1.35a10,10,0,0,1-1.9,1.19,13,13,0,0,1-2.27.89,12.41,12.41,0,0,1-3.09.3,8.23,8.23,0,0,1-6.15-2.5,8.6,8.6,0,0,1-2.45-6.29,9.13,9.13,0,0,1,1.25-5,8.47,8.47,0,0,1,3.57-3.05,18.78,18.78,0,0,1,5.64-1.6q3.28-.44,7-.69V48.1a3.28,3.28,0,0,0-1.7-3.19,11.38,11.38,0,0,0-5.09-.89,14.09,14.09,0,0,0-3.6.56A30.65,30.65,0,0,0,191,46h-.74V39.25c.87-.25,2.26-.55,4.19-.89a33.43,33.43,0,0,1,5.83-.51q7.22,0,10.52,2.41c2.2,1.61,3.3,4.05,3.3,7.35V66.67h-8.73v-3Z"/><path class="cls-3" d="M109.91,104.29h-5.83l-1.52-4.85h-8.1l-1.53,4.85H87.24l8.09-24h6.5ZM101.2,95l-2.69-8.59L95.81,95Z"/><path class="cls-3" d="M132.69,104.29H127V93.72h-8.33v10.57h-5.65v-24h5.65v8.78H127V80.3h5.65Z"/><path class="cls-3" d="M158.51,104.29h-5.84l-1.52-4.85h-8.1l-1.53,4.85h-5.69l8.09-24h6.5ZM149.79,95l-2.69-8.59L144.41,95Z"/><path class="cls-3" d="M181.56,104.29h-5.44l-9.29-16.46v16.46h-5.18v-24h6.75l8,13.75V80.3h5.18Z"/><path class="cls-3" d="M206.51,102.92a27,27,0,0,1-3.9,1.25,19.13,19.13,0,0,1-4.84.62q-5.58,0-8.74-3.32t-3.16-9.2a12.67,12.67,0,0,1,3.19-9q3.18-3.42,8.89-3.43a19.57,19.57,0,0,1,4.12.43,17.6,17.6,0,0,1,4.35,1.7v5.62h-.63l-1.21-1a13.73,13.73,0,0,0-1.53-1.06,9.93,9.93,0,0,0-2-.89,8,8,0,0,0-2.42-.37,7.2,7.2,0,0,0-2.72.49,6.2,6.2,0,0,0-2.19,1.48,6.76,6.76,0,0,0-1.46,2.46,10.06,10.06,0,0,0-.54,3.44,8.71,8.71,0,0,0,1.93,6.09,7.34,7.34,0,0,0,5.69,2.11l.71,0c.26,0,.5,0,.71,0v-4.7h-4.36V91.08h10.1Z"/></g></g></g></svg>';
     var svg_back = '<svg style="width:20px;height:20px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="M5 12l7 7"></path><path d="M5 12l7 -7"></path></svg>';
     var svg_home = '<svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21,21.9h-5c-0.5,0-0.9-0.4-0.9-0.9v-4c0-1.7-1.4-3.1-3.1-3.1c-1.7,0-3.1,1.4-3.1,3.1v4c0,0.5-0.4,0.9-0.9,0.9H3    c-0.5,0-0.9-0.4-0.9-0.9v-9.6c0-0.5,0.2-1,0.6-1.3l8-7.1c0,0,0,0,0.1,0c0.7-0.5,1.8-0.5,2.5,0l8,7.1c0.4,0.3,0.7,0.8,0.7,1.4V21    C21.9,21.5,21.5,21.9,21,21.9z M3.9,21L3.9,21L3.9,21z"></path></svg>';
     var svg_search = '<svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>';
     var svg_account = '<svg style="margin-right:10px;width:22px;height:22px" version="1.1" width="22" height="22" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><title>Account Settings</title><path d="M9.6,3.32a3.86,3.86,0,1,0,3.86,3.85A3.85,3.85,0,0,0,9.6,3.32M16.35,11a.26.26,0,0,0-.25.21l-.18,1.27a4.63,4.63,0,0,0-.82.45l-1.2-.48a.3.3,0,0,0-.3.13l-1,1.66a.24.24,0,0,0,.06.31l1,.79a3.94,3.94,0,0,0,0,1l-1,.79a.23.23,0,0,0-.06.3l1,1.67c.06.13.19.13.3.13l1.2-.49a3.85,3.85,0,0,0,.82.46l.18,1.27a.24.24,0,0,0,.25.2h1.93a.24.24,0,0,0,.23-.2l.18-1.27a5,5,0,0,0,.81-.46l1.19.49c.12,0,.25,0,.32-.13l1-1.67a.23.23,0,0,0-.06-.3l-1-.79a4,4,0,0,0,0-.49,2.67,2.67,0,0,0,0-.48l1-.79a.25.25,0,0,0,.06-.31l-1-1.66c-.06-.13-.19-.13-.31-.13L19.5,13a4.07,4.07,0,0,0-.82-.45l-.18-1.27a.23.23,0,0,0-.22-.21H16.46M9.71,13C5.45,13,2,14.7,2,16.83v1.92h9.33a6.65,6.65,0,0,1,0-5.69A13.56,13.56,0,0,0,9.71,13m7.6,1.43a1.45,1.45,0,1,1,0,2.89,1.45,1.45,0,0,1,0-2.89Z"></path></g></svg>';
+    var svg_arw_up = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>';
+    var svg_arw_dw = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
+    var svg_arw_lf = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>';
+    var svg_arw_rt = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>';
     
     var svg_dot = '<svg style="width:20px;height:20px" version="1.1" width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path></svg>';
     var svg_rdo = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 26px; height: 26px;"><path d="M12 12l0 .01"></path><path d="M14.828 9.172a4 4 0 0 1 0 5.656"></path><path d="M17.657 6.343a8 8 0 0 1 0 11.314"></path><path d="M9.168 14.828a4 4 0 0 1 0 -5.656"></path><path d="M6.337 17.657a8 8 0 0 1 0 -11.314"></path></svg>';
@@ -3662,7 +3601,7 @@ try {
             if (typeof item === 'object' && item.id) {
                 if (!SN[type][itemId]) {
                     SN[type][itemId] = item;
-                    //console.log("New " + type + " Added:", itemId);
+                    //log("New " + type + " Added:", itemId);
                 } else {
                     for (var k in item) {
                         if (item.hasOwnProperty(k)) {
@@ -3714,9 +3653,9 @@ try {
             var isUpdate = !!SN.artist[id];
             SN.artist[id] = found;
 
-            //console.log(isUpdate ? "Artist Updated:" : "Artist Added:", id);
+            //log(isUpdate ? "Artist Updated:" : "Artist Added:", id);
     
-            //console.log("Artist Added / Updated:",id);
+            //log("Artist Added / Updated:",id);
             if (callback) {callback(true, found);}
             return;
         }
@@ -3776,7 +3715,7 @@ try {
             SN.album[id] = Q[1];
             found = SN.album[id];
     
-            console.log(isUpdate ? "Album Updated:" : "Album Added:", id);
+            log(isUpdate ? "Album Updated:" : "Album Added:", id);
     
             if (callback) {callback(true, found);}
             return;
@@ -3792,7 +3731,7 @@ try {
         }
         
         // Album is Not Found Or Not Full → API
-        console.log(found ? "Found Album Without Full Data → API:" : "Album Not Found → API:", id);
+        log(found ? "Found Album Without Full Data → API:" : "Album Not Found → API:", id);
         
         gjs(Q, function (success, jd) {
         
@@ -3824,7 +3763,7 @@ try {
         // Q[1] = Song/Podcast Object
         if (typeof id === 'object' && id !== null) {
     
-            console.log("USNG: Object", id);
+            log("USNG: Object", id);
     
             found = id;
             id = found.id;
@@ -3839,7 +3778,7 @@ try {
             var isUpdate = !!SN[table][id];
             SN[table][id] = found;
     
-            console.log((isUpdate ? "Updated: " : "Added: ") + table, id);
+            log((isUpdate ? "Updated: " : "Added: ") + table, id);
     
             if (callback) {callback(true, found);}
             return;
@@ -3856,13 +3795,13 @@ try {
             found = SN[table][id];
     
             if (found && found.full) {
-                console.log("Found Full " + table + ":", id);
+                log("Found Full " + table + ":", id);
                 if (callback) {callback(true, found);}
                 return;
             }
         }
     
-        console.log(found ? "Found Without Full Data → API:" : "Not Found → API:", id);
+        log(found ? "Found Without Full Data → API:" : "Not Found → API:", id);
     
         gjs(Q, function (success, jd) {
     
@@ -3919,7 +3858,7 @@ try {
             var isUpdate = !!SN[table][id];
             SN[table][id] = found;
     
-            console.log((isUpdate ? "Updated: " : "Added: ") + table, id);
+            log((isUpdate ? "Updated: " : "Added: ") + table, id);
     
             if (callback) {callback(true, found);}
             return;
@@ -3941,7 +3880,7 @@ try {
             }
         }
     
-        console.log(found ? "Found Without Full Data → API:" : "Not Found → API:", id);
+        log(found ? "Found Without Full Data → API:" : "Not Found → API:", id);
     
         gjs(Q, function (success, jd) {
     
@@ -4073,17 +4012,17 @@ try {
     
             if (found.q) {
                 SN.search = found;
-                console.log("SN.search: ", SN.search);
+                log("SN.search: ", SN.search);
             } else {
                 SN.search.q = q.q || "";
             }
     
             if (callback) {callback(true, SN.search);}
-            console.log("USRC:SN:", SN);
+            log("USRC:SN:", SN);
             return;
         }
     
-        console.log("USRC: end Search Not Found → API:", q);
+        log("USRC: end Search Not Found → API:", q);
     
         gjs(Q, function (success, jd) {
     
@@ -4285,7 +4224,7 @@ try {
             localStorage.setItem('hamrahang_user', stringifyJSON(userData));
             localStorage.setItem('hamrahang_refresh_token', refreshToken);
         } catch (e) {
-            console.log("PersistUserSession: localStorage failed:", e.message);
+            log("PersistUserSession: localStorage failed:", e.message);
         }
     }
     
@@ -4405,14 +4344,14 @@ try {
     function StartTVLogin(onSuccess, onDisplay) {
 
         if (!SN.loginEnabled) {
-            console.log("TV login disabled: fallback API mode");
+            log("TV login disabled: fallback API mode");
             return;
         }
 
         gjl({ a: 'request_code' }, function (success, j) {
     
             if (!success || !j || !j.code) {
-                console.log("StartTVLogin: could not get code");
+                log("StartTVLogin: could not get code");
                 return;
             }
     
@@ -4467,7 +4406,7 @@ try {
     
                     clearInterval(currentLoginPoll);
                     currentLoginPoll = null;
-                    console.log("PollTVLoginStatus: code expired");
+                    log("PollTVLoginStatus: code expired");
                 }
             });
     
@@ -4491,7 +4430,7 @@ try {
         try {
             localStorage.setItem('hamrahang_settings', stringifyJSON(SN.settings));
         } catch (e) {
-            console.log("SaveSettingsToStorage failed:", e.message);
+            log("SaveSettingsToStorage failed:", e.message);
         }
     }
     
@@ -4521,7 +4460,7 @@ try {
                 return;
             }
         } catch (e) {
-            console.log("LoadSettingsFromStorage failed:", e.message);
+            log("LoadSettingsFromStorage failed:", e.message);
         }
     
         SN.settings = defaults;
@@ -4637,20 +4576,14 @@ try {
         MCNT.innerHTML = '';
     
         function CHHD(q, id) {
-        
             var thumb = '';
-        
             if (q === 'a') {
-        
                 var artist = SN.artist ? SN.artist[id] : null;
                 if (!artist) { return; }
-        
                 document.title = artist.name + (artist.name_fa ? ' | ' + artist.name_fa : '');
                 thumb = artist.meta && artist.meta.tmb ? artist.meta.tmb : '';
             }
-        
             else if (q === 's') {
-        
                 var song = SN.song ? SN.song[id] : null;
                 if (!song) { return; }
         
@@ -4781,7 +4714,7 @@ try {
     function RequireLogin(onAuthenticated) {
 
         if (!SN.loginEnabled) {
-            console.log("This feature requires the main API server");
+            log("This feature requires the main API server");
             return;
         }
 
@@ -4916,7 +4849,7 @@ try {
         try {
             localStorage.setItem(PROFILE_KEY, stringifyJSON(SN.profile));
         } catch (e) {
-            console.log('SaveProfile failed:', e.message);
+            log('SaveProfile failed:', e.message);
         }
     }
     
@@ -5209,7 +5142,7 @@ try {
 
         if (SN.user && SN.user.loggedIn && SN.accessToken) {
             gja({ a: 'sync_history', items: [{ id: id, type: type, at: at }] }, function (success, j) {
-                if (!success || (j && j.error)) { console.log('PushPlayHistory: server sync skipped'); }
+                if (!success || (j && j.error)) { log('PushPlayHistory: server sync skipped'); }
             });
         }
     }
@@ -5412,7 +5345,7 @@ try {
                         MergeResolvedItems(endpoint, parseJSON(xhr.responseText));
                         finish();
                     } catch (e) {
-                        console.log('ResolveItems: parse failed', e.message);
+                        log('ResolveItems: parse failed', e.message);
                         retryOrFinish();
                     }
                 } else {
@@ -6223,7 +6156,7 @@ try {
     
         var list = CreateQualityList(currentQuality, function (value) {
             SetSetting('audioQuality', value);
-            console.log("Audio quality set to:", value);
+            log("Audio quality set to:", value);
         });
     
         pane.appendChild(list);
@@ -6235,7 +6168,7 @@ try {
     
         var list = CreateQualityList(currentQuality, function (value) {
             SN.VideoQuality = value;
-            console.log("Video quality set to:", value);
+            log("Video quality set to:", value);
             // TODO: ذخیره‌ی مقدار (localStorage یا مشابه)
         });
     
@@ -6307,7 +6240,7 @@ try {
     function gsa(q) {
         
         if (!SN.apiReady || !SN.loginEnabled) {
-            console.log("Admin API unavailable:", SN.apiMode);
+            log("Admin API unavailable:", SN.apiMode);
             return;
         }
 
@@ -6327,7 +6260,7 @@ try {
                         CRAD();
                     }
                 }
-                console.log(SN);
+                log(SN);
             } catch (error) {
                 console.error(error.message || error);
             }
@@ -6339,10 +6272,10 @@ try {
     }
     
     function CRHP(P, QS, callback) {
-    
+
         P = P || 'video';
         QS = QS || 'top';
-    
+
         var routeMap = {
             'video_top':      { a: 1, key: 'top_video',      fetch: ['video', 'top'] },
             'video_latest':   { a: 2, key: 'latest_video',   fetch: ['video', 'latest'] },
@@ -6353,7 +6286,7 @@ try {
             'song_popular':   { a: 5, key: 'latest_song',    fetch: ['song', 'latest'] },
             'artist_top':     { a: 6, key: 'top_artist',     fetch: ['artist', 'top'] }
         };
-    
+            
         // مسیرهای اختصاصی (جزئیات یک آیتم، نه لیست) که خودشون fetch مستقل دارن
         if (P == 'video' && !routeMap['video_' + QS]) {
             CRVP(QS, callback);
@@ -6376,7 +6309,7 @@ try {
         var route = routeMap[routeKey];
     
         if (!route) {
-            console.log("CRHP: Unknown route:", P, QS);
+            log("CRHP: Unknown route:", P, QS);
             renderPage(0, null);
             if (callback) {callback();}
             return;
@@ -6412,7 +6345,7 @@ try {
             tab.appendChild(ha1); tab.appendChild(ha2); tab.appendChild(ha3); tab.appendChild(ha5); tab.appendChild(ha6);
             MCNT.appendChild(tab);
     
-            if (P == 'video') { CRVN(ar, 'musicvideo', HV); }
+            if (P == 'video') { CRVN(ar, 'video', null); }
             if (P == 'song')  { CRSS(ar, 'song'); }
             if (P == 'artist') { CRAS(ar); }
     
@@ -6613,11 +6546,11 @@ try {
             if (callback) { callback(); }
         }
 
-        console.log('[CRLB] render', P, 'cur=', current.key, 'types=', stringifyJSON(typesToResolve), 'idsByType=', stringifyJSON(current.idsByType));
+        log('[CRLB] render', P, 'cur=', current.key, 'types=', stringifyJSON(typesToResolve), 'idsByType=', stringifyJSON(current.idsByType));
         for (t = 0; t < typesToResolve.length; t++) {
             (function (tt) {
                 ResolveItems(tt, current.idsByType[tt], function (ready) {
-                    console.log('[CRLB] resolved', tt, 'ready=', stringifyJSON(ready));
+                    log('[CRLB] resolved', tt, 'ready=', stringifyJSON(ready));
                     readyByType[tt] = ready;
                     onAllResolved();
                 });
@@ -6806,7 +6739,7 @@ try {
             e = SN[T] ? SN[T][id] : null;
     
             if (!e) {
-                console.log("CRVN: " + T + " not found:", id);
+                log("CRVN: " + T + " not found:", id);
                 continue;
             }
     
@@ -6851,7 +6784,6 @@ try {
             });
     
             var elb = OA(document.createElement("div"), {className: "box"});
-    
             var ela = OA(document.createElement("a"), {href: HV + e.id + "/" + artistUrl + "-" + e.url});
     
             ela._item = e;
@@ -6922,11 +6854,11 @@ try {
             if (T == 'podcast') { e = SN.podcast ? SN.podcast[id] : null; url = HS; }
     
             if (!e) {
-                console.log("CRSS: " + T + " not found:", id);
+                log("CRSS: " + T + " not found:", id);
                 continue;
             }
     
-            //console.log("CRSS : ", e);
+            //log("CRSS : ", e);
             var artistList = [];
             var primaryArtistUrl = "";
     
@@ -7027,7 +6959,7 @@ try {
             var e = SN.artist? SN.artist[id] : null;
     
             if (!e) {
-                console.log("CRAS: Artist not found:",id);
+                log("CRAS: Artist not found:",id);
                 continue;
             }
     
@@ -7093,7 +7025,7 @@ try {
             var artist = SN.artist ? SN.artist[artistId] : null;
     
             if (!artist) {
-                console.log("CRAL: Artist not found:", artistId);
+                log("CRAL: Artist not found:", artistId);
                 continue;
             }
     
@@ -7116,7 +7048,7 @@ try {
     function CRTL(ar, au) {
         
         if (!ar || !isArray(ar) || ar.length === 0) {
-            console.log("CRTL: No songs:", ar);
+            log("CRTL: No songs:", ar);
             return;
         }
 
@@ -7138,7 +7070,7 @@ try {
             e = SN.song ? SN.song[id] : null;
             
             if (!e) {
-                console.log("CRTL: Song not found:", id);
+                log("CRTL: Song not found:", id);
                 continue;
             }
             
@@ -7257,7 +7189,7 @@ try {
 
         if(SN.NowPlaying && SN.NowPlaying.id != e.id ){
             
-            console.log("NowPlaying",SN.NowPlaying.id);
+            log("NowPlaying",SN.NowPlaying.id);
             var dac = OA(document.createElement("div"), {className: "page-detail-actions"});
             var dcp = OA(document.createElement("div"), {className: "control-btn"});
             dac.appendChild(dcp);
@@ -7898,7 +7830,7 @@ try {
                 });
                 registered = true;
             } catch (err) {
-                console.log('HPOP: section register failed', err);
+                log('HPOP: section register failed', err);
             }
         }
 
@@ -8448,10 +8380,8 @@ try {
 
     function ADE(){
         var AA = [];
-        var i, j, roots, links;
+        var i, roots, links;
 
-        /* Collect <a> inside each region — not the containers themselves
-           (containers have no href; clicking them was calling chp(undefined) → stay on home). */
         function collectLinks(className) {
             roots = getAllByClass(className);
             if (!roots || !roots.length) { return; }
@@ -8461,33 +8391,38 @@ try {
             }
         }
 
+        /* Tabs + menu first so nav links are always bound even if grid is huge */
+        collectLinks("main-tabs");
+        collectLinks("menu");
+        collectLinks("setting-tabs");
+        collectLinks("section-header");
         collectLinks("artist-box");
         collectLinks("artists");
         collectLinks("item-box");
         collectLinks("track-line");
-        collectLinks("section-header");
-        collectLinks("main-tabs");
-        collectLinks("menu");
-        collectLinks("setting-tabs");
 
         for (var __i_e = 0; __i_e < AA.length; __i_e++) {
             (function (el) {
                 if (!el || el.getAttribute("listener") === "true") { return; }
                 el.setAttribute("listener", "true");
                 el.addEventListener("click", function (h) {
-                    var href, cls, path;
-                    if (h && h.preventDefault) { h.preventDefault(); }
-                    cls = " " + (el.className || "") + " ";
-                    /* Menu Back is SN.goBack only — not chp */
+                    var node, href, cls, path;
+                    /* Prefer the element we bound, not a bubbled child/wrong target */
+                    node = (h && h.currentTarget) ? h.currentTarget : el;
+                    if (h) {
+                        if (h.preventDefault) { h.preventDefault(); }
+                        if (h.stopPropagation) { h.stopPropagation(); }
+                    }
+                    cls = " " + (node.className || "") + " ";
                     if (cls.indexOf(" back ") >= 0) {
                         if (typeof SN.goBack === "function") { SN.goBack(); }
                         return false;
                     }
-                    href = el.getAttribute("href") || "";
+                    href = node.getAttribute("href") || "";
                     if (!href || href === "#") { return false; }
                     path = normalizeRoutePath(href);
-                    /* Menu Home: href="/" or homePath — clear stack, no history dependency */
-                    if (path === "/" || path === SN.homePath || cls.indexOf(" home ") >= 0) {
+                    /* ONLY menu .home or href="/" — NOT every /video/top tab */
+                    if (cls.indexOf(" home ") >= 0 || path === "/") {
                         if (typeof SN.goHome === "function") { SN.goHome(); }
                         else { chp(SN.homePath || "/video/top", null, true); }
                         return false;
@@ -8630,16 +8565,33 @@ try {
     SN.RepeatMode = 'off';
     SN.ShuffleMode = false;
     var playerTime = {duration: 0,current: 0};
-    var Video = document.getElementById("vply");
-    var Audio = document.querySelector(".main-song");
- 
+    function getVideoEl() {
+        var v = document.getElementById("vply");
+        if (!v && MAPL) {
+            try { v = MAPL.getElementsByTagName("video")[0] || null; } catch (eV) {}
+        }
+        return v || null;
+    }
+    function getAudioEl() {
+        var a = document.getElementById("aply");
+        if (!a) {
+            try {
+                a = document.querySelector ? document.querySelector(".main-song") : null;
+            } catch (eA) {}
+        }
+        return a || null;
+    }
+    /* Live lookup — do not cache at parse time (TV/DOM timing) */
+    var Video = getVideoEl();
+    var Audio = getAudioEl();
+
     function PlayVideo(id, list, T) {
     
         T = T || 'video';
         var videoTypes = ['video', 'musicvideo'];
     
         if (videoTypes.indexOf(T) === -1) {
-            console.log("PlayVideo: Invalid type:", T);
+            log("PlayVideo: Invalid type:", T);
             return;
         }
     
@@ -8656,7 +8608,7 @@ try {
         UVID(['video', id], function (success, e) {
 
             if (!success || !e) {
-                console.log("PlayVideo: Could not load video:", id);
+                log("PlayVideo: Could not load video:", id);
                 return;
             }
         
@@ -8688,11 +8640,11 @@ try {
                 playedInShuffle: playedInShuffle
             };
         
-            console.log("PlayVideo: Now Playing:", SN.NowPlaying);
+            log("PlayVideo: Now Playing:", SN.NowPlaying);
         
             var artistUrls = [];
             var artistRefs = (e.artists && isArray(e.artists)) ? e.artists : [];
-        
+     
             for (var j = 0; j < artistRefs.length; j++) {
                 var artistRef = artistRefs[j];
                 var artistId = (typeof artistRef == "object") ? artistRef.id : artistRef;
@@ -8701,18 +8653,18 @@ try {
                     artistUrls.push(SN.artist[artistId].url);
                 }
             }
-        
+      
             var ArtistUrl = artistUrls.join("-");
-        
-            UpdateMiniPlayer(e, ArtistUrl);
+       
+            //UpdateMiniPlayer(e, ArtistUrl);
             UpdateVideoPlayerUI(e, ArtistUrl);
-        
+             
             if (!SN.PlayHistory) { SN.PlayHistory = []; }
             SN.PlayHistory.push({ id: id, player: 'video' });
             if (SN.PlayHistory.length > 50) { SN.PlayHistory.shift(); }
         
             PlayVideoSourceAt(0);
-            OpenMainPlayer();
+            OpenMainPlayer();tvlog("** enter  OpenMainPlayer>> PlayVideo"); 
         });
     }
 
@@ -8723,20 +8675,29 @@ try {
         var sources = (SN.NowPlaying.item && isArray(SN.NowPlaying.item.sources)) ? SN.NowPlaying.item.sources : [];
     
         if (sources.length === 0 || index >= sources.length) {
-            console.log("PlayVideo: All sources failed for video:", SN.NowPlaying.id);
+            log("PlayVideo: All sources failed for video:", SN.NowPlaying.id);
             HandleAllVideoSourcesFailed();
             return;
         }
     
         SN.NowPlaying.sourceIndex = index;
         SN.NowPlaying._sourceFailed = false;
-    
+
+        Video = getVideoEl();
+        if (!Video) {
+            log("PlayVideoSourceAt: #vply not found");
+            return;
+        }
+        if (!sources[index] || !sources[index].url) {
+            log("PlayVideoSourceAt: empty source url at", index);
+            handleVideoSourceFailure(index);
+            return;
+        }
         Video.src = sources[index].url;
-    
         var playPromise = Video.play();
         if (playPromise !== undefined) {
             playPromise.catch(function (err) {
-                console.log("PlayVideoSourceAt: play() rejected for source " + index + ":", err.name);
+                log("PlayVideoSourceAt: play() rejected for source " + index + ":", err.name);
                 handleVideoSourceFailure(index);
             });
         }
@@ -8751,7 +8712,7 @@ try {
     
     function HandleAllVideoSourcesFailed() {
         if (!SN.NowPlaying) { return; }
-        console.log("PlayVideo: Could not play video, skipping:", SN.NowPlaying.item.name);
+        log("PlayVideo: Could not play video, skipping:", SN.NowPlaying.item.name);
         // منطق مشابه HandleAllSourcesFailed صوتی — می‌تونیم بعداً یکی‌سازی کنیم
     }
 
@@ -8788,13 +8749,15 @@ try {
     function UpdateVideoPlayerUI(e, artistUrl) {
 
         // TODO: آپدیت عنوان/آرتیست/پوستر داخل ظرف پلیر ویدیو — منتظر ساختار HTML واقعی MAPL هستم
-        console.log("UpdateVideoPlayerUI called with:", e.name);
+        log("UpdateVideoPlayerUI called with:", e.name);
     }
     
     function GetActiveMediaElement() {
         if (SN.NowPlaying && SN.NowPlaying.player === 'video') {
+            Video = getVideoEl() || Video;
             return Video;
         }
+        Audio = getAudioEl() || Audio;
         return Audio;
     }
     
@@ -8806,7 +8769,7 @@ try {
     
         if (media.paused) {
             var p = media.play();
-            if (p !== undefined) { p.catch(function (err) { console.log("ToggleMainPlayPause: rejected:", err.name); }); }
+            if (p !== undefined) { p.catch(function (err) { log("ToggleMainPlayPause: rejected:", err.name); }); }
         } else { media.pause(); }
         UpdateMainPlayButton();
     }
@@ -8859,12 +8822,12 @@ try {
     }
 
     function OpenMainPlayer() {
-
+tvlog("** enter  OpenMainPlayer");
         if (!SN.NowPlaying) { return; }
         SN.MainPlayer = true;
         MAPL.classList.remove("vis-none");
         playerBox.classList.remove("vis-none");
-    
+     
         var stage = document.getElementById("audio-stage");
 
         if (SN.NowPlaying.player === 'video') {
@@ -8986,8 +8949,8 @@ try {
         Audio.addEventListener('error', function () {
             if (!SN.NowPlaying) { return; }
             var err = Audio.error;
-            console.log("Audio error code:", err ? err.code : 'unknown', "| message:", err ? err.message : '');
-            console.log("PlayItem: Source failed, trying next...");
+            log("Audio error code:", err ? err.code : 'unknown', "| message:", err ? err.message : '');
+            log("PlayItem: Source failed, trying next...");
             handleSourceFailure(SN.NowPlaying.sourceIndex);
         });
     
@@ -9030,7 +8993,7 @@ try {
         });
     
         Audio.addEventListener('ended', function () {
-            console.log("PlayItem: Song ended, RepeatMode:", SN.RepeatMode);
+            log("PlayItem: Song ended, RepeatMode:", SN.RepeatMode);
             if (!SN.NowPlaying) { return; }
             PlayNext();
         });
@@ -9048,7 +9011,7 @@ try {
         var audioTypes = ['song', 'album', 'podcast'];
     
         if (audioTypes.indexOf(T) === -1) {
-            console.log("PlayItem: Video player not implemented yet for type:", T);
+            log("PlayItem: Video player not implemented yet for type:", T);
             return;
         }
     
@@ -9064,7 +9027,7 @@ try {
         USNG(['song', id], function (success, song) {
     
             if (!success || !song) {
-                console.log("PlayItem: Could not load song:", id);
+                log("PlayItem: Could not load song:", id);
                 return;
             }
         
@@ -9097,7 +9060,7 @@ try {
             
             //Audio.src = pickBestSource(song.sources).url;
 
-            console.log("PlayItem: Now Playing:", SN.NowPlaying);
+            log("PlayItem: Now Playing:", SN.NowPlaying);
             
             var artistUrls = [];
             var ArtistUrl = "";
@@ -9163,7 +9126,7 @@ try {
     
         if (sources.length === 0 || index >= sources.length) {
     
-            console.log("PlayItem: All sources failed for song:", SN.NowPlaying.id);
+            log("PlayItem: All sources failed for song:", SN.NowPlaying.id);
     
             HandleAllSourcesFailed();
             return;
@@ -9172,7 +9135,7 @@ try {
         SN.NowPlaying.sourceIndex = index;
         SN.NowPlaying._sourceFailed = false;
     
-        console.log("PlayItem: Trying source " + index + ":", sources[index].url);
+        log("PlayItem: Trying source " + index + ":", sources[index].url);
     
         Audio.src = sources[index].url;
     
@@ -9180,7 +9143,7 @@ try {
     
         if (playPromise !== undefined) {
             playPromise.catch(function (err) {
-                console.log("PlaySourceAt: play() rejected for source " + index + ":", err.name);
+                log("PlaySourceAt: play() rejected for source " + index + ":", err.name);
                 handleSourceFailure(index);
             });
         }
@@ -9196,7 +9159,7 @@ try {
     
         SN.NowPlaying._sourceFailed = true;
     
-        console.log("PlayItem: Source " + failedIndex + " failed, trying next...");
+        log("PlayItem: Source " + failedIndex + " failed, trying next...");
         PlaySourceAt(failedIndex + 1);
     }
     
@@ -9207,7 +9170,7 @@ try {
         var failedId = SN.NowPlaying.id;
         var failedName = SN.NowPlaying.item ? SN.NowPlaying.item.name : failedId;
     
-        console.log("PlayItem: Could not play song, skipping:", failedName);
+        log("PlayItem: Could not play song, skipping:", failedName);
         ShowPlaybackError(failedName);
     
         SN.NowPlaying.isPlaying = false;
@@ -9220,7 +9183,7 @@ try {
         var maxAttempts = (SN.NowPlaying.list && SN.NowPlaying.list.length) || 1;
     
         if (SN.SkipAttempts >= maxAttempts) {
-            console.log("PlayItem: Too many consecutive failures, stopping auto-skip");
+            log("PlayItem: Too many consecutive failures, stopping auto-skip");
             SN.SkipAttempts = 0;
             return;
         }
@@ -9237,7 +9200,7 @@ try {
     
     function ShowPlaybackError(songName) {
         // فعلاً ساده؛ اگه سیستم toast داری جایگزینش کن
-        console.log("⚠️ Could not play: " + songName);
+        log("⚠️ Could not play: " + songName);
     }
     
     function TogglePlayPause() {
@@ -9246,7 +9209,7 @@ try {
             var playPromise = Audio.play();
             if (playPromise !== undefined) {
                 playPromise.catch(function (err) {
-                    console.log("TogglePlayPause: play() rejected:", err.name);
+                    log("TogglePlayPause: play() rejected:", err.name);
                 });
             }
         } else {
@@ -9371,7 +9334,7 @@ try {
         else { next = 'off'; }
     
         SetSetting('repeatMode', next);
-        console.log("RepeatMode changed to:", next);
+        log("RepeatMode changed to:", next);
     
         UpdateRepeatButton();
     }
@@ -9405,7 +9368,7 @@ try {
             SN.NowPlaying.playedInShuffle = [SN.NowPlaying.id];
         }
     
-        console.log("ShuffleMode:", SN.ShuffleMode);
+        log("ShuffleMode:", SN.ShuffleMode);
     
         UpdateShuffleButton();
     }
@@ -9482,7 +9445,7 @@ try {
             var playPromise = Audio.play();
             if (playPromise !== undefined) {
                 playPromise.catch(function (err) {
-                    console.log("PlayNext (repeat one): play() rejected:", err.name);
+                    log("PlayNext (repeat one): play() rejected:", err.name);
                 });
             }
             return;
@@ -9491,7 +9454,7 @@ try {
         var nextId = GetNextSongId();
     
         if (nextId === null) {
-            console.log("PlayNext: End of playlist reached");
+            log("PlayNext: End of playlist reached");
             return;
         }
     
@@ -9699,19 +9662,19 @@ try {
     
     function ChkAudio(){
         Audio.addEventListener("abort", function () {
-          console.log("Abort loading");
+          log("Abort loading");
         });
     
         Audio.addEventListener("error", function (e) {
-            console.log("COULD NOT LOAD AUDIO = " + e.target.error.MEDIA_ERR_ABORTED);
-            console.log("MEDIA ERR NETWORK = " + e.target.error.MEDIA_ERR_NETWORK);
-            console.log("COULD NOT LOAD DECODE = " + e.target.error.MEDIA_ERR_DECODE);
-            console.log("COULD NOT LOAD AUDIO = " + e.target.error.MEDIA_ERR_SRC_NOT_SUPPORTED);
+            log("COULD NOT LOAD AUDIO = " + e.target.error.MEDIA_ERR_ABORTED);
+            log("MEDIA ERR NETWORK = " + e.target.error.MEDIA_ERR_NETWORK);
+            log("COULD NOT LOAD DECODE = " + e.target.error.MEDIA_ERR_DECODE);
+            log("COULD NOT LOAD AUDIO = " + e.target.error.MEDIA_ERR_SRC_NOT_SUPPORTED);
            // changeSRC();
         });
     
         Audio.addEventListener("canplay", function () {
-             //console.log('The file is loaded and ready to play!');
+             //log('The file is loaded and ready to play!');
             }, false);
     }    
         
