@@ -6374,10 +6374,15 @@ try {
             }
 
             ADE();
-            sn.makeFocusable("main");
-            var container = getByClass("container");
-            var first = container ? container.getElementsByTagName("a")[0] || null : null;
-            if (first) { sn.focus(first); }
+            /* Focus after click event fully settles — avoids same-click activating first card */
+            setTimeout(function () {
+                try {
+                    sn.makeFocusable("main");
+                    var container = getByClass("container");
+                    var first = container ? container.getElementsByTagName("a")[0] || null : null;
+                    if (first) { sn.focus(first); }
+                } catch (eF) {}
+            }, 50);
         }
     }
     
@@ -8407,7 +8412,6 @@ try {
                 el.setAttribute("listener", "true");
                 el.addEventListener("click", function (h) {
                     var node, href, cls, path;
-                    /* Prefer the element we bound, not a bubbled child/wrong target */
                     node = (h && h.currentTarget) ? h.currentTarget : el;
                     if (h) {
                         if (h.preventDefault) { h.preventDefault(); }
@@ -8415,19 +8419,28 @@ try {
                     }
                     cls = " " + (node.className || "") + " ";
                     if (cls.indexOf(" back ") >= 0) {
-                        if (typeof SN.goBack === "function") { SN.goBack(); }
+                        /* Defer so this click cannot hit the newly rendered page */
+                        setTimeout(function () {
+                            if (typeof SN.goBack === "function") { SN.goBack(); }
+                        }, 0);
                         return false;
                     }
                     href = node.getAttribute("href") || "";
                     if (!href || href === "#") { return false; }
                     path = normalizeRoutePath(href);
-                    /* ONLY menu .home or href="/" — NOT every /video/top tab */
                     if (cls.indexOf(" home ") >= 0 || path === "/") {
-                        if (typeof SN.goHome === "function") { SN.goHome(); }
-                        else { chp(SN.homePath || "/video/top", null, true); }
+                        setTimeout(function () {
+                            if (typeof SN.goHome === "function") { SN.goHome(); }
+                            else { chp(SN.homePath || "/video/top", null, true); }
+                        }, 0);
                         return false;
                     }
-                    chp(href);
+                    /* Critical: destroy+rebuild DOM inside the same click causes the
+                       browser to deliver the event to whatever is now under the cursor
+                       (usually the first card of the new tab → artist/video detail). */
+                    setTimeout(function () {
+                        chp(href);
+                    }, 0);
                     return false;
                 }, false);
             })(AA[__i_e]);
