@@ -2,6 +2,53 @@
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<meta charset="utf-8">
+	<style type="text/css">
+/* =========================================================
+   BASE CSS — 2013–2015 safe (no vars, no vh-only, no modern APIs)
+   Modern polish lives in /tv.css (loaded only when flex/grid/… ok)
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   0. MINIMAL RESET (prerequisite for layout)
+   box-sizing: IE8+, Chrome 10+, Safari 5.1+ — safe for 2013 TVs
+   --------------------------------------------------------- */
+*,
+*::before,
+*::after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+/* ---------------------------------------------------------
+   1. HTML / BODY — solid base (works without tv.css)
+   height:100% chain for full-screen TV shells (avoid vh alone)
+   --------------------------------------------------------- */
+html, body {
+    display: block;
+    background-color: #1c1b21 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+body {
+    cursor: default;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    font-weight: normal;
+    line-height: 1.5;
+    color: #ffffff;
+}
+
+a {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+    </style>
 	<meta name="viewport" content="width=1280, height=720, user-scalable=no, initial-scale=1.0, minimum-scale=1, maximum-scale=1">
     <meta name="theme-color" content="#1c1b21"/>
     <meta name="cleartype" content="on">
@@ -13,7 +60,7 @@
 	<link rel="icon" href="/icon.png" type="image/png" sizes="256x256">
 	<link rel="apple-touch-icon" href="/apple-icon.png" type="image/png" sizes="256x256">
 	<script src="/js/spatial_navigation.js"></script>
-	<script src="/tvdebug.js?v=30"></script>
+	<script src="/tvdebug.js?v=33"></script>
 <script type="text/javascript">
 (function () {
     function getByClass(className) {
@@ -113,50 +160,6 @@
 </script>
 
 <style>
-/* =========================================================
-   BASE CSS — 2013–2015 safe (no vars, no vh-only, no modern APIs)
-   Modern polish lives in /tv.css (loaded only when flex/grid/… ok)
-   ========================================================= */
-
-/* ---------------------------------------------------------
-   0. MINIMAL RESET (prerequisite for layout)
-   box-sizing: IE8+, Chrome 10+, Safari 5.1+ — safe for 2013 TVs
-   --------------------------------------------------------- */
-*,
-*::before,
-*::after {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-}
-
-/* ---------------------------------------------------------
-   1. HTML / BODY — solid base (works without tv.css)
-   height:100% chain for full-screen TV shells (avoid vh alone)
-   --------------------------------------------------------- */
-html, body {
-    display: block;
-    background-color: #1c1b21;
-    width: 100% !important;
-    height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: hidden;
-}
-
-body {
-    cursor: default;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 16px;
-    font-weight: normal;
-    line-height: 1.5;
-    color: #ffffff;
-}
-
-a {
-    color: #ffffff;
-    text-decoration: none;
-}
 
 .ln {
     margin: 0;
@@ -308,7 +311,7 @@ a {
 }
 
 .main-content .detailes-container {
-    width: 60%;
+
     display: inline-block;
     vertical-align: top;
 }
@@ -316,8 +319,10 @@ a {
 .main-content .playlist-container {
     height: 100%;
     width: 40%;
-    position: relative;
+    position: absolute;
     display: inline-block;
+    top: 0;
+    right: 0;
     vertical-align: top;
     overflow-x: hidden;
     overflow-y: hidden;
@@ -332,9 +337,12 @@ a {
     width: 100%;
     height: 50%;
     margin: 0;
-    padding: 10px;
+    padding-top: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
     background-position: center;
     background-size: auto;
+    background-size: cover;
     background-repeat: no-repeat;
 }
 
@@ -370,7 +378,7 @@ a {
 }
 
 .page-detail-header-container .content {
-    display: block;
+    display: inline-block;
     margin-top: 10px;
     padding-right: 16px;
     padding-left: 16px;
@@ -509,7 +517,6 @@ a {
 /* ---------------------------------------------------------
    5. TABS (MAIN + SETTING) — table / inline-block base
    --------------------------------------------------------- */
-.main-tabs,
 .setting-tabs {
     display: table;
     width: 100%;
@@ -519,19 +526,28 @@ a {
 }
 
 .main-tabs {
-    text-align: center;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
 }
 
 .main-tabs .item {
-    display: table-cell;
-    vertical-align: middle;
+    display: inline-block;
+    vertical-align: top;
     text-align: center;
     position: relative;
     padding: 7px;
-    height: 100%;
+    margin-right: 10px;
     white-space: nowrap;
     color: #808080;
     cursor: pointer;
+    line-height: normal;
+}
+
+.main-tabs .item:last-child {
+    margin-right: 0;
 }
 
 .main-tabs .item:hover,
@@ -598,8 +614,7 @@ a {
    One horizontal row + overflow scroll; modern grid in tv.css
    --------------------------------------------------------- */
 .section-carousel-container,
-.section-container,
-.track-line-container {
+.section-container {
     position: relative;
     display: block;
     width: 100%;
@@ -611,21 +626,32 @@ a {
     width: 100%;
     position: relative;
     margin: 0;
-    padding: 0 8px;
+    padding-top:8px;
+    padding-left:8px;
+    padding-right:8px;
     /* single row: do not wrap; scroll sideways */
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: auto;
     white-space: nowrap;
     font-size: 0;
     letter-spacing: 0;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
-/* song / album / default — ~4 visible; rest scroll horizontally */
+.container::-webkit-scrollbar {
+  display: none;                  /* WebKit/Blink */
+  width: 0;
+  height: 0;
+}
+
+/* song / album / width: 23% => default — ~4 visible; rest scroll horizontally */
+/* song / album / width: 18% => default — ~5 visible; rest scroll horizontally */
 .item-box,
 .artist-box {
     display: inline-block;
     vertical-align: top;
-    width: 23%;
+    width: 18%;
     margin: 0 2% 0 0;
     font-size: 16px;
     letter-spacing: normal;
@@ -750,13 +776,134 @@ a {
 /* ---------------------------------------------------------
    7. TRACK LINE
    --------------------------------------------------------- */
-.track-line .track-cnt {
+.track-line-container {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding-left:24px;
+    padding-right:24px;
+}
+
+.track-line-container > * {
+    margin-bottom: 10px;
+}
+
+.track-line-container > *:last-child {
+    margin-bottom: 0;
+}
+
+.track-line {
+    display: block;
+    position: relative;
+    width: 100%;
     height: 60px;
+    background-color: #404040;
+    border-radius: 10px;
+    outline: 0;
+    overflow: hidden;
+    cursor: pointer;
+    justify-items: start;
+    transition: all 0.3s ease;
+}
+
+.track-line img {
+    display: block;
+    position: relative;
+    top: auto;
+    left: auto;
+    border: 0;
+}
+
+.track-line .artwork {
+    display: inline-block;
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 60px;
+    height: 60px;
+    background-color: #404040;
+    border-radius: 10px 0 0 10px;
+    cursor: pointer;
+}
+
+.track-line .play {
+    display: inline-block;
+    position: relative;
+    top: 0;
+    width: 50px;
+    height: 60px;
+    font-size: 16px;
+    text-align: center;
+    justify-items: center;
+    align-content: center;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.track-line .texts {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 110px;
+    right: 50px;
+    justify-content: center;
+    width: auto;
+    height: 60px;
+}
+
+.track-line .texts .track-cnt {
+    display: block;
+    width: 100%;
+    height: 60px;
+    align-content: center;
+    place-content: center;
+    overflow: hidden;
 }
 
 .track-line .track-cnt:hover,
 .track-line .track-cnt:focus {
     background-color: red;
+}
+
+.track-line .more {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50px;
+    height: 60px;
+    text-align: center;
+    border-radius: 0 10px 10px 0;
+    cursor: pointer;
+}
+
+.track-line .play img,
+.track-line .more img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    margin-top: -12px;
+    margin-left: -12px;
+}
+
+.track-line .artwork,
+.track-line .play,
+.track-line .texts,
+.track-line .date,
+.track-line .duration,
+.track-line .more {
+    vertical-align: top;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    
+}
+
+.track-line .date,
+.track-line .duration {
+    display: none;
 }
 
 /* ---------------------------------------------------------
@@ -2517,7 +2664,8 @@ track {
     transition: opacity 0.7s ease, visibility 0s linear 0.7s;
 }
 
-#app-splash img {
+#app-splash img,
+#app-splash svg {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -2525,6 +2673,10 @@ track {
     height: auto;
     margin-left: -130px;
     margin-top: -90px;
+}
+#app-splash svg {
+    color: #ffffff;
+    fill: currentColor;
 }
 
 #app-splash.splash-hide {
@@ -2534,26 +2686,60 @@ track {
 
 .artist-box a:focus .artwork,
 .track-line a:focus {
-    outline: none;
-    border: 3px solid #ffffff;
+    /*outline: none;*/
+    outline: 3px solid #ffffff;
 }
 
 /* if focus lands on outer box but style was only on artwork */
-.item-box .box a:focus {
-    outline: none;
-    border: 3px solid #ffffff;
+.item-box .box a:focus,
+.artist-box a:focus{
+    /*outline: none;*/
+    outline: 3px solid #ffffff;
 }
 
-.item-box, .artist-box { width: 18%; margin: 0 2% 0 0; }          /* 5 ستون */
+.item-box .box .artwork,
+.item-box .box .artwork .placeholder{
+    border-radius: 10px;
+}
+
+.item-box .box .artwork img {
+    background-color: transparent !important;
+    color: transparent !important;
+    border-radius: 10px;
+    pointer-events: none !important;
+    -webkit-user-drag: none !important;
+}
+
+.artist-box .artwork,
+.artist-box .artwork .placeholder{
+    border-radius: 50%;
+}
+
+.artist-box .artwork img {
+    background-color: transparent !important;
+    color: transparent !important;
+    border-radius: 50%;
+    pointer-events: none !important;
+    -webkit-user-drag: none !important;
+}
+
+.artist-box a:focus .artwork {
+    border-radius: 50%;
+}
+
+.artist-box:hover .artwork {
+    border-radius: 50%;
+}
+
 .container.video .item-box { width: 23%; margin: 0 2% 0 0; }      /* 4 ستون */
-.container { padding: 0; }        
+
 
 </style>
 </head>
 <body>
 <script>
-document.body.style.margin = "0";
-document.body.style.padding = "0";
+//document.body.style.margin = "0";
+//document.body.style.padding = "0";
 </script>
 <div id="app-splash">
     <img src="/assets/hamrah_ahang.png" alt="Hamrahang">
@@ -2574,7 +2760,7 @@ document.body.style.padding = "0";
         </div>
     </div> 
     <div id="main" class="main-container">
-        <div id="main-content" class="main-content" ><div id="js-flag" class="js-flag">NOJS</div>
+        <div id="main-content" class="main-content" >
             <div class="gradient-color-container vis-none"><div class="ratio ratio-21x9" style="background-image: radial-gradient(ellipse at center, #e4f5fc 0%,#bfe8f9 50%,#2ab0ed 100%);;"></div></div>
         </div>
         <div class="main-footer" style="display: none;">
@@ -2585,7 +2771,7 @@ document.body.style.padding = "0";
         </div><!-- /.main-footer -->
     </div>
     <div id="nav" class="">
-        <table id="dpad" class="css-1ojq7oi ">
+        <table id="dpad">
             <tbody>
                 <tr><td></td><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-up" id="sn-up" readonly  ><span class="css-11ee1sb e1cooyvd1"><img src="/assets/arrow-up.png" ></span></div></td><td></td></tr>
                 <tr><td><div class=" css-lc3isr e1xzjd3a2" data="data-sn-left" id="sn-left" readonly ><span class="css-11ee1sb e1cooyvd1"><img src="/assets/arrow-left.png" ></span></div></td><td><div class="css-1klrgra e1xzjd3a1" data="data-sn-ok" id="sn-ok" readonly  ><span class="css-11ee1sb e1cooyvd1"></span></div></td><td><div class="css-lc3isr e1xzjd3a2" data="data-sn-right" id="sn-right" readonly  ><span class="css-11ee1sb e1cooyvd1"><img src="/assets/arrow-right.png" >
@@ -3006,6 +3192,109 @@ window.HA_RemoveSplash = function () {
     function onReady() {
         if (readyDone) { return; }
         readyDone = true;
+        
+document.addEventListener("sn:focused", function (e) {
+
+    var el = e.target;
+    var card = null;
+    var container = null;
+    var node;
+    var cardLeft = 0;
+    var cardRight;
+    var visibleLeft;
+    var visibleRight;
+    var margin = 12;
+
+    // Find the focused card
+    while (el && el !== document) {
+
+        if (el.className &&
+            (
+                (" " + el.className + " ").indexOf(" item-box ") !== -1 ||
+                (" " + el.className + " ").indexOf(" artist-box ") !== -1
+            )) {
+            card = el;
+            break;
+        }
+
+        el = el.parentNode;
+    }
+
+    if (!card) { return; }
+
+    // Find the scroll container
+    el = card.parentNode;
+
+    while (el && el !== document) {
+
+        if (el.className &&
+            (" " + el.className + " ").indexOf(" container ") !== -1) {
+            container = el;
+            break;
+        }
+
+        el = el.parentNode;
+    }
+
+    if (!container) { return; }
+
+    // Calculate card position relative to the container
+    node = card;
+
+    while (node && node !== container) {
+        cardLeft += node.offsetLeft || 0;
+        node = node.offsetParent;
+    }
+
+    // If the offsetParent chain does not reach the container,
+    // use the bounding rectangle as a fallback.
+    if (node !== container) {
+
+        try {
+            cardLeft =
+                card.getBoundingClientRect().left -
+                container.getBoundingClientRect().left +
+                container.scrollLeft;
+        } catch (e2) {
+            return;
+        }
+    }
+
+    cardRight = cardLeft + card.offsetWidth;
+
+    visibleLeft = container.scrollLeft;
+    visibleRight = visibleLeft + container.clientWidth;
+
+    // Scroll right
+    if (cardRight > visibleRight - margin) {
+
+        container.scrollLeft = cardRight -
+            container.clientWidth + margin;
+    }
+
+    // Scroll left
+    else if (cardLeft < visibleLeft + margin) {
+
+        container.scrollLeft = cardLeft - margin;
+
+        if (container.scrollLeft < 0) {
+            container.scrollLeft = 0;
+        }
+    }
+
+    // TV diagnostics
+    if (typeof tvlog === "function") {
+        tvlog(
+            "CAROUSEL: cardLeft=" + cardLeft +
+            " width=" + container.clientWidth +
+            " scrollLeft=" + container.scrollLeft
+        );
+    }
+
+}, true);
+        
+        
+        
         var sn = SpatialNavigation;
 
 try {
@@ -3095,6 +3384,49 @@ try {
         }, true);
         */
         
+        /*document.addEventListener("sn:focused", function (e) {
+
+            var el = e.target;
+            var container = null;
+        
+            // پیدا کردن کاروسل والد
+            while (el && el !== document) {
+                if (el.className &&
+                    (" " + el.className + " ").indexOf(" container ") !== -1) {
+                    container = el;
+                    break;
+                }
+        
+                el = el.parentNode;
+            }
+        
+            if (!container) {
+                return;
+            }
+        
+            // موقعیت کارت و محدوده قابل مشاهده کاروسل
+            var itemRect = e.target.getBoundingClientRect();
+            var containerRect = container.getBoundingClientRect();
+        
+            var margin = 12;
+        
+            // کارت از سمت راست خارج شده است
+            if (itemRect.right > containerRect.right - margin) {
+        
+                container.scrollLeft +=
+                    itemRect.right - containerRect.right + margin;
+        
+            }
+            // کارت از سمت چپ خارج شده است
+            else if (itemRect.left < containerRect.left + margin) {
+        
+                container.scrollLeft -=
+                    containerRect.left + margin - itemRect.left;
+        
+            }
+        
+        }, true);*/
+        
         sn.makeFocusable();
         sn.focus('main');
 
@@ -3153,6 +3485,51 @@ try {
                     case 'sn-ok':
 
                         var current = document.activeElement;
+                    
+                        if (!current || current === document.body) {
+                            sn.focus();
+                            break;
+                        }
+                    
+                        // همان رویدادهایی که SpatialNavigation برای Enter واقعی می‌فرستد
+                        var evt;
+                    
+                        try {
+                            evt = document.createEvent('CustomEvent');
+                            evt.initCustomEvent('sn:enter-down', true, true, {});
+                            current.dispatchEvent(evt);
+                    
+                            evt = document.createEvent('CustomEvent');
+                            evt.initCustomEvent('sn:enter-up', true, true, {});
+                            current.dispatchEvent(evt);
+                        } catch (e) {}
+                    
+                        // اجرای کلیک واقعی روی عنصر فوکوس‌شده
+                        try {
+                            evt = document.createEvent('MouseEvents');
+                            evt.initMouseEvent(
+                                'click',
+                                true,
+                                true,
+                                window,
+                                1,
+                                0, 0, 0, 0,
+                                false, false, false, false,
+                                0,
+                                null
+                            );
+                            current.dispatchEvent(evt);
+                        } catch (e2) {
+                            if (current.click) {
+                                current.click();
+                            }
+                        }
+                    
+                        break;
+
+                        
+/*
+                        var current = document.activeElement;
 
                         if (!current || current === document.body) {
                             sn.focus();
@@ -3166,7 +3543,7 @@ try {
 
                         current.click();
 
-                        break;
+                        break;*/
                 }
             };
         }
@@ -3567,6 +3944,32 @@ try {
     var LOAD_PAGE = '<div class="page-loading-container"><div class="spinner-large"></div></div>';
     var spn_lrg = OA(document.createElement("div"), {className: "spinner-large"});
 
+    /* SVG capability — progressive enhancement for modern browsers */
+    function supportsSvg() {
+        try {
+            return !!(document.createElementNS &&
+                document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGRect);
+        } catch (eSvgDet) {
+            return false;
+        }
+    }
+    var HA_SVG = supportsSvg();
+    var ASPLASH = document.getElementById("app-splash");
+
+    if (HA_SVG && ASPLASH && typeof svg_logo === "string" && svg_logo) {
+        try {
+            ASPLASH.innerHTML = svg_logo;
+            var _svgSplash = ASPLASH.getElementsByTagName("svg")[0];
+            if (_svgSplash) {
+                try {
+                    _svgSplash.setAttribute("width", "260");
+                    _svgSplash.setAttribute("height", "90");
+                    _svgSplash.style.display = "block";
+                } catch (eSvgAttr) {}
+            }
+        } catch (eSplashSvg) {}
+    }
+
     function UARDB(type, ar) {
     
         var i;
@@ -3752,14 +4155,14 @@ try {
     }
 
     function USNG(Q, callback) {
-    
+
         var found = null;
         var id = Q[1];
         var table = null;
     
         if (!SN.song || typeof SN.song !== 'object' || isArray(SN.song)) {SN.song = {};}
         if (!SN.podcast || typeof SN.podcast !== 'object' || isArray(SN.podcast)) {SN.podcast = {};}
-    
+
         // Q[1] = Song/Podcast Object
         if (typeof id === 'object' && id !== null) {
     
@@ -3783,17 +4186,13 @@ try {
             if (callback) {callback(true, found);}
             return;
         }
-    
+   
         // Q[1] = Song/Podcast ID → اول توی هر دو جدول بگرد
-        if (SN.song[id]) {
-            table = 'song';
-        } else if (SN.podcast[id]) {
-            table = 'podcast';
-        }
+        if (SN.song[id]) { table = 'song'; } 
+        else if (SN.podcast[id]) { table = 'podcast'; }
     
         if (table) {
             found = SN[table][id];
-    
             if (found && found.full) {
                 log("Found Full " + table + ":", id);
                 if (callback) {callback(true, found);}
@@ -3802,9 +4201,9 @@ try {
         }
     
         log(found ? "Found Without Full Data → API:" : "Not Found → API:", id);
-    
+             
         gjs(Q, function (success, jd) {
-    
+   
             if (!success || !jd || (!jd.song && !jd.podcast)) {
                 if (callback) {callback(false, null);}
                 return;
@@ -4047,7 +4446,7 @@ try {
         var url = HP + U[0] + '/' + U[1] + '?_qjs=ep';
     
         xhr.open('GET', url, true);
-    
+        tvlog("** enter gjs > xhr");
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== 4) {return;}
             if (xhr.status >= 200 && xhr.status < 300) {
@@ -4671,8 +5070,8 @@ try {
     var Arr_sm = [
         ['video', 'top'],
         ['video', 'latest'],
+        ['song', 'top'],
         ['song', 'latest'],
-        ['song', 'featured'],
         ['artist', 'top']
     ];
 
@@ -5373,8 +5772,7 @@ try {
             chp(HP);
             });
     }
-	
-	
+
 	// ------------------------------------------------------------------
     // CTAB - generic tab builder (ES5)
     // o.types       : [{key, label, icon, href, render}]  (already filtered)
@@ -5477,7 +5875,8 @@ try {
     function CFOC(target, section) {
         var el;
         if (section) { sn.makeFocusable(section); } else { sn.makeFocusable(); }
-        el = (typeof target === "string") ? document.querySelector(target) : target;
+        
+        el = (typeof target === "string") ? getByClass("play-pause") : target;
         if (el) { sn.focus(el); }
     }
 
@@ -5549,7 +5948,6 @@ try {
 
     // song / playlist page: header + title + player controls
     function CREP_detail(cfg, e, kind) {
-
         var dcs = OA(document.createElement("div"), {className: "detailes-container"});
         var dpl = OA(document.createElement("div"), {className: "playlist-container"});
         MCNT.appendChild(dcs);
@@ -5565,7 +5963,7 @@ try {
         var thumb = e.meta && e.meta.tmb ? e.meta.tmb : '';
         if (thumb) {
             updateMainBg(UT + thumb + ".jpg");
-            dtn.appendChild(OA(document.createElement("img"), {className: "ratio ratio-1x1", src: UT + thumb + ".jpg"}));
+            dtn.appendChild(OA(document.createElement("img"), { src: UT + thumb + ".jpg"}));
         } else {
             updateMainBg();
         }
@@ -6347,7 +6745,8 @@ try {
     
             if (P == 'video') { CRVN(ar, 'musicvideo', null); }
             if (P == 'song')  { CRSS(ar, 'song'); }
-            if (P == 'artist') { CRAS(ar); }
+            if (P == 'artist') { CRAS(ar); }            
+
     
             if (typeof SN.user.lp === 'object' && SN.user.lp !== null && SN.user.lp.length > 0) {
                 var hed1 = OA(document.createElement("div"), {className: "section-header p-top-3"});
@@ -7056,13 +7455,10 @@ try {
 
     function CRTL(ar, au) {
         
-        if (!ar || !isArray(ar) || ar.length === 0) {
-            log("CRTL: No songs:", ar);
-            return;
-        }
+        if (!ar || !isArray(ar) || ar.length === 0) { log("CRTL: No songs:", ar); return; }
 
         // PlayList Update
-        var PlayList = document.querySelector(".playlist-container");
+        var PlayList = getByClass("playlist-container");
         if(!PlayList){return;}
 
         PlayList.innerHTML = "";
@@ -7087,7 +7483,7 @@ try {
             var dtb = OA(document.createElement("div"), {className: "artwork"});
 
             var thumb = e.meta && e.meta.tmb ? e.meta.tmb : "undefined";
-            var iep = OA(document.createElement("img"), {className: "ratio ratio-1x1", src: thumb ? UT + thumb + ".jpg" : ""});
+            var iep = OA(document.createElement("img"), { src: thumb ? UT + thumb + ".jpg" : ""});
             dtb.appendChild(iep); 
             dtl.appendChild(dtb);
             
@@ -7103,7 +7499,7 @@ try {
 
             var dpl = OA(document.createElement("div"), {
                 className: "play focusable" + (isThisPlaying ? " playing" : ""),
-                innerHTML: playIcon
+                innerHTML: '<img src="/assets/play-24.png">'//playIcon
             }); 
             dpl._songId = e.id;
             //dpl.setAttribute("data-sn-right", ".track-cnt");
@@ -7134,8 +7530,8 @@ try {
             })(e.id, ar, primaryArtistUrl, e.url);
             
             var dst = OA(document.createElement("div"), {className: "texts"});
-            var tta = OA(document.createElement("a"), {className: "track-cnt", href: HS + e.id + '/' + primaryArtistUrl + "-" + e.url, innerHTML: e.name});
-            var dt1 = OA(document.createElement("div"), {className: "title"});
+            var tta = OA(document.createElement("a"), {className: "track-cnt", href: HS + e.id + '/' + primaryArtistUrl + "-" + e.url});
+            var dt1 = OA(document.createElement("div"), {className: "title", innerHTML: e.name});
             tta.appendChild(dt1);
     
             var dt2 = OA(document.createElement("div"), {className: "text2 artists-inline"});
@@ -7162,7 +7558,8 @@ try {
 
             var dat = OA(document.createElement("div"), {className: "date"});
             var dur = OA(document.createElement("div"), {className: "duration"});
-            var mor = OA(document.createElement("div"), {className: "more focusable", innerHTML: svg_dot});
+            //var mor = OA(document.createElement("div"), {className: "more focusable", innerHTML: svg_dot});
+            var mor = OA(document.createElement("div"), {className: "more focusable", innerHTML: '<img src="/assets/3dot.png">'});
 
             dtl.appendChild(dpl);
             dtl.appendChild(dst);
@@ -7176,18 +7573,19 @@ try {
         PlayList.appendChild(sec);
 
         // More Buttons
-        var eM = MCNT.getAllByClass(".more");
+        var eM = getAllByClass("more",MCNT);
         for (var k = 0; k < eM.length; k++) {
             (function (e) {
                 e.addEventListener("click", function () {
                     CRBW(e);
                 }, false);
-    
+
             })(eM[k]);
         }
     }
     
     function CRPC(e,T) {
+tvlog("** enter CRPC");
 
         var plr = OA(document.createElement("div"), {className: "mini-player"});
         
@@ -9905,8 +10303,12 @@ tvlog("** enter  OpenMainPlayer");
             return;
         }
         
+        if (typeof progressBar === "undefined" || !progressBar) {
+            return;
+        }
+        
         if (document.activeElement !== progressBar) {
-          return;
+            return;
         }
 
         if (e.keyCode === 38 || e.keyCode === 40) {
@@ -9948,26 +10350,8 @@ tvlog("** enter  OpenMainPlayer");
           return mins + ":" + secs;
         }
     }
-    
+
 }();  
-</script>
-<script>
-/* TEMP: only runs if main script parsed fully */
-(function () {
-    var el = document.getElementById("js-flag");
-    if (el) {
-        try {
-            var cur = String(el.innerHTML || "");
-            if (cur.indexOf("MAIN") === 0 || cur.indexOf("PRE-MAIN") === 0 ||
-                cur.indexOf("INIT-API") === 0 || cur.indexOf("API-MODE") === 0 ||
-                cur.indexOf("SPA") === 0 || cur.indexOf("CHP") === 0) {
-                el.innerHTML = cur + " > POST-MAIN";
-            } else if (cur.indexOf("POST-MAIN") < 0) {
-                el.innerHTML = "POST-MAIN-ONLY";
-            }
-        } catch (e) {}
-    }
-})();
 </script>
 </body>
 </html>
