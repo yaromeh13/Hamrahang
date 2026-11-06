@@ -93,6 +93,7 @@
             setStyle(panel, {
                 position: 'fixed',
                 right: '0',
+                //bottom:0,
                 top: '0',
                 width: 'auto',
                 //height: '100%',
@@ -238,64 +239,56 @@
 
     log('--- END INSPECT ---');
 }
-
     // =====================================================
-    // TV DEBUG PANEL TOGGLE
-    // 108 = Samsung red / tools on many sets
-    // 112 = F1 / some LG tools
-    // 403 = LG webOS red (common) / some vendor tools keys
+    // TV DEBUG PANEL TOGGLE - RED BUTTON (KEYCODE 108)
     // =====================================================
     
-    var panelVisible = true;   /* explicit flag — do not trust style.display on TV engines */
-    var debugKeyLockUntil = 0; /* debounce without needing keyup (LG sim often skips keyup) */
-    
-    function isDebugToggleKey(code) {
-        return code === 108 || code === 112 || code === 403;
-    }
+    var debugKeyPressed = false;
     
     function toggleDebugPanel() {
         createPanel();
-        if (!panel) { return; }
     
-        panelVisible = !panelVisible;
-        try {
-            panel.style.display = panelVisible ? 'block' : 'none';
-        } catch (e0) {}
+        if (!panel) return;
     
-        try {
-            log(panelVisible ? 'TV DEBUG PANEL: show' : 'TV DEBUG PANEL: hide');
-        } catch (e1) {}
+        var hidden = (panel.style.display === 'none');
+        panel.style.display = hidden ? 'block' : 'none';
     }
     
     function debugKeyDown(e) {
         e = e || window.event;
+    
         var code = e.keyCode || e.which;
-        var now;
     
-        if (!isDebugToggleKey(code)) { return; }
+        if (code !== 108 && code !== 112 && code !== 403) return;
     
-        now = (new Date()).getTime();
-        /* ignore repeats / stuck keys for 350ms — no keyup required */
-        if (now < debugKeyLockUntil) {
-            if (e.preventDefault) { e.preventDefault(); }
-            e.returnValue = false;
-            return false;
+        if (!debugKeyPressed) {
+            debugKeyPressed = true;
+            toggleDebugPanel();
         }
-        debugKeyLockUntil = now + 350;
     
-        toggleDebugPanel();
-    
-        if (e.preventDefault) { e.preventDefault(); }
+        if (e.preventDefault) e.preventDefault();
         e.returnValue = false;
-        if (e.stopPropagation) { e.stopPropagation(); }
+    
+        if (e.stopPropagation) e.stopPropagation();
         e.cancelBubble = true;
+    
         return false;
+    }
+    
+    function debugKeyUp(e) {
+        e = e || window.event;
+        var code = e.keyCode || e.which;
+        if (code === 108 || code === 112 || code === 403) {
+            debugKeyPressed = false;
+        }
     }
     
     if (window.addEventListener) {
         window.addEventListener('keydown', debugKeyDown, true);
+        window.addEventListener('keyup', debugKeyUp, true);
     } else if (window.attachEvent) {
         window.attachEvent('onkeydown', debugKeyDown);
+        window.attachEvent('onkeyup', debugKeyUp);
     }
 
     function errorHandler(message, url, line, column, errorObject) {
@@ -366,11 +359,7 @@
     // Capture failed script, stylesheet and image loads.
     try {
         if (window.addEventListener) {
-            window.addEventListener(
-                'error',
-                resourceError,
-                true
-            );
+            window.addEventListener('error',resourceError,true);
         } else if (window.attachEvent) {
             log('NOTE: capture-phase resource error events unavailable');
         }
@@ -383,23 +372,14 @@
 
     function readyState() {
         try {
-            if (typeof document.readyState === 'undefined') {
-                return 'undefined';
-            }
-
+            if (typeof document.readyState === 'undefined') {return 'undefined';}
             return safeString(document.readyState);
-
-        } catch (e) {
-            return 'unavailable';
-        }
+        } catch (e) {return 'unavailable';}
     }
 
     function elementCount() {
-        try {
-            return document.getElementsByTagName('*').length;
-        } catch (e) {
-            return '?';
-        }
+        try { return document.getElementsByTagName('*').length;
+        } catch (e) { return '?'; }
     }
 
     function heartbeat() {
@@ -675,14 +655,14 @@
 
     function onDomReady() {
         log('DOMContentLoaded fired');
-        heartbeat();
+        //heartbeat();
     }
 
     function onWindowLoad() {
         log('window load fired');
-        setTimeout(inspectBodyCSS, 1500);
-        setTimeout(checkBodyStyle, 1500);
-        showFeatureReport();
+        //setTimeout(inspectBodyCSS, 1500);
+        //setTimeout(checkBodyStyle, 1500);
+        //showFeatureReport();
     }
 
     log('tvdebug v4 started');
@@ -743,7 +723,7 @@
 
     timer = window.setInterval(function () {
         beat++;
-        heartbeat();
+        //heartbeat();
 
         if (
             beat === 1 ||
@@ -874,15 +854,8 @@
 tvlog('SPATIAL OBJECT: ' + typeof window.SpatialNavigation);
 
 if (window.SpatialNavigation) {
-    tvlog('SPATIAL INIT: ' +
-        typeof window.SpatialNavigation.init);
-
-    tvlog('SPATIAL ADD: ' +
-        typeof window.SpatialNavigation.add);
-
-    tvlog('SPATIAL FOCUS: ' +
-        typeof window.SpatialNavigation.focus);
-
-    tvlog('SPATIAL MAKEFOCUSABLE: ' +
-        typeof window.SpatialNavigation.makeFocusable);
+    //tvlog('SPATIAL INIT: ' + typeof window.SpatialNavigation.init);
+    //tvlog('SPATIAL ADD: ' + typeof window.SpatialNavigation.add);
+    //tvlog('SPATIAL FOCUS: ' + typeof window.SpatialNavigation.focus);
+    //tvlog('SPATIAL MAKEFOCUSABLE: ' + typeof window.SpatialNavigation.makeFocusable);
 }
