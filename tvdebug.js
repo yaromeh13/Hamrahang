@@ -240,54 +240,68 @@
     log('--- END INSPECT ---');
 }
     // =====================================================
-    // TV DEBUG PANEL TOGGLE — red-ish keys + F9
-    // 108 Samsung Orsay KEY_RED | 112 UA55HC8880 / F1 | 403 Tizen+LG webOS
-    // 398 some LG maps | 183 Android TV PROG_RED | 120 F9 Windows
+    // TV DEBUG PANEL TOGGLE
+    // Color RED (and close equivalents) across platforms + F9 desktop
+    //   108  Samsung Orsay / Maple  KEY_RED (official)
+    //   112  Samsung UA55HC8880 measured + F1
+    //   403  Samsung Tizen ColorF0Red + LG webOS Red
+    //   398  Some LG native/maps Red
+    //   183  Android TV / Google TV KEYCODE_PROG_RED (TCL, Hisense, …)
+    //   120  F9 Windows desktop (low browser conflict)
     // =====================================================
-    
+
+    var DEBUG_TOGGLE_KEYS = {
+        108: 1,
+        112: 1,
+        403: 1,
+        398: 1,
+        183: 1,
+        120: 1
+    };
     var debugKeyPressed = false;
-    
+
+    function isDebugToggleKey(code) {
+        return !!(code && DEBUG_TOGGLE_KEYS[code]);
+    }
+
     function toggleDebugPanel() {
         createPanel();
-    
+
         if (!panel) return;
-    
+
         var hidden = (panel.style.display === 'none');
         panel.style.display = hidden ? 'block' : 'none';
     }
-    
+
     function debugKeyDown(e) {
         e = e || window.event;
-    
+
         var code = e.keyCode || e.which;
-    
-        /* Red / color-program keys across platforms + F9 desktop */
-        if (code !== 108 && code !== 112 && code !== 403 &&
-            code !== 398 && code !== 183 && code !== 120) return;
-    
+
+        if (!isDebugToggleKey(code)) return;
+
         if (!debugKeyPressed) {
             debugKeyPressed = true;
             toggleDebugPanel();
         }
-    
+
         if (e.preventDefault) e.preventDefault();
         e.returnValue = false;
-    
+
         if (e.stopPropagation) e.stopPropagation();
         e.cancelBubble = true;
-    
+
         return false;
     }
-    
+
     function debugKeyUp(e) {
         e = e || window.event;
         var code = e.keyCode || e.which;
-        if (code === 108 || code === 112 || code === 403 ||
-            code === 398 || code === 183 || code === 120) {
+        if (isDebugToggleKey(code)) {
             debugKeyPressed = false;
         }
     }
-    
+
     if (window.addEventListener) {
         window.addEventListener('keydown', debugKeyDown, true);
         window.addEventListener('keyup', debugKeyUp, true);
