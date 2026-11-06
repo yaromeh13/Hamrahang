@@ -240,7 +240,9 @@
     log('--- END INSPECT ---');
 }
     // =====================================================
-    // TV DEBUG PANEL TOGGLE — 108 red / 112 / 403 TV / 120 F9 (Windows)
+    // TV DEBUG PANEL TOGGLE — red-ish keys + F9
+    // 108 Samsung Orsay KEY_RED | 112 UA55HC8880 / F1 | 403 Tizen+LG webOS
+    // 398 some LG maps | 183 Android TV PROG_RED | 120 F9 Windows
     // =====================================================
     
     var debugKeyPressed = false;
@@ -259,8 +261,9 @@
     
         var code = e.keyCode || e.which;
     
-        /* 108 red, 112 F1/TV, 403 TV, 120 F9 Windows desktop */
-        if (code !== 108 && code !== 112 && code !== 403 && code !== 120) return;
+        /* Red / color-program keys across platforms + F9 desktop */
+        if (code !== 108 && code !== 112 && code !== 403 &&
+            code !== 398 && code !== 183 && code !== 120) return;
     
         if (!debugKeyPressed) {
             debugKeyPressed = true;
@@ -279,7 +282,8 @@
     function debugKeyUp(e) {
         e = e || window.event;
         var code = e.keyCode || e.which;
-        if (code === 108 || code === 112 || code === 403 || code === 120) {
+        if (code === 108 || code === 112 || code === 403 ||
+            code === 398 || code === 183 || code === 120) {
             debugKeyPressed = false;
         }
     }
