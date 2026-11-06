@@ -240,7 +240,7 @@
     log('--- END INSPECT ---');
 }
     // =====================================================
-    // TV DEBUG PANEL TOGGLE - RED BUTTON (KEYCODE 108)
+    // TV DEBUG PANEL TOGGLE — 108 red / 112 / 403 TV / 120 F9 (Windows)
     // =====================================================
     
     var debugKeyPressed = false;
@@ -259,7 +259,8 @@
     
         var code = e.keyCode || e.which;
     
-        if (code !== 108 && code !== 112 && code !== 403) return;
+        /* 108 red, 112 F1/TV, 403 TV, 120 F9 Windows desktop */
+        if (code !== 108 && code !== 112 && code !== 403 && code !== 120) return;
     
         if (!debugKeyPressed) {
             debugKeyPressed = true;
@@ -278,7 +279,7 @@
     function debugKeyUp(e) {
         e = e || window.event;
         var code = e.keyCode || e.which;
-        if (code === 108 || code === 112 || code === 403) {
+        if (code === 108 || code === 112 || code === 403 || code === 120) {
             debugKeyPressed = false;
         }
     }
