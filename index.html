@@ -124,7 +124,18 @@ a {
 
     g.parseJSON = parseJSON;
     g.stringifyJSON = stringifyJSON;
+    /* Explicit globals for non-window hosts / strict lookup */
+    try {
+        if (typeof window !== 'undefined') {
+            window.parseJSON = parseJSON;
+            window.stringifyJSON = stringifyJSON;
+        }
+    } catch (eG) {}
 })(typeof window !== 'undefined' ? window : this);
+
+/* Top-level aliases (some TV engines resolve these more reliably than window.*) */
+var parseJSON = window.parseJSON;
+var stringifyJSON = window.stringifyJSON;
 </script>
 
 <style>
@@ -3851,6 +3862,51 @@ try {
 <script>
 // Main Application
 !function(){
+
+    /* Bind helpers into this scope — avoids "parseJSON is not defined" on some TVs */
+    var parseJSON = (typeof window.parseJSON === "function")
+        ? window.parseJSON
+        : function (text) {
+            if (text == null || text === "") { return null; }
+            if (typeof JSON !== "undefined" && typeof JSON.parse === "function") {
+                return JSON.parse(text);
+            }
+            return (new Function("return (" + String(text) + ");"))();
+        };
+    var stringifyJSON = (typeof window.stringifyJSON === "function")
+        ? window.stringifyJSON
+        : function (value) {
+            if (typeof JSON !== "undefined" && typeof JSON.stringify === "function") {
+                return JSON.stringify(value);
+            }
+            return String(value);
+        };
+    var getById = (typeof window.getById === "function")
+        ? window.getById
+        : function (id) {
+            try { return document.getElementById(id) || null; } catch (e) { return null; }
+        };
+    var getByClass = (typeof window.getByClass === "function")
+        ? window.getByClass
+        : function (className, root) {
+            var ctx = root || document, list, i, cls;
+            if (!className || !ctx) { return null; }
+            if (ctx.getElementsByClassName) {
+                try {
+                    list = ctx.getElementsByClassName(className);
+                    if (list && list.length) { return list[0]; }
+                } catch (e0) {}
+            }
+            list = ctx.getElementsByTagName("*");
+            for (i = 0; i < list.length; i++) {
+                cls = list[i].className;
+                if (typeof cls === "string" &&
+                    (" " + cls + " ").indexOf(" " + className + " ") !== -1) {
+                    return list[i];
+                }
+            }
+            return null;
+        };
 
     var OA = (typeof assignObject === "function") ? assignObject : function (t) { return t; };
     var sn = (typeof SpatialNavigation !== "undefined") ? SpatialNavigation : null;
