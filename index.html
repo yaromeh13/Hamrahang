@@ -8260,6 +8260,21 @@ try {
 
         dpl.addEventListener('click', function () {
 
+            var current = SN.NowPlaying;
+        
+            // اگر همین ویدیو در حال حاضر آیتم جاری است،
+            // صف را دست نزن و فقط پلیر را باز و پخش را کنترل کن.
+            if (
+                current &&
+                current.player === "video" &&
+                String(current.id) === String(e.id) &&
+                current.type === T
+            ) {
+                OpenMainPlayer();
+                TogglePlayPause();
+                return;
+            }
+        
             var start = pageQueueStart;
         
             if (!start || String(start.id) !== String(e.id)) {
