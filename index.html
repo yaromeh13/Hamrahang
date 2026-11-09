@@ -1577,8 +1577,45 @@ input[type="range"]:hover::-webkit-slider-thumb {
     outline: none;
 }
 
-#audio-stage h1 {
+#media-stage #stage-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(24px);
+    transform: scale(1.1);
+    opacity: 0.55;
+    z-index: 0;
+    pointer-events: none;
+}
+
+#media-stage #detailes-container .texts {
+    position: relative;
+    z-index: 1;
+    padding-top: 8px;
+    text-align: center;
+}
+    
+#media-stage h1 {
     padding: 10px;
+}
+
+#media-stage h1:after {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    bottom: 24px;
+    left: 0;
+    z-index: -1;
+    transform: scaleY(-1);
+    transform-origin: bottom;
+    content: attr(data-content);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 30%, rgba(94, 94, 94, .5) 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 /* ---------------------------------------------------------
@@ -3107,19 +3144,21 @@ window.HA_SVG = (function () {
 </div><!-- /.ln -->
 <div id="player" class="vis-none">
         <video id="vply"></video>
-        <div id="audio-stage" class="detailes-container vis-none">
-            <div id="stage-bg"></div>
+        <div id="media-stage" class="detailes-container vis-none">
+            <div id="stage-bg" class="stage-bg"></div>
             <div id="detailes-container">
+                <div class="texts">
+                    <h1 id="media-stage-title" class="text1"></h1>
+                </div>
                 <div id="header-container" class="page-detail-header-container">
                     <div class="thumbail">
-                    <img id="audio-stage-thumb" src="/assets/svg_sng.png">
+                    <img id="media-stage-thumb" src="/assets/svg_sng.png">
                     </div>
-                    <div class="content" id="audio-stage-artist"></div>
+                    <div class="content" id="media-stage-artist"></div>
                 </div>
-                <div class="texts">
-                    <h1 id="audio-stage-title" class="text1"></h1>
-                </div>
+                
             </div>
+            <div id="media-stage-lyric" class="playlist-container media-stage-lyric ha-lyric-skin"></div>
             <div class="playlist-container"></div>
         </div>
         <div id="player-box" class="player-box vis-none">
@@ -8042,7 +8081,7 @@ try {
         var i, row, item, type, isCurrent, isPlaying;
         var artists, artistRefs, artistId, artistObj;
         var artistList, thumb, dtl, dtb, iep, dpl, dst, tta, dt1, dt2;
-        var actions, up, down, removeBtn;
+        var actions, up, down, removeBtn, more;
     
         for (i = 0; i < ar.length; i++) {
     
@@ -8118,7 +8157,7 @@ try {
     
             /* Title and artists */
             dst = OA(document.createElement("div"), {
-                className: "texts"
+                className: "texts focusable"
             });
     
             tta = OA(document.createElement("div"), {
@@ -8192,8 +8231,13 @@ try {
                 className: "queue-action queue-remove focusable",
                 innerHTML: getIcon(svg_cls, "svg_cls")
             });
+            
+            more = OA(document.createElement("div"), {
+                className: "queue-action more focusable",
+                innerHTML: getIcon(svg_dot, "svg_dot")
+            });
     
-            (function (index) {
+            (function (index, itemId, itemType) {
     
                 if (index > 0) {
                     up.addEventListener("click", function () {
@@ -8210,14 +8254,19 @@ try {
                 removeBtn.addEventListener("click", function () {
                     removeQueueAt(index);
                 }, false);
+                
+                more.addEventListener("click", function () {
+                    CRBW(itemId, itemType);
+                }, false);
     
-            })(i);
+            })(i, row.id, type);
     
             actions.appendChild(up);
             actions.appendChild(down);
             actions.appendChild(removeBtn);
-    
+
             dtl.appendChild(actions);
+            dtl.appendChild(more);
             sec.appendChild(dtl);
         }
     
@@ -8257,6 +8306,9 @@ try {
             className: "play-pause focusable",
             innerHTML: svg_play
         });
+        
+        dpl._itemId = e.id;
+        dpl._itemType = T;
 
         dpl.addEventListener('click', function () {
 
@@ -8266,9 +8318,9 @@ try {
             // صف را دست نزن و فقط پلیر را باز و پخش را کنترل کن.
             if (
                 current &&
-                current.player === "video" &&
                 String(current.id) === String(e.id) &&
-                current.type === T
+                current.player === "video" &&
+                playerKind(T) === "video"
             ) {
                 OpenMainPlayer();
                 TogglePlayPause();
@@ -9689,6 +9741,10 @@ try {
     Backward10.addEventListener("click", function() { ToggleMainBackward10();});
     var Shuffle = document.getElementById("shuffle");
     Shuffle.addEventListener("click", function() { ToggleShuffleMode();});
+    var PreviousItem = document.getElementById("back");
+    PreviousItem.addEventListener("click", function () {PlayPrevious();});
+    var NextItem = document.getElementById("next");
+    NextItem.addEventListener("click", function () {PlayNext();});
 
     SN.NowPlaying = null;
     SN.RepeatMode = GetSetting('repeatMode') || 'off';
@@ -9814,7 +9870,7 @@ try {
         MAPL.classList.remove("vis-none");
         playerBox.classList.remove("vis-none");
      
-        var stage = document.getElementById("audio-stage");
+        var stage = document.getElementById("media-stage");
 
         if (SN.NowPlaying.player === 'video') {
             backdrop.classList.add("vis-none");
@@ -9891,15 +9947,15 @@ try {
     function RenderAudioStage(e) {
 
         var thumb = (e.meta && e.meta.tmb) ? e.meta.tmb : "undefined";
-        var img = document.getElementById("audio-stage-thumb");
+        var img = document.getElementById("media-stage-thumb");
         if (img) { img.src = UT + thumb + ".jpg"; }
         updateStageBg(UT + thumb + ".jpg");
     
-        var titleEl = document.getElementById("audio-stage-title");
+        var titleEl = document.getElementById("media-stage-title");
         if (titleEl) { titleEl.innerHTML = e.name; }
         
         var art = CRAL(e.artists);
-        var artistEl = document.getElementById("audio-stage-artist");
+        var artistEl = document.getElementById("media-stage-artist");
         if (artistEl) { artistEl.innerHTML = ""; artistEl.appendChild(art); }
     }
     
@@ -11238,19 +11294,51 @@ function moveInPlayQueue(itemId, itemType, direction) {
     }
     
     function UpdatePlayButtons() {
+
         var buttons = getAllByClass("play-pause");
-        var isThisPlaying = !!(SN.NowPlaying && SN.NowPlaying.isPlaying);
-        var isBuffering = !!(SN.NowPlaying && SN.NowPlaying.isBuffering);
+        var current = SN.NowPlaying;
+        var isBuffering = !!(current && current.isBuffering);
     
         for (var i = 0; i < buttons.length; i++) {
+    
             var btn = buttons[i];
+            var isThisPlaying;
+    
+            // دکمه‌ای که متعلق به یک آیتم مشخص است
+            if (btn._itemId != null) {
+    
+                var isSameItem = !!(
+                    current &&
+                    String(current.id) === String(btn._itemId) &&
+                    (
+                        current.type === btn._itemType ||
+                        (
+                            current.player === "video" &&
+                            playerKind(btn._itemType) === "video"
+                        )
+                    )
+                );
+    
+                isThisPlaying = !!(
+                    isSameItem &&
+                    current.isPlaying
+                );
+    
+            } else {
+                // دکمه‌های عمومی پلیر
+                isThisPlaying = !!(
+                    current &&
+                    current.isPlaying
+                );
+            }
     
             btn.innerHTML = isThisPlaying ? svg_puse : svg_play;
+    
             btn.appendChild(OA(document.createElement("i"), {
                 className: "wlap"
             }));
     
-            if (isBuffering) {
+            if (isBuffering && current) {
                 btn.classList.add("loading");
             } else {
                 btn.classList.remove("loading");
