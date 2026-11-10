@@ -14010,6 +14010,8 @@ const PROFILE_KEY = 'ha_profile';
             repeat: 'off',
             shuffle: false,
             playedInShuffle: {},
+            shuffleHistory: [],
+            shuffleHistoryIndex: -1,
             skipAttempts: 0,
             playGen: 0,
             waiting: false
@@ -14024,6 +14026,8 @@ const PROFILE_KEY = 'ha_profile';
         if (!Array.isArray(P.queue)) P.queue = [];
         if (typeof P.queueIndex !== 'number') P.queueIndex = -1;
         if (!P.playedInShuffle || typeof P.playedInShuffle !== 'object') P.playedInShuffle = {};
+        if (!Array.isArray(P.shuffleHistory)) {P.shuffleHistory = [];}
+        if (typeof P.shuffleHistoryIndex !== 'number') {P.shuffleHistoryIndex = -1;}
         if (P.repeat !== 'off' && P.repeat !== 'one' && P.repeat !== 'all') P.repeat = 'off';
         if (typeof P.shuffle !== 'boolean') P.shuffle = false;
         if (typeof P.skipAttempts !== 'number') P.skipAttempts = 0;
@@ -14060,7 +14064,10 @@ const PROFILE_KEY = 'ha_profile';
     }
     
     function resetShuffleMemory() {
-        ensurePlayer().playedInShuffle = {};
+        const P = ensurePlayer();
+        P.playedInShuffle = {};
+        P.shuffleHistory = [];
+        P.shuffleHistoryIndex = -1;
     }
     
     function onQueueReplaced() {
@@ -14108,8 +14115,49 @@ const PROFILE_KEY = 'ha_profile';
     
     function markPlayed(row) {
         if (!row) return;
+    
         const P = ensurePlayer();
-        P.playedInShuffle[queueItemKey(row)] = true;
+    
+        if (!P.shuffle) return;
+    
+        const key = queueItemKey(row);
+        let history = P.shuffleHistory;
+        const cursor = P.shuffleHistoryIndex;
+    
+        if (!Array.isArray(history)) {
+            history = [];
+            P.shuffleHistory = history;
+            P.shuffleHistoryIndex = -1;
+        }
+    
+        P.playedInShuffle[key] = true;
+    
+        if (cursor >= 0 && history[cursor] === key) {
+            return;
+        }
+    
+        /* برگشت به آیتم قبلی */
+        if (cursor > 0 && history[cursor - 1] === key) {
+            P.shuffleHistoryIndex = cursor - 1;
+            return;
+        }
+    
+        /* حرکت رو به جلو در تاریخچه */
+        if (
+            cursor >= 0 &&
+            cursor + 1 < history.length &&
+            history[cursor + 1] === key
+        ) {
+            P.shuffleHistoryIndex = cursor + 1;
+            return;
+        }
+    
+        /* آیتم جدید؛ حذف مسیر آینده */
+        history = history.slice(0, cursor + 1);
+        history.push(key);
+    
+        P.shuffleHistory = history;
+        P.shuffleHistoryIndex = history.length - 1;
     }
     
     function recordPlayHistory(row) {
@@ -16065,7 +16113,16 @@ const PROFILE_KEY = 'ha_profile';
     
         const currentRow = q[cur];
         if (currentRow) markPlayed(currentRow);
-    
+        
+        /* ادامه تاریخچه پس از برگشت با Previous */
+        const history = P.shuffleHistory || [];
+        const historyNext = P.shuffleHistoryIndex + 1;
+        if (historyNext >= 0 && historyNext < history.length) {
+            const nextKey = history[historyNext];
+            const historyIndex = q.findIndex((row) => queueItemKey(row) === nextKey);
+            if (historyIndex >= 0) return historyIndex;
+        }
+        
         let remaining = [];
         for (let i = 0; i < q.length; i++) {
             if (i === cur && !fromError) continue;
@@ -16124,14 +16181,13 @@ const PROFILE_KEY = 'ha_profile';
             return prev;
         }
     
-        // شافل: از بین آیتم‌های قبلاً پخش‌شده یکی را تصادفی برگردان (به‌جز جاری)
-        const played = [];
-        for (let i = 0; i < q.length; i++) {
-            if (i === cur) continue;
-            if (P.playedInShuffle[queueItemKey(q[i])]) played.push(i);
-        }
-        if (played.length) {
-            return played[Math.floor(Math.random() * played.length)];
+        // Shuffle: برگشت به آیتم قبلی در تاریخچه واقعی پخش
+        const history = P.shuffleHistory || [];
+        const historyPrev = P.shuffleHistoryIndex - 1;
+        if (historyPrev >= 0 && historyPrev < history.length) {
+            const prevKey = history[historyPrev];
+            const prevIndex = q.findIndex((row) => queueItemKey(row) === prevKey);
+            if (prevIndex >= 0) return prevIndex;
         }
         // هنوز چیزی پخش نشده → مثل حالت عادی به قبلی برو
         let prev = cur - 1;
@@ -16169,10 +16225,8 @@ const PROFILE_KEY = 'ha_profile';
     function toggleShuffle() {
         const P = ensurePlayer();
         P.shuffle = !P.shuffle;
-        P.playedInShuffle = {};
-        if (P.shuffle && P.queue[P.queueIndex]) {
-            P.playedInShuffle[queueItemKey(P.queue[P.queueIndex])] = true;
-        }
+        resetShuffleMemory();
+        if (P.shuffle && P.queue[P.queueIndex]) {markPlayed(P.queue[P.queueIndex]);}
         UpdateRepeatShuffleUI();
         return P.shuffle;
     }
