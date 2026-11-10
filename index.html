@@ -10623,12 +10623,23 @@ try {
         });
     
         var result = [];
+        var seen = {};
+        var key;
     
         for (i = 0; i < rows.length; i++) {
+    
+            key = queueItemKey(rows[i]);
+    
+            if (seen[key]) {
+                continue;
+            }
+    
+            seen[key] = true;
+    
             result.push({
                 id: rows[i].id,
                 type: rows[i].type,
-                position: i
+                position: result.length
             });
         }
     
