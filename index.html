@@ -12371,18 +12371,11 @@ function removeFromPlayQueue(itemId, itemType) {
     
     function ToggleShuffleMode() {
         var P = ensurePlayer();
-    
         P.shuffle = !P.shuffle;
         SN.ShuffleMode = P.shuffle;
-    
         resetShuffleMemory();
-    
-        if (P.shuffle && P.queue[P.queueIndex]) {
-            markPlayed(P.queue[P.queueIndex]);
-        }
-    
+        if (P.shuffle && SN.NowPlaying && SN.NowPlaying.isPlaying) {markPlayed(SN.NowPlaying);}
         log("ShuffleMode:", P.shuffle);
-    
         UpdateShuffleButton();
     }
     
