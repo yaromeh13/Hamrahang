@@ -16137,10 +16137,7 @@ const PROFILE_KEY = 'ha_profile';
             if (next >= q.length) return mode === 'all' ? 0 : -1;
             return next;
         }
-    
-        const currentRow = q[cur];
-        if (currentRow) markPlayed(currentRow);
-        
+
         /* ادامه تاریخچه پس از برگشت با Previous */
         const history = P.shuffleHistory || [];
         const historyNext = P.shuffleHistoryIndex + 1;
