@@ -367,7 +367,7 @@ h1, h2, h3, h4, h5, h6,
 
 .main-content .playlist-container {
     height: 100%;
-    width: 40%;
+    width: 46%;
     position: absolute;
     display: inline-block;
     top: 0;
@@ -830,8 +830,8 @@ h1, h2, h3, h4, h5, h6,
     position: relative;
     display: block;
     width: 100%;
-    padding-left:24px;
-    padding-right:24px;
+    padding-left: 5px;
+    padding-right:20px;
 }
 
 .track-line-container > * {
@@ -891,12 +891,34 @@ h1, h2, h3, h4, h5, h6,
     cursor: pointer;
 }
 
+.track-line .queue-media-type {
+    display: inline-block;
+    position: relative;
+    top: 0;
+    width: 20px;
+    height: 60px;
+    text-align: center;
+    vertical-align: top;
+    overflow: hidden;
+}
+
+.track-line .queue-media-type svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 22px;
+    height: 22px;
+    margin-top: -11px;
+    margin-left: -11px;
+}
+
 .track-line .texts {
     display: block;
     position: absolute;
     top: 0;
     left: 110px;
     right: 50px;
+    padding-left: 10px;
     justify-content: center;
     width: auto;
     height: 60px;
@@ -929,7 +951,7 @@ h1, h2, h3, h4, h5, h6,
     position: absolute;
     top: 0;
     right: 0;
-    width: 50px;
+    width: 36px;
     height: 60px;
     text-align: center;
     border-radius: 0 10px 10px 0;
@@ -980,7 +1002,6 @@ h1, h2, h3, h4, h5, h6,
     position: absolute;
     top: 0;
     right: 0;
-    width: 108px;
     height: 60px;
     text-align: center;
     white-space: nowrap;
@@ -996,6 +1017,23 @@ h1, h2, h3, h4, h5, h6,
     cursor: pointer;
 }
 
+.queue-arrow {
+    display: inline-block;
+    vertical-align: top;
+    width: 24px;
+    height: 60px;
+    line-height: 60px;
+    text-align: center;
+    cursor: pointer;
+}
+.arrow-up,
+.arrow-down{
+    display: inline-block;
+    text-align: center;
+    cursor: pointer;
+} 
+
+
 .queue-action svg {
     width: 20px;
     height: 20px;
@@ -1007,8 +1045,21 @@ h1, h2, h3, h4, h5, h6,
     cursor: default;
 }
 
-.queue-action:focus {
-    background-color: rgba(255, 255, 255, 0.15);
+.track-line .queue-action:hover {
+    background-color: red;
+}
+
+.track-line .queue-action:focus {
+    background-color: red;
+}
+.track-line .arrow-up:focus,
+.track-line .arrow-down:focus{
+    background-color: red;
+}
+
+.track-line .arrow-up:focus,
+.track-line .arrow-down:focus{
+    background-color: red;
 }
 
 .queue-empty {
@@ -1460,10 +1511,10 @@ input[type="range"]:hover::-webkit-slider-thumb {
     width: 100%;
 }
 
-.head-left {
+#player .head-left {
     float: left;
     position: fixed;
-    top: 1rem;
+    top: 10px;
     left: 1rem;
 }
 
@@ -1496,8 +1547,8 @@ input[type="range"]:hover::-webkit-slider-thumb {
 
 #player-box .fullscreen,
 #player-box .back {
-    height: 4rem;
-    width: 4rem;
+    height: 3rem;
+    width: 3rem;
     padding: 0.5rem;
 }
 
@@ -4425,7 +4476,8 @@ try {
     var svg_stg = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings shell-nav-icon" aria-hidden="true" data-variant="outline"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
     var svg_ins = '<svg style="width:22px;height:22px" version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 8a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z"></path><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"></path><path d="M16.5 7.5v.01"></path></svg>';
     var svg_dat = '<svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" ><path d="M20,2H19V1a1,1,0,0,0-2,0V2H7V1A1,1,0,0,0,5,1V2H4A4,4,0,0,0,0,6V20a4,4,0,0,0,4,4H20a4,4,0,0,0,4-4V6A4,4,0,0,0,20,2Zm2,18a2,2,0,0,1-2,2H4a2,2,0,0,1-2-2V6A2,2,0,0,1,4,4H5V5A1,1,0,0,0,7,5V4H17V5a1,1,0,0,0,2,0V4h1a2,2,0,0,1,2,2Z"/><path  d="M19,7H5A1,1,0,0,0,5,9H19a1,1,0,0,0,0-2Z"/><path d="M7,12H5a1,1,0,0,0,0,2H7a1,1,0,0,0,0-2Z"/><path  d="M7,17H5a1,1,0,0,0,0,2H7a1,1,0,0,0,0-2Z"/><path  d="M13,12H11a1,1,0,0,0,0,2h2a1,1,0,0,0,0-2Z"/><path  d="M13,17H11a1,1,0,0,0,0,2h2a1,1,0,0,0,0-2Z"/><path  d="M19,12H17a1,1,0,0,0,0,2h2a1,1,0,0,0,0-2Z"/><path  d="M19,17H17a1,1,0,0,0,0,2h2a1,1,0,0,0,0-2Z"/></svg>';
-    
+    var svg_mup = '<svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width:22px;height:22px"><path d="M57,45.6H7L32,6.3L57,45.6z"></path></svg>';
+    var svg_mdw = '<svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width:22px;height:22px"><path d="M57,18.4H7L32,57.7L57,18.4z"></path></svg>';
     
     var svg_str = '<svg version="1.1" width="22" height="22" viewBox="0 0 60 60" fill="#ffffff" stroke-width="3" stroke="currentColor" ><path d="M55.818 21.578a1.002 1.002 0 00-.808-.681l-18.09-2.629-8.09-16.392a.998.998 0 00-1.792 0l-8.091 16.393-18.09 2.629a1.002 1.002 0 00-.555 1.705l13.091 12.76-3.091 18.018c-.064.375.09.754.397.978a.992.992 0 001.053.076l16.182-8.506 16.18 8.506a1 1 0 001.451-1.054l-3.09-18.017 13.091-12.761c.272-.267.37-.664.252-1.025z"></path></svg>';
     var svg_st2 = '<svg version="1.1" width="22" height="22" viewBox="0 0 60 60" fill="none" stroke-width="3" stroke="currentColor" ><path d="M55.818 21.578a1.002 1.002 0 00-.808-.681l-18.09-2.629-8.09-16.392a.998.998 0 00-1.792 0l-8.091 16.393-18.09 2.629a1.002 1.002 0 00-.555 1.705l13.091 12.76-3.091 18.018c-.064.375.09.754.397.978a.992.992 0 001.053.076l16.182-8.506 16.18 8.506a1 1 0 001.451-1.054l-3.09-18.017 13.091-12.761c.272-.267.37-.664.252-1.025z"></path></svg>';
@@ -8081,10 +8133,10 @@ try {
             className: "track-line-container p-top-1"
         });
     
-        var i, row, item, type, isCurrent, isPlaying;
+        var i, row, item, type, isCurrent, isPlaying, dmt;
         var artists, artistRefs, artistId, artistObj;
         var artistList, thumb, dtl, dtb, iep, dpl, dst, tta, dt1, dt2;
-        var actions, up, down, removeBtn, more;
+        var actions,arrow, up, down, removeBtn, more;
     
         for (i = 0; i < ar.length; i++) {
     
@@ -8157,6 +8209,21 @@ try {
             })(i, row.id, type);
     
             dtl.appendChild(dpl);
+            
+            /* Media type icon */
+            dmt = OA(document.createElement("div"), {
+                className: "queue-media-type",
+                innerHTML: getIcon(
+                    (type === "video" || type === "musicvideo")
+                        ? svg_vdo
+                        : svg_not,
+                    (type === "video" || type === "musicvideo")
+                        ? "svg_vdo"
+                        : "svg_not"
+                )
+            });
+            
+            dtl.appendChild(dmt);
     
             /* Title and artists */
             dst = OA(document.createElement("div"), {
@@ -8216,18 +8283,17 @@ try {
             dtl.appendChild(dst);
     
             /* Queue controls */
-            actions = OA(document.createElement("div"), {
-                className: "queue-actions"
-            });
+            actions = OA(document.createElement("div"), {className: "queue-actions"});
+            arrow = OA(document.createElement("div"), {className: "queue-arrow"});
     
             up = OA(document.createElement("div"), {
-                className: "queue-action" + (i > 0 ? " focusable" : " disabled"),
-                innerHTML: getIcon(svg_arw_up, "svg_arw_up")
+                className: "arrow-up" + (i > 0 ? " focusable" : " disabled"),
+                innerHTML: getIcon(svg_mup, "svg_mup")
             });
     
             down = OA(document.createElement("div"), {
-                className: "queue-action" + (i < ar.length - 1 ? " focusable" : " disabled"),
-                innerHTML: getIcon(svg_arw_dw, "svg_arw_dw")
+                className: "arrow-down" + (i < ar.length - 1 ? " focusable" : " disabled"),
+                innerHTML: getIcon(svg_mdw, "svg_mdw")
             });
     
             removeBtn = OA(document.createElement("div"), {
@@ -8263,9 +8329,10 @@ try {
                 }, false);
     
             })(i, row.id, type);
-    
-            actions.appendChild(up);
-            actions.appendChild(down);
+            
+            arrow.appendChild(up);
+            arrow.appendChild(down);
+            actions.appendChild(arrow);
             actions.appendChild(removeBtn);
 
             dtl.appendChild(actions);
