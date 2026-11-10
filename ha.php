@@ -14129,12 +14129,13 @@ const PROFILE_KEY = 'ha_profile';
             P.shuffleHistory = history;
             P.shuffleHistoryIndex = -1;
         }
-    
+        
+        /* اصلاح نشانگر نامعتبر بدون حذف تاریخچه قبلی */
+        if (cursor < -1 || cursor >= history.length) {cursor = history.length - 1;}
+        if (cursor === -1 && history.length > 0) {cursor = history.length - 1;}
+        P.shuffleHistoryIndex = cursor;
         P.playedInShuffle[key] = true;
-    
-        if (cursor >= 0 && history[cursor] === key) {
-            return;
-        }
+        if (cursor >= 0 && history[cursor] === key) {return;}
     
         /* برگشت به آیتم قبلی */
         if (cursor > 0 && history[cursor - 1] === key) {
