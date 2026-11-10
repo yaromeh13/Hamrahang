@@ -12449,10 +12449,18 @@ function removeFromPlayQueue(itemId, itemType) {
             return;
         }
     
+        var P = ensurePlayer();
         var media = GetActiveMediaElement();
     
+        /* هنوز اطلاعات آهنگ انتخاب‌شده بارگذاری نشده است */
+        var isPendingLoad = !!(
+            P.waiting &&
+            SN.NowPlaying.playGen !== P.playGen
+        );
+    
         // اگر بیشتر از ۳ ثانیه گذشته، از ابتدای همین آیتم پخش کن
-        if (media && media.currentTime > 3) {
+        // مگر اینکه درخواست بارگذاری آهنگ جدید در حال انجام باشد
+        if (!isPendingLoad && media && media.currentTime > 3) {
     
             media.currentTime = 0;
     
