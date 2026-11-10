@@ -10269,6 +10269,8 @@ try {
             cancelSourceStallWatch();
     
             var P = ensurePlayer();
+            P._endedAttemptKey = null;
+            
             var row = P.queue[P.queueIndex];
     
             SN.NowPlaying.isPlaying = true;
@@ -10389,15 +10391,27 @@ try {
         });
     
         media.addEventListener('ended', function () {
-    
+
             if (GetActiveMediaElement() !== media) return;
-            if (!SN.NowPlaying) return;
-    
-            log("Media ended:", SN.NowPlaying.id);
-    
-            SN.NowPlaying.isPlaying = false;
-            SN.NowPlaying.isBuffering = false;
-    
+        
+            var P = ensurePlayer();
+            var NP = SN.NowPlaying;
+        
+            if (!NP || !media.ended) return;
+        
+            /* هر تلاش پخش فقط یک بار اجازه پردازش پایان دارد */
+            var endedKey = String(P.playGen) + ':' +
+                String(NP._sourceAttemptId || 0);
+        
+            if (P._endedAttemptKey === endedKey) return;
+        
+            P._endedAttemptKey = endedKey;
+        
+            log("Media ended:", NP.id);
+        
+            NP.isPlaying = false;
+            NP.isBuffering = false;
+        
             PlayNext();
         });
     }
