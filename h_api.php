@@ -2523,13 +2523,14 @@ $stmt->execute();*/
         
             $maxItems = $limits['items'];
             $pos = 0;
+            $seen = [];
+            $capped = false;
             $ins = $conn->prepare("
                 INSERT INTO playlist_items (id_playlist, item_type, item_id, position, added_at)
                 VALUES (?, ?, ?, ?, ?)
             ");
             foreach ($items as $it) {
-                if ($pos >= $maxItems) break;
-        
+
                 $typeStr = is_object($it) ? ($it->type ?? 'song') : ($it['type'] ?? 'song');
                 $pubId   = is_object($it) ? (int)($it->id ?? 0) : (int)($it['id'] ?? 0);
                 $itemType = ContentTypeToInt($typeStr);
@@ -2537,7 +2538,10 @@ $stmt->execute();*/
         
                 $realId = PublicIdToReal($pubId, $IDHM);
                 if ($realId <= 0) continue;
-        
+                $key = $itemType . ':' . $realId;
+                if (isset($seen[$key])) {continue;}
+                if ($pos >= $maxItems) {$capped = true;break;}
+                $seen[$key] = true;
                 $b_pl = $newId;
                 $b_type = (int)$itemType;
                 $b_id = (int)$realId;
@@ -2553,7 +2557,7 @@ $stmt->execute();*/
                 'ok'       => true,
                 'playlist' => ($full && !empty($full['playlist'])) ? $full['playlist'] : null,
                 'limits'   => $limits,
-                'capped'   => (count($items) > $maxItems)
+                'capped'   => $capped
             ]);
             exit();
         }
@@ -2606,15 +2610,21 @@ $stmt->execute();*/
                     VALUES (?, ?, ?, ?, ?)
                 ");
                 $pos = 0;
+                $seen = [];
+                $capped = false;
                 foreach ($items as $it) {
-                    if ($pos >= $maxItems) break;
-        
                     $typeStr  = is_object($it) ? ($it->type ?? 'song') : ($it['type'] ?? 'song');
                     $pubId    = is_object($it) ? (int)($it->id ?? 0) : (int)($it['id'] ?? 0);
                     $itemType = ContentTypeToInt($typeStr);
                     $realId   = PublicIdToReal($pubId, $IDHM);
                     if ($itemType === null || $itemType > 3 || $realId <= 0) continue;
-        
+                    $key = $itemType . ':' . $realId;
+                    if (isset($seen[$key])) {continue;}
+                    if ($pos >= $maxItems) {
+                        $capped = true;
+                        break;
+                    }
+                    $seen[$key] = true;
                     $b_pl = $newId;
                     $b_type = (int)$itemType;
                     $b_id = (int)$realId;
@@ -2629,7 +2639,7 @@ $stmt->execute();*/
                 $created[] = [
                     'local_id' => $localId,
                     'playlist' => ($full && !empty($full['playlist'])) ? $full['playlist'] : null,
-                    'capped'   => (count($items) > $maxItems)
+                    'capped'   => $capped
                 ];
             }
         
@@ -10787,4 +10797,6 @@ $stmt->execute();*/
         echo json_encode($search_obj);
         exit();
     }
+    
+   
 ?>
