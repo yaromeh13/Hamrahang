@@ -10266,6 +10266,7 @@ try {
     
             if (GetActiveMediaElement() !== media) return;
             if (!SN.NowPlaying) return;
+            cancelSourceStallWatch();
     
             var P = ensurePlayer();
             var row = P.queue[P.queueIndex];
@@ -10290,15 +10291,24 @@ try {
         });
     
         media.addEventListener('waiting', function () {
-    
+
             if (GetActiveMediaElement() !== media) return;
             if (!SN.NowPlaying) return;
-
+        
             setPlayerWaiting(true);
             SN.NowPlaying.isBuffering = true;
-    
+        
+            startSourceStallWatch(media);
+        
             UpdatePlayButtons();
             UpdateMiniPlayerSpin();
+        });
+        media.addEventListener('stalled', function () {
+        
+            if (GetActiveMediaElement() !== media) return;
+            if (!SN.NowPlaying) return;
+        
+            startSourceStallWatch(media);
         });
         /* شروع جابه‌جایی زمان */
         media.addEventListener('seeking', function () {
@@ -10478,6 +10488,76 @@ try {
         }
     
         UpdatePlayButtons();
+    }
+    
+    function cancelSourceStallWatch() {
+        var P = ensurePlayer();
+    
+        if (P._stallWatchTimer) {
+            clearTimeout(P._stallWatchTimer);
+            P._stallWatchTimer = null;
+        }
+    
+        P._stallWatchAttemptId = null;
+    }
+    
+    function startSourceStallWatch(media) {
+        var P = ensurePlayer();
+        var NP = SN.NowPlaying;
+        var gen;
+        var attemptId;
+        var sourceIndex;
+    
+        if (!media || !NP || media.paused || media.ended) return;
+    
+        attemptId = NP._sourceAttemptId;
+        sourceIndex = NP.sourceIndex;
+        gen = P.playGen;
+    
+        if (attemptId == null || sourceIndex == null) return;
+    
+        /* برای یک تلاش، فقط یک تایمر فعال باشد */
+        if (P._stallWatchTimer &&
+            P._stallWatchAttemptId === attemptId) {
+            return;
+        }
+    
+        cancelSourceStallWatch();
+        P._stallWatchAttemptId = attemptId;
+    
+        P._stallWatchTimer = setTimeout(function () {
+            P._stallWatchTimer = null;
+    
+            if (P._stallWatchAttemptId !== attemptId) return;
+    
+            P._stallWatchAttemptId = null;
+    
+            if (P.playGen !== gen ||
+                SN.NowPlaying !== NP ||
+                NP._sourceAttemptId !== attemptId ||
+                NP.sourceIndex !== sourceIndex ||
+                GetActiveMediaElement() !== media) {
+                return;
+            }
+    
+            /* توقف دستی یا پایان پخش، شکست سورس نیست */
+            if (media.paused || media.ended) return;
+    
+            /* اگر دادهٔ کافی رسیده، سورس را خراب اعلام نکن */
+            if (media.readyState >= 3) return;
+    
+            log("source-stall-timeout: trying next source", {
+                id: NP.id,
+                type: NP.type,
+                sourceIndex: sourceIndex,
+                attemptId: attemptId,
+                readyState: media.readyState,
+                networkState: media.networkState
+            });
+    
+            handleSourceFailure(sourceIndex, gen);
+    
+        }, 30000);
     }
 
     function normalizeQueueRows(list, defaultType) {
@@ -11132,6 +11212,7 @@ a2/public_html/tv/index.html
         var media;
         var source;
         var gen;
+        var attemptId;
         var errorHandler;
         var resumeHandler;
         var playPromise;
@@ -11154,6 +11235,13 @@ a2/public_html/tv/index.html
     
         source = sources[index];
         gen = P.playGen;
+        
+        /* باطل کردن Watchdog تلاش قبلی */
+        cancelSourceStallWatch();
+        
+        P._sourceAttemptSeq = (P._sourceAttemptSeq || 0) + 1;
+        attemptId = P._sourceAttemptSeq;
+        NP._sourceAttemptId = attemptId;
     
         if (!source || !source.url) {
             handleSourceFailure(index, gen);
@@ -11217,6 +11305,7 @@ a2/public_html/tv/index.html
     
                 if (gen !== P.playGen ||
                     SN.NowPlaying !== NP ||
+                    NP._sourceAttemptId !== attemptId ||
                     NP.sourceIndex !== index) {
     
                     media.removeEventListener(
@@ -11268,9 +11357,15 @@ a2/public_html/tv/index.html
     
         /* مدیریت خطای همین سورس */
         errorHandler = function () {
-    
-            if (gen !== P.playGen) return;
-    
+
+            if (gen !== P.playGen ||
+                SN.NowPlaying !== NP ||
+                NP._sourceAttemptId !== attemptId ||
+                NP.sourceIndex !== index) {
+                return;
+            }
+        
+            cancelSourceStallWatch();
             handleSourceFailure(index, gen);
         };
     
@@ -11320,10 +11415,14 @@ a2/public_html/tv/index.html
                     return;
                 }
     
-                if (gen !== P.playGen) {
+                if (gen !== P.playGen ||
+                    SN.NowPlaying !== NP ||
+                    NP._sourceAttemptId !== attemptId ||
+                    NP.sourceIndex !== index) {
                     return;
                 }
-    
+                
+                cancelSourceStallWatch();
                 handleSourceFailure(index, gen);
             });
         }
@@ -11531,6 +11630,7 @@ a2/public_html/tv/index.html
         }
     
         NP._sourceFailed = true;
+        cancelSourceStallWatch();
     
         sources = getPlayableSources(NP.item);
     
@@ -11830,7 +11930,7 @@ a2/public_html/tv/index.html
     
         if (!media) return;
         if (!media.paused) {
-        
+            cancelSourceStallWatch();
             setPlayerWaiting(false);
         
             if (SN.NowPlaying) {
