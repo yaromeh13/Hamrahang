@@ -10469,18 +10469,11 @@ try {
                     return;
                 }
     
-                log("waiting-timeout: force clear after 20s");
-    
-                setPlayerWaiting(false);
-    
-                if (SN.NowPlaying) {
-                    SN.NowPlaying.isBuffering = false;
-                }
-    
-                UpdatePlayButtons();
-                UpdatePlaylistRowIcons();
-                UpdateMiniPlayerSpin();
-    
+                log("waiting-timeout: playback is still waiting after 20s", {
+                    gen: P.playGen,
+                    id: SN.NowPlaying && SN.NowPlaying.id,
+                    sourceIndex: SN.NowPlaying && SN.NowPlaying.sourceIndex
+                });
             }, 20000);
         }
     
