@@ -2814,7 +2814,10 @@ track {
 .hpop-body {
     max-height: 60vh;
     padding: 10px;
-    overflow: hidden;
+    white-space: nowrap;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .hpop-item {
@@ -3050,10 +3053,84 @@ track {
     outline: none;
 }
 
+
+
+/* Player Sources Panel */
+
+.hpop-player-sources .player-source-list {
+    width: 100%;
+    padding: 8px 0;
+}
+
+.hpop-player-sources .player-source-row {
+    display: block;
+    position: relative;
+    height: 54px;
+    line-height: 54px;
+    padding: 0 16px;
+    margin: 4px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #ddd;
+    overflow: hidden;
+}
+
+.hpop-player-sources .player-source-row:focus,
+.hpop-player-sources .player-source-row.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.hpop-player-sources .player-source-number {
+    display: inline-block;
+    width: 38px;
+    vertical-align: middle;
+    color: #999;
+}
+
+.hpop-player-sources .player-source-name {
+    display: inline-block;
+    vertical-align: middle;
+    width: 65%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.hpop-player-sources .player-source-quality {
+    float: right;
+    color: #aaa;
+}
+
+.hpop-player-sources .player-source-row.active .player-source-quality {
+    color: #fff;
+}
+
+.hpop-player-sources .player-source-empty {
+    padding: 20px;
+    color: #aaa;
+    text-align: center;
+}
+
+
+.hpop-player-queue .player-queue-popup {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: auto;
+    max-height: 65vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+
 /* Toasts must stay visible above the popup */
 .toast-message {
     z-index: 3000;
 }
+
+
 
 
 /* ---------------------------------------------------------
@@ -3261,7 +3338,7 @@ window.HA_SVG = (function () {
               
             </div>            
             <div class="player-control">
-                <div id="playlist" class="g-30 btn" onclick="handleShowSettingModal('playlist')">
+                <div id="playlist" class="g-30 btn" onclick="openPlayerQueuePanel()">
                     <img src="/assets/playlist.png">
                 </div>
                 <div id="subtitle" class="g-31 btn" onclick="handleShowSettingModal('subtitle')">
@@ -3269,6 +3346,9 @@ window.HA_SVG = (function () {
                 </div>
                 <div id="lyric" class="g-31 btn" onclick="handleShowSettingModal('lyric')">
                     <img src="/assets/svg_lrc.png">
+                </div>
+                <div id="player-sources" class="g-30 btn" onclick="openPlayerSourcesPanel()">
+                    <img src="/assets/setting.png">
                 </div>
             </div>
             <div class="player-setting">
@@ -7147,13 +7227,10 @@ try {
     }
 
     function RenderVideoQualityTab(pane) {
-    
-        var currentQuality = SN.VideoQuality || 'high';
-    
+        var currentQuality = GetSetting('videoQuality') || 'high';
         var list = CreateQualityList(currentQuality, function (value) {
-            SN.VideoQuality = value;
+            SetSetting('videoQuality', value);
             log("Video quality set to:", value);
-            // TODO: ذخیره‌ی مقدار (localStorage یا مشابه)
         });
     
         pane.appendChild(list);
@@ -8110,11 +8187,14 @@ try {
         } : null;
     }
 
-    function CRQT() {
-    
+    function CRQT(target) {
+
         var P = ensurePlayer();
         var ar = P.queue || [];
-        var PlayList = getByClass("playlist-container");
+    
+        var PlayList = target ||
+            P._queueRenderTarget ||
+            getByClass("playlist-container");
     
         if (!PlayList) { return; }
     
@@ -8345,6 +8425,49 @@ try {
         if (typeof sn !== "undefined" && sn && typeof sn.makeFocusable === "function") {
             sn.makeFocusable();
         }
+    }
+
+    function openPlayerQueuePanel() {
+    
+        var P = ensurePlayer();
+        var prev = document.activeElement;
+        var queueHost = null;
+    
+        HPOP.open({
+    
+            title: 'Playlist',
+            className: 'hpop-player-queue',
+    
+            body: function (body) {
+    
+                queueHost = document.createElement('div');
+                queueHost.className = 'playlist-container player-queue-popup';
+    
+                P._queueRenderTarget = queueHost;
+    
+                body.appendChild(queueHost);
+    
+                /* تولید محتوای صف در بدنه HPOP */
+                CRQT(queueHost);
+            },
+    
+            onClose: function () {
+    
+                if (P._queueRenderTarget === queueHost) {
+                    P._queueRenderTarget = null;
+                }
+    
+                if (typeof showPlayerBox === 'function') {
+                    showPlayerBox();
+                }
+    
+                if (prev && prev.focus) {
+                    try {
+                        prev.focus();
+                    } catch (e) {}
+                }
+            }
+        });
     }
 
     function CRED(e, T) {
@@ -10176,7 +10299,52 @@ try {
             UpdatePlayButtons();
             UpdateMiniPlayerSpin();
         });
-    
+        /* شروع جابه‌جایی زمان */
+        media.addEventListener('seeking', function () {
+
+            if (GetActiveMediaElement() !== media) return;
+            if (!SN.NowPlaying) return;
+
+            SN.NowPlaying.isSeeking = true;
+
+            /*
+             * اگر هنگام Seek داده کافی نداریم،
+             * وضعیت Buffering را فعال نگه دار.
+             */
+            if (!media.paused && media.readyState < 3) {
+
+                SN.NowPlaying.isBuffering = true;
+                setPlayerWaiting(true);
+            }
+
+            UpdateMainProgressBar();
+            UpdatePlayButtons();
+            UpdateMiniPlayerSpin();
+        });
+
+        /* پایان جابه‌جایی زمان */
+        media.addEventListener('seeked', function () {
+
+            if (GetActiveMediaElement() !== media) return;
+            if (!SN.NowPlaying) return;
+
+            SN.NowPlaying.isSeeking = false;
+
+            /*
+             * فقط وقتی داده کافی آماده است،
+             * Buffering را پاک کن.
+             */
+            if (media.paused || media.readyState >= 3) {
+
+                SN.NowPlaying.isBuffering = false;
+                setPlayerWaiting(false);
+            }
+
+            UpdateMainProgressBar();
+            UpdatePlayButtons();
+            UpdateMiniPlayerSpin();
+        });
+
         media.addEventListener('pause', function () {
     
             if (GetActiveMediaElement() !== media) return;
@@ -10533,7 +10701,7 @@ function moveQueueAt(index, direction) {
     } else if (P.queueIndex === target) {
         P.queueIndex = index;
     }
-
+a2/public_html/tv/index.html
     if (SN.NowPlaying && P.queueIndex >= 0) {
         SN.NowPlaying.index = P.queueIndex;
     }
@@ -10542,25 +10710,24 @@ function moveQueueAt(index, direction) {
     return true;
 }
 
-
-function moveInPlayQueue(itemId, itemType, direction) {
-
-    var P = ensurePlayer();
-    var type = itemType || "song";
-    var i;
-
-    for (i = 0; i < P.queue.length; i++) {
-
-        if (
-            String(P.queue[i].id) === String(itemId) &&
-            P.queue[i].type === type
-        ) {
-            return moveQueueAt(i, direction);
+    function moveInPlayQueue(itemId, itemType, direction) {
+    
+        var P = ensurePlayer();
+        var type = itemType || "song";
+        var i;
+    
+        for (i = 0; i < P.queue.length; i++) {
+    
+            if (
+                String(P.queue[i].id) === String(itemId) &&
+                P.queue[i].type === type
+            ) {
+                return moveQueueAt(i, direction);
+            }
         }
+    
+        return false;
     }
-
-    return false;
-}
     
     function resetShuffleMemory() {
         ensurePlayer().playedInShuffle = {};
@@ -10569,11 +10736,53 @@ function moveInPlayQueue(itemId, itemType, direction) {
     function onQueueReplaced() {
         var P = ensurePlayer();
     
+        // تمام درخواست‌های بارگذاری و پخش قبلی نامعتبر می‌شوند.
         P.playGen++;
+    
+        // تایمر Waiting قبلی هم متوقف می‌شود.
         setPlayerWaiting(false);
+    
+        // شمارنده خطاهای صف جدید از ابتدا شروع می‌شود.
         P.skipAttempts = 0;
     
+        // حافظه Shuffle مربوط به صف قبلی پاک می‌شود.
         resetShuffleMemory();
+    
+        return P.playGen;
+    }
+    
+    function stopPlaybackForEmptyQueue() {
+        var P = ensurePlayer();
+        var NP = SN.NowPlaying;
+        var media = GetActiveMediaElement();
+    
+        // حذف Listener خطای سورس قبلی
+        clearSourceErrorHandler(NP);
+    
+        // توقف و آزادسازی مدیای در حال پخش
+        if (media) {
+            try {
+                media.pause();
+            } catch (e) {}
+    
+            try {
+                media.removeAttribute('src');
+                media.load();
+            } catch (e) {}
+        }
+    
+        // پاک‌سازی وضعیت پخش
+        SN.NowPlaying = null;
+        P.queueIndex = -1;
+        P.skipAttempts = 0;
+    
+        // پاک‌سازی وضعیت رابط کاربری
+        setPlayerWaiting(false);
+        UpdatePlayButtons();
+        UpdatePlaylistRowIcons();
+        UpdateMiniPlayerSpin();
+    
+        CRQT();
     }
     
     function markPlayed(row) {
@@ -10907,6 +11116,7 @@ function moveInPlayQueue(itemId, itemType, direction) {
     }
     
     function PlayMediaSourceAt(index, options) {
+    
         var P = ensurePlayer();
         var NP = SN.NowPlaying;
         var sources;
@@ -10914,7 +11124,10 @@ function moveInPlayQueue(itemId, itemType, direction) {
         var source;
         var gen;
         var errorHandler;
+        var resumeHandler;
         var playPromise;
+        var resumeTime = 0;
+        var shouldPlay = true;
     
         options = options || {};
     
@@ -10938,7 +11151,21 @@ function moveInPlayQueue(itemId, itemType, direction) {
             return;
         }
     
-        // حذف listener خطای سورس قبلی
+        /* وضعیت پخش قبل از تعویض سورس */
+        if (options.preserveTime) {
+    
+            if (isFinite(media.currentTime) && media.currentTime > 0.25) {
+                resumeTime = media.currentTime;
+            }
+    
+            shouldPlay = !media.paused && !media.ended;
+        }
+    
+        if (options.autoplay === false) {
+            shouldPlay = false;
+        }
+    
+        /* حذف listener خطای سورس قبلی */
         if (NP._sourceErrorHandler) {
             try {
                 media.removeEventListener('error', NP._sourceErrorHandler);
@@ -10947,22 +11174,92 @@ function moveInPlayQueue(itemId, itemType, direction) {
             NP._sourceErrorHandler = null;
         }
     
+        /* حذف listener بازیابی زمان قبلی */
+        if (NP._resumeHandler) {
+            try {
+                media.removeEventListener(
+                    'loadedmetadata',
+                    NP._resumeHandler
+                );
+            } catch (e) {}
+    
+            NP._resumeHandler = null;
+        }
+    
+        /* توقف سورس قبلی */
+        try {
+            media.pause();
+        } catch (e) {}
+    
         NP.sourceIndex = index;
         NP.currentSource = source;
         NP.currentBit = sourceBit(source);
         NP.currentUrl = source.url;
         NP._sourceFailed = false;
-        NP.isBuffering = true;
-        NP.isPlaying = false;
         NP._triedSources = NP._triedSources || {};
     
-        setPlayerWaiting(true);
+        NP.isPlaying = false;
+        NP.isBuffering = shouldPlay;
+    
+        /* مدیریت بازیابی زمان */
+        if (resumeTime > 0) {
+    
+            resumeHandler = function () {
+    
+                if (gen !== P.playGen ||
+                    SN.NowPlaying !== NP ||
+                    NP.sourceIndex !== index) {
+    
+                    media.removeEventListener(
+                        'loadedmetadata',
+                        resumeHandler
+                    );
+    
+                    return;
+                }
+    
+                media.removeEventListener(
+                    'loadedmetadata',
+                    resumeHandler
+                );
+    
+                NP._resumeHandler = null;
+    
+                if (isFinite(media.duration) && media.duration > 0) {
+    
+                    var targetTime = Math.min(
+                        resumeTime,
+                        Math.max(0, media.duration - 0.35)
+                    );
+    
+                    try {
+                        media.currentTime = targetTime;
+                    } catch (e) {
+                        log("Source resume seek failed:", e);
+                    }
+                }
+    
+                UpdateMainProgressBar();
+            };
+    
+            NP._resumeHandler = resumeHandler;
+    
+            media.addEventListener(
+                'loadedmetadata',
+                resumeHandler
+            );
+        }
+    
+        /* وضعیت انتظار */
+        setPlayerWaiting(shouldPlay);
     
         UpdatePlayButtons();
         UpdatePlaylistRowIcons();
         UpdateMiniPlayerSpin();
     
+        /* مدیریت خطای همین سورس */
         errorHandler = function () {
+    
             if (gen !== P.playGen) return;
     
             handleSourceFailure(index, gen);
@@ -10973,25 +11270,44 @@ function moveInPlayQueue(itemId, itemType, direction) {
         media.addEventListener('error', errorHandler);
     
         try {
-            media.pause();
+    
             media.src = source.url;
             media.load();
+    
         } catch (e) {
+    
+            if (NP._resumeHandler) {
+                media.removeEventListener(
+                    'loadedmetadata',
+                    NP._resumeHandler
+                );
+    
+                NP._resumeHandler = null;
+            }
+    
             handleSourceFailure(index, gen);
             return;
         }
     
-        if (options.autoplay === false) {
+        /* بعضی مرورگرها metadata را از قبل آماده دارند */
+        if (resumeHandler && media.readyState >= 1) {
+            resumeHandler();
+        }
+    
+        if (!shouldPlay) {
             return;
         }
     
         playPromise = media.play();
     
         if (playPromise && typeof playPromise.catch === 'function') {
+    
             playPromise.catch(function (err) {
+    
                 var name = err && err.name ? err.name : '';
     
-                if (name === 'AbortError' || name === 'NotAllowedError') {
+                if (name === 'AbortError' ||
+                    name === 'NotAllowedError') {
                     return;
                 }
     
@@ -11003,7 +11319,158 @@ function moveInPlayQueue(itemId, itemType, direction) {
             });
         }
     }
+
+    function openPlayerSourcesPanel() {
     
+        var P = ensurePlayer();
+        var NP = SN.NowPlaying;
+        var prev = document.activeElement;
+    
+        if (!NP || !NP.item) return;
+
+        HPOP.open({
+            title: 'Sources',
+            className: 'hpop-player-sources',
+    
+            body: function (body) {
+    
+                var sources = getPlayableSources(NP.item);
+                var list = document.createElement('div');
+                var rows = [];
+                var i;
+    
+                list.className = 'player-source-list';
+    
+                if (!sources.length) {
+                    var empty = document.createElement('div');
+                    empty.className = 'player-source-empty';
+                    empty.innerHTML = 'No sources available';
+                    list.appendChild(empty);
+                    body.appendChild(list);
+                    return;
+                }
+    
+                function getSourceLabel(src, index) {
+    
+                    var label = '';
+                    var url = src.url || '';
+                    var match;
+    
+                    if (src.owner && typeof src.owner === 'object') {
+                        label = src.owner.name || '';
+                    }
+    
+                    if (!label) {
+                        label = src.name || src.label || src.title || '';
+                    }
+    
+                    if (!label && url) {
+                        match = url.match(/^https?:\/\/([^\/:]+)/i);
+    
+                        if (match && match[1]) {
+                            label = match[1];
+                        }
+                    }
+    
+                    return label || ('Source ' + (index + 1));
+                }
+    
+                function getBitLabel(src) {
+    
+                    var bit = sourceBit(src);
+                    var isVideo = NP.player === 'video';
+    
+                    if (!bit) return '—';
+    
+                    if (isVideo && bit >= 240) {
+                        return bit + 'p';
+                    }
+    
+                    return bit + 'k';
+                }
+    
+                function updateActiveRow(activeIndex) {
+    
+                    var j;
+    
+                    for (j = 0; j < rows.length; j++) {
+    
+                        if (j === activeIndex) {
+                            rows[j].className = 'player-source-row active';
+                        } else {
+                            rows[j].className = 'player-source-row focusable';
+                        }
+                    }
+                }
+    
+                var currentIndex = typeof NP.sourceIndex === 'number'
+                    ? NP.sourceIndex
+                    : -1;
+    
+                for (i = 0; i < sources.length; i++) {
+    
+                    (function (index) {
+    
+                        var src = sources[index];
+                        var row = document.createElement('div');
+                        var number = document.createElement('div');
+                        var name = document.createElement('div');
+                        var quality = document.createElement('div');
+    
+                        row.className = 'player-source-row focusable';
+    
+                        number.className = 'player-source-number';
+                        number.innerHTML = String(index + 1);
+    
+                        name.className = 'player-source-name';
+                        name.innerHTML = getSourceLabel(src, index);
+    
+                        quality.className = 'player-source-quality';
+                        quality.innerHTML = getBitLabel(src);
+    
+                        row.appendChild(number);
+                        row.appendChild(name);
+                        row.appendChild(quality);
+    
+                        if (index === currentIndex) {
+                            row.className = 'player-source-row active';
+                        }
+    
+                        row.addEventListener('click', function () {
+    
+                            if (index === NP.sourceIndex) return;
+    
+                            PlayMediaSourceAt(index, {
+                                preserveTime: true
+                            });
+    
+                            updateActiveRow(index);
+                        });
+    
+                        rows.push(row);
+                        list.appendChild(row);
+    
+                    })(i);
+                }
+    
+                body.appendChild(list);
+            },
+    
+            onClose: function () {
+    
+                if (typeof showPlayerBox === 'function') {
+                    showPlayerBox();
+                }
+    
+                if (prev && prev.focus) {
+                    try {
+                        prev.focus();
+                    } catch (e) {}
+                }
+            }
+        });
+    }
+
     function PlayPreferredSource() {
         var NP = SN.NowPlaying;
         var sources;
@@ -11117,8 +11584,13 @@ function moveInPlayQueue(itemId, itemType, direction) {
     }
     
     function setPlayQueue(list, startId, defaultType) {
-    
+
         var P = ensurePlayer();
+    
+        // ابتدا درخواست‌های صف قبلی را باطل کن.
+        // این کار باید حتی برای صف خالی هم انجام شود.
+        onQueueReplaced();
+    
         var rows = normalizeQueueRows(list, defaultType);
     
         // فقط آیتم‌های قابل پخش
@@ -11134,24 +11606,25 @@ function moveInPlayQueue(itemId, itemType, direction) {
     
         rows = playableRows;
     
-        // جایگزینی صف
+        // جایگزینی کامل صف
         P.queue = rows;
     
         // تعیین آیتم شروع
         var idx = 0;
     
         if (startId != null) {
-
+    
             var found = false;
+    
             var startItem = (typeof startId === "object")
                 ? startId
                 : null;
-        
+    
             var startValue = startItem ? startItem.id : startId;
             var startType = startItem ? startItem.type : null;
-        
+    
             for (i = 0; i < rows.length; i++) {
-        
+    
                 if (
                     String(rows[i].id) === String(startValue) &&
                     (!startType || rows[i].type === startType)
@@ -11161,24 +11634,29 @@ function moveInPlayQueue(itemId, itemType, direction) {
                     break;
                 }
             }
-        
+    
             if (!found) {
                 log("setPlayQueue: start item not found, fallback to 0:", startId);
             }
         }
     
         P.queueIndex = rows.length ? idx : -1;
+    
         CRQT();
     
-        // صف خالی است
+        // اگر صف جدید خالی است، پخش قبلی را هم متوقف کن.
         if (P.queueIndex < 0) {
+            log("setPlayQueue: empty queue, stop current playback");
+    
+            stopPlaybackForEmptyQueue();
+    
             return rows;
         }
     
         var row = rows[P.queueIndex];
         var current = SN.NowPlaying;
     
-        // بررسی اینکه همین آیتم در حال پخش است یا خیر
+        // بررسی اینکه همین آیتم در همان موقعیت در حال پخش است یا خیر
         var already = !!(
             current &&
             String(current.id) === String(row.id) &&
@@ -11187,15 +11665,21 @@ function moveInPlayQueue(itemId, itemType, direction) {
         );
     
         if (already) {
+    
+            // نسل پخش فعلی را با نسل جدید هماهنگ کن.
+            current.playGen = P.playGen;
+    
             log("setPlayQueue: same item, toggle play/pause:", row.id);
-            if (current.player === 'video') { OpenMainPlayer(); }
+    
+            if (current.player === 'video') {
+                OpenMainPlayer();
+            }
+    
             TogglePlayPause();
+    
             return rows;
         }
-        
-        // ریست حافظه Shuffle
-        onQueueReplaced();
-        
+    
         // شروع پخش از موقعیت انتخاب‌شده
         playQueueAt(P.queueIndex);
     
@@ -11547,9 +12031,9 @@ function moveInPlayQueue(itemId, itemType, direction) {
         var next;
     
         if (current === 'off') {
-            next = 'all';
-        } else if (current === 'all') {
             next = 'one';
+        } else if (current === 'one') {
+            next = 'all';
         } else {
             next = 'off';
         }
@@ -11563,7 +12047,7 @@ function moveInPlayQueue(itemId, itemType, direction) {
     
         UpdateRepeatButton();
     }
-    
+        
     function UpdateRepeatButton() {
         var buttons = getAllByClass("btn-repeat");
     
@@ -11733,7 +12217,6 @@ function moveInPlayQueue(itemId, itemType, direction) {
     // click listeners) are moved into the popup on open and moved back on close.
     // #modal itself stays in the HTML (hidden) as the storage for those nodes.
     function handleShowSettingModal(q){
-        if (HPOP.isOpen()) { HPOP.close(); return; }
         var src = document.getElementById("modal-content");
         if (!src) { return; }
         var prev = document.activeElement || null;
@@ -12142,6 +12625,11 @@ function moveInPlayQueue(itemId, itemType, direction) {
           return mins + ":" + secs;
         }
     }
+
+    /* Expose player popup actions to inline HTML handlers */
+    window.handleShowSettingModal = handleShowSettingModal;
+    window.openPlayerQueuePanel = openPlayerQueuePanel;
+    window.openPlayerSourcesPanel = openPlayerSourcesPanel;
 
 }();  
 </script>
