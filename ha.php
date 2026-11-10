@@ -14064,7 +14064,46 @@ const PROFILE_KEY = 'ha_profile';
     }
     
     function onQueueReplaced() {
+        const P = ensurePlayer();
+        P.playGen++;
+        setPlayerWaiting(false);
+        P.skipAttempts = 0;
         resetShuffleMemory();
+        return P.playGen;
+    }
+    
+    function stopPlaybackForEmptyQueue() {
+        const P = ensurePlayer();
+    
+        // باطل کردن درخواست‌های بارگذاری و پخش قبلی
+        P.playGen++;
+    
+        const media = GetActiveMediaElement();
+    
+        // توقف و آزادسازی منبع فعلی
+        if (media) {
+            try {
+                media.pause();
+            } catch (e) {}
+    
+            try {
+                media.removeAttribute('src');
+                media.load();
+            } catch (e) {}
+        }
+    
+        // پاک‌سازی وضعیت پخش
+        P.nowPlaying = null;
+        P.queueIndex = -1;
+        P.skipAttempts = 0;
+        P._lastHistoryKey = null;
+    
+        // پاک‌سازی وضعیت انتظار
+        setPlayerWaiting(false);
+    
+        // به‌روزرسانی رابط کاربری
+        UpdateAllPlayButtons();
+        CRQT();
     }
     
     function markPlayed(row) {
@@ -14115,46 +14154,104 @@ const PROFILE_KEY = 'ha_profile';
     }
 
     async function setPlayQueue(list, startId, defaultType) {
+    
         const P = ensurePlayer();
+    
+        // قبل از جایگزینی صف، درخواست‌های قبلی را باطل کن.
+        // این مرحله حتی برای صف خالی نیز ضروری است.
+        onQueueReplaced();
+    
         let rows = normalizeQueueRows(list, defaultType);
-        // فقط تایپ‌های قابل پخش
+    
+        // فقط آیتم‌های قابل پخش
         const beforeFilter = rows.length;
-        rows = rows.filter((r) => PLAYABLE_TYPES.indexOf(r.type || 'song') !== -1);
+    
+        rows = rows.filter(
+            (r) => PLAYABLE_TYPES.indexOf(r.type || 'song') !== -1
+        );
+    
         if (rows.length !== beforeFilter) {
-            console.log('[HA][setPlayQueue] filtered non-playable', { before: beforeFilter, after: rows.length });
+            console.log('[HA][setPlayQueue] filtered non-playable', {
+                before: beforeFilter,
+                after: rows.length
+            });
         }
-        // position را بعد از فیلتر دوباره ببند
-        rows.forEach((r, i) => { r.position = i; });
+    
+        // بازسازی position بعد از فیلتر
+        rows.forEach((r, i) => {
+            r.position = i;
+        });
+    
+        // جایگزینی صف
         P.queue = rows;
     
+        // تعیین آیتم شروع
         let idx = 0;
+    
         if (startId != null) {
-            const found = rows.findIndex((r) => Number(r.id) === Number(startId));
-            if (found >= 0) idx = found;
-            else console.log('[HA][setPlayQueue] startId not found, fallback 0', { startId });
+    
+            const found = rows.findIndex(
+                (r) => Number(r.id) === Number(startId)
+            );
+    
+            if (found >= 0) {
+                idx = found;
+            } else {
+                console.log(
+                    '[HA][setPlayQueue] startId not found, fallback 0',
+                    { startId }
+                );
+            }
         }
+    
         P.queueIndex = rows.length ? idx : -1;
-        onQueueReplaced();
+    
         CRQT();
     
-        if (P.queueIndex < 0) return rows;
+        // صف خالی: پخش قبلی هم باید متوقف شود.
+        if (P.queueIndex < 0) {
     
-        const row = rows[P.queueIndex];
-        const np = P.nowPlaying;
-        const already =
-            np &&
-            Number(np.id) === Number(row.id) &&
-            np.type === row.type &&
-            Number(np.index) === Number(P.queueIndex);
+            console.log(
+                '[HA][setPlayQueue] empty queue, stop current playback'
+            );
     
-        // همان آیتم: به‌جای هیچ‌کار، toggle play/pause
-        if (already) {
-            console.log('[HA][setPlayQueue] same item → TogglePlayPause', { id: row.id, type: row.type });
-            TogglePlayPause();
+            stopPlaybackForEmptyQueue();
+    
             return rows;
         }
     
+        const row = rows[P.queueIndex];
+        const np = P.nowPlaying;
+    
+        // بررسی اینکه همان آیتم در همان موقعیت در حال پخش است
+        const already = !!(
+            np &&
+            Number(np.id) === Number(row.id) &&
+            np.type === row.type &&
+            Number(np.index) === Number(P.queueIndex)
+        );
+    
+        if (already) {
+    
+            // هماهنگ کردن نسل آیتم جاری با نسل جدید
+            np.playGen = P.playGen;
+    
+            console.log(
+                '[HA][setPlayQueue] same item → TogglePlayPause',
+                {
+                    id: row.id,
+                    type: row.type
+                }
+            );
+    
+            TogglePlayPause();
+    
+            return rows;
+        }
+    
+        // شروع پخش آیتم انتخاب‌شده
         await playQueueAt(P.queueIndex);
+    2/public_html/ha.php
         return rows;
     }
     
@@ -14169,49 +14266,193 @@ const PROFILE_KEY = 'ha_profile';
     
     function removeFromPlayQueue(itemId, itemType) {
         const P = ensurePlayer();
+    
         if (!P.queue.length) return false;
+    
         const type = itemType || 'song';
-        const before = P.queue.length;
+    
+        // اندیس آیتمی که قرار است حذف شود
         const wasIndex = P.queue.findIndex(
-            (r) => Number(r.id) === Number(itemId) && r.type === type
+            (r) => Number(r.id) === Number(itemId) &&
+                   r.type === type
         );
-        P.queue = P.queue.filter(
-            (r) => !(Number(r.id) === Number(itemId) && r.type === type)
+    
+        if (wasIndex < 0) return false;
+    
+        // آیتم هدف فعلی صف را قبل از تغییر نگه می‌داریم.
+        // ممکن است پخش آن هنوز در مرحله دریافت اطلاعات باشد.
+        const oldQueueIndex = P.queueIndex;
+        const targetRow = P.queue[oldQueueIndex] || null;
+        const removedRow = P.queue[wasIndex];
+    
+        // آیا درخواست بارگذاری آیتم هدف هنوز در حال اجراست؟
+        const hadPendingLoad = !!(
+            P.waiting &&
+            (!P.nowPlaying || P.nowPlaying.playGen !== P.playGen)
         );
-        if (P.queue.length === before) return false;
-        P.queue.forEach((r, i) => { r.position = i; });
-        if (wasIndex >= 0) {
-            if (P.queueIndex === wasIndex) {
-                P.queueIndex = Math.min(wasIndex, P.queue.length - 1);
-            } else if (P.queueIndex > wasIndex) {
-                P.queueIndex -= 1;
-            }
+    
+        // آیا آیتم حذف‌شده همان آیتم هدف صف است؟
+        const removedTarget = targetRow === removedRow;
+    
+        // حذف آیتم
+        P.queue.splice(wasIndex, 1);
+    
+        // بازسازی position
+        P.queue.forEach((r, i) => {
+            r.position = i;
+        });
+    
+        // حذف از حافظه Shuffle
+        delete P.playedInShuffle[queueItemKey(removedRow)];
+    
+        // اگر صف خالی شد، پخش را کاملاً متوقف کن.
+        if (!P.queue.length) {
+            stopPlaybackForEmptyQueue();
+            return true;
         }
-        if (!P.queue.length) P.queueIndex = -1;
+    
+        // پیدا کردن موقعیت جدید آیتم هدف قبلی
+        let nextIndex = -1;
+    
+        if (targetRow && !removedTarget) {
+            nextIndex = P.queue.findIndex(
+                (r) => r === targetRow
+            );
+        }
+    
+        // اگر آیتم هدف جاری حذف شده، آیتم بعدی در همان موقعیت
+        // انتخاب می‌شود؛ اگر آخرین آیتم بوده، آیتم قبلی انتخاب می‌شود.
+        if (removedTarget || nextIndex < 0) {
+            nextIndex = Math.min(
+                Math.max(oldQueueIndex, 0),
+                P.queue.length - 1
+            );
+        }
+    
+        P.queueIndex = nextIndex;
+    
+        // اگر آیتم جاری حذف نشده، اندیس metadata را همگام کن.
+        if (
+            !removedTarget &&
+            targetRow &&
+            P.nowPlaying &&
+            Number(P.nowPlaying.id) === Number(targetRow.id) &&
+            P.nowPlaying.type === targetRow.type
+        ) {
+            P.nowPlaying.index = nextIndex;
+        }
+    
         CRQT();
+    
+        // حذف آیتم جاری:
+        // پخش قبلی را متوقف کن و آیتم جایگزین را شروع کن.
+        if (removedTarget) {
+            const media = GetActiveMediaElement();
+    
+            if (media) {
+                try {
+                    media.pause();
+                } catch (e) {}
+            }
+    
+            P._lastHistoryKey = null;
+            P.skipAttempts = 0;
+    
+            playQueueAt(nextIndex);
+    
+            return true;
+        }
+    
+        // اگر درخواست بارگذاری در جریان بوده، چون موقعیت صف
+        // تغییر کرده است، درخواست قبلی نباید ادامه پیدا کند.
+        if (hadPendingLoad) {
+            playQueueAt(nextIndex);
+        }
+    
         return true;
     }
     
     function moveInPlayQueue(itemId, itemType, dir) {
         const P = ensurePlayer();
+    
         if (!P.queue.length) return false;
+    
         const type = itemType || 'song';
+    
+        // موقعیت آیتمی که کاربر می‌خواهد جابه‌جا کند
         const idx = P.queue.findIndex(
-            (r) => Number(r.id) === Number(itemId) && r.type === type
+            (r) => Number(r.id) === Number(itemId) &&
+                   r.type === type
         );
+    
         if (idx < 0) return false;
-        const j = idx + dir;
-        if (j < 0 || j >= P.queue.length) return false;
-        const cur = P.queueIndex;
+    
+        const direction = Number(dir);
+    
+        if (direction !== -1 && direction !== 1) {
+            return false;
+        }
+    
+        const j = idx + direction;
+    
+        // جلوگیری از خروج از محدوده صف
+        if (j < 0 || j >= P.queue.length) {
+            return false;
+        }
+    
+        // هدف فعلی صف را قبل از جابه‌جایی نگه می‌داریم.
+        const targetRow = P.queue[P.queueIndex] || null;
+    
+        // آیا بارگذاری هدف فعلی هنوز تمام نشده؟
+        const hadPendingLoad = !!(
+            P.waiting &&
+            (!P.nowPlaying || P.nowPlaying.playGen !== P.playGen)
+        );
+    
+        // جابه‌جایی دو آیتم
         const tmp = P.queue[idx];
+    
         P.queue[idx] = P.queue[j];
         P.queue[j] = tmp;
-        P.queue.forEach((r, i) => { r.position = i; });
-        if (cur === idx) P.queueIndex = j;
-        else if (cur === j) P.queueIndex = idx;
+    
+        // بازسازی position
+        P.queue.forEach((r, i) => {
+            r.position = i;
+        });
+    
+        // پیدا کردن موقعیت جدید آیتم هدف صف
+        let nextIndex = -1;
+    
+        if (targetRow) {
+            nextIndex = P.queue.findIndex(
+                (r) => r === targetRow
+            );
+        }
+    
+        if (nextIndex >= 0) {
+            P.queueIndex = nextIndex;
+    
+            // همگام‌سازی metadata آیتم جاری
+            if (
+                P.nowPlaying &&
+                Number(P.nowPlaying.id) === Number(targetRow.id) &&
+                P.nowPlaying.type === targetRow.type
+            ) {
+                P.nowPlaying.index = nextIndex;
+            }
+        }
+    
         CRQT();
+    
+        // اگر درخواست قبلی هنوز در حال بارگذاری است،
+        // آن را با اندیس جدید دوباره اجرا کن.
+        if (hadPendingLoad && nextIndex >= 0) {
+            playQueueAt(nextIndex);
+        }
+    
         return true;
     }
+
     
     /**
      * رندر مشترک صف پخش
@@ -15351,8 +15592,16 @@ const PROFILE_KEY = 'ha_profile';
     
         const src = sources[index];
         const gen = P.playGen;
+        const nowPlaying = P.nowPlaying;
+        
         const bit = sourceBit(src);
         const srcName = src.name || src.label || src.title || (src.id != null ? ('id:' + src.id) : '');
+        
+        // شناسه مستقل برای هر بار تلاش پخش یک سورس
+        P._sourceAttemptSeq = (P._sourceAttemptSeq || 0) + 1;
+        
+        const attemptId = P._sourceAttemptSeq;
+        nowPlaying._sourceAttemptId = attemptId;
     
         // تایم فعلی را قبل از عوض شدن src بگیر
         let resumeTime = 0;
@@ -15372,6 +15621,71 @@ const PROFILE_KEY = 'ha_profile';
         P.nowPlaying.isBuffering = true;
         P.nowPlaying.isPlaying = false;
         P.nowPlaying._resumeTime = resumeTime;
+        
+        // حذف Listener خطای تلاش قبلی روی همین عنصر مدیا
+        if (media._haSourceErrorHandler) {
+            media.removeEventListener(
+                'error',
+                media._haSourceErrorHandler
+            );
+        
+            media._haSourceErrorHandler = null;
+        }
+        
+        // Listener اختصاصی همین سورس و همین تلاش پخش
+        const onSourceError = () => {
+        
+            const currentP = ensurePlayer();
+            const currentNP = currentP.nowPlaying;
+        
+            // اگر عنصر مدیا، آهنگ، نسل پخش یا تلاش سورس عوض شده،
+            // این خطا متعلق به وضعیت فعلی نیست.
+            if (
+                GetActiveMediaElement() !== media ||
+                currentP.playGen !== gen ||
+                currentNP !== nowPlaying ||
+                currentNP._sourceAttemptId !== attemptId ||
+                currentNP.sourceIndex !== index
+            ) {
+                console.log('[HA][source:error] stale error ignored', {
+                    sourceIndex: index,
+                    attemptId: attemptId,
+                    currentAttemptId: currentNP
+                        ? currentNP._sourceAttemptId
+                        : null,
+                    gen: gen,
+                    currentGen: currentP.playGen
+                });
+        
+                return;
+            }
+        
+            const mediaErr = media.error;
+        
+            console.warn('[HA][source:error]', {
+                sourceIndex: index,
+                attemptId: attemptId,
+                bit: bit,
+                name: srcName || null,
+                url: String(src.url || '').slice(0, 80),
+                mediaErrorCode: mediaErr ? mediaErr.code : null,
+                mediaErrorMessage: mediaErr ? mediaErr.message : null,
+                id: nowPlaying.id,
+                type: nowPlaying.type,
+                gen: gen
+            });
+        
+            setPlayerWaiting(true);
+            nowPlaying.isBuffering = true;
+        
+            UpdateAllPlayButtons();
+            setArtSpinning(false);
+        
+            handleSourceFailure(index);
+        };
+        
+        media._haSourceErrorHandler = onSourceError;
+        media.addEventListener('error', onSourceError);
     
         UpdateAllPlayButtons();
     
@@ -15396,18 +15710,54 @@ const PROFILE_KEY = 'ha_profile';
         // listener یک‌بار برای seek بعد از metadata
         const onMeta = () => {
             media.removeEventListener('loadedmetadata', onMeta);
-            if (gen !== P.playGen) return;
-            const rt = P.nowPlaying && P.nowPlaying._resumeTime;
-            if (rt > 0 && Number.isFinite(media.duration) && media.duration > 0) {
-                const target = Math.min(rt, Math.max(0, media.duration - 0.35));
+        
+            const currentP = ensurePlayer();
+            const currentNP = currentP.nowPlaying;
+        
+            if (
+                currentP.playGen !== gen ||
+                currentNP !== nowPlaying ||
+                currentNP._sourceAttemptId !== attemptId ||
+                currentNP.sourceIndex !== index
+            ) {
+                console.log('[HA][loadedmetadata] stale event ignored', {
+                    gen: gen,
+                    currentGen: currentP.playGen,
+                    attemptId: attemptId
+                });
+        
+                return;
+            }
+        
+            const rt = nowPlaying._resumeTime;
+        
+            if (
+                rt > 0 &&
+                Number.isFinite(media.duration) &&
+                media.duration > 0
+            ) {
+                const target = Math.min(
+                    rt,
+                    Math.max(0, media.duration - 0.35)
+                );
+        
                 try {
                     media.currentTime = target;
-                    console.log('[HA][PlayMediaSourceAt] resumed at', target);
+        
+                    console.log(
+                        '[HA][PlayMediaSourceAt] resumed at',
+                        target
+                    );
+        
                 } catch (e) {
-                    console.warn('[HA][PlayMediaSourceAt] resume seek failed', e);
+                    console.warn(
+                        '[HA][PlayMediaSourceAt] resume seek failed',
+                        e
+                    );
                 }
             }
-            if (P.nowPlaying) P.nowPlaying._resumeTime = 0;
+        
+            nowPlaying._resumeTime = 0;
         };
         media.addEventListener('loadedmetadata', onMeta);
     
@@ -15418,10 +15768,31 @@ const PROFILE_KEY = 'ha_profile';
         }
     
         if (!wantPlay) return;
-    
         const p = media.play();
         if (p !== undefined) {
             p.catch((err) => {
+        
+                const currentP = ensurePlayer();
+                const currentNP = currentP.nowPlaying;
+        
+                if (
+                    currentP.playGen !== gen ||
+                    currentNP !== nowPlaying ||
+                    currentNP._sourceAttemptId !== attemptId ||
+                    currentNP.sourceIndex !== index
+                ) {
+                    console.log('[HA][play().catch] stale attempt ignored', {
+                        sourceIndex: index,
+                        attemptId: attemptId,
+                        currentAttemptId: currentNP
+                            ? currentNP._sourceAttemptId
+                            : null,
+                        gen: gen,
+                        currentGen: currentP.playGen
+                    });
+        
+                    return;
+                }
                 // AbortError / NotAllowedError را به عنوان شکست سورس حساب نکن
                 const name = err && err.name ? err.name : '';
                 if (name === 'AbortError' || name === 'NotAllowedError') {
@@ -15555,12 +15926,16 @@ const PROFILE_KEY = 'ha_profile';
     async function playQueueAt(index) {
         const P = ensurePlayer();
         if (!P.queue.length || index < 0 || index >= P.queue.length) return;
-    
         const row = P.queue[index];
-        const gen = ++P.playGen; // توکن نسل برای جلوگیری از overwrite استیل
+        const gen = ++P.playGen;
+        P.queueIndex = index;
         setPlayerWaiting(true);
-    
-        console.log('[HA][playQueueAt] start', { index, id: row.id, type: row.type, gen });
+        console.log('[HA][playQueueAt] start', {
+            index,
+            id: row.id,
+            type: row.type,
+            gen
+        });
     
         const item = await ensureQueueItemLoaded(row);
         if (gen !== P.playGen) {
@@ -15569,11 +15944,26 @@ const PROFILE_KEY = 'ha_profile';
         }
         if (!item) {
             console.warn('[HA][playQueueAt] no item', row);
+        
             setPlayerWaiting(false);
+        
+            P.skipAttempts = (P.skipAttempts || 0) + 1;
+        
+            if (P.skipAttempts >= P.queue.length) {
+                P.skipAttempts = 0;
+        
+                console.warn(
+                    '[HA][playQueueAt] all queue items failed to load'
+                );
+        
+                UpdateAllPlayButtons();
+                return;
+            }
+        
             PlayNext(true);
             return;
         }
-    
+        
         const kind = playerKind(row.type);
         // سوییچ مدیا: pause + clear src روی عنصر غیرفعال
         if (kind === 'video') {
@@ -15588,7 +15978,6 @@ const PROFILE_KEY = 'ha_profile';
             }
         }
     
-        P.queueIndex = index;
         P._lastHistoryKey = null;
         P.nowPlaying = {
             id: row.id,
@@ -15686,7 +16075,7 @@ const PROFILE_KEY = 'ha_profile';
     
     function PlayNext(fromError) {
         const P = ensurePlayer();
-        if (!P.queue.length || !P.nowPlaying) return;
+        if (!P.queue.length || (!P.nowPlaying && !fromError)) {return;}
         if (!fromError && P.repeat === 'one') {
             const media = GetActiveMediaElement();
             if (media) {
@@ -15698,7 +16087,12 @@ const PROFILE_KEY = 'ha_profile';
         }
         const next = getNextQueueIndex(!!fromError);
         if (next < 0) {
-            P.nowPlaying.isPlaying = false;
+            if (P.nowPlaying) {
+                P.nowPlaying.isPlaying = false;
+                P.nowPlaying.isBuffering = false;
+            }
+        
+            setPlayerWaiting(false);
             UpdateAllPlayButtons();
             return;
         }
@@ -15921,37 +16315,6 @@ const PROFILE_KEY = 'ha_profile';
             }
             setArtSpinning(false);
             PlayNext(false);
-        });
-        media.addEventListener('error', () => {
-            if (GetActiveMediaElement() !== media) {
-                console.log('[HA][media:error] ignored on inactive element');
-                return;
-            }
-            const P = ensurePlayer();
-            if (!P.nowPlaying) return;
-            const idx = P.nowPlaying.sourceIndex || 0;
-            const sources = getPlayableSources(P.nowPlaying.item);
-            const src = sources[idx] || null;
-            const bit = src ? sourceBit(src) : (P.nowPlaying.currentBit || 0);
-            const srcName = src
-                ? (src.name || src.label || src.title || (src.id != null ? ('id:' + src.id) : ''))
-                : '';
-            const mediaErr = media.error;
-            console.warn('[HA][media:error]', {
-                sourceIndex: idx,
-                bit: bit,
-                name: srcName || null,
-                url: (src && src.url ? String(src.url) : (P.nowPlaying.currentUrl || '')).slice(0, 80),
-                mediaErrorCode: mediaErr ? mediaErr.code : null,
-                mediaErrorMessage: mediaErr ? mediaErr.message : null,
-                id: P.nowPlaying.id,
-                type: P.nowPlaying.type,
-                gen: P.playGen
-            });
-            setPlayerWaiting(true);
-            UpdateAllPlayButtons();
-            setArtSpinning(false);
-            handleSourceFailure(idx);
         });
         media.addEventListener('seeked', () => {
             if (GetActiveMediaElement() !== media) return;
