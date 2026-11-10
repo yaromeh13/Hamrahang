@@ -14412,18 +14412,20 @@ const PROFILE_KEY = 'ha_profile';
             return true;
         }
     
-        // اگر درخواست بارگذاری در جریان بوده، چون موقعیت صف
-        // تغییر کرده است، درخواست قبلی نباید ادامه پیدا کند.
-        if (hadPendingLoad) {
+        if (
+            hadPendingLoad &&
+            nextIndex !== oldQueueIndex
+        ) {
             playQueueAt(nextIndex);
         }
-    
+            
         return true;
     }
     
     function moveInPlayQueue(itemId, itemType, dir) {
+        const oldQueueIndex = P.queueIndex;
         const P = ensurePlayer();
-    
+
         if (!P.queue.length) return false;
     
         const type = itemType || 'song';
@@ -14492,10 +14494,12 @@ const PROFILE_KEY = 'ha_profile';
         }
     
         CRQT();
-    
-        // اگر درخواست قبلی هنوز در حال بارگذاری است،
-        // آن را با اندیس جدید دوباره اجرا کن.
-        if (hadPendingLoad && nextIndex >= 0) {
+        
+        if (
+            hadPendingLoad &&
+            nextIndex >= 0 &&
+            nextIndex !== oldQueueIndex
+        ) {
             playQueueAt(nextIndex);
         }
     
@@ -16446,7 +16450,7 @@ const PROFILE_KEY = 'ha_profile';
             if (GetActiveMediaElement() !== media) return;
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
-			if (media.ended) return;
+            if (media.ended) return;
             P.nowPlaying.isPlaying = false;
             if (!P.waiting) {P.nowPlaying.isBuffering = false;}
             UpdateAllPlayButtons();
