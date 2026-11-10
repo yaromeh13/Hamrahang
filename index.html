@@ -10667,101 +10667,105 @@ try {
     return true;
 }
 
-
-function removeQueueAt(index) {
-
-    var P = ensurePlayer();
-
-    if (index < 0 || index >= P.queue.length) {
-        return false;
-    }
-
-    var removed = P.queue[index];
-    var current = SN.NowPlaying;
-
-    var isCurrent = !!(
-        current &&
-        String(current.id) === String(removed.id) &&
-        current.type === removed.type
-    );
-
-    /* حذف دقیق همان ردیف */
-    P.queue.splice(index, 1);
-
-    /* اصلاح position تمام ردیف‌ها */
-    var i;
-    for (i = 0; i < P.queue.length; i++) {
-        P.queue[i].position = i;
-    }
-
-    if (isCurrent) {
-
-        /* آیتم جاری حذف شده؛ ابتدا پخش قبلی را متوقف کن */
-        var media = GetActiveMediaElement();
-
-        if (media) {
-            try {
-                media.pause();
-            } catch (e) {}
+    function removeQueueAt(index) {
+    
+        var P = ensurePlayer();
+    
+        if (index < 0 || index >= P.queue.length) {
+            return false;
         }
-
-        P.queueIndex = -1;
-
-        /* آیتم بعدی در همان موقعیت قبلی قرار می‌گیرد */
-        if (P.queue.length) {
-
-            var nextIndex = Math.min(index, P.queue.length - 1);
-
-            CRQT();
-            playQueueAt(nextIndex);
-
-        } else {
-
-            /* صف خالی شد؛ پلیر را کاملاً متوقف کن */
-            P.playGen++;
-            clearSourceErrorHandler(current);
-
+    
+        var removed = P.queue[index];
+        var current = SN.NowPlaying;
+    
+        /* آیتم جاری صف، حتی اگر هنوز در حال بارگذاری باشد */
+        var isCurrent = (index === P.queueIndex);
+    
+        /* آیا بارگذاری آیتم انتخاب‌شده هنوز تمام نشده؟ */
+        var hadPendingLoad = !!(
+            P.waiting &&
+            (!current || current.playGen !== P.playGen)
+        );
+    
+        P.queue.splice(index, 1);
+    
+        var i;
+        for (i = 0; i < P.queue.length; i++) {
+            P.queue[i].position = i;
+        }
+    
+        if (isCurrent) {
+    
+            var media = GetActiveMediaElement();
+    
             if (media) {
                 try {
-                    media.removeAttribute("src");
-                    media.load();
+                    media.pause();
                 } catch (e) {}
             }
-
-            SN.NowPlaying = null;
+    
             P.queueIndex = -1;
-            P.skipAttempts = 0;
-
-            setPlayerWaiting(false);
-
-            UpdatePlayButtons();
-            UpdatePlaylistRowIcons();
-            UpdateMiniPlayerSpin();
-
+    
+            if (P.queue.length) {
+    
+                var nextIndex = Math.min(index, P.queue.length - 1);
+    
+                CRQT();
+                playQueueAt(nextIndex);
+    
+            } else {
+    
+                /* صف خالی شد؛ درخواست قبلی را باطل کن */
+                P.playGen++;
+                clearSourceErrorHandler(current);
+                cancelSourceStallWatch();
+    
+                if (media) {
+                    try {
+                        media.removeAttribute("src");
+                        media.load();
+                    } catch (e) {}
+                }
+    
+                SN.NowPlaying = null;
+                P.queueIndex = -1;
+                P.skipAttempts = 0;
+                P._lastHistoryKey = null;
+    
+                setPlayerWaiting(false);
+    
+                UpdatePlayButtons();
+                UpdatePlaylistRowIcons();
+                UpdateMiniPlayerSpin();
+    
+                CRQT();
+            }
+    
+        } else {
+    
+            /* حذف آیتم قبل از موقعیت انتخاب‌شده */
+            if (P.queueIndex > index) {
+                P.queueIndex--;
+    
+                if (!hadPendingLoad && SN.NowPlaying) {
+                    SN.NowPlaying.index = P.queueIndex;
+                }
+            }
+    
+            if (!P.queue.length) {
+                P.queueIndex = -1;
+            }
+    
             CRQT();
-        }
-
-    } else {
-
-        /* حذف آیتمی که قبل از آیتم جاری قرار داشته */
-        if (P.queueIndex > index) {
-            P.queueIndex--;
-
-            if (SN.NowPlaying) {
-                SN.NowPlaying.index = P.queueIndex;
+    
+            /* اگر بارگذاری در جریان است، با اندیس جدید تکرار شود */
+            if (hadPendingLoad && P.queueIndex >= 0) {
+                playQueueAt(P.queueIndex);
             }
         }
-
-        if (!P.queue.length) {
-            P.queueIndex = -1;
-        }
-
-        CRQT();
+    
+        return true;
     }
-
-    return true;
-}
-
 
 function removeFromPlayQueue(itemId, itemType) {
 
@@ -10783,45 +10787,78 @@ function removeFromPlayQueue(itemId, itemType) {
 }
 
 
-function moveQueueAt(index, direction) {
 
-    var P = ensurePlayer();
-    var target = index + direction;
-
-    if (
-        index < 0 ||
-        index >= P.queue.length ||
-        target < 0 ||
-        target >= P.queue.length
-    ) {
-        return false;
+    function moveQueueAt(index, direction) {
+    
+        var P = ensurePlayer();
+        var target = index + direction;
+    
+        if (
+            index < 0 ||
+            index >= P.queue.length ||
+            target < 0 ||
+            target >= P.queue.length
+        ) {
+            return false;
+        }
+    
+        var oldQueueIndex = P.queueIndex;
+        var targetRow = P.queue[oldQueueIndex] || null;
+        var current = SN.NowPlaying;
+    
+        /* آیا بارگذاری آیتم انتخاب‌شده هنوز تمام نشده؟ */
+        var hadPendingLoad = !!(
+            P.waiting &&
+            (!current || current.playGen !== P.playGen)
+        );
+    
+        /* جابه‌جایی دو آیتم */
+        var temp = P.queue[index];
+    
+        P.queue[index] = P.queue[target];
+        P.queue[target] = temp;
+    
+        /* اصلاح position */
+        var i;
+    
+        for (i = 0; i < P.queue.length; i++) {
+            P.queue[i].position = i;
+        }
+    
+        /* پیدا کردن موقعیت جدید آیتم انتخاب‌شده */
+        var nextIndex = -1;
+    
+        if (targetRow) {
+            for (i = 0; i < P.queue.length; i++) {
+                if (P.queue[i] === targetRow) {
+                    nextIndex = i;
+                    break;
+                }
+            }
+        }
+    
+        if (nextIndex >= 0) {
+    
+            P.queueIndex = nextIndex;
+    
+            if (!hadPendingLoad && SN.NowPlaying) {
+                SN.NowPlaying.index = nextIndex;
+            }
+        }
+    
+        CRQT();
+    
+        /* اگر بارگذاری در جریان است و اندیس تغییر کرده، دوباره اجرا کن */
+        if (
+            hadPendingLoad &&
+            nextIndex >= 0 &&
+            nextIndex !== oldQueueIndex
+        ) {
+            playQueueAt(nextIndex);
+        }
+    
+        return true;
     }
-
-    var temp = P.queue[index];
-
-    P.queue[index] = P.queue[target];
-    P.queue[target] = temp;
-
-    /* اصلاح position */
-    var i;
-    for (i = 0; i < P.queue.length; i++) {
-        P.queue[i].position = i;
-    }
-
-    /* اگر آیتم جاری جابه‌جا شده، اندیس جاری را هم اصلاح کن */
-    if (P.queueIndex === index) {
-        P.queueIndex = target;
-    } else if (P.queueIndex === target) {
-        P.queueIndex = index;
-    }
-a2/public_html/tv/index.html
-    if (SN.NowPlaying && P.queueIndex >= 0) {
-        SN.NowPlaying.index = P.queueIndex;
-    }
-
-    CRQT();
-    return true;
-}
 
     function moveInPlayQueue(itemId, itemType, direction) {
     
