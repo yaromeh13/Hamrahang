@@ -14041,9 +14041,14 @@ const PROFILE_KEY = 'ha_profile';
     
     // ---- queue ----
     function normalizeQueueRows(list, defaultType) {
+    
         if (!Array.isArray(list) || !list.length) return [];
+    
+        const seen = {};
+    
         return list
             .map((row, i) => {
+    
                 if (row && typeof row === 'object' && row.id != null) {
                     return {
                         id: row.id,
@@ -14051,13 +14056,31 @@ const PROFILE_KEY = 'ha_profile';
                         position: row.position != null ? row.position : i
                     };
                 }
-                return { id: row, type: defaultType || 'song', position: i };
+    
+                return {
+                    id: row,
+                    type: defaultType || 'song',
+                    position: i
+                };
             })
             .filter((r) => PLAYABLE_TYPES.indexOf(r.type || 'song') !== -1)
             .sort((a, b) => a.position - b.position)
-            .map((r, i) => ({ id: r.id, type: r.type, position: i }));
-    }
+            .filter((r) => {
     
+                const key = queueItemKey(r);
+    
+                if (seen[key]) return false;
+    
+                seen[key] = true;
+                return true;
+            })
+            .map((r, i) => ({
+                id: r.id,
+                type: r.type,
+                position: i
+            }));
+    }
+
     function queueItemKey(row) {
         if (!row) return '';
         return String(row.type || 'song') + ':' + String(row.id);
