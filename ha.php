@@ -14351,8 +14351,30 @@ const PROFILE_KEY = 'ha_profile';
             r.position = i;
         });
     
-        // حذف از حافظه Shuffle
-        delete P.playedInShuffle[queueItemKey(removedRow)];
+        // پاک‌سازی حافظه Shuffle برای آیتم حذف‌شده
+        const removedKey = queueItemKey(removedRow);
+        
+        delete P.playedInShuffle[removedKey];
+        
+        const history = P.shuffleHistory || [];
+        
+        for (let h = history.length - 1; h >= 0; h--) {
+            if (history[h] === removedKey) {
+                history.splice(h, 1);
+        
+                if (h <= P.shuffleHistoryIndex) {
+                    P.shuffleHistoryIndex--;
+                }
+            }
+        }
+        
+        P.shuffleHistory = history;
+        
+        if (!history.length) {
+            P.shuffleHistoryIndex = -1;
+        } else if (P.shuffleHistoryIndex >= history.length) {
+            P.shuffleHistoryIndex = history.length - 1;
+        }
     
         // اگر صف خالی شد، پخش را کاملاً متوقف کن.
         if (!P.queue.length) {
@@ -14423,8 +14445,8 @@ const PROFILE_KEY = 'ha_profile';
     }
     
     function moveInPlayQueue(itemId, itemType, dir) {
-        const oldQueueIndex = P.queueIndex;
         const P = ensurePlayer();
+        const oldQueueIndex = P.queueIndex;
 
         if (!P.queue.length) return false;
     
