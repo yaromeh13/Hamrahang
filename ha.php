@@ -16013,11 +16013,19 @@ const PROFILE_KEY = 'ha_profile';
     
     function TogglePlayPause() {
         const P = ensurePlayer();
-        if (P.waiting) return;
         if (!P.nowPlaying) return;
         const media = GetActiveMediaElement();
         if (!media) return;
-        if (!media.paused) { media.pause(); return; }
+        if (!media.paused) {
+            setPlayerWaiting(false);
+            P.nowPlaying.isBuffering = false;
+            P.nowPlaying.isSeeking = false;
+            media.pause();
+            UpdateAllPlayButtons();
+            setArtSpinning(false);
+            return;
+        }
+        if (P.waiting) return;
         const hasSrc = !!(media.currentSrc || media.getAttribute('src'));
         if (!hasSrc) {
             PlayMediaSourceAt(P.nowPlaying.sourceIndex || 0);
@@ -16273,6 +16281,7 @@ const PROFILE_KEY = 'ha_profile';
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
             P.nowPlaying.isBuffering = false;
+            P.nowPlaying.isSeeking = false;
             P.skipAttempts = 0;
             showPlayerChrome();
             UpdateAllPlayButtons();
@@ -16296,6 +16305,7 @@ const PROFILE_KEY = 'ha_profile';
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
             P.nowPlaying.isBuffering = true;
+            setPlayerWaiting(true);
             setArtSpinning(false);
             UpdateAllPlayButtons();
         });
@@ -16304,7 +16314,7 @@ const PROFILE_KEY = 'ha_profile';
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
             P.nowPlaying.isPlaying = false;
-            P.nowPlaying.isBuffering = false;
+            if (!P.waiting) {P.nowPlaying.isBuffering = false;}
             UpdateAllPlayButtons();
             setArtSpinning(false);
         });
@@ -16320,16 +16330,27 @@ const PROFILE_KEY = 'ha_profile';
             if (GetActiveMediaElement() !== media) return;
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
-            P.nowPlaying.isBuffering = false;
+            P.nowPlaying.isSeeking = false;
+            if (media.readyState >= 3 || (media.paused && !P.waiting)) {
+                P.nowPlaying.isBuffering = false;setPlayerWaiting(false);
+            } else if (!media.paused) {P.nowPlaying.isBuffering = true;}
+            UpdateAllProgress();
             UpdateAllPlayButtons();
-            if (!media.paused) setArtSpinning(true);
+            setArtSpinning(
+                !media.paused &&
+                !P.waiting &&
+                !P.nowPlaying.isBuffering
+            );
         });
-        
         media.addEventListener('seeking', () => {
             if (GetActiveMediaElement() !== media) return;
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
-            P.nowPlaying.isBuffering = true;
+            P.nowPlaying.isSeeking = true;
+            if (!media.paused && media.readyState < 3) {
+                P.nowPlaying.isBuffering = true;
+                setPlayerWaiting(true);
+            }
             UpdateAllPlayButtons();
             setArtSpinning(false);
         });
@@ -16612,6 +16633,7 @@ const PROFILE_KEY = 'ha_profile';
                 document.querySelectorAll('.video-inline-seek, .form-range').forEach((el) => {
                     el._haSeeking = false;
                 });
+                UpdateAllProgress();
             };
             const applySeek = (ev) => {
                 const t = ev.target;
@@ -16634,9 +16656,11 @@ const PROFILE_KEY = 'ha_profile';
             document.addEventListener('pointerdown', beginSeek, true);
             document.addEventListener('touchstart', beginSeek, { capture: true, passive: true });
             document.addEventListener('mousedown', beginSeek, true);
-            document.addEventListener('pointerup', endSeek, true);
+            document.addEventListener('pointercancel', endSeek, true);
             document.addEventListener('touchend', endSeek, true);
             document.addEventListener('mouseup', endSeek, true);
+            document.addEventListener('touchcancel', endSeek, true);
+            document.addEventListener('pointerup', endSeek, true);
             document.addEventListener('input', applySeek);
             document.addEventListener('change', applySeek);
         }
