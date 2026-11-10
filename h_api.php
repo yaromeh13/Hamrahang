@@ -10787,6 +10787,4 @@ $stmt->execute();*/
         echo json_encode($search_obj);
         exit();
     }
-    
-   
 ?>
