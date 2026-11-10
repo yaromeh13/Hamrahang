@@ -10271,6 +10271,7 @@ try {
             var row = P.queue[P.queueIndex];
     
             SN.NowPlaying.isPlaying = true;
+            SN.NowPlaying.isSeeking = false;
             SN.NowPlaying.isBuffering = false;
     
             setPlayerWaiting(false);
@@ -10327,36 +10328,51 @@ try {
 
             if (GetActiveMediaElement() !== media) return;
             if (!SN.NowPlaying) return;
-
+        
+            var P = ensurePlayer();
+        
             SN.NowPlaying.isSeeking = false;
-
+        
             /*
-             * فقط وقتی داده کافی آماده است،
-             * Buffering را پاک کن.
+             * Seek تمام شده است؛ اما اگر پخش هنوز منتظر
+             * دریافت داده باشد، Waiting را حفظ کن.
              */
-            if (media.paused || media.readyState >= 3) {
-
+            if (
+                media.readyState >= 3 ||
+                (media.paused && !P.waiting)
+            ) {
                 SN.NowPlaying.isBuffering = false;
                 setPlayerWaiting(false);
+        
+            } else if (!media.paused) {
+        
+                SN.NowPlaying.isBuffering = true;
             }
-
+        
             UpdateMainProgressBar();
             UpdatePlayButtons();
             UpdateMiniPlayerSpin();
         });
 
         media.addEventListener('pause', function () {
-    
+
             if (GetActiveMediaElement() !== media) return;
             if (!SN.NowPlaying) return;
-    
+        
             if (media.ended) return;
-
-            setPlayerWaiting(false);
-    
+        
+            var P = ensurePlayer();
+        
             SN.NowPlaying.isPlaying = false;
-            SN.NowPlaying.isBuffering = false;
-    
+        
+            /*
+             * هنگام تعویض سورس ممکن است pause به‌صورت داخلی
+             * اتفاق بیفتد؛ Waiting آن عملیات نباید پاک شود.
+             */
+            if (!P.waiting) {
+                SN.NowPlaying.isBuffering = false;
+            }
+        
             UpdatePlayButtons();
             UpdatePlaylistRowIcons();
             UpdateMiniPlayerSpin();
@@ -11820,10 +11836,21 @@ a2/public_html/tv/index.html
         var media = GetActiveMediaElement();
     
         if (!media) return;
-    
-        // توقف باید حتی هنگام Buffering هم امکان‌پذیر باشد
         if (!media.paused) {
+        
+            setPlayerWaiting(false);
+        
+            if (SN.NowPlaying) {
+                SN.NowPlaying.isBuffering = false;
+                SN.NowPlaying.isSeeking = false;
+            }
+        
             media.pause();
+        
+            UpdatePlayButtons();
+            UpdatePlaylistRowIcons();
+            UpdateMiniPlayerSpin();
+        
             return;
         }
     
