@@ -10904,6 +10904,17 @@ a2/public_html/tv/index.html
             P.shuffleHistory = history;
             cursor = -1;
         }
+        
+        /* اصلاح نشانگر نامعتبر بدون حذف تاریخچه قبلی */
+        if (cursor < -1 || cursor >= history.length) {
+            cursor = history.length - 1;
+        }
+        
+        if (cursor === -1 && history.length > 0) {
+            cursor = history.length - 1;
+        }
+        
+        P.shuffleHistoryIndex = cursor;
     
         P.playedInShuffle[key] = true;
     
