@@ -11052,14 +11052,7 @@ function removeFromPlayQueue(itemId, itemType) {
     
             return next;
         }
-    
-        // حالت Shuffle
-        var currentRow = q[cur];
-    
-        if (currentRow) {
-            markPlayed(currentRow);
-        }
-        
+
         /* اگر از Previous برگشته‌ایم، ابتدا مسیر بعدی تاریخچه را ادامه بده */
         var history = P.shuffleHistory || [];
         var historyNext = P.shuffleHistoryIndex + 1;
