@@ -10426,6 +10426,8 @@ try {
             repeat: GetSetting('repeatMode') || 'off',
             shuffle: false,
             playedInShuffle: {},
+            shuffleHistory: [],
+            shuffleHistoryIndex: -1,
             skipAttempts: 0,
             playGen: 0,
             waiting: false
@@ -10445,6 +10447,14 @@ try {
     
         if (!P.playedInShuffle || typeof P.playedInShuffle !== 'object') {
             P.playedInShuffle = {};
+        }
+        
+        if (!isArray(P.shuffleHistory)) {
+            P.shuffleHistory = [];
+        }
+        
+        if (typeof P.shuffleHistoryIndex !== 'number') {
+            P.shuffleHistoryIndex = -1;
         }
     
         if (P.repeat !== 'off' && P.repeat !== 'one' && P.repeat !== 'all') {
@@ -10819,7 +10829,11 @@ a2/public_html/tv/index.html
     }
     
     function resetShuffleMemory() {
-        ensurePlayer().playedInShuffle = {};
+        var P = ensurePlayer();
+    
+        P.playedInShuffle = {};
+        P.shuffleHistory = [];
+        P.shuffleHistoryIndex = -1;
     }
     
     function onQueueReplaced() {
@@ -10875,10 +10889,51 @@ a2/public_html/tv/index.html
     }
     
     function markPlayed(row) {
-        if (!row) { return; }
+        if (!row) return;
     
         var P = ensurePlayer();
-        P.playedInShuffle[queueItemKey(row)] = true;
+    
+        if (!P.shuffle) return;
+    
+        var key = queueItemKey(row);
+        var history = P.shuffleHistory;
+        var cursor = P.shuffleHistoryIndex;
+    
+        if (!isArray(history)) {
+            history = [];
+            P.shuffleHistory = history;
+            cursor = -1;
+        }
+    
+        P.playedInShuffle[key] = true;
+    
+        /* همین آیتم در موقعیت فعلی تاریخچه است */
+        if (cursor >= 0 && history[cursor] === key) {
+            return;
+        }
+    
+        /* برگشت به آیتم قبلی */
+        if (cursor > 0 && history[cursor - 1] === key) {
+            P.shuffleHistoryIndex = cursor - 1;
+            return;
+        }
+    
+        /* حرکت رو به جلو در تاریخچه */
+        if (
+            cursor >= 0 &&
+            cursor + 1 < history.length &&
+            history[cursor + 1] === key
+        ) {
+            P.shuffleHistoryIndex = cursor + 1;
+            return;
+        }
+    
+        /* پخش یک آیتم جدید؛ تاریخچه آینده حذف شود */
+        history = history.slice(0, cursor + 1);
+        history.push(key);
+    
+        P.shuffleHistory = history;
+        P.shuffleHistoryIndex = history.length - 1;
     }
     
     function getNextQueueIndex(fromError) {
@@ -10911,6 +10966,21 @@ a2/public_html/tv/index.html
     
         if (currentRow) {
             markPlayed(currentRow);
+        }
+        
+        /* اگر از Previous برگشته‌ایم، ابتدا مسیر بعدی تاریخچه را ادامه بده */
+        var history = P.shuffleHistory || [];
+        var historyNext = P.shuffleHistoryIndex + 1;
+        
+        if (historyNext >= 0 && historyNext < history.length) {
+        
+            var nextKey = history[historyNext];
+        
+            for (i = 0; i < q.length; i++) {
+                if (queueItemKey(q[i]) === nextKey) {
+                    return i;
+                }
+            }
         }
     
         var remaining = [];
@@ -10977,23 +11047,19 @@ a2/public_html/tv/index.html
             return prev;
         }
     
-        // حالت Shuffle: انتخاب تصادفی از آهنگ‌های قبلاً پخش‌شده
-        var played = [];
-        var i;
-    
-        for (i = 0; i < q.length; i++) {
-    
-            if (i === cur) {
-                continue;
+        // Shuffle: برگشت به آیتم قبلی در تاریخچه واقعی پخش
+        var history = P.shuffleHistory || [];
+        var historyPrev = P.shuffleHistoryIndex - 1;
+        
+        if (historyPrev >= 0 && historyPrev < history.length) {
+        
+            var prevKey = history[historyPrev];
+        
+            for (var h = 0; h < q.length; h++) {
+                if (queueItemKey(q[h]) === prevKey) {
+                    return h;
+                }
             }
-    
-            if (P.playedInShuffle[queueItemKey(q[i])]) {
-                played.push(i);
-            }
-        }
-    
-        if (played.length) {
-            return played[Math.floor(Math.random() * played.length)];
         }
     
         // اگر آهنگ قبلی ثبت نشده بود، از ترتیب عادی استفاده کن
