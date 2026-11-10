@@ -16446,6 +16446,7 @@ const PROFILE_KEY = 'ha_profile';
             if (GetActiveMediaElement() !== media) return;
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
+			if (media.ended) return;
             P.nowPlaying.isPlaying = false;
             if (!P.waiting) {P.nowPlaying.isBuffering = false;}
             UpdateAllPlayButtons();
