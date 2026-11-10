@@ -16243,22 +16243,43 @@ const PROFILE_KEY = 'ha_profile';
     function PlayPrevious() {
         const P = ensurePlayer();
         if (!P.nowPlaying) return;
+    
         const media = GetActiveMediaElement();
-        if (media && media.currentTime > 3) {
+    
+        /* هنوز اطلاعات آهنگ انتخاب‌شده بارگذاری نشده است */
+        const isPendingLoad = !!(
+            P.waiting &&
+            P.nowPlaying.playGen !== P.playGen
+        );
+    
+        if (!isPendingLoad && media && media.currentTime > 3) {
             media.currentTime = 0;
             const p = media.play();
             if (p) p.catch(() => {});
             return;
         }
+    
         const prev = getPrevQueueIndex();
+    
         if (prev < 0) {
-            console.log('[HA][PlayPrevious] no previous', { queueIndex: P.queueIndex, repeat: P.repeat, shuffle: P.shuffle });
+            console.log('[HA][PlayPrevious] no previous', {
+                queueIndex: P.queueIndex,
+                repeat: P.repeat,
+                shuffle: P.shuffle
+            });
             return;
         }
-        console.log('[HA][PlayPrevious]', { from: P.queueIndex, to: prev, shuffle: !!P.shuffle, repeat: P.repeat });
+    
+        console.log('[HA][PlayPrevious]', {
+            from: P.queueIndex,
+            to: prev,
+            shuffle: !!P.shuffle,
+            repeat: P.repeat
+        });
+    
         playQueueAt(prev);
     }
-    
+
     function cycleRepeatMode() {
         const P = ensurePlayer();
         const order = ['off', 'one', 'all'];
