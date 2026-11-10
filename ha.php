@@ -16289,7 +16289,7 @@ const PROFILE_KEY = 'ha_profile';
         const P = ensurePlayer();
         P.shuffle = !P.shuffle;
         resetShuffleMemory();
-        if (P.shuffle && P.queue[P.queueIndex]) {markPlayed(P.queue[P.queueIndex]);}
+        if (P.shuffle && P.nowPlaying && P.nowPlaying.isPlaying) {markPlayed(P.nowPlaying);}
         UpdateRepeatShuffleUI();
         return P.shuffle;
     }
