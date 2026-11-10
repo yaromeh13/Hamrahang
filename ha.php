@@ -15593,6 +15593,7 @@ const PROFILE_KEY = 'ha_profile';
         const src = sources[index];
         const gen = P.playGen;
         const nowPlaying = P.nowPlaying;
+        cancelSourceStallWatch();
         
         const bit = sourceBit(src);
         const srcName = src.name || src.label || src.title || (src.id != null ? ('id:' + src.id) : '');
@@ -15848,6 +15849,7 @@ const PROFILE_KEY = 'ha_profile';
             return;
         }
         P.nowPlaying._sourceFailed = true;
+        cancelSourceStallWatch();
     
         const sources = getPlayableSources(P.nowPlaying.item);
         const failedSrc = sources[failedIndex] || null;
@@ -16017,6 +16019,7 @@ const PROFILE_KEY = 'ha_profile';
         const media = GetActiveMediaElement();
         if (!media) return;
         if (!media.paused) {
+            cancelSourceStallWatch();
             setPlayerWaiting(false);
             P.nowPlaying.isBuffering = false;
             P.nowPlaying.isSeeking = false;
@@ -16259,6 +16262,74 @@ const PROFILE_KEY = 'ha_profile';
         UpdateAllPlayButtons();
     }
     
+    function cancelSourceStallWatch() {
+        const P = ensurePlayer();
+    
+        if (P._stallWatchTimer) {
+            clearTimeout(P._stallWatchTimer);
+            P._stallWatchTimer = null;
+        }
+    
+        P._stallWatchAttemptId = null;
+    }
+    
+    function startSourceStallWatch(media) {
+        const P = ensurePlayer();
+        const NP = P.nowPlaying;
+    
+        if (!media || !NP || media.paused || media.ended) return;
+    
+        const gen = P.playGen;
+        const attemptId = NP._sourceAttemptId;
+        const sourceIndex = NP.sourceIndex;
+    
+        if (attemptId == null || sourceIndex == null) return;
+    
+        if (
+            P._stallWatchTimer &&
+            P._stallWatchAttemptId === attemptId
+        ) {
+            return;
+        }
+    
+        cancelSourceStallWatch();
+        P._stallWatchAttemptId = attemptId;
+    
+        P._stallWatchTimer = setTimeout(() => {
+            P._stallWatchTimer = null;
+    
+            if (P._stallWatchAttemptId !== attemptId) return;
+    
+            P._stallWatchAttemptId = null;
+    
+            if (
+                P.playGen !== gen ||
+                P.nowPlaying !== NP ||
+                NP._sourceAttemptId !== attemptId ||
+                NP.sourceIndex !== sourceIndex ||
+                GetActiveMediaElement() !== media
+            ) {
+                return;
+            }
+    
+            if (media.paused || media.ended) return;
+            if (media.readyState >= 3) return;
+    
+            console.warn('[HA][source-stall-timeout] trying next source', {
+                id: NP.id,
+                type: NP.type,
+                sourceIndex,
+                attemptId,
+                readyState: media.readyState,
+                networkState: media.networkState,
+                gen
+            });
+    
+            handleSourceFailure(sourceIndex);
+    
+        }, 30000);
+    }
+
     function bindMediaElement(media) {
         if (!media || media._haBound) return;
         media._haBound = true;
@@ -16275,6 +16346,7 @@ const PROFILE_KEY = 'ha_profile';
             if (GetActiveMediaElement() !== media) return;
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
+            cancelSourceStallWatch();
             P.nowPlaying.isBuffering = false;
             P.nowPlaying.isSeeking = false;
             P.skipAttempts = 0;
@@ -16297,12 +16369,22 @@ const PROFILE_KEY = 'ha_profile';
         });
         media.addEventListener('waiting', () => {
             if (GetActiveMediaElement() !== media) return;
+        
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
+        
             P.nowPlaying.isBuffering = true;
             setPlayerWaiting(true);
+        
+            startSourceStallWatch(media);
+        
             setArtSpinning(false);
             UpdateAllPlayButtons();
+        });
+        media.addEventListener('stalled', () => {
+            if (GetActiveMediaElement() !== media) return;
+        
+            startSourceStallWatch(media);
         });
         media.addEventListener('pause', () => {
             if (GetActiveMediaElement() !== media) return;
