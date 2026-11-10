@@ -16210,7 +16210,25 @@ const PROFILE_KEY = 'ha_profile';
     
         // Shuffle: برگشت به آیتم قبلی در تاریخچه واقعی پخش
         const history = P.shuffleHistory || [];
-        const historyPrev = P.shuffleHistoryIndex - 1;
+        const historyCurrent = P.shuffleHistoryIndex;
+        const currentRow = q[cur];
+        const currentKey = currentRow ? queueItemKey(currentRow) : '';
+        
+        /* اگر آیتم فعلی هنوز وارد تاریخچه نشده، آخرین آیتم پخش‌شده قبلی است */
+        if (
+            historyCurrent >= 0 &&
+            historyCurrent < history.length &&
+            history[historyCurrent] !== currentKey
+        ) {
+            const pendingPrevKey = history[historyCurrent];
+            const pendingPrevIndex = q.findIndex(
+                (row) => queueItemKey(row) === pendingPrevKey
+            );
+        
+            if (pendingPrevIndex >= 0) return pendingPrevIndex;
+        }
+        
+        const historyPrev = historyCurrent - 1;
         if (historyPrev >= 0 && historyPrev < history.length) {
             const prevKey = history[historyPrev];
             const prevIndex = q.findIndex((row) => queueItemKey(row) === prevKey);
