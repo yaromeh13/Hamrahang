@@ -14122,7 +14122,7 @@ const PROFILE_KEY = 'ha_profile';
     
         const key = queueItemKey(row);
         let history = P.shuffleHistory;
-        const cursor = P.shuffleHistoryIndex;
+        let cursor = P.shuffleHistoryIndex;
     
         if (!Array.isArray(history)) {
             history = [];
@@ -16401,6 +16401,7 @@ const PROFILE_KEY = 'ha_profile';
             if (GetActiveMediaElement() !== media) return;
             const P = ensurePlayer();
             if (!P.nowPlaying) return;
+            P._endedAttemptKey = null;
             cancelSourceStallWatch();
             P.nowPlaying.isBuffering = false;
             P.nowPlaying.isSeeking = false;
@@ -16450,14 +16451,6 @@ const PROFILE_KEY = 'ha_profile';
             UpdateAllPlayButtons();
             setArtSpinning(false);
         });
-        media.addEventListener('ended', () => {
-            if (GetActiveMediaElement() !== media) {
-                console.log('[HA][media:ended] ignored on inactive element');
-                return;
-            }
-            setArtSpinning(false);
-            PlayNext(false);
-        });
         media.addEventListener('seeked', () => {
             if (GetActiveMediaElement() !== media) return;
             const P = ensurePlayer();
@@ -16485,6 +16478,23 @@ const PROFILE_KEY = 'ha_profile';
             }
             UpdateAllPlayButtons();
             setArtSpinning(false);
+        });
+        media.addEventListener('ended', () => {
+            if (GetActiveMediaElement() !== media) {
+                console.log('[HA][media:ended] ignored on inactive element');
+                return;
+            }
+            const P = ensurePlayer();
+            const NP = P.nowPlaying;
+            if (!NP || !media.ended) return;
+            const endedKey = String(P.playGen) + ':' +
+                String(NP._sourceAttemptId || 0);
+            if (P._endedAttemptKey === endedKey) return;
+            P._endedAttemptKey = endedKey;
+            NP.isPlaying = false;
+            NP.isBuffering = false;
+            setArtSpinning(false);
+            PlayNext(false);
         });
     }
     
