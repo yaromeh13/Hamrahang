@@ -11141,7 +11141,26 @@ function removeFromPlayQueue(itemId, itemType) {
     
         // Shuffle: برگشت به آیتم قبلی در تاریخچه واقعی پخش
         var history = P.shuffleHistory || [];
-        var historyPrev = P.shuffleHistoryIndex - 1;
+        var historyCurrent = P.shuffleHistoryIndex;
+        var currentRow = q[cur];
+        var currentKey = currentRow ? queueItemKey(currentRow) : '';
+        
+        /* اگر آیتم فعلی هنوز وارد تاریخچه نشده، آخرین آیتم پخش‌شده قبلی است */
+        if (
+            historyCurrent >= 0 &&
+            historyCurrent < history.length &&
+            history[historyCurrent] !== currentKey
+        ) {
+            var pendingPrevKey = history[historyCurrent];
+        
+            for (var p = 0; p < q.length; p++) {
+                if (queueItemKey(q[p]) === pendingPrevKey) {
+                    return p;
+                }
+            }
+        }
+        
+        var historyPrev = historyCurrent - 1;
         
         if (historyPrev >= 0 && historyPrev < history.length) {
         
