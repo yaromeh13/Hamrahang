@@ -16249,16 +16249,11 @@ const PROFILE_KEY = 'ha_profile';
                 P._waitingTimer = null;
                 if (!P.waiting) return;
                 if (P.playGen !== genAtStart) return; // نسل عوض شده
-                console.warn('[HA][waiting-timeout] force clear after 20s', {
+                console.warn('[HA][waiting-timeout] playback is still waiting after 20s', {
                     gen: P.playGen,
                     id: P.nowPlaying && P.nowPlaying.id,
                     sourceIndex: P.nowPlaying && P.nowPlaying.sourceIndex
                 });
-                P.waiting = false;
-                if (P.nowPlaying) {
-                    P.nowPlaying.isBuffering = false;
-                }
-                UpdateAllPlayButtons();
             }, 20000);
         }
         UpdateAllPlayButtons();
