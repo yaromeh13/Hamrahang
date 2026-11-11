@@ -1239,6 +1239,11 @@ require_once __DIR__ . '/int/h_api.php';
     z-index: 9;
     pointer-events: none;
     box-sizing: border-box;
+    opacity: 1;
+    visibility: visible;
+    -webkit-transition: opacity 0.35s ease, visibility 0.35s ease;
+    -o-transition: opacity 0.35s ease, visibility 0.35s ease;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
 }
 #player .player-owner img {
     display: block;
@@ -1246,6 +1251,26 @@ require_once __DIR__ . '/int/h_api.php';
     height: 100%;
     object-fit: cover;
     border-radius: inherit;
+}
+
+/*
+ * Soft show/hide for player-box shell + owner thumb (CSS only fade).
+ * Global .vis-none is display:none — override so opacity can transition.
+ * Owner visible when controls are auto-hidden (.controls-hidden).
+ */
+#player-box.player-box {
+    opacity: 1;
+    visibility: visible;
+    -webkit-transition: opacity 0.35s ease, visibility 0.35s ease;
+    -o-transition: opacity 0.35s ease, visibility 0.35s ease;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+#player-box.player-box.vis-none,
+#player .player-owner.vis-none {
+    display: block !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .player-box {
@@ -8100,6 +8125,7 @@ if (!empty($_SESSION['loggedin'])) {
         // در صورت نیاز player-box را هم نشان بده
         const box = document.getElementById('player-box');
         if (box) box.classList.remove('vis-none');
+        try { syncPlayerOwnerVisibility(); } catch (e0) {}
         try { applyMediaStageSpin(!!GetSetting('rotatingHeader')); } catch (e) {}
         rehomeVideoToPlayer();
         
@@ -8130,6 +8156,7 @@ if (!empty($_SESSION['loggedin'])) {
         MCLN.classList.remove('vis-none');
         const box = document.getElementById('player-box');
         if (box) box.classList.add('vis-none');
+        try { syncPlayerOwnerVisibility(); } catch (e1) {}
     
         remountInlineVideoIfPossible();
     }
@@ -8144,6 +8171,7 @@ if (!empty($_SESSION['loggedin'])) {
                     if (MCLN) MCLN.classList.remove('vis-none');
                     const box = document.getElementById('player-box');
                     if (box) box.classList.add('vis-none');
+                    try { syncPlayerOwnerVisibility(); } catch (e2) {}
                     remountInlineVideoIfPossible();
                 }
             }
@@ -10805,7 +10833,7 @@ const PROFILE_KEY = 'ha_profile';
         if (!playerOwner) {
             playerOwner = OA(document.createElement('div'), {
                 id: 'player-owner',
-                className: 'player-owner'
+                className: 'player-owner vis-none'
             });
             playerRoot.insertBefore(playerOwner, box);
         }
@@ -11530,6 +11558,34 @@ const PROFILE_KEY = 'ha_profile';
         applyLyricSkin();
     }
 
+    /**
+     * player-box controls visible → hide #player-owner
+     * controls-hidden (auto-hide) + shell open → show #player-owner
+     * same idea as index syncPlayerOwnerVisibility
+     */
+    function syncPlayerOwnerVisibility() {
+        try {
+            const owner = document.getElementById('player-owner');
+            const box = document.getElementById('player-box');
+            if (!owner) return;
+
+            const shellOpen = !!(Player && !Player.classList.contains('vis-none'));
+            const boxGone = !box || box.classList.contains('vis-none');
+
+            if (!shellOpen || boxGone) {
+                owner.classList.add('vis-none');
+                return;
+            }
+
+            /* controls showing → owner hidden; controls auto-hidden → owner shown */
+            if (box.classList.contains('controls-hidden')) {
+                owner.classList.remove('vis-none');
+            } else {
+                owner.classList.add('vis-none');
+            }
+        } catch (e) {}
+    }
+
     function armPlayerControlsHide() {
         const P = ensurePlayer();
         if (P._controlsHideTimer) {
@@ -11537,23 +11593,33 @@ const PROFILE_KEY = 'ha_profile';
             P._controlsHideTimer = null;
         }
         const box = document.getElementById('player-box');
-        if (!box || box.classList.contains('vis-none')) return;
+        if (!box || box.classList.contains('vis-none')) {
+            syncPlayerOwnerVisibility();
+            return;
+        }
         if (GetSetting('keepControllerVisible')) {
             box.classList.remove('controls-hidden');
+            syncPlayerOwnerVisibility();
             return;
         }
         // اگر پنل باز است محو نکن
-        if (P._playerPanelMode) return;
+        if (P._playerPanelMode) {
+            syncPlayerOwnerVisibility();
+            return;
+        }
         P._controlsHideTimer = setTimeout(() => {
             if (GetSetting('keepControllerVisible')) return;
             if (P._playerPanelMode) return;
             box.classList.add('controls-hidden');
+            syncPlayerOwnerVisibility();
         }, 4000);
+        syncPlayerOwnerVisibility();
     }
 
     function revealPlayerControls() {
         const box = document.getElementById('player-box');
         if (box) box.classList.remove('controls-hidden');
+        syncPlayerOwnerVisibility();
         armPlayerControlsHide();
     }
 
