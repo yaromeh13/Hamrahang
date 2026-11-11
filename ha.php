@@ -1226,6 +1226,28 @@ require_once __DIR__ . '/int/h_api.php';
 /* ---------------------------------------------------------
    13. PLAYER BOX / FOOTER / CONTROLS
    --------------------------------------------------------- */
+
+/* تامب انر فول‌اسکرین — راست/پایین ۷۰px؛ فقط وقتی تصویر دارد پر می‌شود */
+#player .player-owner {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    width: 70px;
+    height: 70px;
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 9;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+#player .player-owner img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+}
+
 .player-box {
     position: absolute;
     height: 100%;
@@ -10778,6 +10800,16 @@ const PROFILE_KEY = 'ha_profile';
             playerRoot.insertBefore(stage, box);
         }
 
+        // لایه تامب انر فول‌اسکرین — قبل از player-box؛ فقط تصویر (بدون placeholder)
+        let playerOwner = document.getElementById('player-owner');
+        if (!playerOwner) {
+            playerOwner = OA(document.createElement('div'), {
+                id: 'player-owner',
+                className: 'player-owner'
+            });
+            playerRoot.insertBefore(playerOwner, box);
+        }
+
         box.innerHTML = '';
 
         const backdrop = OA(document.createElement('div'), { className: 'backdrop', id: 'backdrop' });
@@ -15520,25 +15552,44 @@ const PROFILE_KEY = 'ha_profile';
     }
 
     function updateMaxDeskOwnerThumb(item) {
-        const box = MaxDeskOwnerThumb || (MaxDeskPly && MaxDeskPly.querySelector('.owner .owner-thumb'));
-        if (!box) return;
-        box.innerHTML = '';
         const owner = resolveNowPlayingOwner(item);
         const tmb = owner && owner.meta && owner.meta.tmb ? owner.meta.tmb : null;
-        if (tmb) {
-            box.append(
-                OA(document.createElement('img'), {
-                    src: UT + tmb + '.jpg',
-                    alt: (owner && owner.name) || ''
-                })
-            );
-        } else {
-            box.append(
-                OA(document.createElement('span'), {
-                    className: 'placeholder rounded-circle',
-                    innerHTML: typeof svg_dons !== 'undefined' ? svg_dons : ''
-                })
-            );
+        const alt = (owner && owner.name) || '';
+
+        // نوار دسکتاپ — با placeholder در نبود تصویر
+        const deskBox = MaxDeskOwnerThumb || (MaxDeskPly && MaxDeskPly.querySelector('.owner .owner-thumb'));
+        if (deskBox) {
+            deskBox.innerHTML = '';
+            if (tmb) {
+                deskBox.append(
+                    OA(document.createElement('img'), {
+                        className: 'rounded-circle',
+                        src: UT + tmb + '.jpg',
+                        alt: alt
+                    })
+                );
+            } else {
+                deskBox.append(
+                    OA(document.createElement('span'), {
+                        className: 'placeholder rounded-circle',
+                        innerHTML: typeof svg_dons !== 'undefined' ? svg_dons : ''
+                    })
+                );
+            }
+        }
+
+        // فول‌اسکرین (#player-owner) — فقط تصویر؛ بدون placeholder
+        const fsBox = document.getElementById('player-owner');
+        if (fsBox) {
+            fsBox.innerHTML = '';
+            if (tmb) {
+                fsBox.append(
+                    OA(document.createElement('img'), {
+                        src: UT + tmb + '.jpg',
+                        alt: alt
+                    })
+                );
+            }
         }
     }
 
