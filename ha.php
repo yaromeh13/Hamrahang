@@ -15629,7 +15629,6 @@ const PROFILE_KEY = 'ha_profile';
             if (tmb) {
                 deskBox.append(
                     OA(document.createElement('img'), {
-                        className: 'rounded-circle',
                         src: UT + tmb + '.jpg',
                         alt: alt
                     })
@@ -15637,7 +15636,7 @@ const PROFILE_KEY = 'ha_profile';
             } else {
                 deskBox.append(
                     OA(document.createElement('span'), {
-                        className: 'placeholder rounded-circle',
+                        className: 'placeholder',
                         innerHTML: typeof svg_dons !== 'undefined' ? svg_dons : ''
                     })
                 );
