@@ -1434,13 +1434,13 @@ progress {
 .maximum-player-desktop {
     width: -webkit-fill-available;
     display: none;
-    grid-template-columns: 2fr 6fr 1fr 72px;
+    grid-template-columns: 2fr 6fr 1fr 1fr
     grid-template-rows: 100px;
     position: fixed;
     bottom: 0;
     z-index: 21;
     height: 100px;
-    padding: 0 1.5rem;
+    padding-left: 1.5rem;
     background-color: var(--bs-body-bg);
     border-top: 1px solid hsla(0,0%,100%,.1)
 }
@@ -1625,7 +1625,6 @@ progress {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: flex-end
 }
 
 .maximum-player-desktop .details .buttons {
@@ -1664,13 +1663,12 @@ progress {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-end;
     min-width: 0;
+    padding: 0 1.5rem;
 }
 .maximum-player-desktop .owner .owner-thumb {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
+    width: 70px;
+    height: 70px;
     overflow: hidden;
     position: relative;
     flex-shrink: 0;
@@ -1684,7 +1682,7 @@ progress {
     align-items: center;
     justify-content: center;
     object-fit: cover;
-    border-radius: 50%;
+    border-radius: 10%;
 }
 .maximum-player-desktop .owner .owner-thumb .placeholder svg {
     width: 22px;
@@ -3579,7 +3577,7 @@ to {
 
     .maximum-player-desktop {
         display: grid;
-        grid-template-columns: 2fr 4fr 1fr 72px
+        grid-template-columns: 2fr 4fr 1fr 1fr;
     }
     
     .maximum-player-mobile {
@@ -3715,7 +3713,7 @@ to {
     }
 .maximum-player-desktop {
         display: grid;
-        grid-template-columns: 2fr 4fr 2fr
+        grid-template-columns: 2fr 4fr 2fr 1fr;
     }
 }
 
