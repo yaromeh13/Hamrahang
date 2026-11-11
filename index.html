@@ -2046,6 +2046,11 @@ input[type="radio"] {
     z-index: 9;
     pointer-events: none;
     box-sizing: border-box;
+    opacity: 1;
+    visibility: visible;
+    -webkit-transition: opacity 0.35s ease, visibility 0.35s ease;
+    -o-transition: opacity 0.35s ease, visibility 0.35s ease;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
 }
 #player .player-owner img {
     display: block;
@@ -2053,6 +2058,27 @@ input[type="radio"] {
     height: 100%;
     object-fit: cover;
     border-radius: inherit;
+}
+
+/*
+ * Soft show/hide for player chrome + owner thumb (CSS only).
+ * Global .vis-none uses display:none (no transition) — override here so
+ * opacity/visibility can fade when JS toggles .vis-none.
+ */
+#player-box.player-box {
+    opacity: 1;
+    visibility: visible;
+    -webkit-transition: opacity 0.35s ease, visibility 0.35s ease;
+    -o-transition: opacity 0.35s ease, visibility 0.35s ease;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+#player-box.player-box.vis-none,
+#player .player-owner.vis-none {
+    display: block !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 video {
