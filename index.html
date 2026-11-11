@@ -3296,7 +3296,7 @@ window.HA_SVG = (function () {
 <div id="player" class="vis-none">
         <video id="vply"></video>
         <!-- fullscreen source-owner thumb (ha #player-owner) -->
-        <div id="player-owner" class="player-owner"></div>
+        <div id="player-owner" class="player-owner vis-none"></div>
         <div id="media-stage" class="detailes-container vis-none">
             <div id="stage-bg" class="stage-bg"></div>
             <div id="detailes-container">
@@ -10141,6 +10141,8 @@ try {
     
         clearTimeout(hideTimeout);
         hideTimeout = null;
+
+        try { syncPlayerOwnerVisibility(); } catch (eMinOwn) {}
     
         if (SN.NowPlaying.player === 'video') {
             VideoEl.pause();
@@ -12895,11 +12897,51 @@ function removeFromPlayQueue(itemId, itemType) {
     
     SN.KeepControllerVisible = false;
     var hideTimeout;
+
+    /**
+     * وقتی player-box دیده می‌شود → player-owner مخفی
+     * وقتی player-box مخفی است و MainPlayer باز است → player-owner نمایش
+     */
+    function syncPlayerOwnerVisibility() {
+        var ownerEl, boxHidden, cls;
+        try {
+            ownerEl = document.getElementById("player-owner");
+            if (!ownerEl) { return; }
+            if (!playerBox) {
+                ownerEl.className = (ownerEl.className || "").replace(/\bvis-none\b/g, "").replace(/\s+/g, " ");
+                return;
+            }
+            cls = " " + (playerBox.className || "") + " ";
+            boxHidden = cls.indexOf(" vis-none ") !== -1;
+
+            if (!boxHidden) {
+                /* controls visible → hide owner thumb */
+                if (cls.indexOf(" vis-none ") === -1) {
+                    /* on owner: add vis-none if missing */
+                }
+                if ((" " + ownerEl.className + " ").indexOf(" vis-none ") === -1) {
+                    ownerEl.className = (ownerEl.className ? ownerEl.className + " " : "") + "vis-none";
+                }
+            } else if (SN.MainPlayer) {
+                /* controls hidden + fullscreen player → show owner */
+                ownerEl.className = String(ownerEl.className || "")
+                    .replace(/\bvis-none\b/g, " ")
+                    .replace(/\s+/g, " ")
+                    .replace(/^\s+|\s+$/g, "");
+            } else {
+                if ((" " + ownerEl.className + " ").indexOf(" vis-none ") === -1) {
+                    ownerEl.className = (ownerEl.className ? ownerEl.className + " " : "") + "vis-none";
+                }
+            }
+        } catch (eSyncOwn) {}
+    }
+
     function showPlayerBox() {
         try {
           playerBox.classList.remove("vis-none");
           document.body.style.cursor = "auto";
           clearTimeout(hideTimeout);
+          syncPlayerOwnerVisibility();
             if (SN.KeepControllerVisible) {
                 return;
             }
@@ -12913,6 +12955,7 @@ function removeFromPlayQueue(itemId, itemType) {
         try {
             if (SN.KeepControllerVisible) {return;}
           playerBox.classList.add("vis-none");
+          syncPlayerOwnerVisibility();
           var specialElement1 = document.getByClass("float-btn");
           var specialElement2 = document.getByClass("next-float-btn");
                   
@@ -12939,6 +12982,7 @@ function removeFromPlayQueue(itemId, itemType) {
         if (SN.KeepControllerVisible) {
             clearTimeout(hideTimeout);
             playerBox.classList.remove("vis-none");
+            syncPlayerOwnerVisibility();
         } else {
             showPlayerBox();
         }
