@@ -10604,6 +10604,39 @@ try {
         return putOwners(batch);
     }
 
+
+    /**
+     * کلید تامب انر: اولویت meta.ico سپس meta.tmb (same names as ha.php)
+     */
+    function ownerMetaThumbKey(owner) {
+        if (!owner || !owner.meta || typeof owner.meta !== "object") { return null; }
+        if (owner.meta.ico) { return String(owner.meta.ico); }
+        if (owner.meta.tmb) { return String(owner.meta.tmb); }
+        return null;
+    }
+
+    /**
+     * URL تامب انر — سه حرف آخر کلید = پسوند (u11210725ipng → u11210725i.png)
+     */
+    function ownerThumbUrl(key) {
+        var k, ext, base;
+        if (key == null || key === "") { return null; }
+        k = String(key).replace(/^\s+|\s+$/g, "");
+        if (!k) { return null; }
+        if (/^https?:\/\//i.test(k)) { return k; }
+        if (k.indexOf(".") >= 0) {
+            return UT + k;
+        }
+        if (k.length > 3) {
+            ext = k.slice(-3).toLowerCase();
+            base = k.slice(0, -3);
+            if (base && /^[a-z0-9]+$/i.test(ext)) {
+                return UT + base + "." + ext;
+            }
+        }
+        return UT + k + ".jpg";
+    }
+
     /** owner id from a source row */
     function sourceOwnerId(src) {
         if (!src) { return 0; }
@@ -10703,7 +10736,7 @@ try {
         if (!src) { return null; }
         oid = sourceOwnerId(src);
         owner = (src.owner && typeof src.owner === 'object') ? src.owner : null;
-        if (!owner || !(owner.meta && owner.meta.tmb)) {
+        if (!owner || !ownerMetaThumbKey(owner)) {
             fromDb = getOwner(oid);
             if (fromDb) { owner = fromDb; }
         }
@@ -10716,7 +10749,7 @@ try {
      */
     function updateMaxDeskOwnerThumb(item) {
         var owner = resolveNowPlayingOwner(item);
-        var tmb = owner && owner.meta && owner.meta.tmb ? owner.meta.tmb : null;
+        var thumbUrl = ownerThumbUrl(ownerMetaThumbKey(owner));
         var alt = (owner && owner.name) || '';
         var deskBox, fsBox, img, ph;
 
@@ -10737,10 +10770,10 @@ try {
 
         if (deskBox) {
             deskBox.innerHTML = '';
-            if (tmb) {
+            if (thumbUrl) {
                 img = OA(document.createElement('img'), {
                     className: 'rounded-circle',
-                    src: UT + tmb + '.jpg',
+                    src: thumbUrl,
                     alt: alt
                 });
                 deskBox.appendChild(img);
@@ -10757,9 +10790,9 @@ try {
         fsBox = getById ? getById('player-owner') : document.getElementById('player-owner');
         if (fsBox) {
             fsBox.innerHTML = '';
-            if (tmb) {
+            if (thumbUrl) {
                 img = OA(document.createElement('img'), {
-                    src: UT + tmb + '.jpg',
+                    src: thumbUrl,
                     alt: alt
                 });
                 fsBox.appendChild(img);

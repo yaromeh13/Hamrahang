@@ -11369,10 +11369,10 @@ const PROFILE_KEY = 'ha_profile';
             let owner = (src.owner && typeof src.owner === 'object') ? src.owner : null;
             if (!owner || !owner.name) owner = getOwner(oid) || owner;
             const thumbBox = OA(document.createElement('div'), { className: 'ps-thumb' });
-            const tmb = owner && owner.meta && owner.meta.tmb ? owner.meta.tmb : null;
-            if (tmb) {
+            const thumbUrl = ownerThumbUrl(ownerMetaThumbKey(owner));
+            if (thumbUrl) {
                 thumbBox.append(OA(document.createElement('img'), {
-                    src: UT + tmb + '.jpg',
+                    src: thumbUrl,
                     alt: ''
                 }));
             } else {
@@ -13201,6 +13201,41 @@ const PROFILE_KEY = 'ha_profile';
         return putOwners(batch);
     }
 
+
+    /**
+     * کلید تامب انر: اولویت meta.ico سپس meta.tmb
+     */
+    function ownerMetaThumbKey(owner) {
+        if (!owner || !owner.meta || typeof owner.meta !== 'object') return null;
+        if (owner.meta.ico) return String(owner.meta.ico);
+        if (owner.meta.tmb) return String(owner.meta.tmb);
+        return null;
+    }
+
+    /**
+     * URL تامب انر از کلید CDN.
+     * سه حرف آخر بدون نقطه = فرمت فایل:
+     *   u11210725ipng → {UT}u11210725i.png
+     * اگر از قبل نقطه داشت همان + UT؛ وگرنه legacy .jpg
+     */
+    function ownerThumbUrl(key) {
+        if (key == null || key === '') return null;
+        let k = String(key).trim();
+        if (!k) return null;
+        if (/^https?:\/\//i.test(k)) return k;
+        if (k.indexOf('.') >= 0) {
+            return UT + k;
+        }
+        if (k.length > 3) {
+            const ext = k.slice(-3).toLowerCase();
+            const base = k.slice(0, -3);
+            if (base && /^[a-z0-9]+$/i.test(ext)) {
+                return UT + base + '.' + ext;
+            }
+        }
+        return UT + k + '.jpg';
+    }
+
     /** owner id از یک سورس (object یا user id) */
     function sourceOwnerId(src) {
         if (!src) return 0;
@@ -13336,12 +13371,12 @@ const PROFILE_KEY = 'ha_profile';
 
             // تامب
             const thumbBox = OA(document.createElement('div'), { className: 'ds-thumb' });
-            const tmb = owner && owner.meta && owner.meta.tmb ? owner.meta.tmb : null;
-            if (tmb) {
+            const thumbUrl = ownerThumbUrl(ownerMetaThumbKey(owner));
+            if (thumbUrl) {
                 thumbBox.append(
                     OA(document.createElement('img'), {
                         className: 'rounded-circle',
-                        src: UT + tmb + '.jpg',
+                        src: thumbUrl,
                         alt: ''
                     })
                 );
@@ -15610,7 +15645,7 @@ const PROFILE_KEY = 'ha_profile';
         if (!src) return null;
         const oid = sourceOwnerId(src);
         let owner = src.owner && typeof src.owner === 'object' ? src.owner : null;
-        if (!owner || !(owner.meta && owner.meta.tmb)) {
+        if (!owner || !ownerMetaThumbKey(owner)) {
             const fromDb = getOwner(oid);
             if (fromDb) owner = fromDb;
         }
@@ -15619,24 +15654,25 @@ const PROFILE_KEY = 'ha_profile';
 
     function updateMaxDeskOwnerThumb(item) {
         const owner = resolveNowPlayingOwner(item);
-        const tmb = owner && owner.meta && owner.meta.tmb ? owner.meta.tmb : null;
+        const thumbUrl = ownerThumbUrl(ownerMetaThumbKey(owner));
         const alt = (owner && owner.name) || '';
 
         // نوار دسکتاپ — با placeholder در نبود تصویر
         const deskBox = MaxDeskOwnerThumb || (MaxDeskPly && MaxDeskPly.querySelector('.owner .owner-thumb'));
         if (deskBox) {
             deskBox.innerHTML = '';
-            if (tmb) {
+            if (thumbUrl) {
                 deskBox.append(
                     OA(document.createElement('img'), {
-                        src: UT + tmb + '.jpg',
+                        className: 'rounded-circle',
+                        src: thumbUrl,
                         alt: alt
                     })
                 );
             } else {
                 deskBox.append(
                     OA(document.createElement('span'), {
-                        className: 'placeholder',
+                        className: 'placeholder rounded-circle',
                         innerHTML: typeof svg_dons !== 'undefined' ? svg_dons : ''
                     })
                 );
@@ -15647,10 +15683,10 @@ const PROFILE_KEY = 'ha_profile';
         const fsBox = document.getElementById('player-owner');
         if (fsBox) {
             fsBox.innerHTML = '';
-            if (tmb) {
+            if (thumbUrl) {
                 fsBox.append(
                     OA(document.createElement('img'), {
-                        src: UT + tmb + '.jpg',
+                        src: thumbUrl,
                         alt: alt
                     })
                 );
