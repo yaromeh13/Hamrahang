@@ -1434,7 +1434,7 @@ progress {
 .maximum-player-desktop {
     width: -webkit-fill-available;
     display: none;
-    grid-template-columns: 2fr 7fr 1fr;
+    grid-template-columns: 2fr 6fr 1fr 72px;
     grid-template-rows: 100px;
     position: fixed;
     bottom: 0;
@@ -1658,6 +1658,38 @@ progress {
 
 .maximum-player-desktop .details .buttons .button:hover {
     border-color: hsla(0,0%,100%,.5)
+}
+
+.maximum-player-desktop .owner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+}
+.maximum-player-desktop .owner .owner-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    background-color: hsla(0, 0%, 100%, 0.08);
+}
+.maximum-player-desktop .owner .owner-thumb img,
+.maximum-player-desktop .owner .owner-thumb .placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    object-fit: cover;
+    border-radius: 50%;
+}
+.maximum-player-desktop .owner .owner-thumb .placeholder svg {
+    width: 22px;
+    height: 22px;
+    opacity: 0.55;
 }
 
 .maximum-player-queue {
@@ -3547,7 +3579,7 @@ to {
 
     .maximum-player-desktop {
         display: grid;
-        grid-template-columns: 2fr 4fr 1fr
+        grid-template-columns: 2fr 4fr 1fr 72px
     }
     
     .maximum-player-mobile {

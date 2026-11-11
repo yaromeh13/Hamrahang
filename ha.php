@@ -10254,7 +10254,18 @@ const PROFILE_KEY = 'ha_profile';
         );
         det2.append(rowA, rowB);
 
-        root.append(pt, ctrl, det2);
+        // owner — تامب انر سورس در حال پخش (مثل دانلود)
+        const owner = OA(document.createElement('div'), { className: 'owner' });
+        const ownerThumb = OA(document.createElement('div'), { className: 'owner-thumb' });
+        ownerThumb.append(
+            OA(document.createElement('span'), {
+                className: 'placeholder rounded-circle',
+                innerHTML: typeof svg_dons !== 'undefined' ? svg_dons : ''
+            })
+        );
+        owner.append(ownerThumb);
+
+        root.append(pt, ctrl, det2, owner);
     }
 
     /** CRFT — main footer */
@@ -13991,6 +14002,7 @@ const PROFILE_KEY = 'ha_profile';
     const MaxDeskArt = MaxDeskPly ? MaxDeskPly.querySelector('.artwork') : null;
     const MaxDeskTx1 = MaxDeskPly ? MaxDeskPly.querySelector('.text1') : null;
     const MaxDeskTx2 = MaxDeskPly ? MaxDeskPly.querySelector('.text2') : null;
+    const MaxDeskOwnerThumb = MaxDeskPly ? MaxDeskPly.querySelector('.owner .owner-thumb') : null;
     
     const MaxDeskBtns = MaxDeskPly ? MaxDeskPly.querySelectorAll('.controll .button') : [];
     const MaxDeskDtls = MaxDeskPly ? MaxDeskPly.querySelectorAll('.details .button') : [];
@@ -15482,6 +15494,55 @@ const PROFILE_KEY = 'ha_profile';
         }
     }
     
+    /** تامب انر سورس در حال پخش برای نوار دسکتاپ */
+    function resolveNowPlayingOwner(item) {
+        if (!item) return null;
+        try {
+            collectOwnersFromItem(item);
+        } catch (e) {}
+        const P = ensurePlayer();
+        const sources = Array.isArray(item.sources) ? item.sources : [];
+        if (!sources.length) return null;
+        let idx = 0;
+        if (P.nowPlaying && P.nowPlaying.sourceIndex != null) {
+            idx = Number(P.nowPlaying.sourceIndex) || 0;
+        }
+        if (idx < 0 || idx >= sources.length) idx = 0;
+        const src = sources[idx];
+        if (!src) return null;
+        const oid = sourceOwnerId(src);
+        let owner = src.owner && typeof src.owner === 'object' ? src.owner : null;
+        if (!owner || !(owner.meta && owner.meta.tmb)) {
+            const fromDb = getOwner(oid);
+            if (fromDb) owner = fromDb;
+        }
+        return owner;
+    }
+
+    function updateMaxDeskOwnerThumb(item) {
+        const box = MaxDeskOwnerThumb || (MaxDeskPly && MaxDeskPly.querySelector('.owner .owner-thumb'));
+        if (!box) return;
+        box.innerHTML = '';
+        const owner = resolveNowPlayingOwner(item);
+        const tmb = owner && owner.meta && owner.meta.tmb ? owner.meta.tmb : null;
+        if (tmb) {
+            box.append(
+                OA(document.createElement('img'), {
+                    className: 'rounded-circle',
+                    src: UT + tmb + '.jpg',
+                    alt: (owner && owner.name) || ''
+                })
+            );
+        } else {
+            box.append(
+                OA(document.createElement('span'), {
+                    className: 'placeholder rounded-circle',
+                    innerHTML: typeof svg_dons !== 'undefined' ? svg_dons : ''
+                })
+            );
+        }
+    }
+
     function UpdateNowPlayingMeta(item) {
         if (!item) return;
     
@@ -15514,6 +15575,11 @@ const PROFILE_KEY = 'ha_profile';
         }
         if (MaxDeskTx1) MaxDeskTx1.innerHTML = name;
         if (MaxDeskTx2) MaxDeskTx2.innerHTML = artistName;
+
+        // تامب انر سورس فعلی (ha_owner / sources[].owner)
+        try {
+            updateMaxDeskOwnerThumb(item);
+        } catch (e) {}
         
         document.querySelectorAll('.plays-count').forEach((i) => {
             i.innerHTML = item.meta && item.meta.ncp != null
@@ -15720,6 +15786,9 @@ const PROFILE_KEY = 'ha_profile';
         P.nowPlaying.isBuffering = true;
         P.nowPlaying.isPlaying = false;
         P.nowPlaying._resumeTime = resumeTime;
+        try {
+            if (P.nowPlaying.item) updateMaxDeskOwnerThumb(P.nowPlaying.item);
+        } catch (e) {}
         
         // حذف Listener خطای تلاش قبلی روی همین عنصر مدیا
         if (media._haSourceErrorHandler) {
