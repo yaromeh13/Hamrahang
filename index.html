@@ -4638,6 +4638,10 @@ try {
                         }
                     }
                 }
+                /* owners from sources → SN.owners / ha_owner (same as ha.php) */
+                if (typeof collectOwnersFromItem === 'function') {
+                    try { collectOwnersFromItem(SN[type][itemId]); } catch (eOwn) {}
+                }
             }
         }
     
@@ -10433,6 +10437,190 @@ try {
 
 
 
+    /* =========================================================
+       owners DB: SN.owners + localStorage key "ha_owner"
+       Same names as ha.php — only add when id not present (no overwrite)
+       ========================================================= */
+    var HA_OWNER_LS_KEY = 'ha_owner';
+
+    function ensureOwnersMap() {
+        var raw, parsed;
+        if (!SN.owners || typeof SN.owners !== 'object' || isArray(SN.owners)) {
+            SN.owners = {};
+            try {
+                if (typeof localStorage !== 'undefined' && localStorage.getItem) {
+                    raw = localStorage.getItem(HA_OWNER_LS_KEY);
+                    if (raw) {
+                        parsed = (typeof parseJSON === 'function')
+                            ? parseJSON(raw)
+                            : (typeof JSON !== 'undefined' && JSON.parse ? JSON.parse(raw) : null);
+                        if (parsed && typeof parsed === 'object' && !isArray(parsed)) {
+                            SN.owners = parsed;
+                        }
+                    }
+                }
+            } catch (eOwnLoad) {}
+        }
+        if (!SN.owners['0']) {
+            SN.owners['0'] = { id: 0, name: 'Hamrahang', meta: {} };
+        }
+        return SN.owners;
+    }
+
+    function saveOwnersToLocal() {
+        ensureOwnersMap();
+        try {
+            if (typeof localStorage !== 'undefined' && localStorage.setItem) {
+                var payload = (typeof stringifyJSON === 'function')
+                    ? stringifyJSON(SN.owners)
+                    : (typeof JSON !== 'undefined' && JSON.stringify
+                        ? JSON.stringify(SN.owners)
+                        : null);
+                if (payload) {
+                    localStorage.setItem(HA_OWNER_LS_KEY, payload);
+                }
+            }
+        } catch (eOwnSave) {}
+    }
+
+    function getOwner(pubId) {
+        var id = Number(pubId) || 0;
+        ensureOwnersMap();
+        return SN.owners[String(id)] || null;
+    }
+
+    /** Add owner only if id not already present. true = added */
+    function putOwnerIfNew(o) {
+        var id, key, meta;
+        if (!o || o.id == null) { return false; }
+        id = Number(o.id);
+        if (isNaN(id) || id < 0) { return false; }
+        ensureOwnersMap();
+        key = String(id);
+        if (SN.owners[key]) { return false; }
+        meta = (o.meta && typeof o.meta === 'object')
+            ? o.meta
+            : (o.photo ? { photo: String(o.photo) } : {});
+        SN.owners[key] = {
+            id: id,
+            name: (id === 0) ? 'Hamrahang' : (o.name || ('User #' + id)),
+            meta: meta
+        };
+        return true;
+    }
+
+    /** Merge list of owners; persist LS if anything new */
+    function putOwners(list) {
+        var added = 0;
+        var i, o;
+        if (!list || !list.length) { return 0; }
+        for (i = 0; i < list.length; i++) {
+            o = list[i];
+            if (putOwnerIfNew(o)) { added++; }
+        }
+        if (added > 0) { saveOwnersToLocal(); }
+        return added;
+    }
+
+    /**
+     * Extract owners from item.sources into SN.owners
+     * Shape: { url, bit, owner: { id, name, meta? } } or { user: id }
+     */
+    function collectOwnersFromItem(item) {
+        var batch = [];
+        var i, s;
+        if (!item || !isArray(item.sources) || !item.sources.length) {
+            return 0;
+        }
+        for (i = 0; i < item.sources.length; i++) {
+            s = item.sources[i];
+            if (!s) { continue; }
+            if (s.owner && typeof s.owner === 'object' && s.owner.id != null) {
+                batch.push(s.owner);
+            } else if (s.user != null) {
+                batch.push({ id: s.user, name: '' });
+            }
+        }
+        return putOwners(batch);
+    }
+
+    /** owner id from a source row */
+    function sourceOwnerId(src) {
+        if (!src) { return 0; }
+        if (src.owner && typeof src.owner === 'object' && src.owner.id != null) {
+            return Number(src.owner.id) || 0;
+        }
+        if (src.user != null) {
+            return Number(src.user) || 0;
+        }
+        return 0;
+    }
+
+    /**
+     * Fetch missing owner profiles: ?_qjs=own&ids=
+     * ES5 XHR (no fetch). Optional callback(ownersMap).
+     */
+    function resolveOwners(ids, callback) {
+        var need = [];
+        var seen = {};
+        var i, id, url, xhr;
+
+        ensureOwnersMap();
+
+        if (!ids || !ids.length) {
+            if (callback) { callback(SN.owners); }
+            return SN.owners;
+        }
+
+        for (i = 0; i < ids.length; i++) {
+            id = Number(ids[i]) || 0;
+            if (id <= 0) { continue; }
+            if (seen[id]) { continue; }
+            seen[id] = true;
+            if (!SN.owners[String(id)]) {
+                need.push(id);
+            }
+        }
+
+        if (!need.length) {
+            if (callback) { callback(SN.owners); }
+            return SN.owners;
+        }
+
+        url = (typeof HP !== 'undefined' && HP ? HP : (SN.apiBase || '')) +
+            '?_qjs=own&ids=' + need.join(',');
+
+        try {
+            xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = function () {
+                var data;
+                if (xhr.readyState !== 4) { return; }
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        data = (typeof parseJSON === 'function')
+                            ? parseJSON(xhr.responseText)
+                            : JSON.parse(xhr.responseText);
+                        if (data && isArray(data.owners)) {
+                            putOwners(data.owners);
+                        }
+                    } catch (eParse) {
+                        log('[resolveOwners] parse error');
+                    }
+                }
+                if (callback) { callback(SN.owners); }
+            };
+            xhr.onerror = function () {
+                if (callback) { callback(SN.owners); }
+            };
+            xhr.send(null);
+        } catch (eXhr) {
+            log('[resolveOwners] xhr error');
+            if (callback) { callback(SN.owners); }
+        }
+        return SN.owners;
+    }
+
     function defaultPlayerState() {
         return {
             queue: [],
@@ -10480,6 +10668,7 @@ try {
         if (typeof P.playGen !== 'number') P.playGen = 0;
         if (typeof P.waiting !== 'boolean') P.waiting = false;
 
+        ensureOwnersMap();
         return P;
     }
     
@@ -11644,9 +11833,19 @@ function removeFromPlayQueue(itemId, itemType) {
                     var label = '';
                     var url = src.url || '';
                     var match;
+                    var oid;
+                    var own;
     
                     if (src.owner && typeof src.owner === 'object') {
                         label = src.owner.name || '';
+                    }
+    
+                    if (!label && typeof getOwner === 'function') {
+                        oid = sourceOwnerId(src);
+                        if (oid > 0) {
+                            own = getOwner(oid);
+                            if (own && own.name) { label = own.name; }
+                        }
                     }
     
                     if (!label) {
@@ -12074,6 +12273,8 @@ function removeFromPlayQueue(itemId, itemType) {
                 sourceIndex: 0,
                 playGen: gen
             };
+
+            try { collectOwnersFromItem(item); } catch (eCol) {}
     
             if (kind === 'video') {
                 OpenMainPlayer();
