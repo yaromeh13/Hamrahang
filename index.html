@@ -2034,6 +2034,27 @@ input[type="radio"] {
 /* ---------------------------------------------------------
    15. VIDEO / POSTER / OVERLAYS
    --------------------------------------------------------- */
+/* تامب انر فول‌اسکرین — راست/پایین؛ فقط وقتی تصویر دارد پر می‌شود (ha.php) */
+#player .player-owner {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 7.25rem;
+    width: 70px;
+    height: 70px;
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 9;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+#player .player-owner img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+}
+
 video {
     position: fixed;
     width: 100%;
@@ -3274,6 +3295,8 @@ window.HA_SVG = (function () {
 </div><!-- /.ln -->
 <div id="player" class="vis-none">
         <video id="vply"></video>
+        <!-- fullscreen source-owner thumb (ha #player-owner) -->
+        <div id="player-owner" class="player-owner"></div>
         <div id="media-stage" class="detailes-container vis-none">
             <div id="stage-bg" class="stage-bg"></div>
             <div id="detailes-container">
@@ -10086,6 +10109,11 @@ try {
         }
     
         UpdateMainProgressBar();
+        try {
+            if (SN.NowPlaying && SN.NowPlaying.item) {
+                updateMaxDeskOwnerThumb(SN.NowPlaying.item);
+            }
+        } catch (eOpenOwn) {}
         showPlayerBox();
         document.addEventListener("mousemove", showPlayerBox);
         document.addEventListener("keyup", showPlayerBox);
@@ -10198,6 +10226,10 @@ try {
     
         // به‌روزرسانی Mini Player
         UpdateMiniPlayer(item, artistUrl);
+
+        try {
+            updateMaxDeskOwnerThumb(item);
+        } catch (eOwnThumb) {}
     
         // اطلاعات بخش صوتی
         if (SN.NowPlaying && SN.NowPlaying.player === "audio") {
@@ -10619,6 +10651,92 @@ try {
             if (callback) { callback(SN.owners); }
         }
         return SN.owners;
+    }
+
+    /**
+     * تامب انر سورس در حال پخش (همان نام ha.php)
+     * از sourceIndex فعلی SN.NowPlaying + SN.owners / ha_owner
+     */
+    function resolveNowPlayingOwner(item) {
+        var P, sources, idx, src, oid, owner, fromDb;
+        if (!item) { return null; }
+        try {
+            collectOwnersFromItem(item);
+        } catch (eCol) {}
+        P = ensurePlayer();
+        sources = isArray(item.sources) ? item.sources : [];
+        if (!sources.length) { return null; }
+        idx = 0;
+        if (SN.NowPlaying && SN.NowPlaying.sourceIndex != null) {
+            idx = Number(SN.NowPlaying.sourceIndex) || 0;
+        }
+        if (idx < 0 || idx >= sources.length) { idx = 0; }
+        src = sources[idx];
+        if (!src) { return null; }
+        oid = sourceOwnerId(src);
+        owner = (src.owner && typeof src.owner === 'object') ? src.owner : null;
+        if (!owner || !(owner.meta && owner.meta.tmb)) {
+            fromDb = getOwner(oid);
+            if (fromDb) { owner = fromDb; }
+        }
+        return owner;
+    }
+
+    /**
+     * آپدیت تامب انر — نوار دسکتاپ (اختیاری) + فول‌اسکرین #player-owner
+     * همان نام ha.php: updateMaxDeskOwnerThumb
+     */
+    function updateMaxDeskOwnerThumb(item) {
+        var owner = resolveNowPlayingOwner(item);
+        var tmb = owner && owner.meta && owner.meta.tmb ? owner.meta.tmb : null;
+        var alt = (owner && owner.name) || '';
+        var deskBox, fsBox, img, ph;
+
+        /* نوار دسکتاپ اگر در DOM باشد */
+        deskBox = document.querySelector
+            ? document.querySelector('.maximum-player-desktop .owner .owner-thumb')
+            : null;
+        if (!deskBox) {
+            deskBox = getByClass
+                ? null
+                : null;
+        }
+        try {
+            if (!deskBox && typeof getAllByClass === 'function') {
+                /* soft fallback */
+            }
+        } catch (e0) {}
+
+        if (deskBox) {
+            deskBox.innerHTML = '';
+            if (tmb) {
+                img = OA(document.createElement('img'), {
+                    className: 'rounded-circle',
+                    src: UT + tmb + '.jpg',
+                    alt: alt
+                });
+                deskBox.appendChild(img);
+            } else {
+                ph = OA(document.createElement('span'), {
+                    className: 'placeholder rounded-circle',
+                    innerHTML: (typeof svg_dons !== 'undefined') ? svg_dons : ''
+                });
+                deskBox.appendChild(ph);
+            }
+        }
+
+        /* فول‌اسکرین (#player-owner) — فقط تصویر؛ بدون placeholder */
+        fsBox = getById ? getById('player-owner') : document.getElementById('player-owner');
+        if (fsBox) {
+            fsBox.innerHTML = '';
+            if (tmb) {
+                img = OA(document.createElement('img'), {
+                    src: UT + tmb + '.jpg',
+                    alt: alt
+                });
+                fsBox.appendChild(img);
+            }
+        }
     }
 
     function defaultPlayerState() {
@@ -11662,6 +11780,10 @@ function removeFromPlayQueue(itemId, itemType) {
         NP.currentSource = source;
         NP.currentBit = sourceBit(source);
         NP.currentUrl = source.url;
+
+        try {
+            if (NP.item) { updateMaxDeskOwnerThumb(NP.item); }
+        } catch (eOwnSrc) {}
         NP._sourceFailed = false;
         NP._triedSources = NP._triedSources || {};
     
