@@ -10259,7 +10259,7 @@ const PROFILE_KEY = 'ha_profile';
         const ownerThumb = OA(document.createElement('div'), { className: 'owner-thumb' });
         ownerThumb.append(
             OA(document.createElement('span'), {
-                className: 'placeholder rounded-circle',
+                className: 'placeholder',
                 innerHTML: typeof svg_dons !== 'undefined' ? svg_dons : ''
             })
         );
@@ -15528,7 +15528,6 @@ const PROFILE_KEY = 'ha_profile';
         if (tmb) {
             box.append(
                 OA(document.createElement('img'), {
-                    className: 'rounded-circle',
                     src: UT + tmb + '.jpg',
                     alt: (owner && owner.name) || ''
                 })
