@@ -3135,10 +3135,29 @@ track {
     color: #999;
 }
 
+/* owner thumb before source name — image 54px */
+.hpop-player-sources .player-source-owner-thumb {
+    display: inline-block;
+    vertical-align: middle;
+    width: 54px;
+    height: 54px;
+    margin-right: 10px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+}
+.hpop-player-sources .player-source-owner-thumb img {
+    display: block;
+    width: 54px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: inherit;
+}
+
 .hpop-player-sources .player-source-name {
     display: inline-block;
     vertical-align: middle;
-    width: 65%;
+    width: 55%;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -12102,13 +12121,35 @@ function removeFromPlayQueue(itemId, itemType) {
                         var src = sources[index];
                         var row = document.createElement('div');
                         var number = document.createElement('div');
+                        var thumbBox = document.createElement('div');
                         var name = document.createElement('div');
                         var quality = document.createElement('div');
+                        var oid;
+                        var owner;
+                        var thumbUrl;
+                        var img;
     
                         row.className = 'player-source-row focusable';
     
                         number.className = 'player-source-number';
                         number.innerHTML = String(index + 1);
+
+                        /* owner thumb — درست قبل از player-source-name */
+                        thumbBox.className = 'player-source-owner-thumb';
+                        oid = (typeof sourceOwnerId === 'function') ? sourceOwnerId(src) : 0;
+                        owner = (src.owner && typeof src.owner === 'object') ? src.owner : null;
+                        if ((!owner || !ownerMetaThumbKey(owner)) && typeof getOwner === 'function' && oid) {
+                            owner = getOwner(oid) || owner;
+                        }
+                        thumbUrl = (typeof ownerThumbUrl === 'function')
+                            ? ownerThumbUrl(ownerMetaThumbKey(owner))
+                            : null;
+                        if (thumbUrl) {
+                            img = document.createElement('img');
+                            img.src = thumbUrl;
+                            img.alt = '';
+                            thumbBox.appendChild(img);
+                        }
     
                         name.className = 'player-source-name';
                         name.innerHTML = getSourceLabel(src, index);
@@ -12117,6 +12158,7 @@ function removeFromPlayQueue(itemId, itemType) {
                         quality.innerHTML = getBitLabel(src);
     
                         row.appendChild(number);
+                        row.appendChild(thumbBox);
                         row.appendChild(name);
                         row.appendChild(quality);
     
