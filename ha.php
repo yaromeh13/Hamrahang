@@ -1231,7 +1231,7 @@ require_once __DIR__ . '/int/h_api.php';
 #player .player-owner {
     position: absolute;
     right: 1.25rem;
-    bottom: 7.25rem;
+    bottom: 1.25rem;
     width: 70px;
     height: 70px;
     border-radius: 12px;
