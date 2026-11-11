@@ -10608,34 +10608,51 @@ try {
     /**
      * کلید تامب انر: اولویت meta.ico سپس meta.tmb (same names as ha.php)
      */
+        /**
+     * انتخاب کلید تامب انر: اولویت meta.ico سپس meta.tmb (same names as ha.php)
+     * returns { key, kind: 'ico'|'tmb' } or null
+     */
     function ownerMetaThumbKey(owner) {
         if (!owner || !owner.meta || typeof owner.meta !== "object") { return null; }
-        if (owner.meta.ico) { return String(owner.meta.ico); }
-        if (owner.meta.tmb) { return String(owner.meta.tmb); }
+        if (owner.meta.ico) {
+            return { key: String(owner.meta.ico), kind: "ico" };
+        }
+        if (owner.meta.tmb) {
+            return { key: String(owner.meta.tmb), kind: "tmb" };
+        }
         return null;
     }
 
     /**
-     * URL تامب انر — سه حرف آخر کلید = پسوند (u11210725ipng → u11210725i.png)
+     * URL تامب انر.
+     * فقط ico: سه حرف آخر = پسوند (u11210725ipng → u11210725i.png)
+     * tmb: همیشه key + ".jpg" مثل قبل (هیچ کاراکتری از کلید حذف نمی‌شود)
      */
-    function ownerThumbUrl(key) {
-        var k, ext, base;
-        if (key == null || key === "") { return null; }
-        k = String(key).replace(/^\s+|\s+$/g, "");
-        if (!k) { return null; }
-        if (/^https?:\/\//i.test(k)) { return k; }
-        if (k.indexOf(".") >= 0) {
-            return UT + k;
+    function ownerThumbUrl(ref) {
+        var key, kind, ext, base;
+        if (ref == null || ref === "") { return null; }
+        if (typeof ref === "object" && ref.key != null) {
+            key = String(ref.key).replace(/^\s+|\s+$/g, "");
+            kind = ref.kind || "tmb";
+        } else {
+            key = String(ref).replace(/^\s+|\s+$/g, "");
+            kind = "tmb";
         }
-        if (k.length > 3) {
-            ext = k.slice(-3).toLowerCase();
-            base = k.slice(0, -3);
+        if (!key) { return null; }
+        if (/^https?:\/\//i.test(key)) { return key; }
+        if (key.indexOf(".") >= 0) {
+            return UT + key;
+        }
+        if (kind === "ico" && key.length > 3) {
+            ext = key.slice(-3).toLowerCase();
+            base = key.slice(0, -3);
             if (base && /^[a-z0-9]+$/i.test(ext)) {
                 return UT + base + "." + ext;
             }
         }
-        return UT + k + ".jpg";
+        return UT + key + ".jpg";
     }
+
 
     /** owner id from a source row */
     function sourceOwnerId(src) {

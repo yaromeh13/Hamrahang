@@ -13205,36 +13205,54 @@ const PROFILE_KEY = 'ha_profile';
     /**
      * کلید تامب انر: اولویت meta.ico سپس meta.tmb
      */
+        /**
+     * انتخاب کلید تامب انر: اولویت meta.ico سپس meta.tmb
+     * برمی‌گرداند { key, kind: 'ico'|'tmb' } یا null
+     */
     function ownerMetaThumbKey(owner) {
         if (!owner || !owner.meta || typeof owner.meta !== 'object') return null;
-        if (owner.meta.ico) return String(owner.meta.ico);
-        if (owner.meta.tmb) return String(owner.meta.tmb);
+        if (owner.meta.ico) {
+            return { key: String(owner.meta.ico), kind: 'ico' };
+        }
+        if (owner.meta.tmb) {
+            return { key: String(owner.meta.tmb), kind: 'tmb' };
+        }
         return null;
     }
 
     /**
-     * URL تامب انر از کلید CDN.
-     * سه حرف آخر بدون نقطه = فرمت فایل:
-     *   u11210725ipng → {UT}u11210725i.png
-     * اگر از قبل نقطه داشت همان + UT؛ وگرنه legacy .jpg
+     * URL تامب انر.
+     * فقط برای ico: سه حرف آخر = پسوند (u11210725ipng → u11210725i.png)
+     * برای tmb: همیشه مثل قبل key + '.jpg' (سه حرف آخر حذف نمی‌شود)
+     * ref می‌تواند رشتهٔ خام (legacy) یا خروجی ownerMetaThumbKey باشد
      */
-    function ownerThumbUrl(key) {
-        if (key == null || key === '') return null;
-        let k = String(key).trim();
-        if (!k) return null;
-        if (/^https?:\/\//i.test(k)) return k;
-        if (k.indexOf('.') >= 0) {
-            return UT + k;
+    function ownerThumbUrl(ref) {
+        if (ref == null || ref === '') return null;
+        let key, kind;
+        if (typeof ref === 'object' && ref.key != null) {
+            key = String(ref.key).trim();
+            kind = ref.kind || 'tmb';
+        } else {
+            key = String(ref).trim();
+            kind = 'tmb';
         }
-        if (k.length > 3) {
-            const ext = k.slice(-3).toLowerCase();
-            const base = k.slice(0, -3);
+        if (!key) return null;
+        if (/^https?:\/\//i.test(key)) return key;
+        if (key.indexOf('.') >= 0) {
+            return UT + key;
+        }
+        /* فقط ico: پسوند از سه حرف آخر */
+        if (kind === 'ico' && key.length > 3) {
+            const ext = key.slice(-3).toLowerCase();
+            const base = key.slice(0, -3);
             if (base && /^[a-z0-9]+$/i.test(ext)) {
                 return UT + base + '.' + ext;
             }
         }
-        return UT + k + '.jpg';
+        /* tmb و بقیه: همیشه .jpg — کلید کامل حفظ می‌شود */
+        return UT + key + '.jpg';
     }
+
 
     /** owner id از یک سورس (object یا user id) */
     function sourceOwnerId(src) {
