@@ -3519,11 +3519,9 @@ track {
 /* Main lyric panel */
 #media-stage-lyric {
     display: block;
-    height: 200px;
+    height: 200px; /* بدون تغییر */
     box-sizing: border-box;
     overflow: hidden;
-    overflow-x: hidden;
-    overflow-y: auto;
     color: #ffffff;
     text-align: center;
     font-family: Arial, Tahoma, sans-serif;
@@ -3536,8 +3534,8 @@ track {
 #media-stage-lyric .ha-lrc {
     display: block;
     position: relative;
-
     width: 100%;
+    height: 100%;
     max-height: 100%;
 
     margin: 0;
@@ -6583,6 +6581,25 @@ try {
                      Math.abs(i - index) === 1 ? ' is-near' : '') +
                     (view === 'normal' && index >= 0 &&
                      i < index ? ' past' : '');
+            }
+            
+            /* Auto-scroll active lyric in normal mode */
+            if (view === 'normal' && index >= 0 && rows[index]) {
+                stage = el.querySelector('.ha-lrc');
+            
+                if (stage) {
+                    var targetTop = rows[index].offsetTop -
+                        Math.max(
+                            0,
+                            (stage.clientHeight - rows[index].offsetHeight) / 2
+                        );
+            
+                    if (targetTop < 0) {
+                        targetTop = 0;
+                    }
+            
+                    stage.scrollTop = targetTop;
+                }
             }
         },
     
