@@ -3410,6 +3410,7 @@ track {
     width: 100%;
     height: 100%;
     padding: 16px;
+    box-sizing: border-box;
     overflow: hidden;
     color: #ffffff;
     text-align: center;
@@ -3418,14 +3419,18 @@ track {
 
 .lyric-container .ha-lrc {
     display: block;
+    position: relative;
     width: 100%;
+    height: 100%;
     max-height: 100%;
+    box-sizing: border-box;
+
     text-align: center;
     overflow-x: hidden;
     overflow-y: auto;
+
     scroll-behavior: smooth;
     scrollbar-width: none;
-    
 }
 
 .lyric-container .ha-lrc-line {
@@ -3503,10 +3508,14 @@ track {
 
 .mini-lyric-container {
     padding: 12px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .card-lyric-container {
     padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 
