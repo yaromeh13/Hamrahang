@@ -6592,8 +6592,12 @@ try {
                      i < index ? ' past' : '');
             }
             
-            /* Auto-scroll active lyric in normal mode */
-            if (view === 'normal' && index >= 0 && rows[index]) {
+            /* Auto-scroll active lyric in normal and focus modes */
+            if (
+                (view === 'normal' || view === 'focus') &&
+                index >= 0 &&
+                rows[index]
+            ) {
                 stage = el.querySelector('.ha-lrc');
             
                 if (stage) {
