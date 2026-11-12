@@ -832,6 +832,7 @@ h1, h2, h3, h4, h5, h6,
     width: 100%;
     padding-left: 5px;
     padding-right:20px;
+    padding-bottom: 5px;
 }
 
 .track-line-container > * {
@@ -933,6 +934,14 @@ h1, h2, h3, h4, h5, h6,
     overflow: hidden;
 }
 
+.track-line:hover{
+    outline: solid 2px red;
+}
+
+.track-line:focus{
+    outline: solid 2px red;
+}
+
 .track-line .texts:hover {
     background-color: red;
 }
@@ -972,6 +981,22 @@ h1, h2, h3, h4, h5, h6,
     height: 24px;
     margin-top: -12px;
     margin-left: -12px;
+}
+
+.track-line .play:hover {
+    background-color: red;
+}
+.track-line .play:focus {
+    background-color: red;
+}
+
+.track-line .more:focus{
+    color: white;
+    background-color: red;
+}
+.track-line .more:hover {
+    color: white;
+    background-color: red;
 }
 
 .track-line .artwork,
@@ -1052,8 +1077,8 @@ h1, h2, h3, h4, h5, h6,
 .track-line .queue-action:focus {
     background-color: red;
 }
-.track-line .arrow-up:focus,
-.track-line .arrow-down:focus{
+.track-line .arrow-up:hover,
+.track-line .arrow-down:hover{
     background-color: red;
 }
 
@@ -3143,8 +3168,6 @@ track {
     height: 54px;
     margin-right: 10px;
     overflow: hidden;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.06);
 }
 .hpop-player-sources .player-source-owner-thumb img {
     display: block;
@@ -3198,6 +3221,113 @@ track {
 
 
 
+/* =========================================================
+   LYRICS — Legacy TV compatible
+   No Flexbox / Grid / CSS variables
+   ========================================================= */
+
+.lyric-container {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 16px;
+    overflow: hidden;
+    color: #ffffff;
+    text-align: center;
+    font-family: Arial, Tahoma, sans-serif;
+}
+
+.lyric-container .ha-lrc {
+    display: block;
+    width: 100%;
+    max-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    text-align: center;
+}
+
+.lyric-container .ha-lrc-line {
+    display: block;
+    padding: 7px 5px;
+    color: #b8b8b8;
+    line-height: 1.8;
+    font-size: inherit;
+    white-space: normal;
+}
+
+.lyric-container .ha-lrc-line.active {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.lyric-container .ha-lrc-line.past {
+    opacity: 0.45;
+}
+
+.lyric-container .ha-lrc-line.is-near {
+    opacity: 0.55;
+}
+
+.lyric-container .ha-lrc--focus {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.lyric-container .ha-lrc--focus .ha-lrc-line.active {
+    font-size: 1.25em;
+    font-weight: bold;
+}
+
+.lyric-container .ha-lrc--line,
+.lyric-container .ha-lrc--card {
+    display: table;
+    width: 100%;
+    height: 100%;
+}
+
+.lyric-container .ha-lrc-line-stage {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    font-size: 1.2em;
+    line-height: 1.8;
+}
+
+.lyric-container .ha-lrc--card .ha-lrc-line-stage {
+    padding: 15px;
+    background-color: rgba(255,255,255,0.07);
+    border-radius: 10px;
+}
+
+.lyric-container .ha-lrc-empty {
+    display: block;
+    padding: 25px 10px;
+    color: #888888;
+    text-align: center;
+}
+
+.mini-queue-container,
+.mini-lyric-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.mini-lyric-container {
+    padding: 12px;
+}
+
+.card-lyric-container {
+    padding: 20px;
+}
+
 
 /* ---------------------------------------------------------
    UTILITIES — spacing (px base; win over component rules)
@@ -3222,21 +3352,7 @@ track {
 
 
 
-.track-line .play:hover {
-    background-color: red;
-}
-.track-line .play:focus {
-    background-color: red;
-}
 
-.track-line .more:focus{
-    color: white;
-    background-color: red;
-}
-.track-line .more:hover {
-    color: white;
-    background-color: red;
-}
 /* if focus lands on outer box but style was only on artwork */
 .track-line a:focus,
 .item-box .box a:focus,
@@ -3415,7 +3531,7 @@ window.HA_SVG = (function () {
                 <div id="lyric" class="g-31 btn" onclick="handleShowSettingModal('lyric')">
                     <img src="/assets/svg_lrc.png">
                 </div>
-                <div id="player-sources" class="g-30 btn" onclick="openPlayerSourcesPanel()">
+                <div id="setting" class="g-30 setting btn" >
                     <img src="/assets/setting.png">
                 </div>
             </div>
@@ -3427,8 +3543,8 @@ window.HA_SVG = (function () {
                 <div id="shuffle" class="btn btn-shuffle" >
                     <img src="/assets/shuffle.png">
                 </div>
-                <div id="setting" class="g-30 setting btn" >
-                    <img src="/assets/setting.png">
+                <div id="player-sources" class="g-30 btn" onclick="openPlayerSourcesPanel()">
+                    <img src="/assets/svg_dsk.png">
                 </div>
                 
             </div>
@@ -4587,7 +4703,7 @@ try {
     var svg_rdo = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 26px; height: 26px;"><path d="M12 12l0 .01"></path><path d="M14.828 9.172a4 4 0 0 1 0 5.656"></path><path d="M17.657 6.343a8 8 0 0 1 0 11.314"></path><path d="M9.168 14.828a4 4 0 0 1 0 -5.656"></path><path d="M6.337 17.657a8 8 0 0 1 0 -11.314"></path></svg>';
     var svg_ply = '<svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 22V2L22 12 6 22Z"/></svg>';
     var svg_pus = '<svg version="1.1" width="22" height="22" viewBox="0 0 64 64" fill="currentColor" style="width: 20px; height: 20px;"><path d="M39.1,57V7h14.3v50H39.1z M10.6,57V7h14.3v50H10.6z"></path></svg>';
-    var svg_sng1 = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 100px; height: 100px;"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg>';
+    var svg_dsk = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 100px; height: 100px;"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M7 12a5 5 0 0 1 5 -5"></path><path d="M12 17a5 5 0 0 0 5 -5"></path></svg>';
     var svg_sng = '<svg version="1.1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.8,16.2c0,1.7,1.3,3,3,3s3-1.3,3-3s-1.3-3-3-3S6.8,14.6,6.8,16.2"></path><path d="M12.8,16.2V4.8l4.3,0"></path></svg>';
     var svg_sfb = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M5 12l14 0"></path><path d="M13 18l6 -6"></path><path d="M13 6l6 6"></path></svg>';
     var svg_src = '<svg version="1.1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>';
@@ -5538,7 +5654,13 @@ try {
             showImages: false,
             keepControllerVisible: false,
             repeatMode: 'off',
-            shuffleMode: false
+            shuffleMode: false,
+            lyricFontSize: 'md',
+            lyricFontSizePx: 16,
+            lyricFontFamily: '',
+            lyricDisplayMode: 'normal',
+            lyricLang: '',
+            playerShowLyrics: true
         };
     
         try {
@@ -5560,6 +5682,488 @@ try {
         SN.settings = defaults;
     }
     
+    /* =========================================================
+       LYRICS ENGINE — ES5
+       Main player settings are isolated from card and mini player.
+       ========================================================= */
+    
+    var LYRIC_RENDER_DEFAULTS = {
+        card: {
+            enabled: true,
+            view: 'normal',
+            lang: 'fa',
+            fontSize: 20,
+            fontFamily: ''
+        },
+        mini: {
+            enabled: true,
+            view: 'focus',
+            lang: 'fa',
+            fontSize: 16,
+            fontFamily: ''
+        }
+    };
+    
+    var LYRIC_FONT_MAP = {
+        f1: '"Vazirmatn", Tahoma, Arial, sans-serif',
+        f2: 'Georgia, "Times New Roman", serif',
+        f3: '"Segoe UI", Arial, sans-serif',
+        f4: '"Courier New", monospace'
+    };
+    
+    var LYRIC_SIZE_MIN = 12;
+    var LYRIC_SIZE_MAX = 32;
+    
+    var LYRIC_SIZE_PRESETS = {
+        sm: 13,
+        md: 16,
+        lg: 20,
+        xl: 24
+    };
+    
+    var LyricsEngine = {
+        lines: [],
+        activeIndex: -1,
+        offsetMs: 0,
+        itemId: null,
+        lang: 'fa',
+        synced: false,
+        mounts: [],
+    
+        clampSize: function (value) {
+            value = parseInt(value, 10);
+            if (isNaN(value)) value = 16;
+    
+            return Math.max(
+                LYRIC_SIZE_MIN,
+                Math.min(LYRIC_SIZE_MAX, value)
+            );
+        },
+    
+        getMainSettings: function () {
+            return {
+                enabled: GetSetting('playerShowLyrics') !== false &&
+                         GetSetting('playerShowLyrics') !== 0 &&
+                         GetSetting('playerShowLyrics') !== '0',
+    
+                view: GetSetting('lyricDisplayMode') || 'normal',
+                lang: GetSetting('lyricLang') || 'fa',
+                fontSize: this.clampSize(
+                    GetSetting('lyricFontSizePx') || 16
+                ),
+                fontFamily: GetSetting('lyricFontFamily') || ''
+            };
+        },
+    
+        parseLrc: function (source) {
+            var result = [];
+            var rows = String(source || '').split(/\r?\n/);
+            var re = /^\[(\d{1,2}):(\d{2})(?:[\.:](\d{1,3}))?\]\s*(.*)$/;
+            var i, line, meta, match, fraction, time;
+    
+            this.offsetMs = 0;
+    
+            for (i = 0; i < rows.length; i++) {
+                line = rows[i].replace(/^\s+|\s+$/g, '');
+                if (!line) continue;
+    
+                meta = line.match(/^\[([a-zA-Z]+):(.*)\]$/);
+    
+                if (meta) {
+                    if (meta[1].toLowerCase() === 'offset') {
+                        this.offsetMs = parseInt(meta[2], 10) || 0;
+                    }
+                    continue;
+                }
+    
+                match = line.match(re);
+                if (!match) continue;
+    
+                fraction = 0;
+    
+                if (match[3]) {
+                    fraction = parseInt(match[3], 10) /
+                        (match[3].length >= 3 ? 1000 : 100);
+                }
+    
+                time = (parseInt(match[1], 10) * 60) +
+                       parseInt(match[2], 10) +
+                       fraction;
+    
+                if (match[4]) {
+                    result.push({
+                        t: time,
+                        text: match[4]
+                    });
+                }
+            }
+    
+            result.sort(function (a, b) {
+                return a.t - b.t;
+            });
+    
+            return result;
+        },
+    
+        parsePlain: function (source) {
+            var rows = String(source || '').split(/\r?\n/);
+            var result = [];
+            var i, line;
+    
+            for (i = 0; i < rows.length; i++) {
+                line = rows[i].replace(/^\s+|\s+$/g, '');
+    
+                if (line) {
+                    result.push({
+                        t: -1,
+                        text: line
+                    });
+                }
+            }
+    
+            return result;
+        },
+    
+        pickEntry: function (item, preferredLang) {
+            var list, lang, base, i, entry;
+    
+            if (!item || !item.lyrics || !item.lyrics.length) {
+                return null;
+            }
+    
+            list = item.lyrics;
+            lang = String(preferredLang || 'fa').toLowerCase();
+            base = lang.split('-')[0];
+    
+            for (i = 0; i < list.length; i++) {
+                entry = list[i];
+    
+                if (entry && entry.body &&
+                    String(entry.lng || '').toLowerCase() === lang) {
+                    return entry;
+                }
+            }
+    
+            for (i = 0; i < list.length; i++) {
+                entry = list[i];
+    
+                if (entry && entry.body &&
+                    String(entry.lng || '').toLowerCase().indexOf(base) === 0) {
+                    return entry;
+                }
+            }
+    
+            for (i = 0; i < list.length; i++) {
+                if (list[i] && list[i].body) {
+                    return list[i];
+                }
+            }
+    
+            return null;
+        },
+    
+        hasLyrics: function (item, lang) {
+            return !!this.pickEntry(item, lang);
+        },
+    
+        createSnapshot: function (item, lang) {
+            var entry = this.pickEntry(item, lang);
+            var snapshot = {
+                itemId: item && item.id != null ? String(item.id) : null,
+                lines: [],
+                synced: false,
+                offsetMs: 0,
+                lang: lang || 'fa'
+            };
+    
+            if (!entry || !entry.body) return snapshot;
+    
+            if (String(entry.knd || '').toLowerCase() === 'lrc' ||
+                /^\s*\[\d{1,2}:\d{2}/.test(entry.body)) {
+    
+                var previousOffset = this.offsetMs;
+    
+                snapshot.lines = this.parseLrc(entry.body);
+                snapshot.offsetMs = this.offsetMs;
+                snapshot.synced = snapshot.lines.length > 0;
+    
+                this.offsetMs = previousOffset;
+    
+            } else {
+                snapshot.lines = this.parsePlain(entry.body);
+            }
+    
+            snapshot.lang = entry.lng || snapshot.lang;
+    
+            return snapshot;
+        },
+    
+        loadFromItem: function (item, lang) {
+            var entry, i;
+    
+            this.lines = [];
+            this.activeIndex = -1;
+            this.offsetMs = 0;
+            this.synced = false;
+            this.itemId = item && item.id != null ?
+                String(item.id) : null;
+    
+            entry = this.pickEntry(item, lang);
+    
+            if (!entry || !entry.body) {
+                this.renderAll();
+                return false;
+            }
+    
+            if (String(entry.knd || '').toLowerCase() === 'lrc' ||
+                /^\s*\[\d{1,2}:\d{2}/.test(entry.body)) {
+    
+                this.lines = this.parseLrc(entry.body);
+                this.synced = this.lines.length > 0;
+    
+            } else {
+                this.lines = this.parsePlain(entry.body);
+            }
+    
+            this.lang = entry.lng || lang || 'fa';
+    
+            for (i = 0; i < this.mounts.length; i++) {
+                if (this.mounts[i].scope === 'player') {
+                    this.mounts[i].snapshot = null;
+                }
+            }
+    
+            this.renderAll();
+    
+            return this.lines.length > 0;
+        },
+    
+        mount: function (element, item, scope, options) {
+            var i, mount, snapshot;
+    
+            if (!element) return;
+    
+            scope = scope || 'player';
+            options = options || {};
+    
+            snapshot = item ?
+                this.createSnapshot(item, options.lang) : null;
+    
+            mount = null;
+    
+            for (i = 0; i < this.mounts.length; i++) {
+                if (this.mounts[i].element === element) {
+                    mount = this.mounts[i];
+                    break;
+                }
+            }
+    
+            if (!mount) {
+                mount = {
+                    element: element,
+                    item: item || null,
+                    snapshot: snapshot,
+                    scope: scope,
+                    options: options
+                };
+    
+                this.mounts.push(mount);
+    
+            } else {
+                mount.item = item || null;
+                mount.snapshot = snapshot;
+                mount.scope = scope;
+                mount.options = options;
+            }
+    
+            this.renderMount(mount);
+            this.syncMount(mount);
+        },
+    
+        unmount: function (element) {
+            var next = [];
+            var i;
+    
+            for (i = 0; i < this.mounts.length; i++) {
+                if (this.mounts[i].element !== element) {
+                    next.push(this.mounts[i]);
+                }
+            }
+    
+            this.mounts = next;
+        },
+    
+        getLines: function (mount) {
+            if (mount.snapshot) {
+                return mount.snapshot.lines;
+            }
+    
+            return this.lines;
+        },
+    
+        getActiveIndex: function (mount) {
+            var snapshot = mount.snapshot;
+    
+            if (snapshot) {
+                if (!snapshot.synced) return -1;
+    
+                if (String(snapshot.itemId) !== String(this.itemId)) {
+                    return -1;
+                }
+            }
+    
+            return this.activeIndex;
+        },
+    
+        getView: function (mount) {
+            if (mount.scope === 'player') {
+                return this.getMainSettings().view;
+            }
+    
+            return mount.options.view || 'normal';
+        },
+    
+        renderMount: function (mount) {
+            var el = mount.element;
+            var lines = this.getLines(mount);
+            var view = this.getView(mount);
+            var options = mount.options;
+            var wrapper, row, i;
+    
+            if (!el) return;
+    
+            el.innerHTML = '';
+    
+            el.style.fontSize = (options.fontSize || 16) + 'px';
+            el.style.fontFamily =
+                LYRIC_FONT_MAP[options.fontFamily] ||
+                options.fontFamily ||
+                'inherit';
+    
+            if (!lines || !lines.length) {
+                el.innerHTML = '<div class="ha-lrc-empty">No lyrics</div>';
+                return;
+            }
+    
+            wrapper = document.createElement('div');
+            wrapper.className = 'ha-lrc ha-lrc--' + view;
+    
+            if (view === 'line' || view === 'card') {
+                row = document.createElement('div');
+                row.className = 'ha-lrc-line-stage';
+    
+                wrapper.appendChild(row);
+                el.appendChild(wrapper);
+    
+                return;
+            }
+    
+            for (i = 0; i < lines.length; i++) {
+                row = document.createElement('div');
+                row.className = 'ha-lrc-line';
+                row.setAttribute('data-i', String(i));
+                row.innerHTML = lines[i].text;
+    
+                wrapper.appendChild(row);
+            }
+    
+            el.appendChild(wrapper);
+        },
+    
+        syncMount: function (mount) {
+            var lines = this.getLines(mount);
+            var index = this.getActiveIndex(mount);
+            var view = this.getView(mount);
+            var el = mount.element;
+            var rows, stage, i, active;
+    
+            if (!el || !lines.length) return;
+    
+            if (view === 'line' || view === 'card') {
+                stage = el.querySelector('.ha-lrc-line-stage');
+    
+                if (stage) {
+                    stage.innerHTML =
+                        index >= 0 && lines[index] ?
+                        lines[index].text : '';
+                }
+    
+                return;
+            }
+    
+            rows = el.querySelectorAll('.ha-lrc-line');
+    
+            for (i = 0; i < rows.length; i++) {
+                active = i === index;
+    
+                rows[i].className = 'ha-lrc-line' +
+                    (active ? ' active' : '') +
+                    (view === 'focus' && index >= 0 &&
+                     Math.abs(i - index) === 1 ? ' is-near' : '') +
+                    (view === 'normal' && index >= 0 &&
+                     i < index ? ' past' : '');
+            }
+        },
+    
+        sync: function (time) {
+            var lo = 0;
+            var hi = this.lines.length - 1;
+            var mid, answer = -1;
+            var target = (Number(time) || 0) + (this.offsetMs / 1000);
+            var i;
+    
+            if (!this.synced) return;
+    
+            while (lo <= hi) {
+                mid = (lo + hi) >> 1;
+    
+                if (this.lines[mid].t <= target) {
+                    answer = mid;
+                    lo = mid + 1;
+                } else {
+                    hi = mid - 1;
+                }
+            }
+    
+            if (answer === this.activeIndex) return;
+    
+            this.activeIndex = answer;
+    
+            for (i = 0; i < this.mounts.length; i++) {
+                this.syncMount(this.mounts[i]);
+            }
+        },
+    
+        renderAll: function () {
+            var i;
+    
+            for (i = this.mounts.length - 1; i >= 0; i--) {
+                if (!this.mounts[i].element ||
+                    !document.documentElement.contains(this.mounts[i].element)) {
+                    this.mounts.splice(i, 1);
+                    continue;
+                }
+    
+                this.renderMount(this.mounts[i]);
+                this.syncMount(this.mounts[i]);
+            }
+        },
+    
+        applyMainSettings: function () {
+            var stage = document.getElementById('media-stage-lyric');
+            var settings = this.getMainSettings();
+    
+            if (!stage) return;
+    
+            stage.style.display = settings.enabled ? '' : 'none';
+            stage.style.fontSize = settings.fontSize + 'px';
+            stage.style.fontFamily =
+                LYRIC_FONT_MAP[settings.fontFamily] || 'inherit';
+    
+            this.renderAll();
+        }
+    };
+
     /* Path-only route for SPA. Internal SN.navStack is the back stack (not window.history). */
     function normalizeRoutePath(u) {
         var s, i, path;
@@ -6684,6 +7288,35 @@ try {
         var dpl = OA(document.createElement("div"), {className: "playlist-container"});
         MCNT.appendChild(dcs);
         MCNT.appendChild(dpl);
+        
+        /* Card lyrics — independent snapshot */
+        if (LYRIC_RENDER_DEFAULTS.card.enabled &&
+            LyricsEngine.hasLyrics(
+                e,
+                LYRIC_RENDER_DEFAULTS.card.lang
+            )) {
+        
+            var cardLyrics = OA(
+                document.createElement('div'),
+                {
+                    className: 'lyric-container card-lyric-container'
+                }
+            );
+        
+            dpl.appendChild(cardLyrics);
+        
+            LyricsEngine.mount(
+                cardLyrics,
+                e,
+                'card',
+                {
+                    view: LYRIC_RENDER_DEFAULTS.card.view,
+                    lang: LYRIC_RENDER_DEFAULTS.card.lang,
+                    fontSize: LYRIC_RENDER_DEFAULTS.card.fontSize,
+                    fontFamily: LYRIC_RENDER_DEFAULTS.card.fontFamily
+                }
+            );
+        }
 
         var dhc = OA(document.createElement("div"), {className: "page-detail-header-container"});
         var dtn = OA(document.createElement("div"), {className: "thumbail"});
@@ -8643,7 +9276,7 @@ try {
         return [dtl, dac];
     }
     
-    function CRPC(e,T) {
+    function CRPC(e, T, miniPanels) {
         
         if (!SN.NowPlaying || !SN.NowPlaying.item) {
             return null;
@@ -8719,8 +9352,31 @@ try {
             }
     
             var dbl = OA(document.createElement("div"), {className: "focusable", innerHTML: getIcon(svg_lrc, "svg_lrc")});
-            // Placeholder: copy of row2 btn3 icon — به زودی به چیزی وصل میشه
             var dbph = OA(document.createElement("div"), {className: "focusable", innerHTML: getIcon(svg_pls, "svg_pls")});
+            
+            /* Mini-player local view switch only */
+            if (miniPanels) {
+            
+                dbl.addEventListener('click', function (ev) {
+                    if (ev && ev.stopPropagation) {
+                        ev.stopPropagation();
+                    }
+            
+                    miniPanels.queue.style.display = 'none';
+                    miniPanels.lyrics.style.display = '';
+            
+                    LyricsEngine.renderAll();
+                });
+            
+                dbph.addEventListener('click', function (ev) {
+                    if (ev && ev.stopPropagation) {
+                        ev.stopPropagation();
+                    }
+            
+                    miniPanels.lyrics.style.display = 'none';
+                    miniPanels.queue.style.display = '';
+                });
+            }
     
             // More menu: same as the .more buttons of list rows — opens the CRBW popup
             var dbm = OA(document.createElement("div"), {className: "focusable", innerHTML: getIcon(svg_dot, "svg_dot")});
@@ -8794,13 +9450,48 @@ try {
         var u = (SN.user.fv = SN.user.fv || []);
         
         var e = SN.NowPlaying.item;
-    
+        
         var dcs = OA(document.createElement("div"), {className: "detailes-container"});
-        var dpl = OA(document.createElement("div"), {className: "playlist-container"});
+        var dpl = OA(document.createElement("div"), {className: "playlist-container mini-playlist-container"});
+        
+        var miniQueue = OA(document.createElement('div'), {
+            className: 'mini-queue-container'
+        });
+        
+        var miniLyrics = OA(document.createElement('div'), {
+            className: 'lyric-container mini-lyric-container'
+        });
+        
+        miniLyrics.style.display = 'none';
+        
+        dpl.appendChild(miniQueue);
+        dpl.appendChild(miniLyrics);
+        
         MCNT.appendChild(dcs);
         MCNT.appendChild(dpl);
-
-        CRQT();
+        
+        /* Queue is visible by default */
+        CRQT(miniQueue);
+        
+        /* Lyrics use developer defaults, not user settings */
+        if (LYRIC_RENDER_DEFAULTS.mini.enabled &&
+            LyricsEngine.hasLyrics(
+                e,
+                LYRIC_RENDER_DEFAULTS.mini.lang
+            )) {
+        
+            LyricsEngine.mount(
+                miniLyrics,
+                e,
+                'mini',
+                {
+                    view: LYRIC_RENDER_DEFAULTS.mini.view,
+                    lang: LYRIC_RENDER_DEFAULTS.mini.lang,
+                    fontSize: LYRIC_RENDER_DEFAULTS.mini.fontSize,
+                    fontFamily: LYRIC_RENDER_DEFAULTS.mini.fontFamily
+                }
+            );
+        }
 
         var dhc = OA(document.createElement("div"), {className: "page-detail-header-container"});
         var dtn = OA(document.createElement("div"), {className: "thumbail"});
@@ -8827,7 +9518,10 @@ try {
         dtl.appendChild(tlt);
         dcs.appendChild(dtl);
 
-        var crpc = CRPC(e);
+        var crpc = CRPC(e, SN.NowPlaying.type, {
+            queue: miniQueue,
+            lyrics: miniLyrics
+        });
         dcs.appendChild(crpc);
         
         var newUrl = HS + e.id + '/' + au + "-" + e.url;
@@ -10126,6 +10820,7 @@ try {
         if (ProgressBar) { ProgressBar.style.width = percent + "%"; }
         if (currentEl) { currentEl.innerHTML = FormatTime(current); }
         if (finalEl) { finalEl.innerHTML = FormatTime(duration); }
+        if (typeof LyricsEngine !== 'undefined') {LyricsEngine.sync(current);}
     }
     
     function OpenMainPlayer() {
@@ -10241,6 +10936,26 @@ try {
         if (artistEl) {
             artistEl.innerHTML = "";
             artistEl.appendChild(art);
+        }
+        
+        if (e) {
+            LyricsEngine.loadFromItem(
+                e,
+                GetSetting('lyricLang') || 'fa'
+            );
+        
+            var lyricStage = document.getElementById('media-stage-lyric');
+        
+            if (lyricStage) {
+                LyricsEngine.mount(
+                    lyricStage,
+                    null,
+                    'player',
+                    LyricsEngine.getMainSettings()
+                );
+        
+                LyricsEngine.applyMainSettings();
+            }
         }
     }
     
@@ -12966,6 +13681,10 @@ function removeFromPlayQueue(itemId, itemType) {
         if (!src) { return; }
         var prev = document.activeElement || null;
         var cols = null;
+        if (q === 'lyric') {
+            openLyricsSettingsPanel();
+            return;
+        }
         HPOP.open({
             title: 'Setting',
             className: 'hpop-setting',
@@ -13015,6 +13734,265 @@ function removeFromPlayQueue(itemId, itemType) {
     
     SN.KeepControllerVisible = false;
     var hideTimeout;
+
+    function openLyricsSettingsPanel() {
+        var previousFocus = document.activeElement;
+    
+        function makeButton(label, active, callback) {
+            var button = document.createElement('div');
+    
+            button.className = 'fs-btn focusable' +
+                (active ? ' active' : '');
+    
+            button.innerHTML = label;
+    
+            button.addEventListener('click', callback);
+    
+            return button;
+        }
+    
+        HPOP.open({
+            title: 'Lyrics Settings',
+            className: 'hpop-setting',
+    
+            body: function (body) {
+                var settings = LyricsEngine.getMainSettings();
+                var section, title, row, select, slider, presets;
+                var fonts, modes, i, option, button;
+    
+                /* Show / Hide */
+                section = document.createElement('div');
+                section.className = 'player-panel-section';
+    
+                title = document.createElement('div');
+                title.className = 'sec-title';
+                title.innerHTML = 'Lyrics on player';
+    
+                section.appendChild(title);
+    
+                row = document.createElement('div');
+                row.className = 'player-toggle-row';
+    
+                row.innerHTML =
+                    '<div class="label">Show lyrics</div>';
+    
+                button = document.createElement('div');
+                button.className = 'player-toggle' +
+                    (settings.enabled ? ' on' : '');
+    
+                button.innerHTML = '<span></span>';
+    
+                button.addEventListener('click', function () {
+                    var next = !LyricsEngine.getMainSettings().enabled;
+    
+                    SetSetting('playerShowLyrics', next);
+    
+                    button.className = 'player-toggle' +
+                        (next ? ' on' : '');
+    
+                    LyricsEngine.applyMainSettings();
+                });
+    
+                row.appendChild(button);
+                section.appendChild(row);
+                body.appendChild(section);
+    
+                /* Language */
+                section = document.createElement('div');
+                section.className = 'player-panel-section';
+    
+                title = document.createElement('div');
+                title.className = 'sec-title';
+                title.innerHTML = 'Lyrics language';
+    
+                section.appendChild(title);
+    
+                select = document.createElement('select');
+                select.className = 'focusable';
+    
+                var item = SN.NowPlaying && SN.NowPlaying.item;
+                var entries = item && item.lyrics ? item.lyrics : [];
+    
+                option = document.createElement('option');
+                option.value = '';
+                option.innerHTML = 'Automatic';
+                select.appendChild(option);
+    
+                for (i = 0; i < entries.length; i++) {
+                    if (!entries[i] || !entries[i].body) continue;
+    
+                    option = document.createElement('option');
+                    option.value = entries[i].lng || '';
+                    option.innerHTML = entries[i].lng || 'Unknown';
+    
+                    select.appendChild(option);
+                }
+    
+                select.value = GetSetting('lyricLang') || '';
+    
+                select.addEventListener('change', function () {
+                    var media = GetActiveMediaElement();
+    
+                    SetSetting('lyricLang', select.value);
+    
+                    LyricsEngine.loadFromItem(
+                        SN.NowPlaying && SN.NowPlaying.item,
+                        select.value || 'fa'
+                    );
+    
+                    LyricsEngine.applyMainSettings();
+    
+                    if (media) {
+                        LyricsEngine.sync(media.currentTime || 0);
+                    }
+                });
+    
+                section.appendChild(select);
+                body.appendChild(section);
+    
+                /* Font size */
+                section = document.createElement('div');
+                section.className = 'player-panel-section';
+    
+                title = document.createElement('div');
+                title.className = 'sec-title';
+                title.innerHTML = 'Lyrics size';
+    
+                section.appendChild(title);
+    
+                slider = document.createElement('input');
+                slider.type = 'range';
+                slider.min = String(LYRIC_SIZE_MIN);
+                slider.max = String(LYRIC_SIZE_MAX);
+                slider.step = '1';
+                slider.value = String(settings.fontSize);
+                slider.className = 'focusable';
+    
+                slider.addEventListener('input', function () {
+                    var size = LyricsEngine.clampSize(slider.value);
+    
+                    SetSetting('lyricFontSizePx', size);
+                    LyricsEngine.applyMainSettings();
+                });
+    
+                section.appendChild(slider);
+    
+                presets = document.createElement('div');
+                presets.className = 'player-font-size lyric-size-presets';
+    
+                var presetNames = ['sm', 'md', 'lg', 'xl'];
+    
+                for (i = 0; i < presetNames.length; i++) {
+                    (function (key) {
+                        var size = LYRIC_SIZE_PRESETS[key];
+    
+                        presets.appendChild(makeButton(
+                            key.toUpperCase(),
+                            settings.fontSize === size,
+                            function () {
+                                SetSetting('lyricFontSize', key);
+                                SetSetting('lyricFontSizePx', size);
+    
+                                slider.value = String(size);
+                                LyricsEngine.applyMainSettings();
+    
+                                openLyricsSettingsPanel();
+                            }
+                        ));
+                    })(presetNames[i]);
+                }
+    
+                section.appendChild(presets);
+                body.appendChild(section);
+    
+                /* Font family */
+                section = document.createElement('div');
+                section.className = 'player-panel-section';
+    
+                title = document.createElement('div');
+                title.className = 'sec-title';
+                title.innerHTML = 'Lyrics font';
+    
+                section.appendChild(title);
+    
+                fonts = document.createElement('div');
+                fonts.className = 'player-font-size lyric-font-keys';
+    
+                for (i = 1; i <= 4; i++) {
+                    (function (key) {
+                        fonts.appendChild(makeButton(
+                            key.toUpperCase(),
+                            settings.fontFamily === key,
+                            function () {
+                                var next =
+                                    GetSetting('lyricFontFamily') === key ?
+                                    '' : key;
+    
+                                SetSetting('lyricFontFamily', next);
+                                LyricsEngine.applyMainSettings();
+    
+                                openLyricsSettingsPanel();
+                            }
+                        ));
+                    })('f' + i);
+                }
+    
+                section.appendChild(fonts);
+                body.appendChild(section);
+    
+                /* Display mode */
+                section = document.createElement('div');
+                section.className = 'player-panel-section';
+    
+                title = document.createElement('div');
+                title.className = 'sec-title';
+                title.innerHTML = 'Lyrics style';
+    
+                section.appendChild(title);
+    
+                modes = document.createElement('div');
+                modes.className = 'player-font-size';
+    
+                var modeList = [
+                    {v: 'normal', l: 'Normal'},
+                    {v: 'line', l: 'Line'},
+                    {v: 'focus', l: 'Focus'},
+                    {v: 'card', l: 'Card'}
+                ];
+    
+                for (i = 0; i < modeList.length; i++) {
+                    (function (mode) {
+                        modes.appendChild(makeButton(
+                            mode.l,
+                            settings.view === mode.v,
+                            function () {
+                                SetSetting('lyricDisplayMode', mode.v);
+    
+                                LyricsEngine.applyMainSettings();
+    
+                                openLyricsSettingsPanel();
+                            }
+                        ));
+                    })(modeList[i]);
+                }
+    
+                section.appendChild(modes);
+                body.appendChild(section);
+            },
+    
+            onClose: function () {
+                if (typeof showPlayerBox === 'function') {
+                    showPlayerBox();
+                }
+    
+                if (previousFocus && previousFocus.focus) {
+                    try {
+                        previousFocus.focus();
+                    } catch (e) {}
+                }
+            }
+        });
+    }
 
     /**
      * وقتی player-box دیده می‌شود → player-owner مخفی
