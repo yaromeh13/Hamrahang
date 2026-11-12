@@ -6150,7 +6150,7 @@ try {
             lyricFontSize: 'md',
             lyricFontSizePx: 16,
             lyricFontFamily: '',
-            lyricDisplayMode: 'normal',
+            lyricDisplayMode: 'focus',
             lyricLang: '',
             playerShowLyrics: true
         };
@@ -6239,7 +6239,7 @@ try {
                          GetSetting('playerShowLyrics') !== 0 &&
                          GetSetting('playerShowLyrics') !== '0',
     
-                view: GetSetting('lyricDisplayMode') || 'normal',
+                view: GetSetting('lyricDisplayMode') || 'focus',
                 lang: GetSetting('lyricLang') || 'fa',
                 fontSize: this.clampSize(
                     GetSetting('lyricFontSizePx') || 16
