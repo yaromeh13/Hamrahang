@@ -6646,9 +6646,10 @@ try {
                 'inherit';
         
             if (!lines || !lines.length) {
-                el.appendChild(
-                    document.createTextNode('No lyrics')
-                );
+                row = document.createElement('div');
+                row.className = 'ha-lrc-empty';
+                row.appendChild(document.createTextNode('No lyrics'));
+                el.appendChild(row);
                 return;
             }
         
