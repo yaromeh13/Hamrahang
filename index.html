@@ -3213,6 +3213,184 @@ track {
 }
 
 
+/* =====================================================
+   HPOP — LYRICS SETTINGS
+   Independent panel styling
+   Legacy TV compatible — no Flexbox / Grid
+   ===================================================== */
+
+/* Popup size */
+.hpop.hpop-player-lyrics-settings {
+    top: 7%;
+    width: 620px;
+    margin-left: -310px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    background: #202027;
+}
+
+/* Scrollable content */
+.hpop-player-lyrics-settings .hpop-body {
+    max-height: 72vh;
+    padding: 12px 20px 20px;
+    white-space: normal;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Each setting section */
+.hpop-player-lyrics-settings .player-panel-section {
+    display: block;
+    position: relative;
+    width: 100%;
+    padding: 13px 5px 15px;
+    margin: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.09);
+    overflow: hidden;
+}
+
+.hpop-player-lyrics-settings .player-panel-section:last-child {
+    border-bottom: 0;
+}
+
+/* Section title */
+.hpop-player-lyrics-settings .sec-title {
+    display: block;
+    margin: 0 0 12px;
+    color: #bdbdc8;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 22px;
+}
+
+/* Show lyrics row */
+.hpop-player-lyrics-settings .player-toggle-row {
+    display: block;
+    min-height: 38px;
+    line-height: 38px;
+    overflow: hidden;
+}
+
+.hpop-player-lyrics-settings .player-toggle-row .label {
+    display: inline-block;
+    color: #fff;
+    font-size: 15px;
+    vertical-align: middle;
+}
+
+/* Toggle */
+.hpop-player-lyrics-settings .player-toggle {
+    display: block;
+    float: right;
+    position: relative;
+    width: 48px;
+    height: 26px;
+    margin-top: 6px;
+    border-radius: 15px;
+    background: #555560;
+    cursor: pointer;
+}
+
+.hpop-player-lyrics-settings .player-toggle span {
+    display: block;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.hpop-player-lyrics-settings .player-toggle.on {
+    background: #a70000;
+}
+
+.hpop-player-lyrics-settings .player-toggle.on span {
+    left: 25px;
+}
+
+/* Language selector */
+.hpop-player-lyrics-settings select {
+    display: block;
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 6px;
+    background: #303039;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+}
+
+.hpop-player-lyrics-settings select:focus {
+    border-color: #a70000;
+    background: #383840;
+}
+
+/* Font size slider */
+.hpop-player-lyrics-settings input[type="range"] {
+    display: block;
+    width: 100%;
+    height: 28px;
+    margin: 8px 0 12px;
+    cursor: pointer;
+}
+
+/* Presets, font family and display modes */
+.hpop-player-lyrics-settings .player-font-size {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+}
+
+.hpop-player-lyrics-settings .fs-btn {
+    display: inline-block;
+    min-width: 65px;
+    height: 38px;
+    line-height: 38px;
+    padding: 0 13px;
+    margin: 3px 7px 3px 0;
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 6px;
+    background: #303039;
+    color: #c8c8d0;
+    font-size: 13px;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.hpop-player-lyrics-settings .fs-btn.active {
+    border-color: #a70000;
+    background: #790000;
+    color: #fff;
+}
+
+.hpop-player-lyrics-settings .fs-btn:focus,
+.hpop-player-lyrics-settings .fs-btn.focus {
+    border-color: #fff;
+    background: #a70000;
+    color: #fff;
+    outline: none;
+}
+
+/* Focus state for all controls */
+.hpop-player-lyrics-settings select:focus,
+.hpop-player-lyrics-settings input:focus {
+    outline: 1px solid #a70000;
+}
+
+/* Smaller screens */
+@media screen and (max-width: 700px) {
+    .hpop.hpop-player-lyrics-settings {
+        left: 3%;
+        width: 94%;
+        margin-left: 0;
+    }
+}
+
 
 /* Toasts must stay visible above the popup */
 .toast-message {
