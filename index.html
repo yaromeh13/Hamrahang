@@ -3828,10 +3828,10 @@ window.HA_SVG = (function () {
                 <div id="playlist" class="g-30 btn" onclick="openPlayerQueuePanel()">
                     <img src="/assets/playlist.png">
                 </div>
-                <div id="subtitle" class="g-31 btn" onclick="handleShowSettingModal('subtitle')">
+                <div id="subtitle" class="g-31 btn" onclick="openLyricsSettingsPanel()">
                     <img src="/assets/subtitle.png">
                 </div>
-                <div id="lyric" class="g-31 btn" onclick="handleShowSettingModal('lyric')">
+                <div id="lyric" class="g-31 btn" onclick="openLyricsSettingsPanel()">
                     <img src="/assets/svg_lrc.png">
                 </div>
                 <div id="setting" class="g-30 setting btn" >
@@ -13984,12 +13984,10 @@ function removeFromPlayQueue(itemId, itemType) {
     function handleShowSettingModal(q){
         var src = document.getElementById("modal-content");
         if (!src) { return; }
+    
         var prev = document.activeElement || null;
         var cols = null;
-        if (q === 'lyric') {
-            openLyricsSettingsPanel();
-            return;
-        }
+    
         HPOP.open({
             title: 'Setting',
             className: 'hpop-setting',
@@ -14002,7 +14000,6 @@ function removeFromPlayQueue(itemId, itemType) {
             onClose: function () {
                 while (cols && cols.firstChild) { src.appendChild(cols.firstChild); }
                 cols = null;
-                // The player controls may have auto-hidden meanwhile: show them, then restore focus
                 if (typeof showPlayerBox === 'function') { showPlayerBox(); }
                 if (prev && prev.focus) { try { prev.focus(); } catch (err) {} }
             }
@@ -14058,7 +14055,7 @@ function removeFromPlayQueue(itemId, itemType) {
     
         HPOP.open({
             title: 'Lyrics Settings',
-            className: 'hpop-setting',
+            className: 'hpop-player-lyrics-settings',
     
             body: function (body) {
                 var settings = LyricsEngine.getMainSettings();
