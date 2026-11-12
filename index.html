@@ -2062,8 +2062,8 @@ input[type="radio"] {
 /* تامب انر فول‌اسکرین — راست/پایین؛ فقط وقتی تصویر دارد پر می‌شود (ha.php) */
 #player .player-owner {
     position: absolute;
-    right: 1.25rem;
-    bottom: 1.25rem;
+    right: 16PX;
+    bottom: 16PX;
     width: 70px;
     height: 70px;
     border-radius: 12px;
@@ -6213,6 +6213,7 @@ try {
         lines: [],
         activeIndex: -1,
         offsetMs: 0,
+        currentTime: 0,
         itemId: null,
         lang: 'fa',
         synced: false,
@@ -6246,50 +6247,77 @@ try {
         parseLrc: function (source) {
             var result = [];
             var rows = String(source || '').split(/\r?\n/);
-            var re = /^\[(\d{1,2}):(\d{2})(?:[\.:](\d{1,3}))?\]\s*(.*)$/;
-            var i, line, meta, match, fraction, time;
-    
+            var timeRe = /\[(\d{1,2}):(\d{2})(?:[\.:](\d{1,3}))?\]/g;
+            var i, j, line, meta, match, fraction, time;
+            var times, text, order, textStart;
+        
             this.offsetMs = 0;
-    
+            order = 0;
+        
             for (i = 0; i < rows.length; i++) {
                 line = rows[i].replace(/^\s+|\s+$/g, '');
+        
                 if (!line) continue;
-    
+        
                 meta = line.match(/^\[([a-zA-Z]+):(.*)\]$/);
-    
+        
                 if (meta) {
                     if (meta[1].toLowerCase() === 'offset') {
                         this.offsetMs = parseInt(meta[2], 10) || 0;
                     }
                     continue;
                 }
-    
-                match = line.match(re);
-                if (!match) continue;
-    
-                fraction = 0;
-    
-                if (match[3]) {
-                    fraction = parseInt(match[3], 10) /
-                        (match[3].length >= 3 ? 1000 : 100);
+        
+                times = [];
+                textStart = 0;
+                timeRe.lastIndex = 0;
+        
+                while ((match = timeRe.exec(line)) !== null) {
+                    textStart = timeRe.lastIndex;
+                    fraction = 0;
+        
+                    if (match[3]) {
+                        if (match[3].length === 1) {
+                            fraction = parseInt(match[3], 10) / 10;
+                        } else if (match[3].length === 2) {
+                            fraction = parseInt(match[3], 10) / 100;
+                        } else {
+                            fraction = parseInt(match[3], 10) / 1000;
+                        }
+                    }
+        
+                    time = (parseInt(match[1], 10) * 60) +
+                           parseInt(match[2], 10) +
+                           fraction;
+        
+                    times.push(time);
                 }
-    
-                time = (parseInt(match[1], 10) * 60) +
-                       parseInt(match[2], 10) +
-                       fraction;
-    
-                if (match[4]) {
+        
+                if (!times.length) continue;
+        
+                text = line.substring(textStart);
+                text = text.replace(/^\s+|\s+$/g, '');
+        
+                if (!text) continue;
+        
+                for (j = 0; j < times.length; j++) {
                     result.push({
-                        t: time,
-                        text: match[4]
+                        t: times[j],
+                        text: text,
+                        _order: order++
                     });
                 }
             }
-    
+        
             result.sort(function (a, b) {
-                return a.t - b.t;
+                if (a.t !== b.t) return a.t - b.t;
+                return a._order - b._order;
             });
-    
+        
+            for (i = 0; i < result.length; i++) {
+                delete result[i]._order;
+            }
+        
             return result;
         },
     
@@ -6392,9 +6420,9 @@ try {
             this.lines = [];
             this.activeIndex = -1;
             this.offsetMs = 0;
+            this.currentTime = 0;
             this.synced = false;
-            this.itemId = item && item.id != null ?
-                String(item.id) : null;
+            this.itemId = item && item.id != null ? String(item.id) : null;
     
             entry = this.pickEntry(item, lang);
     
@@ -6489,17 +6517,53 @@ try {
             return this.lines;
         },
     
+        findActiveIndex: function (lines, time, offsetMs, synced) {
+            var lo = 0;
+            var hi;
+            var mid;
+            var answer = -1;
+        
+            if (!synced || !lines || !lines.length) {
+                return -1;
+            }
+        
+            hi = lines.length - 1;
+        
+            time = (Number(time) || 0) +
+                   ((Number(offsetMs) || 0) / 1000);
+        
+            while (lo <= hi) {
+                mid = (lo + hi) >> 1;
+        
+                if (lines[mid].t <= time) {
+                    answer = mid;
+                    lo = mid + 1;
+                } else {
+                    hi = mid - 1;
+                }
+            }
+        
+            return answer;
+        },
+
         getActiveIndex: function (mount) {
             var snapshot = mount.snapshot;
-    
+        
             if (snapshot) {
                 if (!snapshot.synced) return -1;
-    
+        
                 if (String(snapshot.itemId) !== String(this.itemId)) {
                     return -1;
                 }
+        
+                return this.findActiveIndex(
+                    snapshot.lines,
+                    this.currentTime,
+                    snapshot.offsetMs,
+                    snapshot.synced
+                );
             }
-    
+        
             return this.activeIndex;
         },
     
@@ -6519,7 +6583,7 @@ try {
             var wrapper, row, i;
     
             if (!el) return;
-    
+            mount._activeIndex = null;
             el.innerHTML = '';
     
             el.style.fontSize = (options.fontSize || 16) + 'px';
@@ -6563,27 +6627,32 @@ try {
             var index = this.getActiveIndex(mount);
             var view = this.getView(mount);
             var el = mount.element;
-            var rows, stage, i, active;
-    
-            if (!el || !lines.length) return;
-    
+            var rows, stage, i, active, targetTop;
+        
+            if (!el || !lines || !lines.length) return;
+        
+            /* Avoid unnecessary DOM updates */
+            if (mount._activeIndex === index) return;
+        
+            mount._activeIndex = index;
+        
             if (view === 'line' || view === 'card') {
                 stage = el.querySelector('.ha-lrc-line-stage');
-    
+        
                 if (stage) {
                     stage.innerHTML =
                         index >= 0 && lines[index] ?
                         lines[index].text : '';
                 }
-    
+        
                 return;
             }
-    
+        
             rows = el.querySelectorAll('.ha-lrc-line');
-    
+        
             for (i = 0; i < rows.length; i++) {
                 active = i === index;
-    
+        
                 rows[i].className = 'ha-lrc-line' +
                     (active ? ' active' : '') +
                     (view === 'focus' && index >= 0 &&
@@ -6591,55 +6660,48 @@ try {
                     (view === 'normal' && index >= 0 &&
                      i < index ? ' past' : '');
             }
-            
-            /* Auto-scroll active lyric in normal and focus modes */
+        
+            /* Auto-scroll active lyric */
             if (
                 (view === 'normal' || view === 'focus') &&
                 index >= 0 &&
                 rows[index]
             ) {
                 stage = el.querySelector('.ha-lrc');
-            
+        
                 if (stage) {
-                    var targetTop = rows[index].offsetTop -
+                    targetTop = rows[index].offsetTop -
                         Math.max(
                             0,
                             (stage.clientHeight - rows[index].offsetHeight) / 2
                         );
-            
+        
                     if (targetTop < 0) {
                         targetTop = 0;
                     }
-            
+        
                     stage.scrollTop = targetTop;
                 }
             }
         },
     
         sync: function (time) {
-            var lo = 0;
-            var hi = this.lines.length - 1;
-            var mid, answer = -1;
-            var target = (Number(time) || 0) + (this.offsetMs / 1000);
             var i;
-    
-            if (!this.synced) return;
-    
-            while (lo <= hi) {
-                mid = (lo + hi) >> 1;
-    
-                if (this.lines[mid].t <= target) {
-                    answer = mid;
-                    lo = mid + 1;
-                } else {
-                    hi = mid - 1;
-                }
-            }
-    
-            if (answer === this.activeIndex) return;
-    
-            this.activeIndex = answer;
-    
+        
+            this.currentTime = Number(time) || 0;
+        
+            /* Active index for the main player */
+            this.activeIndex = this.findActiveIndex(
+                this.lines,
+                this.currentTime,
+                this.offsetMs,
+                this.synced
+            );
+        
+            /*
+             * Each mount calculates its own active index.
+             * Do not return early when the main player's index is unchanged.
+             */
             for (i = 0; i < this.mounts.length; i++) {
                 this.syncMount(this.mounts[i]);
             }
