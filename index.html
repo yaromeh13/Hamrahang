@@ -6150,7 +6150,7 @@ try {
             lyricFontSize: 'md',
             lyricFontSizePx: 16,
             lyricFontFamily: '',
-            lyricDisplayMode: 'focus',
+            lyricDisplayMode: 'normal',
             lyricLang: '',
             playerShowLyrics: true
         };
@@ -6239,7 +6239,7 @@ try {
                          GetSetting('playerShowLyrics') !== 0 &&
                          GetSetting('playerShowLyrics') !== '0',
     
-                view: GetSetting('lyricDisplayMode') || 'focus',
+                view: GetSetting('lyricDisplayMode') || 'normal',
                 lang: GetSetting('lyricLang') || 'fa',
                 fontSize: this.clampSize(
                     GetSetting('lyricFontSizePx') || 16
@@ -6465,20 +6465,6 @@ try {
     
             scope = scope || 'player';
             options = options || {};
-            
-            /*
-             * Remove mounts whose elements are no longer
-             * attached to the document.
-             */
-            for (i = this.mounts.length - 1; i >= 0; i--) {
-            
-                if (
-                    !this.mounts[i].element ||
-                    !document.documentElement.contains(
-                        this.mounts[i].element
-                    )
-                ) {this.mounts.splice(i, 1);}
-            }
     
             snapshot = item ?
                 this.createSnapshot(item, options.lang) : null;
@@ -6547,18 +6533,8 @@ try {
         
             hi = lines.length - 1;
         
-            /*
-             * Standard LRC offset:
-             * Positive offset delays lyrics.
-             * Negative offset advances lyrics.
-             */
-            time = (Number(time) || 0) - ((Number(offsetMs) || 0) / 1000);
-                   
-            /*
-             * Show the first lyric before its timestamp.
-             * Prevents an empty Focus view at playback start.
-             */
-            if (time < lines[0].t) {return 0;}
+            time = (Number(time) || 0) +
+                   ((Number(offsetMs) || 0) / 1000);
         
             while (lo <= hi) {
                 mid = (lo + hi) >> 1;
@@ -6596,23 +6572,10 @@ try {
         },
     
         getView: function (mount) {
-
-            var synced = mount.snapshot
-                ? mount.snapshot.synced
-                : this.synced;
-        
-            /*
-             * Lyrics بدون Timestamp باید همیشه
-             * به‌صورت متن معمولی نمایش داده شود.
-             */
-            if (!synced) {
-                return 'normal';
-            }
-        
             if (mount.scope === 'player') {
                 return this.getMainSettings().view;
             }
-        
+    
             return mount.options.view || 'normal';
         },
     
@@ -6620,72 +6583,46 @@ try {
             var el = mount.element;
             var lines = this.getLines(mount);
             var view = this.getView(mount);
-        
-            var options = mount.scope === 'player'
-                ? this.getMainSettings()
-                : mount.options;
-        
-            var isStatic = !(
-                mount.snapshot
-                    ? mount.snapshot.synced
-                    : this.synced
-            );
-        
+            var options = mount.options;
             var wrapper, row, i;
-        
+    
             if (!el) return;
-        
             mount._activeIndex = null;
             el.innerHTML = '';
-        
+    
             el.style.fontSize = (options.fontSize || 16) + 'px';
-        
             el.style.fontFamily =
                 LYRIC_FONT_MAP[options.fontFamily] ||
                 options.fontFamily ||
                 'inherit';
-        
+    
             if (!lines || !lines.length) {
-                row = document.createElement('div');
-                row.className = 'ha-lrc-empty';
-                row.appendChild(document.createTextNode('No lyrics'));
-                el.appendChild(row);
+                el.innerHTML = '<div class="ha-lrc-empty">No lyrics</div>';
                 return;
             }
-        
+    
             wrapper = document.createElement('div');
-        
             wrapper.className = 'ha-lrc ha-lrc--' + view;
-        
-            if (isStatic) {
-                wrapper.className += ' static';
-            }
-        
-            if (!isStatic && (view === 'line' || view === 'card')) {
-        
+    
+            if (view === 'line' || view === 'card') {
                 row = document.createElement('div');
                 row.className = 'ha-lrc-line-stage';
-        
+    
                 wrapper.appendChild(row);
                 el.appendChild(wrapper);
-        
+    
                 return;
             }
-        
+    
             for (i = 0; i < lines.length; i++) {
-        
                 row = document.createElement('div');
                 row.className = 'ha-lrc-line';
-        
                 row.setAttribute('data-i', String(i));
-        
-                row.appendChild(
-                    document.createTextNode(lines[i].text)
-                );
-        
+                row.innerHTML = lines[i].text;
+    
                 wrapper.appendChild(row);
             }
-        
+    
             el.appendChild(wrapper);
         },
     
@@ -6707,12 +6644,9 @@ try {
                 stage = el.querySelector('.ha-lrc-line-stage');
         
                 if (stage) {
-                    while (stage.firstChild) {stage.removeChild(stage.firstChild);}
-                    if (index >= 0 && lines[index]) {
-                        stage.appendChild(
-                            document.createTextNode(lines[index].text)
-                        );
-                    }
+                    stage.innerHTML =
+                        index >= 0 && lines[index] ?
+                        lines[index].text : '';
                 }
         
                 return;
