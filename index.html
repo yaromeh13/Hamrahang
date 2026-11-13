@@ -3970,8 +3970,8 @@ window.HA_SVG = (function () {
                 </div>
                 
             </div>
-            <div id="media-stage-lyric" class="playlist-container media-stage-lyric ha-lyric-skin"></div>
         </div>
+        <div id="media-stage-lyric" class="playlist-container media-stage-lyric ha-lyric-skin"></div>
         <div id="player-box" class="player-box vis-none">
             <div class="backdrop" id="backdrop"></div>
 
@@ -6403,8 +6403,9 @@ try {
     
             if (!entry || !entry.body) return snapshot;
     
-            if (String(entry.knd || '').toLowerCase() === 'lrc' ||
-                /^\s*\[\d{1,2}:\d{2}/.test(entry.body)) {
+            if (String(entry.fmt || '').toLowerCase() === 'lrc' ||
+                /^\s*\[\d{1,2}:\d{2}(?:[\.:]\d{1,3})?\]/.test(entry.body)
+            ) {
     
                 var previousOffset = this.offsetMs;
     
@@ -6440,8 +6441,9 @@ try {
                 return false;
             }
     
-            if (String(entry.knd || '').toLowerCase() === 'lrc' ||
-                /^\s*\[\d{1,2}:\d{2}/.test(entry.body)) {
+            if (String(entry.fmt || '').toLowerCase() === 'lrc' ||
+                    /^\s*\[\d{1,2}:\d{2}(?:[\.:]\d{1,3})?\]/.test(entry.body)
+                ) {
     
                 this.lines = this.parseLrc(entry.body);
                 this.synced = this.lines.length > 0;
@@ -11476,6 +11478,7 @@ try {
         playerBox.classList.remove("vis-none");
      
         var stage = document.getElementById("media-stage");
+        RenderPlayerLyrics(SN.NowPlaying.item);
 
         if (SN.NowPlaying.player === 'video') {
             backdrop.classList.add("vis-none");
@@ -11582,25 +11585,28 @@ try {
             artistEl.innerHTML = "";
             artistEl.appendChild(art);
         }
-        
-        if (e) {
-            LyricsEngine.loadFromItem(
-                e,
-                GetSetting('lyricLang') || 'fa'
+    }
+    
+    function RenderPlayerLyrics(e) {
+
+        if (!e) { return; }
+    
+        LyricsEngine.loadFromItem(
+            e,
+            GetSetting('lyricLang') || 'fa'
+        );
+    
+        var lyricStage = document.getElementById('media-stage-lyric');
+    
+        if (lyricStage) {
+            LyricsEngine.mount(
+                lyricStage,
+                null,
+                'player',
+                LyricsEngine.getMainSettings()
             );
-        
-            var lyricStage = document.getElementById('media-stage-lyric');
-        
-            if (lyricStage) {
-                LyricsEngine.mount(
-                    lyricStage,
-                    null,
-                    'player',
-                    LyricsEngine.getMainSettings()
-                );
-        
-                LyricsEngine.applyMainSettings();
-            }
+    
+            LyricsEngine.applyMainSettings();
         }
     }
     
@@ -11633,6 +11639,7 @@ try {
     
         // به‌روزرسانی Mini Player
         UpdateMiniPlayer(item, artistUrl);
+        RenderPlayerLyrics(item);
 
         try {
             updateMaxDeskOwnerThumb(item);
