@@ -6244,7 +6244,10 @@ try {
                          GetSetting('playerShowLyrics') !== 0 &&
                          GetSetting('playerShowLyrics') !== '0',
     
-                view: GetSetting('lyricDisplayMode') || 'focus',
+                view: (
+                    SN.NowPlaying &&
+                    SN.NowPlaying.player === 'video'
+                ) ? 'line' : (GetSetting('lyricDisplayMode') || 'focus'),
                 lang: GetSetting('lyricLang') || 'fa',
                 fontSize: this.clampSize(
                     GetSetting('lyricFontSizePx') || 16
@@ -14408,6 +14411,10 @@ function removeFromPlayQueue(itemId, itemType) {
     
             body: function (body) {
                 var settings = LyricsEngine.getMainSettings();
+                var isVideo = !!(
+                    SN.NowPlaying &&
+                    SN.NowPlaying.player === 'video'
+                );
                 var section, title, row, select, slider, presets;
                 var fonts, modes, i, option, button;
     
@@ -14424,13 +14431,10 @@ function removeFromPlayQueue(itemId, itemType) {
                 row = document.createElement('div');
                 row.className = 'player-toggle-row';
     
-                row.innerHTML =
-                    '<div class="label">Show lyrics</div>';
+                row.innerHTML = '<div class="label">Show lyrics</div>';
     
                 button = document.createElement('div');
-                button.className = 'player-toggle' +
-                    (settings.enabled ? ' on' : '');
-    
+                button.className = 'player-toggle' + (settings.enabled ? ' on' : '');
                 button.innerHTML = '<span></span>';
     
                 button.addEventListener('click', function () {
@@ -14592,43 +14596,37 @@ function removeFromPlayQueue(itemId, itemType) {
                 body.appendChild(section);
     
                 /* Display mode */
-                section = document.createElement('div');
-                section.className = 'player-panel-section';
-    
-                title = document.createElement('div');
-                title.className = 'sec-title';
-                title.innerHTML = 'Lyrics style';
-    
-                section.appendChild(title);
-    
-                modes = document.createElement('div');
-                modes.className = 'player-font-size';
-    
-                var modeList = [
-                    {v: 'normal', l: 'Normal'},
-                    {v: 'line', l: 'Line'},
-                    {v: 'focus', l: 'Focus'},
-                    {v: 'card', l: 'Card'}
-                ];
-    
-                for (i = 0; i < modeList.length; i++) {
-                    (function (mode) {
-                        modes.appendChild(makeButton(
-                            mode.l,
-                            settings.view === mode.v,
-                            function () {
-                                SetSetting('lyricDisplayMode', mode.v);
-    
-                                LyricsEngine.applyMainSettings();
-    
-                                openLyricsSettingsPanel();
-                            }
-                        ));
-                    })(modeList[i]);
+                if (!isVideo) {
+                    section = OA(document.createElement('div'), {className: 'player-panel-section'});
+                    title = OA(document.createElement('div'), {className: 'sec-title', innerHTML: 'Lyrics style'});
+                    section.appendChild(title);
+                    modes = document.createElement('div');
+                    modes.className = 'player-font-size';
+        
+                    var modeList = [
+                        {v: 'normal', l: 'Normal'},
+                        {v: 'line', l: 'Line'},
+                        {v: 'focus', l: 'Focus'},
+                        {v: 'card', l: 'Card'}
+                    ];
+                    for (i = 0; i < modeList.length; i++) {
+                        (function (mode) {
+                            modes.appendChild(makeButton(
+                                mode.l,
+                                settings.view === mode.v,
+                                function () {
+                                    SetSetting('lyricDisplayMode', mode.v);
+        
+                                    LyricsEngine.applyMainSettings();
+        
+                                    openLyricsSettingsPanel();
+                                }
+                            ));
+                        })(modeList[i]);
+                    }
+                    section.appendChild(modes);
+                    body.appendChild(section);
                 }
-    
-                section.appendChild(modes);
-                body.appendChild(section);
             },
     
             onClose: function () {
