@@ -2284,6 +2284,35 @@ require_once __DIR__ . '/int/h_api.php';
     align-items: center;
     justify-content: center;
 }
+.video-inline-lyrics {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12%;
+    z-index: 3;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 16px;
+    text-align: center;
+    pointer-events: none;
+    font-size: var(--ha-lyric-size, 16px);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.95);
+}
+
+.video-inline-lyrics .ha-lrc {
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+}
+
+.video-inline-lyrics .ha-lrc-line-stage {
+    min-height: 2.4em;
+}
+
+.video-inline-lyrics .ha-lrc-fade {
+    pointer-events: none;
+}
+
 .media-stage{
     position: absolute;
     inset: 0;
@@ -7662,6 +7691,7 @@ if (!empty($_SESSION['loggedin'])) {
         Video.controls = false;
     
         if (inlineBar) inlineBar.classList.remove('vis-none');
+        syncInlineVideoLyrics(P.nowPlaying && P.nowPlaying.item);
     }
     
     function rehomeVideoToPlayer() {
@@ -15134,11 +15164,64 @@ const PROFILE_KEY = 'ha_profile';
     
         stage.classList.toggle('is-hidden', !settings.enabled);
         stage.dataset.open = settings.enabled ? '1' : '0';
+        
+        const P = ensurePlayer();
+
+        if (P.inlineVideo) {
+            syncInlineVideoLyrics(
+                P.nowPlaying && P.nowPlaying.item
+            );
+        }
     
         const btn = document.getElementById('lyric');
         if (btn) {
             btn.classList.remove('active');
         }
+    }
+    
+    function syncInlineVideoLyrics(item) {
+        const P = ensurePlayer();
+        const iv = P.inlineVideo;
+    
+        if (!iv || !iv.videoSlot) return;
+    
+        let box = iv.videoSlot.querySelector('.video-inline-lyrics');
+    
+        if (!box) {
+            box = OA(document.createElement('div'), {
+                className: 'video-inline-lyrics ha-lyric-skin'
+            });
+    
+            box.setAttribute('data-ha-lyric-skin', '1');
+            iv.videoSlot.appendChild(box);
+        }
+    
+        const settings = LyricsEngine.getMainSettings();
+    
+        // فقط ویدیوی در حال پخش و دارای LRC
+        const valid = (
+            P.nowPlaying &&
+            P.nowPlaying.player === 'video' &&
+            item &&
+            LyricsEngine.hasLyrics(item) &&
+            LyricsEngine.synced &&
+            settings.enabled
+        );
+    
+        if (!valid) {
+            box.classList.add('vis-none');
+            box.innerHTML = '';
+            LyricsEngine.unmount(box);
+            return;
+        }
+    
+        box.classList.remove('vis-none');
+    
+        // ویدیو همیشه فقط حالت خطی دارد
+        LyricsEngine.mount(box, 'sync', 'line');
+    
+        const media = GetActiveMediaElement();
+        LyricsEngine.sync(media ? media.currentTime : 0);
     }
 
     const LyricsEngine = {
@@ -15982,6 +16065,7 @@ const PROFILE_KEY = 'ha_profile';
             LyricsEngine.mountDefaults(item);
             CRML(item);
             applyPlayerLyricsVisibility();
+            syncInlineVideoLyrics(item);
             const stageLyr = document.getElementById('media-stage-lyric');
             if (stageLyr && LyricsEngine.lines.length) {
                 // پیش‌فرض مخفی نباشد اگر کاربر قبلاً باز کرده
