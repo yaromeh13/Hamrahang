@@ -15175,36 +15175,96 @@ const PROFILE_KEY = 'ha_profile';
         parseLrc(text) {
             const out = [];
             if (!text) return out;
-            const re = /^\[(\d{1,2}):(\d{2})(?:[\.:](\d{1,3}))?\]\s*(.*)$/;
-            String(text).split(/\r?\n/).forEach((raw) => {
-                const line = raw.trim();
-                if (!line) return;
-                // meta tags [ti:] [ar:] [offset:] ...
-                const meta = line.match(/^\[([a-zA-Z]+):(.*)\]$/);
-                if (meta && !/^\d/.test(meta[1])) {
-                    if (meta[1].toLowerCase() === 'offset') {
-                        const n = parseInt(meta[2], 10);
-                        if (Number.isFinite(n)) this.offsetMs = n;
+        
+            const rows = String(text || '').split(/\r?\n/);
+            const timeRe = /\[(\d{1,2}):(\d{2})(?:[\.:](\d{1,3}))?\]/g;
+        
+            let order = 0;
+            let inIntro = false;
+        
+            this.offsetMs = 0;
+        
+            for (let i = 0; i < rows.length; i++) {
+                const line = rows[i].trim();
+        
+                if (!line) continue;
+        
+                // Intro block
+                if (line.toLowerCase() === '[intro]') {
+                    inIntro = true;
+                    continue;
+                }
+        
+                if (line.toLowerCase() === '[/intro]') {
+                    inIntro = false;
+                    continue;
+                }
+        
+                // LRC metadata
+                const meta = line.match(/^([[]([a-zA-Z]+):(.*)[]])$/);
+        
+                if (meta) {
+                    if (meta[2].toLowerCase() === 'offset') {
+                        this.offsetMs = parseInt(meta[3], 10) || 0;
                     }
-                    return;
+                    continue;
                 }
-                const m = line.match(re);
-                if (!m) {
-                    // خط بدون زمان → متن ثابت (t = -1 نگه می‌داریم در parsePlain)
-                    return;
+        
+                const times = [];
+                let match;
+                let textStart = 0;
+        
+                timeRe.lastIndex = 0;
+        
+                while ((match = timeRe.exec(line)) !== null) {
+                    textStart = timeRe.lastIndex;
+        
+                    let fraction = 0;
+        
+                    if (match[3]) {
+                        if (match[3].length === 1) {
+                            fraction = parseInt(match[3], 10) / 10;
+                        } else if (match[3].length === 2) {
+                            fraction = parseInt(match[3], 10) / 100;
+                        } else {
+                            fraction = parseInt(match[3], 10) / 1000;
+                        }
+                    }
+        
+                    const time =
+                        (parseInt(match[1], 10) * 60) +
+                        parseInt(match[2], 10) +
+                        fraction;
+        
+                    times.push(time);
                 }
-                const min = parseInt(m[1], 10) || 0;
-                const sec = parseInt(m[2], 10) || 0;
-                let frac = 0;
-                if (m[3]) {
-                    const f = m[3];
-                    frac = parseInt(f, 10) / (f.length >= 3 ? 1000 : 100);
+        
+                if (!times.length) continue;
+        
+                const lyricText = line.substring(textStart).trim();
+        
+                if (!lyricText) continue;
+        
+                for (let j = 0; j < times.length; j++) {
+                    out.push({
+                        t: times[j],
+                        text: lyricText,
+                        intro: inIntro,
+                        _order: order++
+                    });
                 }
-                const t = min * 60 + sec + frac;
-                const txt = (m[4] || '').trim();
-                if (txt) out.push({ t, text: txt });
+            }
+        
+            // Sort by timestamp; preserve original order for equal timestamps
+            out.sort((a, b) => {
+                if (a.t !== b.t) return a.t - b.t;
+                return a._order - b._order;
             });
-            out.sort((a, b) => a.t - b.t);
+        
+            for (let i = 0; i < out.length; i++) {
+                delete out[i]._order;
+            }
+        
             return out;
         },
 
@@ -15236,6 +15296,24 @@ const PROFILE_KEY = 'ha_profile';
         hasLyrics(item) {
             return !!this.pickEntry(item);
         },
+        
+        isLrcSource(source) {
+            return /(?:^|\r?\n)\s*\[\d{1,2}:\d{2}(?:[\.:]\d{1,3})?\]/
+                .test(String(source || ''));
+        },
+        
+        isLrcEntry(entry) {
+            if (!entry || !entry.body) return false;
+        
+            const kind = String(entry.knd || '').toLowerCase();
+            const format = String(entry.fmt || '').toLowerCase();
+        
+            return (
+                kind === 'lrc' ||
+                format === 'lrc' ||
+                this.isLrcSource(entry.body)
+            );
+        },
 
         /** اسنپ‌شات لیریک برای bind به یک آیتم صفحه (مستقل از پلیر) */
         _snapshotFromItem(item, preferredLng) {
@@ -15249,9 +15327,8 @@ const PROFILE_KEY = 'ha_profile';
                 lang: null
             };
             if (!entry || !entry.body) return snap;
-            const knd = String(entry.knd || '').toLowerCase();
             const body = entry.body;
-            if (knd === 'lrc' || /^\s*\[\d{1,2}:\d{2}/.test(body)) {
+            if (this.isLrcEntry(entry)) {
                 // parseLrc از this.offsetMs هم می‌نویسد — موقتاً جدا نگه می‌داریم
                 const prevOff = this.offsetMs;
                 this.offsetMs = 0;
@@ -15279,9 +15356,8 @@ const PROFILE_KEY = 'ha_profile';
                 this._rerenderPlayerMounts();
                 return false;
             }
-            const knd = String(entry.knd || '').toLowerCase();
             const body = entry.body;
-            if (knd === 'lrc' || /^\s*\[\d{1,2}:\d{2}/.test(body)) {
+            if (this.isLrcEntry(entry)) {
                 this.lines = this.parseLrc(body);
                 this.synced = this.lines.length > 0 && this.lines[0].t >= 0;
             } else {
@@ -15682,7 +15758,6 @@ const PROFILE_KEY = 'ha_profile';
             if (thumbUrl) {
                 deskBox.append(
                     OA(document.createElement('img'), {
-                        className: 'rounded-circle',
                         src: thumbUrl,
                         alt: alt
                     })
@@ -15690,7 +15765,7 @@ const PROFILE_KEY = 'ha_profile';
             } else {
                 deskBox.append(
                     OA(document.createElement('span'), {
-                        className: 'placeholder rounded-circle',
+                        className: 'placeholder',
                         innerHTML: typeof svg_dons !== 'undefined' ? svg_dons : ''
                     })
                 );
