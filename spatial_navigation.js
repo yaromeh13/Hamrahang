@@ -297,7 +297,7 @@
   function queryAll(selector, root) {
     var result = [];
     var ctx = root || document;
-    var parts, p, i, j, el, nodes, cls, acc, m, rootEl, tag;
+    var parts, p, i, j, el, nodes, cls, acc, m, rootEl, tag, cur;
     var doc;
 
     if (!selector) { return result; }
