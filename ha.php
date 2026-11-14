@@ -15201,7 +15201,7 @@ const PROFILE_KEY = 'ha_profile';
                 }
         
                 // LRC metadata
-                meta = line.match(/^\[([a-zA-Z]+):(.*)\]$/);
+                const meta = line.match(/^\[([a-zA-Z]+):(.*)\]$/);
 
                 if (meta) {
                     if (meta[1].toLowerCase() === 'offset') {
@@ -15391,7 +15391,7 @@ const PROFILE_KEY = 'ha_profile';
 
         findIndex(timeSec) {
             if (!this.synced || !this.lines.length) return -1;
-            const t = timeSec + (this.offsetMs / 1000);
+            const t = timeSec - (this.offsetMs / 1000);
             let lo = 0, hi = this.lines.length - 1, ans = -1;
             while (lo <= hi) {
                 const mid = (lo + hi) >> 1;
