@@ -15143,6 +15143,7 @@ const PROFILE_KEY = 'ha_profile';
     const LyricsEngine = {
         lines: [],
         activeIndex: -1,
+        currentTime: 0,
         offsetMs: 0,
         itemId: null,
         itemType: null,
@@ -15389,13 +15390,16 @@ const PROFILE_KEY = 'ha_profile';
             this._rerenderPlayerMounts();
         },
 
-        findIndex(timeSec) {
-            if (!this.synced || !this.lines.length) return -1;
-            const t = timeSec - (this.offsetMs / 1000);
-            let lo = 0, hi = this.lines.length - 1, ans = -1;
+        findIndex(timeSec, sourceLines, offsetMs) {
+            const lines = sourceLines || this.lines;
+            const offset = offsetMs != null ? offsetMs : this.offsetMs;
+            if (!lines.length) return -1;
+            const t = (Number(timeSec) || 0) - (Number(offset) || 0) / 1000;
+            let lo = 0, hi = lines.length - 1, ans = -1;
             while (lo <= hi) {
                 const mid = (lo + hi) >> 1;
-                if (this.lines[mid].t <= t) {
+        
+                if (lines[mid].t <= t) {
                     ans = mid;
                     lo = mid + 1;
                 } else {
@@ -15406,10 +15410,12 @@ const PROFILE_KEY = 'ha_profile';
         },
 
         sync(timeSec) {
-            if (!this.synced) return;
-            const idx = this.findIndex(timeSec);
-            if (idx === this.activeIndex) return;
-            this.activeIndex = idx;
+            this.currentTime = Number(timeSec) || 0;
+            if (this.synced) {
+                this.activeIndex = this.findIndex(this.currentTime);
+            } else {
+                this.activeIndex = -1;
+            }
             this._applyActive();
         },
 
@@ -15483,17 +15489,35 @@ const PROFILE_KEY = 'ha_profile';
         },
 
         _linesOf(m) {
-            return (m && m.bound && Array.isArray(m.bound.lines)) ? m.bound.lines : this.lines;
+            const source = (m && m.bound && Array.isArray(m.bound.lines))
+                ? m.bound.lines
+                : this.lines;
+        
+            // Player displays all lines; other mounts hide intro lines.
+            if (!m || !m.bound) return source;
+        
+            return source.filter((line) => !line.intro);
         },
-
-        _activeIndexOf(m) {
+        
+        _activeIndexOf(m, lines) {
             if (m && m.bound) {
-                // فقط اگر همان ترک در حال پخش است هایلایت/سینک کن
-                if (this.itemId != null && String(m.bound.itemId) === String(this.itemId) && this.synced) {
-                    return this.activeIndex;
+                // Only sync a bound lyric when its item is playing.
+                if (
+                    this.itemId == null ||
+                    String(m.bound.itemId) !== String(this.itemId) ||
+                    !m.bound.synced
+                ) {
+                    return -1;
                 }
-                return -1;
+        
+                // Bound mounts use their own lines and offset.
+                return this.findIndex(
+                    this.currentTime,
+                    lines,
+                    m.bound.offsetMs
+                );
             }
+        
             return this.activeIndex;
         },
 
@@ -15541,10 +15565,8 @@ const PROFILE_KEY = 'ha_profile';
             const self = this;
             const boundId = m.bound ? m.bound.itemId : null;
             lines.forEach((ln, i) => {
-                const row = OA(document.createElement('div'), {
-                    className: 'ha-lrc-line',
-                    innerHTML: ln.text
-                });
+                const row = OA(document.createElement('div'), {className: 'ha-lrc-line'});
+                row.textContent = ln.text;
                 row.setAttribute('data-i', String(i));
                 if (ln.t >= 0) row.setAttribute('data-t', String(ln.t));
                 if (synced && ln.t >= 0) {
@@ -15571,7 +15593,7 @@ const PROFILE_KEY = 'ha_profile';
                 const synced = m.bound ? !!m.bound.synced : this.synced;
                 if (m.mode === 'static' || !synced) return;
                 const view = this._viewFor(m);
-                const idx = this._activeIndexOf(m);
+                const idx = this._activeIndexOf(m, lines);
 
                 if (view === 'line' || view === 'card') {
                     const stage = m.el.querySelector('.ha-lrc-line-stage');
@@ -15592,10 +15614,8 @@ const PROFILE_KEY = 'ha_profile';
                             if (cur.parentNode) cur.parentNode.removeChild(cur);
                         }, 360);
                     }
-                    const next = OA(document.createElement('div'), {
-                        className: 'ha-lrc-fade',
-                        innerHTML: text
-                    });
+                    const next = OA(document.createElement('div'), {className: 'ha-lrc-fade'});
+                    next.textContent = text;
                     stage.append(next);
                     void next.offsetWidth;
                     next.classList.add('is-in');
