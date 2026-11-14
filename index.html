@@ -6604,12 +6604,6 @@ try {
              * Negative offset advances lyrics.
              */
             time = (Number(time) || 0) - ((Number(offsetMs) || 0) / 1000);
-                   
-            /*
-             * Show the first lyric before its timestamp.
-             * Prevents an empty Focus view at playback start.
-             */
-            if (time < lines[0].t) {return 0;}
         
             while (lo <= hi) {
                 mid = (lo + hi) >> 1;
