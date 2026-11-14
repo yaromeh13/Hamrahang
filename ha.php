@@ -15201,7 +15201,12 @@ const PROFILE_KEY = 'ha_profile';
                 }
         
                 // LRC metadata
-                const meta = line.match(/^([[]([a-zA-Z]+):(.*)[]])$/);
+                if (meta) {
+                    if (meta[1].toLowerCase() === 'offset') {
+                        this.offsetMs = parseInt(meta[2], 10) || 0;
+                    }
+                    continue;
+                }
         
                 if (meta) {
                     if (meta[2].toLowerCase() === 'offset') {
