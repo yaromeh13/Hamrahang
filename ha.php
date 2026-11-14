@@ -15352,11 +15352,14 @@ const PROFILE_KEY = 'ha_profile';
             this.synced = false;
         
             // بررسی اینکه آیتم جدید همان آهنگ قبلی است یا خیر
+            const nextItemType = (item && item.meta && item.meta.type) || null;
+
             const sameItem = (
                 this.itemId != null &&
                 item &&
                 item.id != null &&
-                String(this.itemId) === String(item.id)
+                String(this.itemId) === String(item.id) &&
+                String(this.itemType || '') === String(nextItemType || '')
             );
         
             // در تغییر زبان، زمان پخش حفظ شود؛
@@ -15376,7 +15379,7 @@ const PROFILE_KEY = 'ha_profile';
                 ? item.id
                 : null;
         
-            this.itemType = (item && item.meta && item.meta.type) || null;
+            this.itemType = nextItemType;
         
             const entry = this.pickEntry(item, preferredLng);
         
