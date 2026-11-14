@@ -15350,43 +15350,102 @@ const PROFILE_KEY = 'ha_profile';
             this.activeIndex = -1;
             this.offsetMs = 0;
             this.synced = false;
-            this.itemId = item && item.id != null ? item.id : null;
+        
+            // بررسی اینکه آیتم جدید همان آهنگ قبلی است یا خیر
+            const sameItem = (
+                this.itemId != null &&
+                item &&
+                item.id != null &&
+                String(this.itemId) === String(item.id)
+            );
+        
+            // در تغییر زبان، زمان پخش حفظ شود؛
+            // در تغییر آهنگ، زمان از صفر شروع شود.
+            if (sameItem) {
+                try {
+                    const media = GetActiveMediaElement();
+                    this.currentTime = media
+                        ? (media.currentTime || 0)
+                        : this.currentTime;
+                } catch (e) {}
+            } else {
+                this.currentTime = 0;
+            }
+        
+            this.itemId = item && item.id != null
+                ? item.id
+                : null;
+        
             this.itemType = (item && item.meta && item.meta.type) || null;
+        
             const entry = this.pickEntry(item, preferredLng);
+        
+            // اگر متن آهنگ موجود نبود، mountهای پلیر پاک‌سازی شوند.
             if (!entry || !entry.body) {
                 this._rerenderPlayerMounts();
                 return false;
             }
+        
             const body = entry.body;
+        
+            // تشخیص فرمت متن آهنگ
             if (this.isLrcEntry(entry)) {
                 this.lines = this.parseLrc(body);
-                this.synced = this.lines.length > 0 && this.lines[0].t >= 0;
+                this.synced = (
+                    this.lines.length > 0 &&
+                    this.lines[0].t >= 0
+                );
             } else {
                 this.lines = this.parsePlain(body);
                 this.synced = false;
             }
-            if (entry.lng) this.lang = entry.lng;
-            // فقط mountهای پلیر + boundهای همان آیتم — نه صفحهٔ آهنگ دیگر
-            this._mounts = this._mounts.filter((m) => m.el && m.el.isConnected);
+        
+            if (entry.lng) {
+                this.lang = entry.lng;
+            }
+        
+            // حذف mountهای از بین رفته
+            this._mounts = this._mounts.filter((m) => {
+                return m.el && m.el.isConnected;
+            });
+        
+            // به‌روزرسانی mountها
             this._mounts.forEach((m) => {
                 if (m.bound) {
-                    if (item && String(m.bound.itemId) === String(item.id)) {
-                        m.bound = this._snapshotFromItem(item, preferredLng);
+                    // فقط mountهای متصل به همین آهنگ به‌روزرسانی شوند.
+                    if (
+                        item &&
+                        String(m.bound.itemId) === String(item.id)
+                    ) {
+                        m.bound = this._snapshotFromItem(
+                            item,
+                            preferredLng
+                        );
+        
                         this._renderInto(m);
                     }
+        
                     return;
                 }
+        
+                // mountهای عمومی پلیر
                 this._renderInto(m);
             });
+        
             this._applyActive();
+        
             return this.lines.length > 0;
         },
-
+        
         clear() {
             this.lines = [];
             this.activeIndex = -1;
+            this.currentTime = 0;
+            this.offsetMs = 0;
             this.synced = false;
             this.itemId = null;
+            this.itemType = null;
+        
             this._rerenderPlayerMounts();
         },
 
