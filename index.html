@@ -6263,16 +6263,29 @@ try {
             var result = [];
             var rows = String(source || '').split(/\r?\n/);
             var timeRe = /\[(\d{1,2}):(\d{2})(?:[\.:](\d{1,3}))?\]/g;
+        
             var i, j, line, meta, match, fraction, time;
             var times, text, order, textStart;
+            var inIntro = false;
         
             this.offsetMs = 0;
             order = 0;
-        
+
             for (i = 0; i < rows.length; i++) {
                 line = rows[i].replace(/^\s+|\s+$/g, '');
         
                 if (!line) continue;
+                
+                /* Intro block */
+                if (line.toLowerCase() === '[intro]') {
+                    inIntro = true;
+                    continue;
+                }
+                
+                if (line.toLowerCase() === '[/intro]') {
+                    inIntro = false;
+                    continue;
+                }
         
                 meta = line.match(/^\[([a-zA-Z]+):(.*)\]$/);
         
@@ -6319,6 +6332,7 @@ try {
                     result.push({
                         t: times[j],
                         text: text,
+                        intro: inIntro,
                         _order: order++
                     });
                 }
@@ -6396,6 +6410,11 @@ try {
         hasLyrics: function (item, lang) {
             return !!this.pickEntry(item, lang);
         },
+        
+        isLrcSource: function (source) {
+            return /(?:^|\r?\n)\s*\[\d{1,2}:\d{2}(?:[\.:]\d{1,3})?\]/
+                .test(String(source || ''));
+        },
     
         createSnapshot: function (item, lang) {
             var entry = this.pickEntry(item, lang);
@@ -6409,12 +6428,8 @@ try {
     
             if (!entry || !entry.body) return snapshot;
     
-            if (String(entry.fmt || '').toLowerCase() === 'lrc' ||
-                /^\s*\[\d{1,2}:\d{2}(?:[\.:]\d{1,3})?\]/.test(entry.body)
-            ) {
-    
+            if (String(entry.fmt || '').toLowerCase() === 'lrc' || this.isLrcSource(entry.body)) {
                 var previousOffset = this.offsetMs;
-    
                 snapshot.lines = this.parseLrc(entry.body);
                 snapshot.offsetMs = this.offsetMs;
                 snapshot.synced = snapshot.lines.length > 0;
@@ -6447,9 +6462,7 @@ try {
                 return false;
             }
     
-            if (String(entry.fmt || '').toLowerCase() === 'lrc' ||
-                    /^\s*\[\d{1,2}:\d{2}(?:[\.:]\d{1,3})?\]/.test(entry.body)
-                ) {
+            if (String(entry.fmt || '').toLowerCase() === 'lrc' || this.isLrcSource(entry.body)) {
     
                 this.lines = this.parseLrc(entry.body);
                 this.synced = this.lines.length > 0;
@@ -6463,9 +6476,10 @@ try {
             for (i = 0; i < this.mounts.length; i++) {
                 if (this.mounts[i].scope === 'player') {
                     this.mounts[i].snapshot = null;
+                    this.mounts[i]._linesCache = null;
                 }
             }
-    
+                
             this.renderAll();
     
             return this.lines.length > 0;
@@ -6511,7 +6525,8 @@ try {
                     item: item || null,
                     snapshot: snapshot,
                     scope: scope,
-                    options: options
+                    options: options,
+                    _linesCache: null
                 };
     
                 this.mounts.push(mount);
@@ -6521,6 +6536,7 @@ try {
                 mount.snapshot = snapshot;
                 mount.scope = scope;
                 mount.options = options;
+                mount._linesCache = null;
             }
     
             this.renderMount(mount);
@@ -6541,11 +6557,33 @@ try {
         },
     
         getLines: function (mount) {
-            if (mount.snapshot) {
-                return mount.snapshot.lines;
+            var sourceLines;
+            var result = [];
+            var i;
+        
+            sourceLines = mount.snapshot
+                ? mount.snapshot.lines
+                : this.lines;
+        
+            /* Player displays all lines */
+            if (mount.scope === 'player') {
+                return sourceLines;
             }
-    
-            return this.lines;
+        
+            /* Other scopes hide intro lines */
+            if (mount._linesCache) {
+                return mount._linesCache;
+            }
+        
+            for (i = 0; i < sourceLines.length; i++) {
+                if (!sourceLines[i].intro) {
+                    result.push(sourceLines[i]);
+                }
+            }
+        
+            mount._linesCache = result;
+        
+            return result;
         },
     
         findActiveIndex: function (lines, time, offsetMs, synced) {
