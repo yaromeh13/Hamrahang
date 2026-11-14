@@ -8041,7 +8041,7 @@ try {
             SN.NowPlaying.type === kind
         );
         
-        if (kind === 'song' && isPlaying) {
+        if (kind === 'song' && isSameMedia) {
             dcs.appendChild(CRPC(e, kind));
         } else {
             dcs.appendChild(cred[1]);
