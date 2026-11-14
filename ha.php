@@ -10824,8 +10824,11 @@ const PROFILE_KEY = 'ha_profile';
                 className: 'playlist-container media-stage-lyric ha-lyric-skin'
             });
             plBox.setAttribute('data-ha-lyric-skin', '1');
-            stage.append(stageBg, det, plBox);
+            
+            stage.append(stageBg, det);
+            
             playerRoot.insertBefore(stage, box);
+            playerRoot.insertBefore(plBox, box);
         }
 
         // لایه تامب انر فول‌اسکرین — قبل از player-box؛ فقط تصویر (بدون placeholder)
@@ -15124,20 +15127,18 @@ const PROFILE_KEY = 'ha_profile';
     }
 
     function applyPlayerLyricsVisibility() {
-        const on = GetSetting('playerShowLyrics');
-        const show = on === true || on === 1 || on === '1' || on === undefined || on === null;
+        const settings = LyricsEngine.getMainSettings();
+    
         const stage = document.getElementById('media-stage-lyric');
         if (!stage) return;
-        if (show) {
-            stage.classList.remove('is-hidden');
-            stage.dataset.open = '1';
-        } else {
-            stage.classList.add('is-hidden');
-            stage.dataset.open = '0';
-        }
-        // دکمه #lyric فقط تب لیریک را باز می‌کند — کلاس active نمی‌گیرد
+    
+        stage.classList.toggle('is-hidden', !settings.enabled);
+        stage.dataset.open = settings.enabled ? '1' : '0';
+    
         const btn = document.getElementById('lyric');
-        if (btn) btn.classList.remove('active');
+        if (btn) {
+            btn.classList.remove('active');
+        }
     }
 
     const LyricsEngine = {
@@ -15152,13 +15153,37 @@ const PROFILE_KEY = 'ha_profile';
         displayMode: 'normal', // normal | line | focus | card
         _mounts: [], // { el, mode: 'sync'|'static' }
         _lineFadeToken: 0,
+        
+        getMainSettings() {
+            const enabled = GetSetting('playerShowLyrics');
+        
+            const P = ensurePlayer();
+            const isVideo = !!(
+                P.nowPlaying &&
+                P.nowPlaying.player === 'video'
+            );
+        
+            return {
+                enabled: enabled !== false &&
+                         enabled !== 0 &&
+                         enabled !== '0',
+        
+                view: isVideo
+                    ? 'line'
+                    : (GetSetting('lyricDisplayMode') || 'focus'),
+        
+                lang: GetSetting('lyricLang') || 'fa',
+        
+                fontSize: this.clampSize(
+                    GetSetting('lyricFontSizePx') || 16
+                ),
+        
+                fontFamily: GetSetting('lyricFontFamily') || ''
+            };
+        },
 
         getDisplayMode() {
-            try {
-                return GetSetting('lyricDisplayMode') || this.displayMode || 'normal';
-            } catch (e) {
-                return this.displayMode || 'normal';
-            }
+            return this.getMainSettings().view;
         },
 
         setDisplayMode(mode) {
@@ -17015,7 +17040,9 @@ const PROFILE_KEY = 'ha_profile';
     function CRML(item) {
         const box = document.getElementById('mini-lyric');
         if (!box) return;
+    
         item = item || (ensurePlayer().nowPlaying && ensurePlayer().nowPlaying.item);
+    
         if (!item || !LyricsEngine.hasLyrics(item)) {
             box.classList.add('vis-none');
             box.innerHTML = '';
@@ -17025,7 +17052,8 @@ const PROFILE_KEY = 'ha_profile';
             } catch (e) {}
             return;
         }
-        LyricsEngine.loadFromItem(item);
+    
+        // Lyrics قبلاً توسط mountDefaults بارگذاری شده است.
         const mode = LyricsEngine.synced ? 'sync' : 'static';
         const view = LyricsEngine.synced ? 'focus' : 'static';
         box.classList.remove('vis-none');
