@@ -15173,11 +15173,7 @@ const PROFILE_KEY = 'ha_profile';
                     : (GetSetting('lyricDisplayMode') || 'focus'),
         
                 lang: GetSetting('lyricLang') || 'fa',
-        
-                fontSize: this.clampSize(
-                    GetSetting('lyricFontSizePx') || 16
-                ),
-        
+                fontSize: getLyricFontPx(),
                 fontFamily: GetSetting('lyricFontFamily') || ''
             };
         },
