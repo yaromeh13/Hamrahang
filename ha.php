@@ -2226,14 +2226,15 @@ require_once __DIR__ . '/int/h_api.php';
 #media-stage-lyric.is-hidden {
     display: none !important;
 }
-
 .media-stage-lyric {
-    position: relative;
-    z-index: 1;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    box-sizing: border-box;
     padding: 8px 16px 100px;
     font-size: var(--ha-lyric-size, 16px);
+    pointer-events: auto;
 }
-
 .video-stage { max-width: 650px;position: relative; background: #000; overflow: hidden; }
 .video-stage.ratio {
     position: relative;
@@ -14489,7 +14490,6 @@ const PROFILE_KEY = 'ha_profile';
     
         // شروع پخش آیتم انتخاب‌شده
         await playQueueAt(P.queueIndex);
-    2/public_html/ha.php
         return rows;
     }
     
