@@ -7675,12 +7675,22 @@ if (!empty($_SESSION['loggedin'])) {
         if (!Video || !videoSlot) return;
     
         const P = ensurePlayer();
+        const previousInline = P.inlineVideo;
+        
+        const lyricsVisible = (
+            previousInline &&
+            previousInline.stage === stage
+        )
+            ? previousInline.lyricsVisible !== false
+            : true;
+        
         P.inlineVideo = {
             stage: stage,
             thumbWrap: thumbWrap,
             videoSlot: videoSlot,
             inlineBar: inlineBar,
-            itemId: P.nowPlaying ? P.nowPlaying.id : null
+            itemId: P.nowPlaying ? P.nowPlaying.id : null,
+            lyricsVisible: lyricsVisible
         };
     
         stage.classList.add('is-playing');
@@ -7758,14 +7768,23 @@ if (!empty($_SESSION['loggedin'])) {
         times.append(tCur, tSep, tDur);
         
         const actions = OA(document.createElement('div'), { className: 'video-inline-actions' });
-        const stBtn = OA(document.createElement('div'), {
+        const subBtn = OA(document.createElement('div'), {
             className: 'video-inline-st',
-            title: 'Settings',
-            innerHTML: svg_stg
+            title: 'Subtitles',
+            innerHTML: svg_sub
         });
-        stBtn.addEventListener('click', () => {
-            // بعداً: باز کردن پنل کیفیت / سرعت
-            // فعلاً خالی یا console
+        
+        subBtn.addEventListener('click', () => {
+            const P = ensurePlayer();
+            const iv = P.inlineVideo;
+        
+            if (!iv) return;
+        
+            iv.lyricsVisible = iv.lyricsVisible === false;
+        
+            syncInlineVideoLyrics(
+                P.nowPlaying && P.nowPlaying.item
+            );
         });
         
         const fsBtn = OA(document.createElement('div'), {
@@ -7775,7 +7794,7 @@ if (!empty($_SESSION['loggedin'])) {
         });
         fsBtn.addEventListener('click', openPlayerShell);
         
-        actions.append(stBtn, fsBtn);
+        actions.append(subBtn, fsBtn);
         row.append(times, actions);
         inlineBar.append(seek, row);
 
@@ -15205,7 +15224,8 @@ const PROFILE_KEY = 'ha_profile';
             item &&
             LyricsEngine.hasLyrics(item) &&
             LyricsEngine.synced &&
-            settings.enabled
+            settings.enabled &&
+            iv.lyricsVisible !== false
         );
     
         if (!valid) {
