@@ -11335,31 +11335,36 @@ const PROFILE_KEY = 'ha_profile';
         });
         secL.append(ffWrap);
         body.append(secL);
-
-        // ---- Lyrics display mode ----
-        const secLM = OA(document.createElement('div'), { className: 'player-panel-section' });
-        secLM.append(OA(document.createElement('div'), { className: 'sec-title', innerHTML: 'Lyrics style' }));
-        const lmWrap = OA(document.createElement('div'), { className: 'player-font-size' });
-        const curLm = GetSetting('lyricDisplayMode') || 'normal';
-        [
-            { v: 'normal', l: 'Normal' },
-            { v: 'line', l: 'Line' },
-            { v: 'focus', l: 'Focus' },
-            { v: 'card', l: 'Card' }
-        ].forEach((opt) => {
-            const b = OA(document.createElement('div'), {
-                className: 'fs-btn' + (curLm === opt.v ? ' active' : ''),
-                innerHTML: opt.l
+        
+        const P = ensurePlayer();
+        const isVideo = !!(P.nowPlaying && P.nowPlaying.player === 'video');
+        
+        if (!isVideo) {
+            // ---- Lyrics display mode ----
+            const secLM = OA(document.createElement('div'), { className: 'player-panel-section' });
+            secLM.append(OA(document.createElement('div'), { className: 'sec-title', innerHTML: 'Lyrics style' }));
+            const lmWrap = OA(document.createElement('div'), { className: 'player-font-size' });
+            const curLm = GetSetting('lyricDisplayMode') || 'normal';
+            [
+                { v: 'normal', l: 'Normal' },
+                { v: 'line', l: 'Line' },
+                { v: 'focus', l: 'Focus' },
+                { v: 'card', l: 'Card' }
+            ].forEach((opt) => {
+                const b = OA(document.createElement('div'), {
+                    className: 'fs-btn' + (curLm === opt.v ? ' active' : ''),
+                    innerHTML: opt.l
+                });
+                b.addEventListener('click', () => {
+                    SetSetting('lyricDisplayMode', opt.v);
+                    try { LyricsEngine.setDisplayMode(opt.v); } catch (e) {}
+                    openPlayerPanel('settings');
+                });
+                lmWrap.append(b);
             });
-            b.addEventListener('click', () => {
-                SetSetting('lyricDisplayMode', opt.v);
-                try { LyricsEngine.setDisplayMode(opt.v); } catch (e) {}
-                openPlayerPanel('settings');
-            });
-            lmWrap.append(b);
-        });
-        secLM.append(lmWrap);
-        body.append(secLM);
+            secLM.append(lmWrap);
+            body.append(secLM);
+        }
 
         // ---- More (placeholder) ----
         const secM = OA(document.createElement('div'), { className: 'player-panel-section' });
