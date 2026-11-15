@@ -2054,9 +2054,7 @@ require_once __DIR__ . '/int/h_api.php';
 
 /* ---- Lyrics engine (LRC) ---- */
 .ha-lrc {
-    display: flex;
     flex-direction: column;
-    gap: 0.55rem;
     text-align: center;
     direction: rtl;
 }
@@ -2129,7 +2127,6 @@ require_once __DIR__ . '/int/h_api.php';
 }
 /* حالت فوکوس — قبلی / فعلی / بعدی */
 .ha-lrc.ha-lrc--focus {
-    gap: 0.35rem;
     padding: 8px 4px;
 }
 .ha-lrc.ha-lrc--focus .ha-lrc-line {
@@ -2179,7 +2176,6 @@ require_once __DIR__ . '/int/h_api.php';
     left: auto; right: auto;
 }
 .media-stage-lyric .ha-lrc {
-    max-height: 24vh;
     overflow-x: hidden;
     overflow-y: auto;
     scroll-behavior: smooth;
@@ -17533,14 +17529,10 @@ const PROFILE_KEY = 'ha_profile';
             tms.remove();
           }, 3000);
     }
-
-
 }();
 </script>
 </body>
 </html>
 <?php
-if (isset($conn) && $conn instanceof mysqli) {
-    $conn->close();
-}
+if (isset($conn) && $conn instanceof mysqli) {$conn->close();}
 ?>
