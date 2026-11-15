@@ -2227,8 +2227,10 @@ require_once __DIR__ . '/int/h_api.php';
     display: none !important;
 }
 .media-stage-lyric {
+    display: inline-block;
     position: absolute;
-    inset: 0;
+    width: 100%;
+    bottom: 50px;
     z-index: 2;
     box-sizing: border-box;
     padding: 8px 16px 100px;
@@ -11215,7 +11217,7 @@ const PROFILE_KEY = 'ha_profile';
         const qList = OA(document.createElement('div'), { className: 'player-quality-list' });
         const P = ensurePlayer();
         const item = P.nowPlaying && P.nowPlaying.item;
-        const isVideo = P.nowPlaying && P.nowPlaying.player === 'video';
+        const isVideo = !!(P.nowPlaying && P.nowPlaying.player === 'video');
         const sources = getPlayableSources(item);
         // unique bits desc
         const bits = [];
@@ -11335,9 +11337,6 @@ const PROFILE_KEY = 'ha_profile';
         });
         secL.append(ffWrap);
         body.append(secL);
-        
-        const P = ensurePlayer();
-        const isVideo = !!(P.nowPlaying && P.nowPlaying.player === 'video');
         
         if (!isVideo) {
             // ---- Lyrics display mode ----
@@ -17536,8 +17535,7 @@ const PROFILE_KEY = 'ha_profile';
     }
 
 
-}();  
-
+}();
 </script>
 </body>
 </html>
