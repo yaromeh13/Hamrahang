@@ -10935,13 +10935,10 @@ const PROFILE_KEY = 'ha_profile';
         const btnQueue = OA(document.createElement('div'), {
             id: 'playlist', className: 'g-30 btn', title: 'Queue', innerHTML: svg_pls
         });
-        const btnSub = OA(document.createElement('div'), {
-            id: 'subtitle', className: 'g-31 btn vis-none', title: 'Subtitle', innerHTML: svg_sub
-        });
         const btnLyr = OA(document.createElement('div'), {
             id: 'lyric', className: 'g-31 btn vis-none', title: 'Lyrics', innerHTML: svg_lrc
         });
-        setLeft.append(btnStg,btnQueue, btnSub, btnLyr);
+        setLeft.append(btnStg,btnQueue,btnLyr);
 
         // center controls
         const control = OA(document.createElement('div'), { className: 'player-control' });
@@ -16101,24 +16098,19 @@ const PROFILE_KEY = 'ha_profile';
     
     function applyPlayerMode(kind) {
         if (!Player) return;
+    
         const stage = document.getElementById('media-stage');
+    
         if (kind === 'video') {
             if (Video) Video.classList.remove('vis-none');
             if (stage) stage.classList.add('vis-none');
-            const sub = document.getElementById('subtitle');
-            const lyr = document.getElementById('lyric');
-            if (sub) sub.classList.remove('vis-none');
-            if (lyr) lyr.classList.add('vis-none');
         } else {
             if (Video) {
                 Video.pause();
                 if (Video.parentNode === Player) Video.classList.add('vis-none');
             }
+    
             if (stage) stage.classList.remove('vis-none');
-            const sub = document.getElementById('subtitle');
-            const lyr = document.getElementById('lyric');
-            if (sub) sub.classList.add('vis-none');
-            if (lyr) lyr.classList.remove('vis-none');
         }
     }
     
