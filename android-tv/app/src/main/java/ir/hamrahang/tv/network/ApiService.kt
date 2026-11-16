@@ -34,8 +34,14 @@ interface ApiService {
         @Query("_qjs") qjs: String = "ep"
     ): List<SongDto>
 
-    @GET("album/last")
-    suspend fun getLastAlbums(
+    // Web API: /album/latest and /album/featured
+    @GET("album/latest")
+    suspend fun getLatestAlbums(
+        @Query("_qjs") qjs: String = "ep"
+    ): List<AlbumDto>
+
+    @GET("album/featured")
+    suspend fun getFeaturedAlbums(
         @Query("_qjs") qjs: String = "ep"
     ): List<AlbumDto>
 
@@ -45,6 +51,7 @@ interface ApiService {
         @Query("_qjs") qjs: String = "ep"
     ): SearchResponseDto
 
+    // Web API detail response: { "artist": { ... } }
     @GET("artist/{id}")
     suspend fun getArtist(
         @retrofit2.http.Path("id") id: String,
@@ -57,13 +64,13 @@ interface ApiService {
         @Query("_qjs") qjs: String = "ep"
     ): VideoResponseDto
 
-
     @GET("song/{id}")
     suspend fun getSong(
         @retrofit2.http.Path("id") id: String,
         @Query("_qjs") qjs: String = "ep"
     ): SongResponseDto
 
+    // Web API detail response: { "album": { ... } }
     @GET("album/{id}")
     suspend fun getAlbum(
         @retrofit2.http.Path("id") id: String,
@@ -74,5 +81,4 @@ interface ApiService {
     suspend fun getFavorites(
         @Query("_qjs") qjs: String = "ep"
     ): FavoriteResponseDto
-
 }
