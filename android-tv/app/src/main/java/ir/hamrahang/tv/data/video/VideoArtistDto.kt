@@ -9,13 +9,14 @@ data class VideoArtistDto(
     val id: String,
     val name: String? = null,
     val name_fa: String? = null,
+    val names: Map<String, String>? = null,
     val meta: ArtistMeta? = null
 ) {
     fun toArtistDto(): ArtistDto =
         ArtistDto(
             id = id,
-            name = name,
-            name_fa = name_fa,
+            name = name ?: names?.get("en"),
+            name_fa = name_fa ?: names?.get("fa"),
             meta = meta
         )
 }
