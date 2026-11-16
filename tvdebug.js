@@ -91,6 +91,7 @@
             panel.id = 'tvdebug-panel';
 
             setStyle(panel, {
+                display: 'none',
                 position: 'fixed',
                 right: '0',
                 //bottom:0,
@@ -250,54 +251,49 @@
     //   120  F9 Windows desktop (low browser conflict)
     // =====================================================
 
-    var DEBUG_TOGGLE_KEYS = {
-        108: 1,
-        112: 1,
-        403: 1,
-        398: 1,
-        183: 1,
-        120: 1
-    };
+    var DEBUG_TOGGLE_KEYS = {108: 1, 112: 1, 120: 1, 183: 1, 398: 1, 403: 1};
     var debugKeyPressed = false;
 
-    function isDebugToggleKey(code) {
-        return !!(code && DEBUG_TOGGLE_KEYS[code]);
+    function isDebugToggleKey(code, key) {
+        if (code && DEBUG_TOGGLE_KEYS[code]) {
+            return true;
+        }
+    
+        if (key && String(key).toLowerCase() === 'colorf0red') {
+            return true;
+        }
+    
+        return false;
     }
 
     function toggleDebugPanel() {
         createPanel();
-
         if (!panel) return;
-
         var hidden = (panel.style.display === 'none');
         panel.style.display = hidden ? 'block' : 'none';
     }
 
     function debugKeyDown(e) {
         e = e || window.event;
-
         var code = e.keyCode || e.which;
-
-        if (!isDebugToggleKey(code)) return;
-
+        var key = e.key || '';
+        if (!isDebugToggleKey(code, key)) return;
         if (!debugKeyPressed) {
             debugKeyPressed = true;
             toggleDebugPanel();
         }
-
         if (e.preventDefault) e.preventDefault();
         e.returnValue = false;
-
         if (e.stopPropagation) e.stopPropagation();
         e.cancelBubble = true;
-
         return false;
     }
 
     function debugKeyUp(e) {
         e = e || window.event;
         var code = e.keyCode || e.which;
-        if (isDebugToggleKey(code)) {
+        var key = e.key || '';
+        if (isDebugToggleKey(code, key)) {
             debugKeyPressed = false;
         }
     }
@@ -464,17 +460,11 @@
             );
         }
 
-        try {
-            canvas = document.createElement('canvas');
-        } catch (e1) {
-            canvas = {};
-        }
+        try {canvas = document.createElement('canvas');}
+        catch (e1) {canvas = {};}
 
-        try {
-            video = document.createElement('video');
-        } catch (e2) {
-            video = {};
-        }
+        try {video = document.createElement('video');}
+        catch (e2) {video = {};}
 
         addFeature(
             'XHR',
