@@ -96,18 +96,17 @@ class SearchViewModel : ViewModel() {
                     if (songs.isNotEmpty())
                         add(SearchSection.Songs(songs))
 
+                    if (videos.isNotEmpty())
+                        add(SearchSection.Videos(videos))
+
                     if (musicVideos.isNotEmpty())
                         add(SearchSection.MusicVideos(musicVideos))
 
                     if (albums.isNotEmpty())
                         add(SearchSection.Albums(albums))
 
-
                     if (podcasts.isNotEmpty())
                         add(SearchSection.Podcasts(podcasts))
-
-                    if (videos.isNotEmpty())
-                        add(SearchSection.Videos(videos))
                 }
 
                 _result.value = sections
