@@ -7,6 +7,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import ir.hamrahang.tv.data.MediaSource
+import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.playback.PlaybackManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -440,6 +441,7 @@ data class PlayerMedia(
     val artist: String,
     val artwork: String?,
     val sources: List<MediaSource>,
-    val type: MediaType
+    val type: MediaType,
+    val contentType: ContentType? = null
 )
 
