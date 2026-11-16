@@ -6,7 +6,7 @@ import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryRepository
-import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
+import ir.hamrahang.tv.data.video.VideoRepository
 import ir.hamrahang.tv.data.podcast.PodcastRepository
 import ir.hamrahang.tv.data.song.SongRepository
 import ir.hamrahang.tv.domain.album.Album
@@ -32,7 +32,7 @@ object PlaybackManager {
 
     // Repositories // =========================================================
     private val songRepository = SongRepository()
-    private val musicVideoRepository = MusicVideoRepository()
+    private val videoRepository = VideoRepository()
     private val podcastRepository = PodcastRepository()
     private val albumRepository = AlbumRepository()
 
@@ -199,7 +199,7 @@ object PlaybackManager {
                 }
             }
             MediaType.VIDEO -> {
-                playMusicVideo( context = context, item = item )
+                playVideo(context = context, item = item)
             }
         }
     }
@@ -327,33 +327,33 @@ object PlaybackManager {
         )
     }
 
-    // PLAY MUSIC VIDEO
-    private suspend fun playMusicVideo(
+    // PLAY VIDEO / MUSIC VIDEO
+    private suspend fun playVideo(
         context: Context,
         item: PlaybackItem
     ) {
-        val fullVideo = musicVideoRepository .getMusicVideo( item.id )
+        val fullVideo = videoRepository.getVideo(item.id)
 
         playbackHistoryRepository.record(
             mediaId = fullVideo.id.toLong(),
-            type = ContentType.MUSICVIDEO.value,
+            type = fullVideo.contentType.value
         )
-        // Quality
-        // -----------------------------------------------------
-        val preferredQuality = PlaybackQualityManager .getPreferredQuality( MediaType.VIDEO )
 
-        // Sources
-        // -----------------------------------------------------
-        val selectedSources = SourceSelector.select( sources = fullVideo.sources, type = MediaType.VIDEO, preferredQuality = preferredQuality )
+        val preferredQuality =
+            PlaybackQualityManager.getPreferredQuality(MediaType.VIDEO)
 
-        Log.d( "SOURCE_SELECTOR", "MusicVideo=${fullVideo.id}" )
-        Log.d( "SOURCE_SELECTOR", "Quality=$preferredQuality" )
-        Log.d( "SOURCE_SELECTOR", "Sources=${selectedSources.map { "${it.bit}:${it.type}" }}" )
+        val selectedSources = SourceSelector.select(
+            sources = fullVideo.sources,
+            type = MediaType.VIDEO,
+            preferredQuality = preferredQuality
+        )
 
-        // Player State
-        // -----------------------------------------------------
+        Log.d("SOURCE_SELECTOR", "Video=${fullVideo.id}")
+        Log.d("SOURCE_SELECTOR", "VideoType=${fullVideo.contentType}")
+        Log.d("SOURCE_SELECTOR", "Quality=$preferredQuality")
+        Log.d("SOURCE_SELECTOR", "Sources=${selectedSources.map { "${it.bit}:${it.type}" }}")
+
         val cover = fullVideo.thumb
-        //val selectedSource = selectedSources.firstOrNull()
 
         PlayerState.updatePlaybackInfo {
             copy(
@@ -376,17 +376,17 @@ object PlaybackManager {
 
         BackgroundManager.set(cover)
 
-        // PlayerManager
-        currentContentType = ContentType.MUSICVIDEO
+        currentContentType = fullVideo.contentType
         PlayerManager.play(
             context,
             PlayerMedia(
                 id = fullVideo.id,
                 title = fullVideo.displayTitle(),
-                artist = fullVideo.artists.joinToString( " - " ) { it.displayTitle() },
-                artwork = fullVideo.thumb,
+                artist = fullVideo.artists.joinToString(" - ") { it.displayTitle() },
+                artwork = cover,
                 sources = selectedSources,
-                type = MediaType.VIDEO )
+                type = MediaType.VIDEO
+            )
         )
     }
 
