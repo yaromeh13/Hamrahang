@@ -47,7 +47,7 @@ class VideoRepository {
             throw error
         }
 
-        dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it) }
+        dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it.toArtistDto()) }
         dto.songs?.forEach { DatabaseUpdater.song.syncMini(it) }
         DatabaseUpdater.video.syncFull(dto)
 
