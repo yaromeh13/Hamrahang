@@ -27,5 +27,5 @@ data class Video(
         }
 
     val thumb: String
-        get() = ImageResolver.thumb(meta?.tmb)
+        get() = ImageResolver.thumb(meta?.tmb ?: meta?.tmv ?: meta?.cvr)
 }
