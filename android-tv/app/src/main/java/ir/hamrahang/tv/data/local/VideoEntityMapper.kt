@@ -23,7 +23,7 @@ object VideoEntityMapper {
             titleFa = dto.name_fa ?: dto.names?.get("fa"),
             artistIds = gson.toJson(dto.artists?.map { it.id } ?: emptyList<String>()),
             songIds = gson.toJson(dto.songs?.mapNotNull { it.id } ?: emptyList<String>()),
-            meta = gson.toJson(meta.copy(type = meta.type ?: "video")),
+            meta = gson.toJson(meta.copy(type = meta.type ?: "musicvideo")),
             sources = gson.toJson(dto.sources ?: emptyList<MediaSource>()),
             isFull = isFull,
             updatedAt = System.currentTimeMillis()
@@ -34,7 +34,7 @@ object VideoEntityMapper {
         val oldMeta = jsonToMeta(old.meta)
         val newMeta = dto.meta
         val mergedMeta = if (newMeta == null) oldMeta else MediaMeta(
-            type = newMeta.type ?: oldMeta?.type ?: "video",
+            type = newMeta.type ?: oldMeta?.type ?: "musicvideo",
             tmb = newMeta.tmb ?: oldMeta?.tmb,
             art = newMeta.art ?: oldMeta?.art,
             lrc = newMeta.lrc ?: oldMeta?.lrc,
