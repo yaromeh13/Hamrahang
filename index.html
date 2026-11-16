@@ -4262,78 +4262,157 @@ window.HA_RemoveSplash = function () {
     SN.initAPI = function () {
         var mainPing = "https://hamrahang.ir/app/ping";
         var mainBase = "https://hamrahang.ir/";
-        var fallbackBase = "http://tv.hamrahang.ir/tv-api.php/";
+    
+        var pageProtocol = location.protocol === "https:"
+            ? "https:"
+            : "http:";
+    
+        var isTvHost = location.hostname.toLowerCase() === "tv.hamrahang.ir";
+    
+        var fallbackBase = pageProtocol + "//tv.hamrahang.ir/tv-api.php/";
+    
         var finished = false;
         var xhr = new XMLHttpRequest();
         var timer = null;
+    
         function finish(useMain) {
             if (finished) { return; }
             finished = true;
-            if (timer) { clearTimeout(timer); }
+    
+            if (timer) {
+                clearTimeout(timer);
+            }
+    
+            /*
+             * HTTP + Main Ping success:
+             * Redirect the TV website to HTTPS before starting the SPA.
+             */
+            if (useMain && isTvHost && pageProtocol === "http:") {
+                var secureUrl = "https://tv.hamrahang.ir" +
+                    (location.pathname || "/") +
+                    (location.search || "") +
+                    (location.hash || "");
+    
+                try {
+                    location.replace(secureUrl);
+                    return;
+                } catch (e) {
+                    log("HTTPS redirect failed:", e);
+                }
+            }
+    
             if (useMain) {
                 SN.apiBase = mainBase;
                 SN.apiMode = "main";
                 SN.loginEnabled = true;
-                /* media over HTTPS (modern path) */
+    
                 SN.thumbBase = "https://cdn.hamrahang.ir/thumb/";
                 SN.cdnBase = "https://cdn.hamrahang.ir";
                 SN.cdnMp3 = "https://cdn.hamrahang.ir/mp3/";
+    
             } else {
                 SN.apiBase = fallbackBase;
                 SN.apiMode = "fallback";
                 SN.loginEnabled = false;
-                /* Maple / no-TLS: thumbs & media via HTTP CDN */
-                SN.thumbBase = "http://cdn.hamrahang.ir/thumb/";
-                SN.cdnBase = "http://cdn.hamrahang.ir";
-                SN.cdnMp3 = "http://cdn.hamrahang.ir/mp3/";
+    
+                SN.thumbBase = pageProtocol + "//cdn.hamrahang.ir/thumb/";
+                SN.cdnBase = pageProtocol + "//cdn.hamrahang.ir";
+                SN.cdnMp3 = pageProtocol + "//cdn.hamrahang.ir/mp3/";
+    
                 try {
                     if (document.body.className.indexOf("api-fallback") < 0) {
-                        //document.body.className += " api-fallback";
+                        // document.body.className += " api-fallback";
                     }
                 } catch (e) {}
             }
-
+    
             SN.apiReady = true;
-            log("API mode:", SN.apiMode, SN.apiBase, "thumb:", SN.thumbBase);
+    
+            log(
+                "API mode:",
+                SN.apiMode,
+                SN.apiBase,
+                "protocol:",
+                pageProtocol,
+                "thumb:",
+                SN.thumbBase
+            );
+    
             var callbacks = SN.apiReadyCallbacks || [];
             SN.apiReadyCallbacks = [];
+    
             for (var i = 0; i < callbacks.length; i++) {
-                try { callbacks[i](); } catch (e) { log(e); }
+                try {
+                    callbacks[i]();
+                } catch (e) {
+                    log(e);
+                }
             }
         }
+    
+        /*
+         * Local / external host:
+         * Keep the existing local API behavior.
+         */
         if (!/(^|\.)hamrahang\.ir$/i.test(location.hostname)) {
             SN.apiBase = "/api/";
             SN.apiMode = "local";
             SN.loginEnabled = true;
+    
             SN.thumbBase = "https://hamrahang.ir/thumb/";
             SN.cdnBase = "https://cdn.hamrahang.ir";
             SN.cdnMp3 = "https://cdn.hamrahang.ir/mp3/";
+    
             SN.apiReady = true;
+    
             var localCallbacks = SN.apiReadyCallbacks || [];
             SN.apiReadyCallbacks = [];
+    
             for (var li = 0; li < localCallbacks.length; li++) {
-                try { localCallbacks[li](); } catch (e) { log(e); }
+                try {
+                    localCallbacks[li]();
+                } catch (e) {
+                    log(e);
+                }
             }
+    
             return;
         }
+    
+        /*
+         * Check the main API first.
+         */
         xhr.onreadystatechange = function () {
-            if (xhr.readyState !== 4 || finished) { return; }
+            if (xhr.readyState !== 4 || finished) {
+                return;
+            }
+    
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
                     var ping = parseJSON(xhr.responseText);
+    
                     if (ping && ping.status === "ok") {
                         finish(true);
                         return;
                     }
                 } catch (e) {}
             }
+    
             finish(false);
         };
-        xhr.onerror = function () { finish(false); };
+    
+        xhr.onerror = function () {
+            finish(false);
+        };
+    
         timer = setTimeout(function () {
-            try { xhr.abort(); } catch (e) {}
+            try {
+                xhr.abort();
+            } catch (e) {}
+    
             finish(false);
         }, 6000);
+    
         try {
             xhr.open("GET", mainPing, true);
             xhr.send(null);
