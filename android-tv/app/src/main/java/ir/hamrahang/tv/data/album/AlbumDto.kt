@@ -1,7 +1,7 @@
 package ir.hamrahang.tv.data.album
 
 import ir.hamrahang.tv.data.MediaMeta
-import ir.hamrahang.tv.data.artist.ArtistDto
+import ir.hamrahang.tv.data.video.VideoArtistDto
 import ir.hamrahang.tv.data.song.SongDto
 
 data class AlbumDto(
@@ -11,7 +11,7 @@ data class AlbumDto(
     val name_fa: String? = null,
     val url: String? = null,
     val names: Map<String, String>? = null,
-    val artists: List<ArtistDto>? = null,
+    val artists: List<VideoArtistDto>? = null,
     val songs: List<SongDto>? = null,
     val meta: MediaMeta? = null,
     val full: Boolean? = null
