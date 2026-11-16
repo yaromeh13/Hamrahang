@@ -3,14 +3,11 @@ package ir.hamrahang.tv.network
 import ir.hamrahang.tv.data.album.AlbumDto
 import ir.hamrahang.tv.data.artist.ArtistDto
 import ir.hamrahang.tv.data.artist.ArtistResponseDto
-import ir.hamrahang.tv.data.musicvideo.MusicVideoDto
 import ir.hamrahang.tv.data.song.SongDto
 import ir.hamrahang.tv.data.search.SearchResponseDto
 import ir.hamrahang.tv.data.song.SongResponseDto
 import ir.hamrahang.tv.data.album.AlbumResponseDto
 import ir.hamrahang.tv.data.favorite.FavoriteResponseDto
-import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
-import ir.hamrahang.tv.data.musicvideo.MusicVideoResponseDto
 import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.video.VideoResponseDto
 import retrofit2.Response
@@ -26,11 +23,6 @@ interface ApiService {
     suspend fun getLatestVideos(
         @Query("_qjs") qjs: String = "ep"
     ): List<VideoDto>
-
-    @GET("video/latest")
-    suspend fun getLatestMusicVideos(
-        @Query("_qjs") qjs: String = "ep"
-    ): List<MusicVideoDto>
 
     @GET("artist/top")
     suspend fun getTopArtists(
