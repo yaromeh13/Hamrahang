@@ -117,7 +117,7 @@ object FavoriteManager {
     ): ContentType {
         return when (mediaType) {
             MediaType.AUDIO -> ContentType.SONG
-            MediaType.VIDEO -> ContentType.MUSICVIDEO
+            MediaType.VIDEO -> ContentType.VIDEO
         }
     }
 
