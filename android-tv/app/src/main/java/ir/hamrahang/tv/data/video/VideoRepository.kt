@@ -36,7 +36,14 @@ class VideoRepository {
             return toDomain(local)
         }
 
-        val dto = normalize(ApiClient.api.getVideo(id).video)
+        val dto = try {
+            normalize(ApiClient.api.getVideo(id).video)
+        } catch (error: Exception) {
+            // Keep locally cached video details usable when the API is unavailable.
+            if (local != null) return toDomain(local)
+            throw error
+        }
+
         dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it) }
         dto.songs?.forEach { DatabaseUpdater.song.syncMini(it) }
         DatabaseUpdater.video.syncFull(dto)
