@@ -1,17 +1,15 @@
 package ir.hamrahang.tv.data
 
 data class MediaMeta(
-
     val type: String? = null,
-
-    val tmb: String?,
-    val art: String?,
-    val lrc: String?,
-    val des: String?,
-    val gnr: List<Int>?,
-    val lan: String?,
-    val rls: String?,
-    val lik: Long?,
-    val ncp: Long?
-
+    val tmb: String? = null,
+    val art: String? = null,
+    val lrc: String? = null,
+    val des: String? = null,
+    val gnr: List<Int>? = null,
+    val lan: String? = null,
+    val rls: String? = null,
+    val lik: Long? = null,
+    val ncp: Long? = null,
+    val dur: Long? = null
 )
