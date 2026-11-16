@@ -100,7 +100,25 @@ object DatabaseProvider {
             database.execSQL("DROP TABLE IF EXISTS musicvideos")
 
             // Older playback code recorded every video as MUSICVIDEO.
-            // Reclassify cached regular-video history entries using meta.type.
+            // Remove a duplicate legacy row first to respect the unique history index.
+            database.execSQL("""
+                DELETE FROM playback_history
+                WHERE type = 1
+                  AND mediaId IN (
+                      SELECT CAST(id AS INTEGER)
+                      FROM videos
+                      WHERE meta LIKE '%"type":"video"%'
+                  )
+                  AND EXISTS (
+                      SELECT 1
+                      FROM playback_history AS existing
+                      WHERE existing.mediaId = playback_history.mediaId
+                        AND existing.userId = playback_history.userId
+                        AND existing.type = 3
+                  )
+            """.trimIndent())
+
+            // Reclassify remaining regular-video history entries using meta.type.
             database.execSQL("""
                 UPDATE playback_history
                 SET type = 3
