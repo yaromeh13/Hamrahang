@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.artist.ArtistRepository
 import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
+import ir.hamrahang.tv.data.podcast.PodcastRepository
 
 import ir.hamrahang.tv.data.search.SearchRepository
 
@@ -21,6 +22,7 @@ class SearchViewModel : ViewModel() {
     private val albumRepository = AlbumRepository()
     private val songRepository = SongRepository()
     private val musicVideoRepository = MusicVideoRepository()
+    private val podcastRepository = PodcastRepository()
 
 
     private val _result = MutableStateFlow<List<SearchSection>>(emptyList())
@@ -73,13 +75,12 @@ class SearchViewModel : ViewModel() {
                             ?: emptyList()
                     )
 
-                /*val podcasts =
+                val podcasts =
                     podcastRepository.getByIds(
                         dto.search.podcasts
                             ?.mapNotNull { it.id }
                             ?: emptyList()
                     )
-                 */
                 /*val videos =
                     videoRepository.getByIds(
                         dto.search.videos
@@ -106,9 +107,8 @@ class SearchViewModel : ViewModel() {
                         add(SearchSection.Albums(albums))
 
 
-                    /*if (podcasts.isNotEmpty())
+                    if (podcasts.isNotEmpty())
                         add(SearchSection.Podcasts(podcasts))
-*/
                     /*if (videos.isNotEmpty())
                         add(SearchSection.Videos(videos))
 */
