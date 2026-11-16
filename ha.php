@@ -741,6 +741,9 @@ require_once __DIR__ . '/int/h_api.php';
 .playlist-tab-list .section-container {
     margin-top: 0.5rem;
 }
+.playlist-tab-list .track-line-container{
+    padding: 0;
+}
 
 .ha-device-row {
     display: flex;
@@ -6230,7 +6233,7 @@ if (!empty($_SESSION['loggedin'])) {
         pane.append(countsBox);
         renderFavoriteCounts(countsBox);
 
-        const foot = OA(document.createElement('div'), { className: 'ha-settings-foot ha-settings-foot-row' });
+        const foot = OA(document.createElement('div'), { className: 'ha-settings-foot' });
         if (SN.user && SN.user.loggedIn) {
             const syncBtn = OA(document.createElement('div'), {
                 className: 'btn btn-model-3',
@@ -6263,7 +6266,7 @@ if (!empty($_SESSION['loggedin'])) {
         pane.append(countsBox);
         renderHistoryCounts(countsBox);
 
-        const foot = OA(document.createElement('div'), { className: 'ha-settings-foot ha-settings-foot-row' });
+        const foot = OA(document.createElement('div'), { className: 'ha-settings-foot' });
         if (SN.user && SN.user.loggedIn) {
             const syncBtn = OA(document.createElement('div'), {
                 className: 'btn btn-model-3',
@@ -13548,10 +13551,8 @@ const PROFILE_KEY = 'ha_profile';
             const dbc = OA(document.createElement('div'), { className: 'bottom-sheet-container' });
             const hed = OA(document.createElement('div'), { className: 'bottom-sheet-header' });
             const cnt = OA(document.createElement('div'), { className: 'bottom-sheet-content' });
-            const d10 = OA(document.createElement('div'), { style: 'width:100%;height:100%;' });
             const dbs = OA(document.createElement('div'), { className: 'bottom-sheet-menu' });
-            d10.append(dbs);
-            cnt.append(d10);
+            cnt.append(dbs);
     
             const btc = OA(document.createElement('div'), {
                 className: 'bottom-sheet-close',
