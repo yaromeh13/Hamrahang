@@ -6337,35 +6337,35 @@ try {
                 fontFamily: GetSetting('lyricFontFamily') || ''
             };
         },
-    
+        
         parseLrc: function (source) {
             var result = [];
             var rows = String(source || '').split(/\r?\n/);
             var timeRe = /\[(\d{1,2}):(\d{2})(?:[\.:](\d{1,3}))?\]/g;
         
-            var i, j, line, meta, match, fraction, time;
-            var times, text, order, textStart;
+            var i, j, line, meta, match;
+            var fraction, time, times, text, textStart;
             var inIntro = false;
         
             this.offsetMs = 0;
-            order = 0;
-
+        
             for (i = 0; i < rows.length; i++) {
                 line = rows[i].replace(/^\s+|\s+$/g, '');
         
                 if (!line) continue;
-                
+        
                 /* Intro block */
                 if (line.toLowerCase() === '[intro]') {
                     inIntro = true;
                     continue;
                 }
-                
+        
                 if (line.toLowerCase() === '[/intro]') {
                     inIntro = false;
                     continue;
                 }
         
+                /* LRC metadata */
                 meta = line.match(/^\[([a-zA-Z]+):(.*)\]$/);
         
                 if (meta) {
@@ -6377,6 +6377,7 @@ try {
         
                 times = [];
                 textStart = 0;
+        
                 timeRe.lastIndex = 0;
         
                 while ((match = timeRe.exec(line)) !== null) {
@@ -6400,35 +6401,52 @@ try {
                     times.push(time);
                 }
         
-                if (!times.length) continue;
-        
                 text = line.substring(textStart);
                 text = text.replace(/^\s+|\s+$/g, '');
         
                 if (!text) continue;
         
+                /* Keep untimed lines in their original position. */
+                if (!times.length) {
+                    result.push({
+                        t: -1,
+                        text: text,
+                        intro: inIntro
+                    });
+                    continue;
+                }
+        
+                /* A line may contain multiple timestamps. */
                 for (j = 0; j < times.length; j++) {
                     result.push({
                         t: times[j],
                         text: text,
-                        intro: inIntro,
-                        _order: order++
+                        intro: inIntro
                     });
                 }
             }
         
-            result.sort(function (a, b) {
-                if (a.t !== b.t) return a.t - b.t;
-                return a._order - b._order;
-            });
-        
-            for (i = 0; i < result.length; i++) {
-                delete result[i]._order;
-            }
-        
+            /* Preserve original display order. */
             return result;
         },
-    
+        
+        hasTimedLines: function (lines) {
+            var i;
+        
+            if (!lines || !lines.length) return false;
+        
+            for (i = 0; i < lines.length; i++) {
+                if (
+                    lines[i] &&
+                    Number(lines[i].t) >= 0
+                ) {
+                    return true;
+                }
+            }
+        
+            return false;
+        },
+
         parsePlain: function (source) {
             var rows = String(source || '').split(/\r?\n/);
             var result = [];
@@ -6511,7 +6529,7 @@ try {
                 var previousOffset = this.offsetMs;
                 snapshot.lines = this.parseLrc(entry.body);
                 snapshot.offsetMs = this.offsetMs;
-                snapshot.synced = snapshot.lines.length > 0;
+                snapshot.synced = this.hasTimedLines(snapshot.lines);
     
                 this.offsetMs = previousOffset;
     
@@ -6544,7 +6562,7 @@ try {
             if (String(entry.fmt || '').toLowerCase() === 'lrc' || this.isLrcSource(entry.body)) {
     
                 this.lines = this.parseLrc(entry.body);
-                this.synced = this.lines.length > 0;
+                this.synced = this.hasTimedLines(this.lines);
     
             } else {
                 this.lines = this.parsePlain(entry.body);
@@ -6666,32 +6684,39 @@ try {
         },
     
         findActiveIndex: function (lines, time, offsetMs, synced) {
-            var lo = 0;
-            var hi;
-            var mid;
+            var i;
+            var lineTime;
             var answer = -1;
+            var latestTime = -1;
         
             if (!synced || !lines || !lines.length) {
                 return -1;
             }
         
-            hi = lines.length - 1;
-        
             /*
-             * Standard LRC offset:
              * Positive offset delays lyrics.
              * Negative offset advances lyrics.
              */
-            time = (Number(time) || 0) - ((Number(offsetMs) || 0) / 1000);
+            time = (Number(time) || 0) -
+                   ((Number(offsetMs) || 0) / 1000);
         
-            while (lo <= hi) {
-                mid = (lo + hi) >> 1;
+            for (i = 0; i < lines.length; i++) {
+                lineTime = Number(lines[i].t);
         
-                if (lines[mid].t <= time) {
-                    answer = mid;
-                    lo = mid + 1;
-                } else {
-                    hi = mid - 1;
+                /* Untimed lines are never synchronization targets. */
+                if (
+                    !isFinite(lineTime) ||
+                    lineTime < 0
+                ) {
+                    continue;
+                }
+        
+                if (
+                    lineTime <= time &&
+                    lineTime >= latestTime
+                ) {
+                    latestTime = lineTime;
+                    answer = i;
                 }
             }
         
@@ -6700,6 +6725,7 @@ try {
 
         getActiveIndex: function (mount) {
             var snapshot = mount.snapshot;
+            var lines;
         
             if (snapshot) {
                 if (!snapshot.synced) return -1;
@@ -6708,8 +6734,10 @@ try {
                     return -1;
                 }
         
+                lines = this.getLines(mount);
+        
                 return this.findActiveIndex(
-                    snapshot.lines,
+                    lines,
                     this.currentTime,
                     snapshot.offsetMs,
                     snapshot.synced
@@ -6718,7 +6746,7 @@ try {
         
             return this.activeIndex;
         },
-    
+
         getView: function (mount) {
             var synced = mount.snapshot
                 ? mount.snapshot.synced
