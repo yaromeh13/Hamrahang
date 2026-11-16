@@ -12275,7 +12275,7 @@ try {
             collectOwnersFromItem(item);
         } catch (eCol) {}
         P = ensurePlayer();
-        sources = isArray(item.sources) ? item.sources : [];
+        sources = getPlayableSources(item);
         if (!sources.length) { return null; }
         idx = 0;
         if (SN.NowPlaying && SN.NowPlaying.sourceIndex != null) {
@@ -13796,7 +13796,7 @@ function removeFromPlayQueue(itemId, itemType) {
     
         if (next >= 0) {
             NP._sourceFailed = false;
-            PlayMediaSourceAt(next);
+            PlayMediaSourceAt(next, { preserveTime: true });
             return;
         }
     
