@@ -12,7 +12,7 @@ object VideoMapper {
 
         val title = dto.name ?: dto.names?.get("en")
         val titleFa = dto.name_fa ?: dto.names?.get("fa")
-        val meta = dto.meta ?: MediaMeta(type = "musicvideo")
+        val meta = dto.meta ?: MediaMeta(type = "video")
 
         return Video(
             id = dto.id ?: "",
@@ -21,7 +21,7 @@ object VideoMapper {
             url = dto.url,
             artists = dto.artists?.map { ArtistMapper.map(it.toArtistDto()) } ?: emptyList(),
             songs = dto.songs?.mapNotNull { it.id } ?: emptyList(),
-            meta = meta.copy(type = meta.type ?: "musicvideo"),
+            meta = meta.copy(type = meta.type ?: "video"),
             sources = dto.sources ?: emptyList()
         )
     }
