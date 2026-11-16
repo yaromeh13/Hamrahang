@@ -123,27 +123,10 @@ class ContentRowsAdapter(
                     recycler.adapter = VideoAdapter(
                         items = row.items,
                         onFocus = { video ->
-                            onBackgroundChange(video.meta?.tmb)
+                            onBackgroundChange(video.thumb)
                             onHeroFocus(HeroContent.VideoHero(video))
                         },
-                        onClick = { video ->
-                            onItemClick(UiClickEvent.VideoClick(video))
-                        }
-                    )
-                    VideoAdapter.ITEM_LAYOUT_RES
-                }
-
-                is ContentRow.MusicVideos -> {
-                    recycler.adapter = MusicVideoAdapter(
-                        items = row.items,
-                        onFocus = { musicVideo ->
-                            onBackgroundChange(musicVideo.thumb)
-                            onHeroFocus(
-                                HeroContent.MusicVideoHero(musicVideo)
-                            )
-                        },
-                        onClick = { musicVideo, index ->
-
+                        onClick = { video, index ->
                             PlaybackManager.start(
                                 PlaybackSession(
                                     id = row.sessionId,
@@ -154,21 +137,50 @@ class ContentRowsAdapter(
                                             id = item.id,
                                             title = item.displayTitle(),
                                             artwork = item.thumb,
-                                            artists = item.artists
+                                            artists = item.artists,
+                                            contentType = item.contentType
                                         )
                                     },
                                     currentIndex = index,
                                     mediaType = MediaType.VIDEO
                                 )
                             )
-
-                            onItemClick(
-                                UiClickEvent.MusicVideoClick(musicVideo)
-                            )
+                            onItemClick(UiClickEvent.VideoClick(video))
                         }
                     )
+                    VideoAdapter.ITEM_LAYOUT_RES
+                }
 
-                    MusicVideoAdapter.ITEM_LAYOUT_RES
+                is ContentRow.MusicVideos -> {
+                    recycler.adapter = VideoAdapter(
+                        items = row.items,
+                        onFocus = { video ->
+                            onBackgroundChange(video.thumb)
+                            onHeroFocus(HeroContent.MusicVideoHero(video))
+                        },
+                        onClick = { video, index ->
+                            PlaybackManager.start(
+                                PlaybackSession(
+                                    id = row.sessionId,
+                                    title = row.sessionTitle,
+                                    source = row.sessionSource,
+                                    items = row.items.map { item ->
+                                        PlaybackItem(
+                                            id = item.id,
+                                            title = item.displayTitle(),
+                                            artwork = item.thumb,
+                                            artists = item.artists,
+                                            contentType = item.contentType
+                                        )
+                                    },
+                                    currentIndex = index,
+                                    mediaType = MediaType.VIDEO
+                                )
+                            )
+                            onItemClick(UiClickEvent.MusicVideoClick(video))
+                        }
+                    )
+                    VideoAdapter.ITEM_LAYOUT_RES
                 }
 
                 is ContentRow.Artists -> {
