@@ -265,7 +265,8 @@ object PlaybackManager {
                 artwork = fullSong.thumb,
                 //artwork = CoverArtBinder.resolve( fullSong ),
                 sources = selectedSources,
-                type = MediaType.AUDIO )
+                type = MediaType.AUDIO,
+                contentType = ContentType.SONG )
         )
     }
 
@@ -322,7 +323,8 @@ object PlaybackManager {
                 artist = podcast.artists.joinToString(" - ") { it.displayTitle() },
                 artwork = cover,
                 sources = selectedSources,
-                type = MediaType.AUDIO
+                type = MediaType.AUDIO,
+                contentType = ContentType.PODCAST
             )
         )
     }
@@ -385,7 +387,8 @@ object PlaybackManager {
                 artist = fullVideo.artists.joinToString(" - ") { it.displayTitle() },
                 artwork = cover,
                 sources = selectedSources,
-                type = MediaType.VIDEO
+                type = MediaType.VIDEO,
+                contentType = fullVideo.contentType
             )
         )
     }
