@@ -16,6 +16,8 @@ class VideoRepository {
 
     private val dao = DatabaseProvider.database().videoDao()
     private val artistRepository = ArtistRepository()
+    private var latestCache: List<Video>? = null
+    private var latestCacheAt: Long = 0L
 
     suspend fun sync(items: List<VideoDto>) {
         items.forEach { dto ->
@@ -45,13 +47,22 @@ class VideoRepository {
     }
 
     suspend fun getLatestVideos(): List<Video> {
-        return try {
+        val now = System.currentTimeMillis()
+        latestCache?.let {
+            if (now - latestCacheAt < 30_000L) return it
+        }
+
+        val result = try {
             val dto = ApiClient.api.getLatestVideos().map(::normalize)
             sync(dto)
             getByIds(dto.mapNotNull { it.id })
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             getAll()
         }
+
+        latestCache = result
+        latestCacheAt = now
+        return result
     }
 
     suspend fun getLatestMusicVideos(): List<Video> =
@@ -78,6 +89,6 @@ class VideoRepository {
 
     private fun normalize(dto: VideoDto): VideoDto {
         val meta = dto.meta ?: ir.hamrahang.tv.data.MediaMeta()
-        return dto.copy(meta = meta.copy(type = meta.type ?: "video"))
+        return dto.copy(meta = meta.copy(type = meta.type ?: "musicvideo"))
     }
 }
