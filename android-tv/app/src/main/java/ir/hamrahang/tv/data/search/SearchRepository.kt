@@ -14,6 +14,7 @@ class SearchRepository(
 
     private val albumRepository: AlbumRepository = AlbumRepository(),
     private val musicVideoRepository: MusicVideoRepository = MusicVideoRepository(),
+    private val podcastRepository: PodcastRepository = PodcastRepository()
 
 ) {
 
@@ -37,9 +38,7 @@ class SearchRepository(
             response.search.musicvideos ?: emptyList()
         )
 
-        //response.search.podcasts?.let {
-        //    podcastRepository.sync(it)
-        //}
+        podcastRepository.sync(response.search.podcasts ?: emptyList())
 
         //response.search.videos?.let {
         //    videoRepository.sync(it)
