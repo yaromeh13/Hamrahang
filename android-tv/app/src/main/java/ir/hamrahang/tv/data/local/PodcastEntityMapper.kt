@@ -31,8 +31,12 @@ object PodcastEntityMapper {
 
             parentIds = gson.toJson(
                 dto.parents
-                    ?.mapNotNull { it.id }
-                    ?: emptyList<String>()
+                    ?.mapNotNull {
+                        val id = it.id ?: return@mapNotNull null
+                        val type = it.type ?: return@mapNotNull null
+                        ir.hamrahang.tv.data.ParentMini(id = id, type = type)
+                    }
+                    ?: emptyList<ir.hamrahang.tv.data.ParentMini>()
             ),
 
             meta = gson.toJson(dto.meta),
@@ -88,7 +92,11 @@ object PodcastEntityMapper {
             parentIds =
                 if (dto.parents != null) {
                     gson.toJson(
-                        dto.parents.mapNotNull { it.id }
+                        dto.parents.mapNotNull {
+                            val id = it.id ?: return@mapNotNull null
+                            val type = it.type ?: return@mapNotNull null
+                            ir.hamrahang.tv.data.ParentMini(id = id, type = type)
+                        }
                     )
                 } else {
                     old.parentIds
