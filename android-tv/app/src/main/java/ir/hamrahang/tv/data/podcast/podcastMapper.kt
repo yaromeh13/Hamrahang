@@ -26,7 +26,10 @@ object PodcastMapper {
             url = dto.url,
 
             artists =
-                dto.artists?.let(ArtistMapper::mapList) ?: emptyList(),
+                dto.artists
+                    ?.map { it.toArtistDto() }
+                    ?.let(ArtistMapper::mapList)
+                    ?: emptyList(),
 
             parents =
                 dto.parents ?: emptyList(),
