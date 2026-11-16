@@ -98,6 +98,19 @@ object DatabaseProvider {
 
             database.execSQL("DROP TABLE videos_legacy_28")
             database.execSQL("DROP TABLE IF EXISTS musicvideos")
+
+            // Older playback code recorded every video as MUSICVIDEO.
+            // Reclassify cached regular-video history entries using meta.type.
+            database.execSQL("""
+                UPDATE playback_history
+                SET type = 3
+                WHERE type = 1
+                  AND mediaId IN (
+                      SELECT CAST(id AS INTEGER)
+                      FROM videos
+                      WHERE meta LIKE '%"type":"video"%'
+                  )
+            """.trimIndent())
         }
     }
 
