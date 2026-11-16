@@ -18,6 +18,7 @@ data class VideoArtistDto(
             id = id,
             name = name,
             name_fa = name_fa,
+            names = names,
             meta = meta
         )
 }
