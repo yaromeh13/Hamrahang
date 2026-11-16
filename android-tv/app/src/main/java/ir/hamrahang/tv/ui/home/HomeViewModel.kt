@@ -31,6 +31,7 @@ class HomeViewModel : ViewModel() {
             val mainRows =
                 buildList {
                     repo.buildMusicVideoRow()?.let(::add)
+                    repo.buildVideoRow()?.let(::add)
                     repo.buildTopSongsRow()?.let(::add)
                     repo.buildArtistRow()?.let(::add)
                     //repo.buildTrendingRow()?.let(::add)
@@ -43,9 +44,11 @@ class HomeViewModel : ViewModel() {
 
                 repo.observePlaybackHistorySongsRow(),
 
-                repo.observePlaybackHistoryMusicVideosRow()
+                repo.observePlaybackHistoryMusicVideosRow(),
 
-            ) { historySongs, historyMusicVideos ->
+                repo.observePlaybackHistoryVideosRow()
+
+            ) { historySongs, historyMusicVideos, historyVideos ->
 
                 buildList {
 
@@ -57,6 +60,7 @@ class HomeViewModel : ViewModel() {
 
                     // بعد History Music Videos
                     historyMusicVideos?.let(::add)
+                    historyVideos?.let(::add)
 
                 }
 
