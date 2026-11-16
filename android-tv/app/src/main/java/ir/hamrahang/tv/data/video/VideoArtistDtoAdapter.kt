@@ -34,6 +34,7 @@ class VideoArtistDtoAdapter : JsonDeserializer<VideoArtistDto> {
             id = idElement.asString,
             name = obj.get("name")?.takeUnless { it.isJsonNull }?.asString,
             name_fa = obj.get("name_fa")?.takeUnless { it.isJsonNull }?.asString,
+            names = obj.get("names")?.takeUnless { it.isJsonNull }?.let { context.deserialize<Map<String, String>>(it, Map::class.java) },
             meta = meta
         )
     }
