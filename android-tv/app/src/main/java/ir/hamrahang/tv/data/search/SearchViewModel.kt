@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.artist.ArtistRepository
-import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
+import ir.hamrahang.tv.data.video.VideoRepository
 import ir.hamrahang.tv.data.podcast.PodcastRepository
 
 import ir.hamrahang.tv.data.search.SearchRepository
@@ -21,7 +21,7 @@ class SearchViewModel : ViewModel() {
     private val artistRepository = ArtistRepository()
     private val albumRepository = AlbumRepository()
     private val songRepository = SongRepository()
-    private val musicVideoRepository = MusicVideoRepository()
+    private val videoRepository = VideoRepository()
     private val podcastRepository = PodcastRepository()
 
 
@@ -69,11 +69,14 @@ class SearchViewModel : ViewModel() {
                     )
 
                 val musicVideos =
-                    musicVideoRepository.getByIds(
-                        dto.search.musicvideos
-                            ?.mapNotNull { it.id }
-                            ?: emptyList()
-                    )
+                    videoRepository.getByIds(
+                        dto.search.musicvideos?.mapNotNull { it.id } ?: emptyList()
+                    ).filter { it.isMusicVideo }
+
+                val videos =
+                    videoRepository.getByIds(
+                        dto.search.videos?.mapNotNull { it.id } ?: emptyList()
+                    ).filterNot { it.isMusicVideo }
 
                 val podcasts =
                     podcastRepository.getByIds(
@@ -81,13 +84,6 @@ class SearchViewModel : ViewModel() {
                             ?.mapNotNull { it.id }
                             ?: emptyList()
                     )
-                /*val videos =
-                    videoRepository.getByIds(
-                        dto.search.videos
-                            ?.mapNotNull { it.id }
-                            ?: emptyList()
-                    )
-                */
                 //--------------------------------------------------
                 // Build Sections
                 //--------------------------------------------------
@@ -109,9 +105,9 @@ class SearchViewModel : ViewModel() {
 
                     if (podcasts.isNotEmpty())
                         add(SearchSection.Podcasts(podcasts))
-                    /*if (videos.isNotEmpty())
+
+                    if (videos.isNotEmpty())
                         add(SearchSection.Videos(videos))
-*/
                 }
 
                 _result.value = sections
