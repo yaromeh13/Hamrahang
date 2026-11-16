@@ -200,9 +200,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                         ?: return@launch
 
                 val type =
-                    FavoriteManager.contentTypeOf(
-                        media.type
-                    )
+                    FavoriteManager.contentTypeOf(media)
 
                 val favorite =
                     FavoriteManager.toggle(
@@ -716,9 +714,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             ?.toLongOrNull()
             ?: return false
 
-        val type = FavoriteManager.contentTypeOf(
-            media.type
-        )
+        val type = FavoriteManager.contentTypeOf(media)
 
         return FavoriteManager.isFavorite(
             mediaId = mediaId,
