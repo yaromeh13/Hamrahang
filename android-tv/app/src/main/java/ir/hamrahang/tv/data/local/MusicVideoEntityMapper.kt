@@ -24,6 +24,8 @@ object MusicVideoEntityMapper {
     ): MusicVideo =
         VideoEntityMapper.toDomain(entity.toVideoEntity(), artists)
 
+    fun jsonToIds(json: String): List<String> = VideoEntityMapper.jsonToIds(json)
+
     private fun MusicVideoEntity.toVideoEntity() = VideoEntity(
         id = id,
         title = title,
