@@ -3,6 +3,7 @@ package ir.hamrahang.tv.data.album
 import ir.hamrahang.tv.data.local.AlbumEntityMapper
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.DatabaseUpdater
+import ir.hamrahang.tv.data.video.toArtistDto
 import ir.hamrahang.tv.domain.album.Album
 import ir.hamrahang.tv.network.ApiClient
 import kotlinx.coroutines.CancellationException
@@ -27,7 +28,7 @@ class AlbumRepository {
             val response = ApiClient.api.getAlbum(id)
             val album = response.album
 
-            album.artists?.forEach { DatabaseUpdater.artist.syncMini(it) }
+            album.artists?.forEach { DatabaseUpdater.artist.syncMini(it.toArtistDto()) }
             album.songs?.forEach { DatabaseUpdater.song.syncMini(it) }
 
             DatabaseUpdater.album.syncFull(album)
