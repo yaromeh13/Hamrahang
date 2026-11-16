@@ -7,6 +7,7 @@ import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryRepository
 import ir.hamrahang.tv.data.video.VideoRepository
+import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
 import ir.hamrahang.tv.data.podcast.PodcastRepository
 import ir.hamrahang.tv.data.song.SongRepository
 import ir.hamrahang.tv.domain.album.Album
@@ -33,6 +34,7 @@ object PlaybackManager {
     // Repositories // =========================================================
     private val songRepository = SongRepository()
     private val videoRepository = VideoRepository()
+    private val musicVideoRepository = MusicVideoRepository()
     private val podcastRepository = PodcastRepository()
     private val albumRepository = AlbumRepository()
 
@@ -334,7 +336,11 @@ object PlaybackManager {
         context: Context,
         item: PlaybackItem
     ) {
-        val fullVideo = videoRepository.getVideo(item.id)
+        val fullVideo = if (item.contentType == ContentType.MUSICVIDEO) {
+            musicVideoRepository.getMusicVideo(item.id)
+        } else {
+            videoRepository.getVideo(item.id)
+        }
 
         playbackHistoryRepository.record(
             mediaId = fullVideo.id.toLong(),
