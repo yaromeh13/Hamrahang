@@ -1,6 +1,7 @@
 package ir.hamrahang.tv.data.local
 
 import ir.hamrahang.tv.data.ParentMini
+import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.album.AlbumDto
 import ir.hamrahang.tv.data.artist.ArtistDto
 import ir.hamrahang.tv.data.video.VideoDto
@@ -294,14 +295,15 @@ object DatabaseUpdater {
                 musicvideo.sync(dto, isFull)
                 return
             }
-            val id = dto.id ?: return
+            val normalized = dto.copy(meta = (dto.meta ?: MediaMeta()).copy(type = dto.meta?.type ?: "video"))
+            val id = normalized.id ?: return
             val local = dao.get(id)
             if (local?.isFull == true && !isFull) return
             val full = (local?.isFull == true) || isFull
             val entity = if (local == null) {
-                VideoEntityMapper.fromDto(dto, full)
+                VideoEntityMapper.fromDto(normalized, full)
             } else {
-                VideoEntityMapper.merge(local, dto, full)
+                VideoEntityMapper.merge(local, normalized, full)
             }
             dao.insert(entity)
         }
