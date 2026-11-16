@@ -11,5 +11,8 @@ data class MediaMeta(
     val rls: String? = null,
     val lik: Long? = null,
     val ncp: Long? = null,
-    val dur: Long? = null
+    val dur: Long? = null,
+    val tmv: String? = null,
+    val cvr: String? = null,
+    val gal: List<String>? = null
 )
