@@ -44,7 +44,9 @@ class PodcastAdapter(
 
         val item = items[position]
 
-        holder.title.text = item.title
+        holder.title.text =
+            if (AppState.isPersian()) item.titleFa ?: item.title
+            else item.title
         holder.artist.text =
             item.artists
                 .joinToString(" • ") {
