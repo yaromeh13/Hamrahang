@@ -6,6 +6,7 @@ import ir.hamrahang.tv.data.local.DatabaseUpdater
 import ir.hamrahang.tv.data.local.VideoEntityMapper
 import ir.hamrahang.tv.domain.video.Video
 import ir.hamrahang.tv.network.ApiClient
+import kotlinx.coroutines.CancellationException
 
 class VideoRepository {
 
@@ -38,6 +39,8 @@ class VideoRepository {
 
         val dto = try {
             normalize(ApiClient.api.getVideo(id).video)
+        } catch (error: CancellationException) {
+            throw error
         } catch (error: Exception) {
             // Keep locally cached video details usable when the API is unavailable.
             if (local != null) return toDomain(local)
@@ -62,6 +65,8 @@ class VideoRepository {
             val dto = ApiClient.api.getLatestVideos().map(::normalize)
             sync(dto)
             getByIds(dto.mapNotNull { it.id })
+        } catch (error: CancellationException) {
+            throw error
         } catch (_: Exception) {
             getAll()
         }
