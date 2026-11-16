@@ -12,6 +12,7 @@ import ir.hamrahang.tv.data.favorite.FavoriteResponseDto
 import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
 import ir.hamrahang.tv.data.musicvideo.MusicVideoResponseDto
 import ir.hamrahang.tv.data.video.VideoDto
+import ir.hamrahang.tv.data.video.VideoResponseDto
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -59,10 +60,10 @@ interface ApiService {
     ): ArtistResponseDto
 
     @GET("video/{id}")
-    suspend fun getMusicVideo(
+    suspend fun getVideo(
         @retrofit2.http.Path("id") id: String,
         @Query("_qjs") qjs: String = "ep"
-    ): MusicVideoResponseDto
+    ): VideoResponseDto
 
 
     @GET("song/{id}")
