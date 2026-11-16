@@ -19,7 +19,7 @@ object VideoMapper {
             title = if (isFa) titleFa ?: title else title ?: titleFa,
             titleFa = titleFa,
             url = dto.url,
-            artists = dto.artists?.let(ArtistMapper::mapList) ?: emptyList(),
+            artists = dto.artists?.map { ArtistMapper.map(it.toArtistDto()) } ?: emptyList(),
             songs = dto.songs?.mapNotNull { it.id } ?: emptyList(),
             meta = meta.copy(type = meta.type ?: "musicvideo"),
             sources = dto.sources ?: emptyList()
