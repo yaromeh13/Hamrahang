@@ -4,7 +4,6 @@ import ir.hamrahang.tv.data.artist.ArtistRepository
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.DatabaseUpdater
 import ir.hamrahang.tv.data.local.SongEntityMapper
-import ir.hamrahang.tv.data.video.toArtistDto
 import ir.hamrahang.tv.domain.song.Song
 
 import ir.hamrahang.tv.network.ApiClient
