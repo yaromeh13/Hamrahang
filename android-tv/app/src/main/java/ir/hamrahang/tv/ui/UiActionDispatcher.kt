@@ -16,7 +16,7 @@ object UiActionDispatcher {
                 navigator.openVideo()
             }
 
-            is UiClickEvent.VideoClick -> { Log.d("NAV", "VideoClick received") }
+            is UiClickEvent.VideoClick -> navigator.openVideo()
 
             is UiClickEvent.SongClick -> {
                 navigator.openPlayback()
