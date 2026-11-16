@@ -1,6 +1,7 @@
 package ir.hamrahang.tv.domain.podcast
 
 import ir.hamrahang.tv.data.podcast.PodcastDto
+import ir.hamrahang.tv.domain.artist.ArtistMapper
 import ir.hamrahang.tv.util.UrlUtils
 import ir.hamrahang.tv.utils.AppState
 
@@ -25,7 +26,7 @@ object PodcastMapper {
             url = dto.url,
 
             artists =
-                dto.artists ?: emptyList(),
+                dto.artists?.let(ArtistMapper::mapList) ?: emptyList(),
 
             parents =
                 dto.parents ?: emptyList(),
