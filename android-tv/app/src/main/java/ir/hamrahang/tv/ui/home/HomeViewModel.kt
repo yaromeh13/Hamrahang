@@ -30,8 +30,8 @@ class HomeViewModel : ViewModel() {
 
             val mainRows =
                 buildList {
-                    repo.buildMusicVideoRow()?.let(::add)
                     repo.buildVideoRow()?.let(::add)
+                    repo.buildMusicVideoRow()?.let(::add)
                     repo.buildTopSongsRow()?.let(::add)
                     repo.buildArtistRow()?.let(::add)
                     //repo.buildTrendingRow()?.let(::add)
