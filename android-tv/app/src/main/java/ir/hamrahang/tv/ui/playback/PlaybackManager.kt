@@ -49,6 +49,7 @@ object PlaybackManager {
     private val scope = CoroutineScope( Dispatchers.Main.immediate + supervisorJob )
     private var appContext: Context? = null
     private var playCurrentJob: Job? = null
+    private var currentContentType: ContentType? = null
 
     // Session
     // --------------------------------------------------
@@ -181,7 +182,8 @@ object PlaybackManager {
         val currentMedia = PlayerManager.getCurrentMedia()
         if (
             currentMedia?.id == item.id &&
-            currentMedia.type == mediaType
+            currentMedia.type == mediaType &&
+            currentContentType == item.contentType
         ) {
             return
         }
@@ -253,6 +255,7 @@ object PlaybackManager {
 
         // PlayerManager
         // -----------------------------------------------------
+        currentContentType = ContentType.SONG
         PlayerManager.play(
             context,
             PlayerMedia(
@@ -310,6 +313,7 @@ object PlaybackManager {
 
         BackgroundManager.set(cover)
 
+        currentContentType = ContentType.PODCAST
         PlayerManager.play(
             context,
             PlayerMedia(
@@ -373,6 +377,7 @@ object PlaybackManager {
         BackgroundManager.set(cover)
 
         // PlayerManager
+        currentContentType = ContentType.MUSICVIDEO
         PlayerManager.play(
             context,
             PlayerMedia(
