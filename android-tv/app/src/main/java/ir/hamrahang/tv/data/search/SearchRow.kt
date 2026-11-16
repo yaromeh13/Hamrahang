@@ -32,7 +32,7 @@ object SearchRows {
 
                         musicvideos(
                             items = section.items,
-                            title = R.string.tab_tracks.str,
+                            title = R.string.tab_videos.str,
                             sessionId = "search",
                             sessionTitle = "Search",
                             sessionSource = PlaybackSource.SEARCH
