@@ -20,7 +20,7 @@ class VideoRepository {
 
     suspend fun sync(items: List<VideoDto>) {
         items.forEach { dto ->
-            dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it) }
+            dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it.toArtistDto()) }
             dto.songs?.forEach { DatabaseUpdater.song.syncMini(it) }
             DatabaseUpdater.video.syncMini(normalize(dto))
         }
