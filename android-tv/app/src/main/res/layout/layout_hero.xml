@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/heroRoot"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/_260sdp">
+
+    <include
+        android:id="@+id/musicVideoHero"
+        layout="@layout/hero_musicvideo"
+        android:visibility="gone"/>
+
+    <include
+        android:id="@+id/songHero"
+        layout="@layout/hero_song"
+        android:visibility="gone"/>
+
+    <include
+        android:id="@+id/artistHero"
+        layout="@layout/hero_artist"
+        android:visibility="gone"/>
+
+    <include
+        android:id="@+id/albumHero"
+        layout="@layout/hero_album"
+        android:visibility="gone"/>
+
+</FrameLayout>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="220dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp"
+    android:orientation="vertical"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:background="@android:color/transparent">
+
+    <ImageView
+        android:id="@+id/cover"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:scaleType="centerCrop"
+        android:background="@drawable/card_bg"
+        android:clipToOutline="true"
+        android:padding="6dp"/>
+
+    <TextView
+        android:id="@+id/songTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="6dp"
+        android:textColor="#FFFFFF"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textSize="@dimen/_9ssp"
+        android:paddingStart="@dimen/_10dp"/>
+</LinearLayout>

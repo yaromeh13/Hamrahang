@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="160dp"
+    android:layout_height="220dp"
+    android:layout_margin="10dp"
+    android:background="#2A2A2A"
+    android:focusable="true"
+    android:paddingEnd="@dimen/_10dp"
+    android:focusableInTouchMode="true">
+
+    <TextView
+        android:id="@+id/movieTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:layout_gravity="center"
+        android:text="Movie"/>
+</FrameLayout>

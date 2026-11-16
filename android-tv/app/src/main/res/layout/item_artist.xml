@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/_130dp"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:color="@android:color/transparent">
+
+    <FrameLayout
+        android:id="@+id/artistContainer"
+        android:layout_width="@dimen/_110dp"
+        android:layout_height="@dimen/_110dp"
+        android:background="@drawable/art_focus_border"
+        android:padding="@dimen/_6dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/artistImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/CircleImage"/>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/artistTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#FFF"
+        android:textSize="@dimen/_8ssp"
+        android:maxLines="1"/>
+    <TextView
+        android:id="@+id/artistSubTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#ccc"
+        android:textSize="@dimen/_7ssp"
+        android:maxLines="1"/>
+
+</LinearLayout>

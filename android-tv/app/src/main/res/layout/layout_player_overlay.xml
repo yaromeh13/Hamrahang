@@ -1,0 +1,663 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/playerOverlay"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!--====================-->
+    <!-- Header             -->
+    <!--====================-->
+
+    <LinearLayout
+        android:id="@+id/headerContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/controlContainer"
+        android:layout_margin="32dp"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:id="@+id/leftHeaderContainer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <FrameLayout
+            android:id="@+id/lyricsContainer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="24dp">
+
+            <TextView
+                android:id="@+id/txtNoLyrics"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="No Lyrics"
+                android:textColor="#FFFFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold"/>
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <!--====================-->
+    <!-- Seek               -->
+    <!--====================-->
+
+    <LinearLayout
+        android:id="@+id/seekContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/controlContainer"
+        android:layout_marginStart="60dp"
+        android:layout_marginEnd="60dp"
+        android:layout_marginBottom="24dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layoutDirection="ltr"
+        android:textDirection="ltr">
+
+        <TextView
+            android:id="@+id/txtCurrentTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"/>
+
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:minHeight="3dp"
+            android:maxHeight="3dp"
+            android:splitTrack="false"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:progressDrawable="@drawable/seekbar_progress"
+            android:thumb="@drawable/seekbar_thumb"/>
+
+        <TextView
+            android:id="@+id/txtDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"/>
+
+    </LinearLayout>
+
+    <!--====================-->
+    <!-- Controls           -->
+    <!--====================-->
+
+    <RelativeLayout
+        android:id="@+id/controlContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="@dimen/_10sdp"
+        android:layout_marginEnd="@dimen/_10sdp"
+        android:layout_marginBottom="@dimen/_10sdp">
+
+        <!-- Left -->
+        <LinearLayout
+            android:id="@+id/leftControls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/btnLike"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_favorite"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+            <ImageButton
+                android:id="@+id/btnPlaylist"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_bookmark"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+            <ImageButton
+                android:id="@+id/btnPlayerSettings"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_settings"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+        </LinearLayout>
+
+
+        <!-- Center -->
+
+        <LinearLayout
+            android:id="@+id/centerControls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layoutDirection="ltr"
+            android:textDirection="ltr"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/btnPrev"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_skip_previous"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+            <ImageButton
+                android:id="@+id/btnRewind15"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_replay_10"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+            <ImageButton
+                android:id="@+id/btnPlayPause"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_play_arrow"
+                android:background="@drawable/bg_player_round"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:tint="@android:color/white"/>
+
+            <ImageButton
+                android:id="@+id/btnForward15"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_forward_10"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+            <ImageButton
+                android:id="@+id/btnNext"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_skip_next"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+        </LinearLayout>
+
+        <!-- Right -->
+        <LinearLayout
+            android:id="@+id/rightControls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/btnQueue"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_queue_music"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+            <ImageButton
+                android:id="@+id/btnShuffle"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_shuffle"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+            <ImageButton
+                android:id="@+id/btnRepeat"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_repeat"
+                android:focusable="true"
+                android:clickable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_player_round"/>
+
+        </LinearLayout>
+
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/playerSettingsPanel"
+        android:layout_width="760dp"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:orientation="horizontal"
+        android:textColor="#FFFFFF"
+        android:padding="24dp"
+        android:background="@drawable/bg_setting_player"
+        android:visibility="gone">
+
+        <!-- ================= تنظیمات ================= -->
+        <!-- ================= تنظیمات صوتی ================= -->
+
+        <LinearLayout
+            android:id="@+id/settingsColumnAudio"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="تنظیمات"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="18sp"/>
+
+            <LinearLayout
+                android:id="@+id/rowItemLyrics"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:padding="8dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_settings_row_focus"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="متن ترانه"
+                    android:textColor="#FFF"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchLyrics"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:focusable="false"
+                    android:clickable="false"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowItemHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="8dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_settings_row_focus"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="هدر"
+                    android:textColor="#FFF"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:focusable="false"
+                    android:clickable="false"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowItemHeaderRotate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="8dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_settings_row_focus"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="هدر چرخان"
+                    android:textColor="#FFF"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchHeaderRotate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:focusable="false"
+                    android:clickable="false"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowItemController"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="8dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_settings_row_focus"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="کنترلر"
+                    android:textColor="#FFF"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchController"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:focusable="false"
+                    android:clickable="false"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ================= تنظیمات ویدیو ================= -->
+
+        <LinearLayout
+            android:id="@+id/settingsColumnVideo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="تنظیمات"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="18sp"/>
+
+            <LinearLayout
+                android:id="@+id/rowItemSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:padding="8dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_settings_row_focus"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="زیرنویس"
+                    android:textColor="#FFF"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:focusable="false"
+                    android:clickable="false"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowItemVideoImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="8dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_settings_row_focus"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="تصویر"
+                    android:textColor="#FFF"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchVideoImage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:focusable="false"
+                    android:clickable="false"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowItemVideoCover"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="8dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_settings_row_focus"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="کاور"
+                    android:textColor="#FFF"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchVideoCover"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:focusable="false"
+                    android:clickable="false"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="#33FFFFFF"/>
+
+        <!-- ================= کیفیت ================= -->
+
+        <LinearLayout
+            android:id="@+id/rowQuality"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="کیفیت پخش"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="18sp"/>
+
+            <RadioGroup
+                android:id="@+id/qualityRadioGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </LinearLayout>
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="#33FFFFFF"/>
+
+        <!-- ================= رنگ متن ================= -->
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="رنگ متن"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="18sp"/>
+
+            <RadioGroup
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_settings_row_focus"
+                    android:text="سفید"
+                    android:checked="true"/>
+
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_settings_row_focus"
+                    android:text="مشکی"/>
+
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_settings_row_focus"
+                    android:text="زرد"/>
+
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_settings_row_focus"
+                    android:text="آبی"/>
+
+            </RadioGroup>
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="#33FFFFFF"/>
+
+        <!-- ================= اندازه قلم ================= -->
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="اندازه قلم"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="18sp"/>
+
+            <RadioGroup
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:padding="8dp"
+                    android:background="@drawable/bg_settings_row_focus"
+                    android:text="کوچک"/>
+
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:padding="8dp"
+                    android:background="@drawable/bg_settings_row_focus"
+                    android:text="متوسط"
+                    android:checked="true"/>
+
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:padding="8dp"
+                    android:background="@drawable/bg_settings_row_focus"
+                    android:text="بزرگ"/>
+
+            </RadioGroup>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

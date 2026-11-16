@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="82dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="8dp"
+    android:layout_marginVertical="3dp"
+    android:layout_marginHorizontal="6dp"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:clickable="true"
+    android:background="@drawable/bg_playlist_item">
+
+    <ImageView
+        android:id="@+id/PlsCover"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/default_album"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/songTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+        <TextView
+            android:id="@+id/songArtist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#B5FFFFFF"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 1. پایه تیره (همین که داری) -->
+    <item>
+        <color android:color="#121212"/>
+    </item>
+
+    <!-- 2. گرادیان برای عمق بیشتر (خیلی مهم برای TV UI) -->
+    <item>
+        <shape>
+            <gradient
+                android:angle="270"
+                android:startColor="#00000000"
+                android:endColor="#CC000000"
+                android:type="linear"/>
+        </shape>
+    </item>
+
+    <!-- 3. ویگنت تیره مرکزی برای خوانایی متن -->
+    <item>
+        <shape>
+            <gradient
+                android:angle="0"
+                android:startColor="#CC000000"
+                android:centerColor="#22000000"
+                android:endColor="#CC000000"
+                android:type="radial"
+                android:gradientRadius="600"/>
+        </shape>
+    </item>
+
+</layer-list>

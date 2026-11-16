@@ -1,0 +1,117 @@
+package ir.hamrahang.tv.favorite
+
+import ir.hamrahang.tv.data.local.ContentType
+import ir.hamrahang.tv.data.local.DatabaseProvider
+import ir.hamrahang.tv.data.local.entity.FavoriteRepository
+import ir.hamrahang.tv.player.MediaType
+
+object FavoriteManager {
+
+    private val repository by lazy {
+
+        FavoriteRepository(
+            DatabaseProvider
+                .database()
+                .favoriteDao()
+        )
+
+    }
+
+    suspend fun add(
+        mediaId: Long,
+        type: ContentType,
+        userId: Long = 0
+    ) {
+
+        repository.add(
+            mediaId = mediaId,
+            type = type,
+            userId = userId
+        )
+
+    }
+
+    suspend fun remove(
+        mediaId: Long,
+        type: ContentType,
+        userId: Long = 0
+    ) {
+
+        repository.remove(
+            mediaId = mediaId,
+            type = type,
+            userId = userId
+        )
+
+    }
+
+    suspend fun toggle(
+        mediaId: Long,
+        type: ContentType,
+        userId: Long = 0
+    ): Boolean {
+
+        return repository.toggle(
+            mediaId = mediaId,
+            type = type,
+            userId = userId
+        )
+
+    }
+
+    suspend fun isFavorite(
+        mediaId: Long,
+        type: ContentType,
+        userId: Long = 0
+    ): Boolean {
+
+        return repository.isFavorite(
+            mediaId = mediaId,
+            type = type,
+            userId = userId
+        )
+
+    }
+
+    fun observeFavorites(
+        type: ContentType,
+        userId: Long = 0
+    ) =
+        repository.observeFavorites(
+            type = type,
+            userId = userId
+        )
+
+    suspend fun getFavorites(
+        type: ContentType,
+        userId: Long = 0
+    ) =
+        repository.getFavorites(
+            type = type,
+            userId = userId
+        )
+
+    suspend fun clear(
+        userId: Long = 0
+    ) {
+
+        repository.clear(userId)
+
+    }
+
+    suspend fun clearAll() {
+
+        repository.clearAll()
+
+    }
+
+    fun contentTypeOf(
+        mediaType: MediaType
+    ): ContentType {
+        return when (mediaType) {
+            MediaType.AUDIO -> ContentType.SONG
+            MediaType.VIDEO -> ContentType.MUSICVIDEO
+        }
+    }
+
+}

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <!-- HEADER -->
+
+    <LinearLayout
+        android:id="@+id/searchHeader"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="24dp"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:paddingBottom="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+    <EditText
+        android:id="@+id/searchInput"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="@drawable/bg_search_input"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#AAAAAA"
+        android:hint="Search..."
+        android:textSize="18sp"
+        android:singleLine="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:nextFocusDown="@id/tabResult"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"/>
+        <HorizontalScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/tabContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:clickable="true"
+                    android:id="@+id/tabResult"
+                    style="@style/SearchTab"
+                    android:text="@string/tab_result"
+                    android:nextFocusUp="@id/searchInput"
+                    android:nextFocusDown="@id/searchRecycler"/>
+
+                <TextView
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:id="@+id/tabTracks"
+                    style="@style/SearchTab"
+                    android:text="@string/tab_tracks"
+                    android:nextFocusUp="@id/searchInput"/>
+
+                <TextView
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:id="@+id/tabArtists"
+                    style="@style/SearchTab"
+                    android:text="@string/tab_artists"
+                    android:nextFocusUp="@id/searchInput"/>
+                <TextView
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:id="@+id/tabMusicVideos"
+                    style="@style/SearchTab"
+                    android:text="@string/tab_videos"
+                    android:nextFocusUp="@id/searchInput"/>
+
+                <TextView
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:id="@+id/tabPodcasts"
+                    style="@style/SearchTab"
+                    android:text="@string/tab_videos"
+                    android:nextFocusUp="@id/searchInput"/>
+
+                <TextView
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:id="@+id/tabVideos"
+                    style="@style/SearchTab"
+                    android:text="@string/tab_videos"
+                    android:nextFocusUp="@id/searchInput"/>
+
+                <TextView
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:id="@+id/tabAlbums"
+                    style="@style/SearchTab"
+                    android:text="@string/tab_albums"
+                    android:nextFocusUp="@id/searchInput"/>
+
+            </LinearLayout>
+
+        </HorizontalScrollView>
+
+    </LinearLayout>
+    <FrameLayout
+        android:id="@+id/searchHeroContainer"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/_260sdp"
+        android:visibility="gone"
+
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:layout_marginBottom="20dp"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <include
+            android:id="@+id/heroContainer"
+            layout="@layout/layout_hero"
+            android:layout_width="match_parent"
+            android:layout_height="280dp"
+            android:layout_gravity="bottom" />
+
+    </FrameLayout>
+    <androidx.leanback.widget.VerticalGridView
+        android:id="@+id/searchRecycler"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="32dp"
+        android:focusable="true"
+        app:focusOutEnd="true"
+        app:focusOutFront="true"
+        android:focusableInTouchMode="true"
+        app:numberOfColumns="1"
+        app:layout_constraintTop_toBottomOf="@id/searchHeader"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,40 @@
+<resources>
+
+    <string name="app_name">Hamrahang</string>
+
+    <string name="app_title">Hamrahang</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_live">Live</string>
+    <string name="menu_search">Search</string>
+    <string name="menu_setting">Settings</string>
+
+    <string name="menu_kids">Kids</string>
+    <string name="menu_categories">Categories</string>
+    <string name="menu_bookmark">Bookmarks</string>
+    <string name="menu_profile">Profile</string>
+
+    <string name="last_albums">Last Albums</string>
+    <string name="last_videos">Last Videos</string>
+    <string name="top_songs">Top Songs</string>
+    <string name="top_artists">Top Artists</string>
+    <string name="artists">Artists</string>
+    <string name="trending">Trending</string>
+
+    <string name="search_hint">Search...</string>
+
+    <string name="tab_result">Result</string>
+    <string name="tab_tracks">Tracks</string>
+    <string name="tab_artists">Artists</string>
+    <string name="tab_videos">Music Videos</string>
+    <string name="tab_albums">Albums</string>
+
+    <string name="section_videos">Music Videos</string>
+    <string name="section_tracks">Tracks</string>
+    <string name="section_albums">Albums</string>
+
+    <string name="quality_high">Highest</string>
+    <string name="quality_medium">Medium</string>
+    <string name="quality_low">Lowest</string>
+
+</resources>

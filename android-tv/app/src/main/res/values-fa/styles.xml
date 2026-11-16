@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="AppFont.Regular" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:fontFamily">@font/yekan_regular</item>
+    </style>
+
+    <style name="AppFont.Medium" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:fontFamily">@font/yekan_medium</item>
+    </style>
+
+    <style name="AppFont.Bold" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:fontFamily">@font/vazir_bold</item>
+    </style>
+
+    <style name="Text.Body" parent="AppFont.Regular"/>
+    <style name="Text.Menu" parent="AppFont.Medium"/>
+    <style name="Text.Title" parent="AppFont.Bold"/>
+
+    <style name="CircleImage">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="CircleImageView">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+</resources>

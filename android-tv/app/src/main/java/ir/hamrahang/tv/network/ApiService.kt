@@ -1,0 +1,85 @@
+package ir.hamrahang.tv.network
+
+import ir.hamrahang.tv.data.album.AlbumDto
+import ir.hamrahang.tv.data.artist.ArtistDto
+import ir.hamrahang.tv.data.artist.ArtistResponseDto
+import ir.hamrahang.tv.data.musicvideo.MusicVideoDto
+import ir.hamrahang.tv.data.song.SongDto
+import ir.hamrahang.tv.data.search.SearchResponseDto
+import ir.hamrahang.tv.data.song.SongResponseDto
+import ir.hamrahang.tv.data.album.AlbumResponseDto
+import ir.hamrahang.tv.data.favorite.FavoriteResponseDto
+import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
+import ir.hamrahang.tv.data.musicvideo.MusicVideoResponseDto
+import ir.hamrahang.tv.data.video.VideoDto
+import retrofit2.Response
+import retrofit2.http.GET
+import retrofit2.http.Query
+
+interface ApiService {
+
+    @GET("app/ping")
+    suspend fun ping(): Response<PingResponse>
+
+    @GET("video/latest")
+    suspend fun getLatestVideos(
+        @Query("_qjs") qjs: String = "ep"
+    ): List<VideoDto>
+
+    @GET("video/latest")
+    suspend fun getLatestMusicVideos(
+        @Query("_qjs") qjs: String = "ep"
+    ): List<MusicVideoDto>
+
+    @GET("artist/top")
+    suspend fun getTopArtists(
+        @Query("_qjs") qjs: String = "ep"
+    ): List<ArtistDto>
+
+    @GET("song/top")
+    suspend fun getTopSongs(
+        @Query("_qjs") qjs: String = "ep"
+    ): List<SongDto>
+
+    @GET("album/last")
+    suspend fun getLastAlbums(
+        @Query("_qjs") qjs: String = "ep"
+    ): List<AlbumDto>
+
+    @GET("search/{query}")
+    suspend fun search(
+        @retrofit2.http.Path("query") query: String,
+        @Query("_qjs") qjs: String = "ep"
+    ): SearchResponseDto
+
+    @GET("artist/{id}")
+    suspend fun getArtist(
+        @retrofit2.http.Path("id") id: String,
+        @Query("_qjs") qjs: String = "ep"
+    ): ArtistResponseDto
+
+    @GET("video/{id}")
+    suspend fun getMusicVideo(
+        @retrofit2.http.Path("id") id: String,
+        @Query("_qjs") qjs: String = "ep"
+    ): MusicVideoResponseDto
+
+
+    @GET("song/{id}")
+    suspend fun getSong(
+        @retrofit2.http.Path("id") id: String,
+        @Query("_qjs") qjs: String = "ep"
+    ): SongResponseDto
+
+    @GET("album/{id}")
+    suspend fun getAlbum(
+        @retrofit2.http.Path("id") id: String,
+        @Query("_qjs") qjs: String = "ep"
+    ): AlbumResponseDto
+
+    @GET("favorite")
+    suspend fun getFavorites(
+        @Query("_qjs") qjs: String = "ep"
+    ): FavoriteResponseDto
+
+}

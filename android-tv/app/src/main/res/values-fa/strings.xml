@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_title">همراهنگ</string>
+
+    <string name="menu_home">خانه</string>
+    <string name="menu_live">پخش زنده</string>
+    <string name="menu_search">جستجو</string>
+    <string name="menu_setting">تنظیمات</string>
+
+    <string name="menu_kids">کودک</string>
+    <string name="menu_categories">دسته‌بندی‌</string>
+    <string name="menu_bookmark">نشان‌شده‌ها</string>
+    <string name="menu_profile">پروفایل</string>
+
+    <string name="last_albums">آلبوم های جدید</string>
+    <string name="last_videos">ویدئو های جدید</string>
+    <string name="top_songs">آهنگ های جدید</string>
+    <string name="top_artists">هنرمندان برتر</string>
+    <string name="artists">هنرمندان</string>
+    <string name="trending">پر بازدید</string>
+
+    <string name="search_hint">جستجو کنید</string>
+
+    <string name="tab_result">همه</string>
+    <string name="tab_tracks">آهنگ ها</string>
+    <string name="tab_artists">هنرمندان</string>
+    <string name="tab_videos">موزیک ویدیو</string>
+    <string name="tab_albums">آلبم ها</string>
+
+    <string name="section_videos">موزیک ویدیو</string>
+    <string name="section_tracks">آهنگ ها</string>
+    <string name="section_albums">آلوم ها</string>
+
+    <string name="quality_high">بیشترین</string>
+    <string name="quality_medium">متوسط</string>
+    <string name="quality_low">کمترین</string>
+
+
+</resources>

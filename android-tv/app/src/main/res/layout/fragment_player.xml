@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:keepScreenOn="true"
+        tools:ignore="MissingClass"
+        app:use_artwork="false"
+        app:use_controller="false"/>
+    <FrameLayout
+        android:id="@+id/playback_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:transitionGroup="false">
+        <ImageView
+            android:id="@+id/playback_backdrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </FrameLayout>
+    <include
+        android:id="@+id/playerOverlay"
+        layout="@layout/layout_player_overlay"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/playerQueuePanel"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:elevation="20dp"
+        android:background="@drawable/bg_default"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintWidth_percent="0.40">
+
+        <!-- محتوای پنل -->
+        <LinearLayout
+            android:id="@+id/queueContent"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="10dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/btnCloseQueue">
+
+            <TextView
+                android:id="@+id/txtQueueTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="صف پخش"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:background="#30FFFFFF"/>
+
+            <include
+                layout="@layout/layout_queue_recycler"/>
+
+        </LinearLayout>
+        <!-- جداکننده‌ی عمودی -->
+        <View
+            android:id="@+id/dividerQueue"
+            android:layout_width="1dp"
+            android:layout_height="0dp"
+            android:background="#30FFFFFF"
+            app:layout_constraintStart_toEndOf="@id/queueContent"
+            app:layout_constraintEnd_toStartOf="@id/btnCloseQueue"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <!-- نوار بستن -->
+        <FrameLayout
+            android:id="@+id/btnCloseQueue"
+            android:layout_width="48dp"
+            android:layout_height="0dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:clickable="true"
+            android:background="@drawable/bg_queue_close_focus"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="✕"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"/>
+
+        </FrameLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    <include
+        android:id="@+id/messageContainer"
+        layout="@layout/widget_message"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

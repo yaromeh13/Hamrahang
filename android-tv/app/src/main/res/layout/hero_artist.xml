@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/artistHeroRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="@dimen/_20dp">
+
+    <ImageView
+        android:id="@+id/artistCover"
+        android:layout_width="@dimen/_100sdp"
+        android:layout_height="@dimen/_100sdp"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/_20dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/artistName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="@dimen/_24sdp"/>
+
+        <TextView
+            android:id="@+id/artistSubName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="@dimen/_20sdp"/>
+
+        <LinearLayout
+            android:id="@+id/layoutArtistCounts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"/>
+
+        <LinearLayout
+            android:id="@+id/layoutArtistInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/layoutArtistSocial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:id="@+id/artistBio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#BBBBBB"/>
+        <ImageButton
+            android:id="@+id/btnPlayArtist"
+            android:layout_width="@dimen/_36sdp"
+            android:layout_height="@dimen/_36sdp"
+            android:layout_marginTop="@dimen/_16dp"
+
+            android:background="@drawable/bg_artist_play"
+
+            android:src="@drawable/ic_play_arrow"
+            android:tint="@android:color/black"
+
+            android:padding="@dimen/_8dp"
+
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:clickable="true"
+
+            android:nextFocusLeft="@id/artistCover"
+            android:nextFocusRight="@id/btnPlayArtist"
+            android:nextFocusUp="@id/artistBio"
+            android:nextFocusDown="@id/btnPlayArtist"
+
+            android:visibility="gone"/>
+    </LinearLayout>
+
+</LinearLayout>

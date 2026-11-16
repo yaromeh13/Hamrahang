@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_focused="true">
+        <inset
+            android:insetLeft="5dp"
+            android:insetTop="5dp"
+            android:insetRight="5dp"
+            android:insetBottom="5dp">
+
+            <shape android:shape="oval">
+                <solid android:color="@android:color/white"/>
+
+                <stroke
+                    android:width="3dp"
+                    android:color="#E53935"/>
+            </shape>
+
+        </inset>
+    </item>
+
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@android:color/white"/>
+        </shape>
+    </item>
+
+</selector>

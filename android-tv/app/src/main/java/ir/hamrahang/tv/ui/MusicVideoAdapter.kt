@@ -1,0 +1,77 @@
+package ir.hamrahang.tv.ui
+
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import com.bumptech.glide.Glide
+import android.widget.TextView
+import androidx.annotation.LayoutRes
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import ir.hamrahang.tv.R
+import ir.hamrahang.tv.domain.musicvideo.MusicVideo
+import ir.hamrahang.tv.util.displayTitle
+
+class MusicVideoAdapter(
+    private var items: List<MusicVideo>,
+    private val onFocus: (MusicVideo) -> Unit,
+    private val onClick: (MusicVideo, Int) -> Unit
+) : RecyclerView.Adapter<MusicVideoAdapter.VH>() {
+    companion object {
+        @LayoutRes
+        val ITEM_LAYOUT_RES = R.layout.item_musicvideo
+    }
+    inner class VH(view: View) : RecyclerView.ViewHolder(view) {
+        val title: TextView = view.findViewById(R.id.songTitle)
+        val cover: ImageView = view.findViewById(R.id.cover)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(ITEM_LAYOUT_RES, parent, false)
+        return VH(view)
+    }
+
+    override fun onBindViewHolder(holder: VH, position: Int) {
+
+        val item = items[position]
+        holder.title.text = item.displayTitle()
+
+        Glide.with(holder.itemView.context)
+            .load(item.thumb)
+            .transform(CenterCrop(), RoundedCorners(7))
+            .placeholder(android.R.color.darker_gray)
+            .error(android.R.color.darker_gray)
+            .into(holder.cover)
+
+        holder.cover.clipToOutline = true
+        holder.itemView.setOnFocusChangeListener { _, hasFocus ->
+
+            holder.cover.isSelected = hasFocus
+
+            if (hasFocus) {
+                Log.d("FOCUS_TEST", item.title ?: "")
+                onFocus(item)
+            }
+        }
+
+        holder.itemView.setOnClickListener {
+            val index = holder.bindingAdapterPosition
+
+            if (index != RecyclerView.NO_POSITION) {
+                onClick(item, index)
+            }
+        }
+
+    }
+
+    override fun getItemCount() = items.size
+
+    fun submit(newItems: List<MusicVideo>) {
+        items = newItems
+        notifyDataSetChanged()
+    }
+}
