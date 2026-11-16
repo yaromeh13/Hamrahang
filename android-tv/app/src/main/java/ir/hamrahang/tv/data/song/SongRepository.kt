@@ -30,6 +30,10 @@ class SongRepository {
 
         val local = dao.get(id)
 
+        if (local != null && SongEntityMapper.jsonToMeta(local.meta)?.type == "podcast") {
+            error("Item $id is a podcast; use PodcastRepository")
+        }
+
         if (
             local != null &&
             local.isFull &&
@@ -48,11 +52,16 @@ class SongRepository {
 
         val response = ApiClient.api.getSong(id)
 
+        if (response.song.meta?.type == "podcast") {
+            error("Item $id is a podcast; use PodcastRepository")
+        }
+
         DatabaseUpdater.artist.syncMini(response.song.artists ?: emptyList())
         DatabaseUpdater.syncParents(response.song.parents ?: emptyList())
         DatabaseUpdater.song.syncFull(response.song)
 
-        val entity = dao.get(id)!!
+        val entity = dao.get(id)
+            ?: error("Song sync failed for id=$id")
 
         val artists =
             artistRepository.getByIds(
