@@ -2,6 +2,7 @@ package ir.hamrahang.tv.data
 
 data class MediaMeta(
     val type: String? = null,
+    val act: Int? = null,
     val tmb: String? = null,
     val art: String? = null,
     val lrc: String? = null,
