@@ -4,6 +4,7 @@ import ir.hamrahang.tv.data.artist.ArtistRepository
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.DatabaseUpdater
 import ir.hamrahang.tv.data.local.SongEntityMapper
+import ir.hamrahang.tv.data.video.toArtistDto
 import ir.hamrahang.tv.domain.song.Song
 
 import ir.hamrahang.tv.network.ApiClient
@@ -56,7 +57,7 @@ class SongRepository {
             error("Item $id is a podcast; use PodcastRepository")
         }
 
-        DatabaseUpdater.artist.syncMini(response.song.artists ?: emptyList())
+        response.song.artists?.forEach { DatabaseUpdater.artist.syncMini(it.toArtistDto()) }
         DatabaseUpdater.syncParents(response.song.parents ?: emptyList())
         DatabaseUpdater.song.syncFull(response.song)
 
@@ -85,7 +86,7 @@ class SongRepository {
             val dto = ApiClient.api.getTopSongs()
 
             dto.forEach { song ->
-                DatabaseUpdater.artist.syncMini(song.artists ?: emptyList())
+                song.artists?.forEach { DatabaseUpdater.artist.syncMini(it.toArtistDto()) }
                 DatabaseUpdater.syncParents(song.parents ?: emptyList())
             }
 
