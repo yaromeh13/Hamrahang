@@ -3,9 +3,10 @@ package ir.hamrahang.tv.data.local
 import ir.hamrahang.tv.data.ParentMini
 import ir.hamrahang.tv.data.album.AlbumDto
 import ir.hamrahang.tv.data.artist.ArtistDto
-import ir.hamrahang.tv.data.musicvideo.MusicVideoDto
+import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.song.SongDto
 import ir.hamrahang.tv.data.local.entity.PodcastEntity
+import ir.hamrahang.tv.data.local.entity.VideoEntity
 
 object DatabaseUpdater {
 
@@ -138,11 +139,11 @@ object DatabaseUpdater {
 
                 }
 
-                "musicvideo" -> {
+                "musicvideo", "video" -> {
 
-                    musicVideo.syncMini(
+                    video.syncMini(
 
-                        MusicVideoDto(
+                        VideoDto(
                             id = parent.id,
                             name = parent.name,
                             name_fa = parent.name_fa,
@@ -279,45 +280,34 @@ object DatabaseUpdater {
         }
     }
 
-    // MusicVideo
+    // Video and MusicVideo share the videos table
 
-    object musicVideo : EntityUpdater<MusicVideoDto> {
+    object video : EntityUpdater<VideoDto> {
 
         private val dao =
-            DatabaseProvider
-                .database()
-                .musicvideoDao()
+            DatabaseProvider.database().videoDao()
 
-        override suspend fun syncMini(dto: MusicVideoDto) {
+        override suspend fun syncMini(dto: VideoDto) {
             sync(dto, false)
         }
 
-        override suspend fun syncFull(dto: MusicVideoDto) {
+        override suspend fun syncFull(dto: VideoDto) {
             sync(dto, true)
         }
 
-        private suspend fun sync(
-            dto: MusicVideoDto,
-            isFull: Boolean
-        ) {
+        private suspend fun sync(dto: VideoDto, isFull: Boolean) {
             val id = dto.id ?: return
             val local = dao.get(id)
             if (local?.isFull == true && !isFull) return
+
             val finalIsFull = (local?.isFull == true) || isFull
-            val entity =
-                if (local == null) {
-                    MusicVideoEntityMapper.fromDto(
-                        dto,
-                        finalIsFull
-                    )
-                } else {
-                    MusicVideoEntityMapper.merge(
-                        local,
-                        dto,
-                        finalIsFull
-                    )
-                }
+            val entity = if (local == null) {
+                VideoEntityMapper.fromDto(dto, finalIsFull)
+            } else {
+                VideoEntityMapper.merge(local, dto, finalIsFull)
+            }
             dao.insert(entity)
         }
     }
+
 }
