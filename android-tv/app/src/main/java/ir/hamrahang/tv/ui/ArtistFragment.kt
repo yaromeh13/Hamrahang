@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import androidx.leanback.widget.VerticalGridView
 import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.video.VideoRepository
+import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
 import ir.hamrahang.tv.data.song.SongRepository
 
 
@@ -83,9 +84,8 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
 
             val songs = SongRepository().getByIds(artist.songIds)
             val albums = AlbumRepository().getByIds(artist.albumIds)
-            val artistVideos = VideoRepository().getByIds((artist.musicVideoIds + artist.videoIds).distinct())
-            val musicvideos = artistVideos.filter { it.isMusicVideo }
-            val videos = artistVideos.filterNot { it.isMusicVideo }
+            val videos = VideoRepository().getByIds(artist.videoIds)
+            val musicvideos = MusicVideoRepository().getByIds(artist.musicVideoIds)
 
             val rowsData = ContentRows {
 

@@ -1,11 +1,14 @@
 package ir.hamrahang.tv.data.local
 
 import ir.hamrahang.tv.data.ParentMini
+import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.album.AlbumDto
 import ir.hamrahang.tv.data.artist.ArtistDto
 import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.song.SongDto
 import ir.hamrahang.tv.data.local.entity.PodcastEntity
+import ir.hamrahang.tv.data.local.VideoEntityMapper
+import ir.hamrahang.tv.data.local.MusicVideoEntityMapper
 
 object DatabaseUpdater {
 
@@ -131,7 +134,8 @@ object DatabaseUpdater {
                             id = parent.id,
                             name = parent.name,
                             name_fa = parent.name_fa,
-                            meta = parent.meta
+                            meta = parent.meta?.copy(type = parent.type)
+                                ?: MediaMeta(type = parent.type)
                         )
 
                     )
@@ -279,31 +283,49 @@ object DatabaseUpdater {
         }
     }
 
-    // Video and MusicVideo share the videos table
+    // Video and MusicVideo are routed into independent Room tables.
 
     object video : EntityUpdater<VideoDto> {
+        private val dao = DatabaseProvider.database().videoDao()
 
-        private val dao =
-            DatabaseProvider.database().videoDao()
-
-        override suspend fun syncMini(dto: VideoDto) {
-            sync(dto, false)
-        }
-
-        override suspend fun syncFull(dto: VideoDto) {
-            sync(dto, true)
-        }
+        override suspend fun syncMini(dto: VideoDto) = sync(dto, false)
+        override suspend fun syncFull(dto: VideoDto) = sync(dto, true)
 
         private suspend fun sync(dto: VideoDto, isFull: Boolean) {
+            if (dto.meta?.type == "musicvideo") {
+                musicvideo.sync(dto, isFull)
+                return
+            }
+            val normalized = dto.copy(meta = (dto.meta ?: MediaMeta()).copy(type = dto.meta?.type ?: "video"))
+            val id = normalized.id ?: return
+            val local = dao.get(id)
+            if (local?.isFull == true && !isFull) return
+            val full = (local?.isFull == true) || isFull
+            val entity = if (local == null) {
+                VideoEntityMapper.fromDto(normalized, full)
+            } else {
+                VideoEntityMapper.merge(local, normalized, full)
+            }
+            dao.insert(entity)
+        }
+    }
+
+    object musicvideo : EntityUpdater<VideoDto> {
+        private val dao = DatabaseProvider.database().musicVideoDao()
+
+        override suspend fun syncMini(dto: VideoDto) = sync(dto, false)
+        override suspend fun syncFull(dto: VideoDto) = sync(dto, true)
+
+        private suspend fun sync(dto: VideoDto, isFull: Boolean) {
+            if (dto.meta?.type != "musicvideo") return
             val id = dto.id ?: return
             val local = dao.get(id)
             if (local?.isFull == true && !isFull) return
-
-            val finalIsFull = (local?.isFull == true) || isFull
+            val full = (local?.isFull == true) || isFull
             val entity = if (local == null) {
-                VideoEntityMapper.fromDto(dto, finalIsFull)
+                MusicVideoEntityMapper.fromDto(dto, full)
             } else {
-                VideoEntityMapper.merge(local, dto, finalIsFull)
+                MusicVideoEntityMapper.merge(local, dto, full)
             }
             dao.insert(entity)
         }

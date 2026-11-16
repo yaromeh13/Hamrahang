@@ -3,6 +3,7 @@ package ir.hamrahang.tv.data.artist
 import ir.hamrahang.tv.data.local.ArtistEntityMapper
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.DatabaseUpdater
+import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
 import ir.hamrahang.tv.domain.artist.Artist
 import ir.hamrahang.tv.network.ApiClient
 
@@ -109,14 +110,10 @@ class ArtistRepository {
             DatabaseUpdater.podcast.syncMini(it)
         }
 
-        // Videos and MusicVideos share the same API and Room table.
-        response.artist.musicvideos?.forEach {
-            DatabaseUpdater.video.syncMini(it)
-        }
+        // Store each media kind in its dedicated Room table.
+        MusicVideoRepository().sync(response.artist.musicvideos ?: emptyList())
 
-        response.artist.videos?.forEach {
-            DatabaseUpdater.video.syncMini(it)
-        }
+        response.artist.videos?.forEach { DatabaseUpdater.video.syncMini(it) }
 
         // ---------- Sync child tables ----------
 /*

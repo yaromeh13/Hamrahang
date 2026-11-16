@@ -20,7 +20,7 @@ class VideoRepository {
     private var latestCacheAt: Long = 0L
 
     suspend fun sync(items: List<VideoDto>) {
-        items.forEach { dto ->
+        items.filter { it.meta?.type != "musicvideo" }.forEach { dto ->
             dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it.toArtistDto()) }
             dto.songs?.forEach { DatabaseUpdater.song.syncMini(it) }
             DatabaseUpdater.video.syncMini(normalize(dto))
@@ -29,61 +29,51 @@ class VideoRepository {
 
     suspend fun getVideo(id: String): Video {
         val local = dao.get(id)
-        if (
-            local != null &&
-            local.isFull &&
+        if (local != null && local.isFull &&
             System.currentTimeMillis() - local.updatedAt < CACHE_TIME
-        ) {
-            return toDomain(local)
-        }
+        ) return toDomain(local)
 
         val dto = try {
             normalize(ApiClient.api.getVideo(id).video)
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
-            // Keep locally cached video details usable when the API is unavailable.
             if (local != null) return toDomain(local)
             throw error
+        }
+
+        if (dto.meta?.type == "musicvideo") {
+            error("Item $id is a music video; use MusicVideoRepository")
         }
 
         dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it.toArtistDto()) }
         dto.songs?.forEach { DatabaseUpdater.song.syncMini(it) }
         DatabaseUpdater.video.syncFull(dto)
 
-        val entity = dao.get(id) ?: error("Video sync failed for id=$id")
-        return toDomain(entity)
+        return toDomain(dao.get(id) ?: error("Video sync failed for id=$id"))
     }
 
     suspend fun getLatestVideos(): List<Video> {
         val now = System.currentTimeMillis()
-        latestCache?.let {
-            if (now - latestCacheAt < 30_000L) return it
-        }
+        latestCache?.let { if (now - latestCacheAt < 30_000L) return it }
 
         val result = try {
             val dto = ApiClient.api.getLatestVideos().map(::normalize)
             sync(dto)
-            getByIds(dto.mapNotNull { it.id })
+            getByIds(dto.filter { it.meta?.type != "musicvideo" }.mapNotNull { it.id })
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {
             getAll()
         }
-
         latestCache = result
         latestCacheAt = now
         return result
     }
 
-    suspend fun getLatestMusicVideos(): List<Video> =
-        getLatestVideos().filter { it.isMusicVideo }
+    suspend fun getLatestRegularVideos(): List<Video> = getLatestVideos()
 
-    suspend fun getLatestRegularVideos(): List<Video> =
-        getLatestVideos().filterNot { it.isMusicVideo }
-
-    suspend fun getAll(): List<Video> =
-        dao.getAll().map { toDomain(it) }
+    suspend fun getAll(): List<Video> = dao.getAll().map { toDomain(it) }
 
     suspend fun getByIds(ids: List<String>): List<Video> {
         if (ids.isEmpty()) return emptyList()
@@ -92,14 +82,12 @@ class VideoRepository {
     }
 
     private suspend fun toDomain(entity: ir.hamrahang.tv.data.local.entity.VideoEntity): Video {
-        val artists = artistRepository.getByIds(
-            VideoEntityMapper.jsonToIds(entity.artistIds)
-        )
+        val artists = artistRepository.getByIds(VideoEntityMapper.jsonToIds(entity.artistIds))
         return VideoEntityMapper.toDomain(entity, artists)
     }
 
     private fun normalize(dto: VideoDto): VideoDto {
-        val meta = dto.meta ?: ir.hamrahang.tv.data.MediaMeta()
-        return dto.copy(meta = meta.copy(type = meta.type ?: "musicvideo"))
+        val meta = dto.meta ?: ir.hamrahang.tv.data.MediaMeta(type = "video")
+        return dto.copy(meta = meta.copy(type = meta.type ?: "video"))
     }
 }

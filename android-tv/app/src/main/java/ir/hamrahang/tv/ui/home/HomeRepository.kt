@@ -5,6 +5,7 @@ import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryRepository
 import ir.hamrahang.tv.data.video.VideoRepository
+import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
 import ir.hamrahang.tv.data.song.SongRepository
 import ir.hamrahang.tv.playback.PlaybackSource
 import ir.hamrahang.tv.ui.rows.ContentRow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.map
 class HomeRepository(
 
     private val videoRepository: VideoRepository = VideoRepository(),
+    private val musicVideoRepository: MusicVideoRepository = MusicVideoRepository(),
     private val songRepository: SongRepository = SongRepository(),
     private val artistRepository: ArtistRepository= ArtistRepository()
 
@@ -94,11 +96,9 @@ class HomeRepository(
                 }
 
                 val musicVideos =
-                    videoRepository.getByIds(
-                        history.map {
-                            it.mediaId.toString()
-                        }
-                    ).filter { it.isMusicVideo }
+                    musicVideoRepository.getByIds(
+                        history.map { it.mediaId.toString() }
+                    )
 
                 if (musicVideos.isEmpty()) {
                     return@map null
@@ -177,7 +177,7 @@ class HomeRepository(
         return try {
 
             val MusicVideos =
-                videoRepository.getLatestMusicVideos()
+                musicVideoRepository.getLatestMusicVideos()
 
             if (MusicVideos.isEmpty())
                 null
