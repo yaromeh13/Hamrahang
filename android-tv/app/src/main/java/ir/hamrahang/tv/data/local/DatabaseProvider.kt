@@ -91,7 +91,7 @@ object DatabaseProvider {
                         ELSE ''
                     END ||
                     ']',
-                    1,
+                    0,
                     updatedAt
                 FROM videos_legacy_28
             """.trimIndent())
