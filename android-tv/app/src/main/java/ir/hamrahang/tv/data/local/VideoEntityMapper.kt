@@ -44,7 +44,10 @@ object VideoEntityMapper {
             rls = newMeta.rls ?: oldMeta?.rls,
             lik = newMeta.lik ?: oldMeta?.lik,
             ncp = newMeta.ncp ?: oldMeta?.ncp,
-            dur = newMeta.dur ?: oldMeta?.dur
+            dur = newMeta.dur ?: oldMeta?.dur,
+            tmv = newMeta.tmv ?: oldMeta?.tmv,
+            cvr = newMeta.cvr ?: oldMeta?.cvr,
+            gal = newMeta.gal ?: oldMeta?.gal
         )
 
         return old.copy(
