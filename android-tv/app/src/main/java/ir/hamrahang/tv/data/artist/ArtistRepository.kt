@@ -105,6 +105,9 @@ class ArtistRepository {
         response.artist.songs?.
             forEach {DatabaseUpdater.song.syncMini(it)}
 
+        response.artist.podcasts?.forEach {
+            DatabaseUpdater.podcast.syncMini(it)
+        }
 
         // MusicVideos
         response.artist.musicvideos?.
@@ -121,16 +124,7 @@ class ArtistRepository {
 
             }
 
-//----------------------------------------------------
-// Podcasts
-//----------------------------------------------------
-
-        response.artist.podcasts
-            ?.forEach {
-
-                DatabaseUpdater.podcast.syncMini(it)
-
-            }*/
+*/
 
         // ---------- Sync child tables ----------
 /*

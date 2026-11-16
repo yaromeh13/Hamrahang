@@ -19,9 +19,12 @@ import androidx.room.TypeConverters
 import ir.hamrahang.tv.data.local.dao.FavoriteDao
 import ir.hamrahang.tv.data.local.dao.UserDao
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryEntity
+import ir.hamrahang.tv.data.local.dao.PodcastDao
+import ir.hamrahang.tv.data.local.entity.PodcastEntity
 @Database(
     entities = [
         SongEntity::class,
+        PodcastEntity::class,
         ArtistEntity::class,
         AlbumEntity::class,
         VideoEntity::class,
@@ -35,17 +38,12 @@ import ir.hamrahang.tv.data.local.playback.PlaybackHistoryEntity
 )
 @TypeConverters(RoomConverters::class)
 abstract class AppDatabase : RoomDatabase() {
-
     abstract fun songDao(): SongDao
-
+    abstract fun podcastDao(): PodcastDao
     abstract fun artistDao(): ArtistDao
-
     abstract fun albumDao(): AlbumDao
-
     abstract fun videoDao(): VideoDao
-
     abstract fun musicvideoDao(): MusicVideoDao
-
     abstract fun playbackHistoryDao(): PlaybackHistoryDao
     abstract fun favoriteDao(): FavoriteDao
     abstract fun userDao(): UserDao

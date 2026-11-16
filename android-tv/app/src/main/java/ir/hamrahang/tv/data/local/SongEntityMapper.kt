@@ -85,6 +85,7 @@ object SongEntityMapper {
                 oldMeta
             } else {
                 MediaMeta(
+                    type = dto.meta.type ?: oldMeta?.type,
                     tmb = dto.meta.tmb ?: oldMeta?.tmb,
                     art = dto.meta.art ?: oldMeta?.art,
                     lrc = dto.meta.lrc ?: oldMeta?.lrc,

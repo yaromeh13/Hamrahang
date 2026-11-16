@@ -5,6 +5,7 @@ import ir.hamrahang.tv.data.album.AlbumDto
 import ir.hamrahang.tv.data.artist.ArtistDto
 import ir.hamrahang.tv.data.musicvideo.MusicVideoDto
 import ir.hamrahang.tv.data.song.SongDto
+import ir.hamrahang.tv.data.local.entity.PodcastEntity
 
 object DatabaseUpdater {
 
@@ -35,6 +36,10 @@ object DatabaseUpdater {
             dto: SongDto,
             isFull: Boolean
         ) {
+            if (dto.meta?.type == "podcast") {
+                podcast.sync(dto, isFull)
+                return
+            }
 
             val id = dto.id ?: return
             val local = dao.get(id)
@@ -53,6 +58,57 @@ object DatabaseUpdater {
                         finalIsFull
                     )
                 }
+            dao.insert(entity)
+        }
+    }
+
+    //==================================================
+    // Podcast
+    //==================================================
+
+    object podcast : EntityUpdater<SongDto> {
+
+        private val dao =
+            DatabaseProvider
+                .database()
+                .podcastDao()
+
+        override suspend fun syncMini(dto: SongDto) {
+            sync(dto, false)
+        }
+
+        override suspend fun syncFull(dto: SongDto) {
+            sync(dto, true)
+        }
+
+        internal suspend fun sync(
+            dto: SongDto,
+            isFull: Boolean
+        ) {
+
+            if (dto.meta?.type != "podcast") return
+
+            val id = dto.id ?: return
+            val local = dao.get(id)
+
+            if (local?.isFull == true && !isFull) return
+
+            val finalIsFull = (local?.isFull == true) || isFull
+
+            val entity =
+                if (local == null) {
+                    PodcastEntityMapper.fromDto(
+                        dto,
+                        finalIsFull
+                    )
+                } else {
+                    PodcastEntityMapper.merge(
+                        local,
+                        dto,
+                        finalIsFull
+                    )
+                }
+
             dao.insert(entity)
         }
     }

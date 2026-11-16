@@ -22,6 +22,6 @@ data class ArtistDto(
     val songs: List<SongDto>? = null,
     val musicvideos: List<MusicVideoDto>? = null,
     val videos: List<VideoDto>? = null,
-    val podcasts: List<PodcastDto>? = null,
+    val podcasts: List<SongDto>? = null,
 
 )
