@@ -50,9 +50,9 @@ class PodcastAdapter(
                 .joinToString(" • ") {
 
                     if (AppState.isPersian())
-                        it.name_fa ?: it.name ?: ""
+                        it.titleFa ?: it.title ?: ""
                     else
-                        it.name ?: it.name_fa ?: ""
+                        it.title ?: it.titleFa ?: ""
 
                 }
 
