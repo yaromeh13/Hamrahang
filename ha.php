@@ -6209,22 +6209,6 @@ if (!empty($_SESSION['loggedin'])) {
         SN._pendingHistory = [];
     }
     
-    function LoadUserSession(callback) {
-
-        var userId = null;
-        try {
-            userId = localStorage.getItem('ha_user_id');
-        } catch (e) {}
-    
-        if (!userId) {
-            SN.user = { loggedIn: false, id: null, name: null, fv: { sng: [], art: [], alb: [] }, playlists: [] };
-            if (callback) { callback(false); }
-            return;
-        }
-    
-        LoadUserFromAPI(userId, callback);
-    }
-    
     async function RenderFavoriteTab(pane) {
         LoadProfile();
         await HydrateProfileItems();
@@ -8159,16 +8143,6 @@ if (!empty($_SESSION['loggedin'])) {
         clearHeroMenu();
     }
 
-    function getVideoFsRoot() {
-        // اگر داخل صفحه ویدیو هستیم و stage هست:
-        const stage = document.querySelector('.video-stage.is-playing');
-        if (stage) return stage;
-        // وگرنه باکس ویدیو داخل max:
-        const maxSlot = document.querySelector('.maximum-player-mobile .video-fs-root');
-        if (maxSlot) return maxSlot;
-        return document.querySelector('.main-video');
-    }
-    
     function openPlayerShell() {
         if (!Player || !MCLN) return;
         Player.classList.remove('vis-none');
@@ -15302,7 +15276,6 @@ const PROFILE_KEY = 'ha_profile';
             const rows = String(text || '').split(/\r?\n/);
             const timeRe = /\[(\d{1,2}):(\d{2})(?:[\.:](\d{1,3}))?\]/g;
         
-            let order = 0;
             let inIntro = false;
         
             this.offsetMs = 0;
@@ -15325,14 +15298,14 @@ const PROFILE_KEY = 'ha_profile';
         
                 // LRC metadata
                 const meta = line.match(/^\[([a-zA-Z]+):(.*)\]$/);
-
+        
                 if (meta) {
                     if (meta[1].toLowerCase() === 'offset') {
                         this.offsetMs = parseInt(meta[2], 10) || 0;
                     }
                     continue;
                 }
-                        
+        
                 const times = [];
                 let match;
                 let textStart = 0;
@@ -15354,41 +15327,47 @@ const PROFILE_KEY = 'ha_profile';
                         }
                     }
         
-                    const time =
+                    times.push(
                         (parseInt(match[1], 10) * 60) +
                         parseInt(match[2], 10) +
-                        fraction;
-        
-                    times.push(time);
+                        fraction
+                    );
                 }
-        
-                if (!times.length) continue;
         
                 const lyricText = line.substring(textStart).trim();
         
                 if (!lyricText) continue;
         
+                // Keep untimed lines in their original position.
+                if (!times.length) {
+                    out.push({
+                        t: -1,
+                        text: lyricText,
+                        intro: inIntro
+                    });
+                    continue;
+                }
+        
+                // A line may contain multiple timestamps.
                 for (let j = 0; j < times.length; j++) {
                     out.push({
                         t: times[j],
                         text: lyricText,
-                        intro: inIntro,
-                        _order: order++
+                        intro: inIntro
                     });
                 }
             }
         
-            // Sort by timestamp; preserve original order for equal timestamps
-            out.sort((a, b) => {
-                if (a.t !== b.t) return a.t - b.t;
-                return a._order - b._order;
-            });
-        
-            for (let i = 0; i < out.length; i++) {
-                delete out[i]._order;
-            }
-        
+            // Do not sort: preserve the original display order.
             return out;
+        },
+
+        hasTimedLines(lines) {
+            if (!lines || !lines.length) return false;
+        
+            return lines.some((line) => {
+                return line && Number(line.t) >= 0;
+            });
         },
 
         parsePlain(text) {
@@ -15458,7 +15437,7 @@ const PROFILE_KEY = 'ha_profile';
                 snap.lines = this.parseLrc(body);
                 snap.offsetMs = this.offsetMs || 0;
                 this.offsetMs = prevOff;
-                snap.synced = snap.lines.length > 0 && snap.lines[0].t >= 0;
+                snap.synced = this.hasTimedLines(snap.lines);
             } else {
                 snap.lines = this.parsePlain(body);
                 snap.synced = false;
@@ -15516,10 +15495,7 @@ const PROFILE_KEY = 'ha_profile';
             // تشخیص فرمت متن آهنگ
             if (this.isLrcEntry(entry)) {
                 this.lines = this.parseLrc(body);
-                this.synced = (
-                    this.lines.length > 0 &&
-                    this.lines[0].t >= 0
-                );
+                this.synced = this.hasTimedLines(this.lines);
             } else {
                 this.lines = this.parsePlain(body);
                 this.synced = false;
@@ -15577,20 +15553,33 @@ const PROFILE_KEY = 'ha_profile';
         findIndex(timeSec, sourceLines, offsetMs) {
             const lines = sourceLines || this.lines;
             const offset = offsetMs != null ? offsetMs : this.offsetMs;
-            if (!lines.length) return -1;
-            const t = (Number(timeSec) || 0) - (Number(offset) || 0) / 1000;
-            let lo = 0, hi = lines.length - 1, ans = -1;
-            while (lo <= hi) {
-                const mid = (lo + hi) >> 1;
         
-                if (lines[mid].t <= t) {
-                    ans = mid;
-                    lo = mid + 1;
-                } else {
-                    hi = mid - 1;
+            if (!lines.length) return -1;
+        
+            const t = (Number(timeSec) || 0) -
+                      (Number(offset) || 0) / 1000;
+        
+            let answer = -1;
+            let latestTime = -1;
+        
+            for (let i = 0; i < lines.length; i++) {
+                const lineTime = Number(lines[i].t);
+        
+                // Untimed lines must never become active.
+                if (!Number.isFinite(lineTime) || lineTime < 0) {
+                    continue;
+                }
+        
+                if (
+                    lineTime <= t &&
+                    lineTime >= latestTime
+                ) {
+                    latestTime = lineTime;
+                    answer = i;
                 }
             }
-            return ans;
+        
+            return answer;
         },
 
         sync(timeSec) {
@@ -15932,7 +15921,7 @@ const PROFILE_KEY = 'ha_profile';
             collectOwnersFromItem(item);
         } catch (e) {}
         const P = ensurePlayer();
-        const sources = Array.isArray(item.sources) ? item.sources : [];
+        const sources = getPlayableSources(item);
         if (!sources.length) return null;
         let idx = 0;
         if (P.nowPlaying && P.nowPlaying.sourceIndex != null) {
@@ -16500,7 +16489,7 @@ const PROFILE_KEY = 'ha_profile';
             console.log('[HA][handleSourceFailure] try another source', { nextIndex: next, total: sources.length });
             // _sourceFailed را برای ایندکس جدید آزاد می‌کنیم تا بتوان fail بعدی را هم ثبت کرد
             P.nowPlaying._sourceFailed = false;
-            PlayMediaSourceAt(next);
+            PlayMediaSourceAt(next, { preserveTime: true });
             return;
         }
     
