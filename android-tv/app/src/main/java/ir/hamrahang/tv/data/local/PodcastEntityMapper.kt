@@ -6,6 +6,7 @@ import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.local.entity.PodcastEntity
 import ir.hamrahang.tv.data.song.SongDto
+import ir.hamrahang.tv.domain.artist.Artist
 import ir.hamrahang.tv.domain.podcast.Podcast
 
 object PodcastEntityMapper {
@@ -108,14 +109,15 @@ object PodcastEntityMapper {
     }
 
     fun toDomain(
-        entity: PodcastEntity
+        entity: PodcastEntity,
+        artists: List<Artist> = emptyList()
     ): Podcast {
 
         return Podcast(
             id = entity.id,
             title = entity.title ?: "",
             titleFa = entity.titleFa,
-            artists = emptyList(),
+            artists = artists,
             parents = jsonToParents(entity.parentIds),
             meta = jsonToMeta(entity.meta),
             sources = jsonToSources(entity.sources)
