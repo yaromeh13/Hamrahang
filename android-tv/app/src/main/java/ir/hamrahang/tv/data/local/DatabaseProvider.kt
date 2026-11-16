@@ -132,13 +132,56 @@ object DatabaseProvider {
         }
     }
 
+
+    private val MIGRATION_29_30 = object : Migration(29, 30) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("""
+                CREATE TABLE IF NOT EXISTS musicvideos (
+                    id TEXT NOT NULL,
+                    title TEXT,
+                    titleFa TEXT,
+                    artistIds TEXT NOT NULL,
+                    songIds TEXT NOT NULL,
+                    meta TEXT NOT NULL,
+                    sources TEXT NOT NULL,
+                    isFull INTEGER NOT NULL,
+                    updatedAt INTEGER NOT NULL,
+                    PRIMARY KEY(id)
+                )
+            """.trimIndent())
+
+            // Move every cached music video out of videos. Legacy rows without
+            // an explicit regular-video type are treated as music videos.
+            database.execSQL("""
+                INSERT OR REPLACE INTO musicvideos (
+                    id, title, titleFa, artistIds, songIds,
+                    meta, sources, isFull, updatedAt
+                )
+                SELECT
+                    id, title, titleFa,
+                    COALESCE(artistIds, '[]'),
+                    COALESCE(songIds, '[]'),
+                    COALESCE(meta, '{"type":"musicvideo"}'),
+                    COALESCE(sources, '[]'),
+                    isFull, updatedAt
+                FROM videos
+                WHERE meta NOT LIKE '%"type":"video"%'
+            """.trimIndent())
+
+            database.execSQL("""
+                DELETE FROM videos
+                WHERE meta NOT LIKE '%"type":"video"%'
+            """.trimIndent())
+        }
+    }
+
     fun init(context: Context) {
         db = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "hamrahang.db"
         )
-            .addMigrations(MIGRATION_28_29)
+            .addMigrations(MIGRATION_28_29, MIGRATION_29_30)
             .fallbackToDestructiveMigration()
             .build()
     }
