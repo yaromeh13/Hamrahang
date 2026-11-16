@@ -10,6 +10,7 @@ import ir.hamrahang.tv.domain.hero.HeroContent
 import android.view.KeyEvent
 import androidx.leanback.widget.HorizontalGridView
 import ir.hamrahang.tv.MainActivity
+import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.playback.PlaybackItem
 import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.playback.PlaybackSession
@@ -94,6 +95,24 @@ class ContentRowsAdapter(
                             onHeroFocus(HeroContent.PodcastHero(podcast))
                         },
                         onClick = { podcast, index ->
+                            PlaybackManager.start(
+                                PlaybackSession(
+                                    id = row.sessionId,
+                                    title = row.sessionTitle,
+                                    source = row.sessionSource,
+                                    items = row.items.map { item ->
+                                        PlaybackItem(
+                                            id = item.id,
+                                            title = item.titleFa ?: item.title,
+                                            artwork = item.thumb,
+                                            artists = item.artists,
+                                            contentType = ContentType.PODCAST
+                                        )
+                                    },
+                                    currentIndex = index,
+                                    mediaType = MediaType.AUDIO
+                                )
+                            )
                             onItemClick(UiClickEvent.PodcastClick(podcast))
                         }
                     )
