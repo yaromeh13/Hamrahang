@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.data.album
 
+import com.google.gson.JsonElement
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.video.VideoArtistDto
 import ir.hamrahang.tv.data.song.SongDto
@@ -10,7 +11,7 @@ data class AlbumDto(
     // The current web API does not return name_fa; localized names are in "names".
     val name_fa: String? = null,
     val url: String? = null,
-    val names: Map<String, String>? = null,
+    val names: JsonElement? = null,
     val artists: List<VideoArtistDto>? = null,
     val songs: List<SongDto>? = null,
     val meta: MediaMeta? = null,
