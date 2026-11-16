@@ -7,6 +7,7 @@ import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryRepository
 import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
+import ir.hamrahang.tv.data.podcast.PodcastRepository
 import ir.hamrahang.tv.data.song.SongRepository
 import ir.hamrahang.tv.domain.album.Album
 import ir.hamrahang.tv.player.BackgroundManager
@@ -32,6 +33,7 @@ object PlaybackManager {
     // Repositories // =========================================================
     private val songRepository = SongRepository()
     private val musicVideoRepository = MusicVideoRepository()
+    private val podcastRepository = PodcastRepository()
     private val albumRepository = AlbumRepository()
 
     private val playbackHistoryRepository =
@@ -188,7 +190,11 @@ object PlaybackManager {
         // ----------------------------------------------
         when (mediaType) {
             MediaType.AUDIO -> {
-                playSong( context = context, item = item )
+                if (item.contentType == ContentType.PODCAST) {
+                    playPodcast(context = context, item = item)
+                } else {
+                    playSong(context = context, item = item)
+                }
             }
             MediaType.VIDEO -> {
                 playMusicVideo( context = context, item = item )
@@ -257,6 +263,63 @@ object PlaybackManager {
                 //artwork = CoverArtBinder.resolve( fullSong ),
                 sources = selectedSources,
                 type = MediaType.AUDIO )
+        )
+    }
+
+    // PLAY PODCAST
+    private suspend fun playPodcast(
+        context: Context,
+        item: PlaybackItem
+    ) {
+        val podcast = podcastRepository.getPodcast(item.id)
+
+        playbackHistoryRepository.record(
+            mediaId = podcast.id.toLong(),
+            type = ContentType.PODCAST.value
+        )
+
+        val preferredQuality =
+            PlaybackQualityManager.getPreferredQuality(MediaType.AUDIO)
+
+        val selectedSources = SourceSelector.select(
+            sources = podcast.sources,
+            type = MediaType.AUDIO,
+            preferredQuality = preferredQuality
+        )
+
+        val cover = podcast.thumb
+
+        PlayerState.updatePlaybackInfo {
+            copy(
+                visible = true,
+                mediaId = podcast.id,
+                mediaType = MediaType.AUDIO,
+                artwork = cover,
+                title = podcast.titleFa ?: podcast.title,
+                song = null,
+                album = null,
+                artists = podcast.artists,
+                liked = false,
+                favorite = false,
+                downloaded = false,
+                metadata = podcast.meta,
+                sources = selectedSources,
+                selectedSource = selectedSources.firstOrNull()
+            )
+        }
+
+        BackgroundManager.set(cover)
+
+        PlayerManager.play(
+            context,
+            PlayerMedia(
+                id = podcast.id,
+                title = podcast.titleFa ?: podcast.title,
+                artist = podcast.artists.joinToString(" - ") { it.displayTitle() },
+                artwork = cover,
+                sources = selectedSources,
+                type = MediaType.AUDIO
+            )
         )
     }
 
