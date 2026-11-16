@@ -5,28 +5,14 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "videos")
 data class VideoEntity(
-
     @PrimaryKey
-    val id: Long,
-
-    val title: String,
-
-    val titleFa: String,
-
-    val artistId: Long,
-
-    val artistName: String,
-
-    val thumb: String?,
-
-    val duration: Long,
-
-    val source720: String?,
-
-    val source1080: String?,
-
-    val source4k: String?,
-
-    val updatedAt: Long =
-        System.currentTimeMillis()
+    val id: String,
+    val title: String?,
+    val titleFa: String?,
+    val artistIds: String,
+    val songIds: String,
+    val meta: String,
+    val sources: String,
+    val isFull: Boolean,
+    val updatedAt: Long
 )
