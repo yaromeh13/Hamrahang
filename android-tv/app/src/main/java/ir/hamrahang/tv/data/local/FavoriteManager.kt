@@ -4,6 +4,7 @@ import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.entity.FavoriteRepository
 import ir.hamrahang.tv.player.MediaType
+import ir.hamrahang.tv.player.PlayerMedia
 import ir.hamrahang.tv.domain.video.Video
 
 object FavoriteManager {
@@ -107,6 +108,9 @@ object FavoriteManager {
     }
 
     fun contentTypeOf(video: Video): ContentType = video.contentType
+
+    fun contentTypeOf(media: PlayerMedia): ContentType =
+        media.contentType ?: contentTypeOf(media.type)
 
     fun contentTypeOf(
         mediaType: MediaType
