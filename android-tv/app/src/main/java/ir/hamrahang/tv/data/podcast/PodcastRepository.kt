@@ -25,7 +25,7 @@ class PodcastRepository {
 
     suspend fun sync(items: List<PodcastDto>) {
         items.forEach { dto ->
-            dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it) }
+            dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it.toArtistDto()) }
             DatabaseUpdater.syncParents(dto.parents)
             DatabaseUpdater.podcast.syncMini(
                 SongDto(
@@ -69,7 +69,7 @@ class PodcastRepository {
         }
 
         dto.artists?.forEach {
-            DatabaseUpdater.artist.syncMini(it)
+            DatabaseUpdater.artist.syncMini(it.toArtistDto())
         }
 
         DatabaseUpdater.syncParents(dto.parents)
