@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.artist.ArtistRepository
 import ir.hamrahang.tv.data.video.VideoRepository
+import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
 import ir.hamrahang.tv.data.podcast.PodcastRepository
 
 import ir.hamrahang.tv.data.search.SearchRepository
@@ -22,6 +23,7 @@ class SearchViewModel : ViewModel() {
     private val albumRepository = AlbumRepository()
     private val songRepository = SongRepository()
     private val videoRepository = VideoRepository()
+    private val musicVideoRepository = MusicVideoRepository()
     private val podcastRepository = PodcastRepository()
 
 
@@ -69,9 +71,9 @@ class SearchViewModel : ViewModel() {
                     )
 
                 val musicVideos =
-                    videoRepository.getByIds(
+                    musicVideoRepository.getByIds(
                         dto.search.musicvideos?.mapNotNull { it.id } ?: emptyList()
-                    ).filter { it.isMusicVideo }
+                    )
 
                 val videos =
                     videoRepository.getByIds(
