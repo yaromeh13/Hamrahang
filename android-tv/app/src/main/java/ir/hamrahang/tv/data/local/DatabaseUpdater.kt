@@ -134,7 +134,8 @@ object DatabaseUpdater {
                             id = parent.id,
                             name = parent.name,
                             name_fa = parent.name_fa,
-                            meta = parent.meta
+                            meta = parent.meta?.copy(type = parent.type)
+                                ?: MediaMeta(type = parent.type)
                         )
 
                     )
