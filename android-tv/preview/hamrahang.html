@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hamrahang — Android TV app preview</title>
+<style>
+  :root{
+    --bg:#0a0a10; --panel:#111119; --ink:#fff; --muted:#9a9ab0;
+    --red:#E50914; --purple:#6200EE; --teal:#03DAC5;
+    --nav-w:150px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(1200px 700px at 70% -10%, #1b1038 0%, var(--bg) 55%);
+    color:var(--ink);
+    font-family:"Segoe UI",Tahoma,Arial,sans-serif;
+    display:flex;flex-direction:column;gap:14px;
+    padding:18px;min-height:100vh;
+  }
+  body.fa{font-family:Tahoma,"Segoe UI",Arial,sans-serif}
+
+  /* ---------- page chrome ---------- */
+  .chrome{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .chrome h1{font-size:18px;font-weight:700;letter-spacing:.3px}
+  .chrome .sub{color:var(--muted);font-size:12.5px}
+  .chip{
+    background:var(--panel);border:1px solid #26263a;border-radius:999px;
+    padding:5px 12px;font-size:12px;color:var(--muted);white-space:nowrap
+  }
+  .chip b{color:#e8e8ff;font-weight:600}
+  .chip.ok{border-color:#1d5c33;color:#7ee2a8}
+  .lang-btn{
+    margin-inline-start:auto;background:var(--purple);color:#fff;border:0;
+    border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer
+  }
+  .lang-btn:hover{filter:brightness(1.15)}
+
+  /* ---------- TV frame ---------- */
+  .tv{
+    position:relative;display:flex;overflow:hidden;
+    width:100%;max-width:1280px;aspect-ratio:16/9;max-height:72vh;
+    margin:0 auto;background:#050508;border-radius:14px;
+    border:1px solid #26263a;box-shadow:0 30px 80px rgba(0,0,0,.6);
+  }
+
+  /* side menu */
+  .nav{
+    width:var(--nav-w);flex:0 0 var(--nav-w);background:rgba(10,10,16,.92);
+    padding:14px 0;display:flex;flex-direction:column;gap:2px;
+    border-inline-end:1px solid #1c1c2a;z-index:3
+  }
+  .brand{display:flex;align-items:center;gap:8px;padding:4px 14px 14px}
+  .brand svg{width:74px;height:auto;display:block}
+  .brand .fallback{display:none;font-weight:800;font-size:15px}
+  .brand .fallback i{color:var(--red);font-style:normal}
+  .menu{display:flex;flex-direction:column;gap:2px;list-style:none}
+  .menu-item{
+    display:flex;align-items:center;gap:9px;position:relative;
+    padding:9px 12px;cursor:pointer;color:#d9d9e6;font-size:13px;font-weight:600;
+    border-radius:0 8px 8px 0;outline:none;user-select:none
+  }
+  body.fa .menu-item{border-radius:8px 0 0 8px}
+  .menu-item svg{width:17px;height:17px;flex:0 0 17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .menu-item .indicator{
+    position:absolute;inset-inline-start:0;top:50%;transform:translateY(-50%);
+    width:5px;height:18px;background:transparent;border-radius:3px
+  }
+  .menu-item.active{background:#181826;color:#fff}
+  .menu-item.active .indicator{background:var(--red)}
+  .menu-item:focus-visible,.menu-item.kfocus{background:#222234;color:#fff;box-shadow:inset 0 0 0 1px #3d3d5c}
+
+  /* stage */
+  .stage{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+  .hero{
+    position:relative;flex:0 0 34%;overflow:hidden;
+    background:linear-gradient(120deg,#2a0f52 0%, #4b1580 45%, #0d2b3a 100%);
+    display:flex;flex-direction:column;justify-content:flex-end;padding:20px 26px
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(to top, rgba(5,5,8,.95) 0%, rgba(5,5,8,.25) 55%, transparent 100%)
+  }
+  .hero>*{position:relative;z-index:1}
+  .hero .kicker{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal);margin-bottom:6px}
+  .hero h2{font-size:clamp(18px,2.6vw,30px);font-weight:800;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+  .hero p{color:#cfcfe4;font-size:12.5px;margin-top:6px;max-width:520px}
+  .hero .actions{display:flex;gap:10px;margin-top:12px}
+  .btn{
+    border:0;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;
+    cursor:pointer;display:inline-flex;align-items:center;gap:7px;outline:none
+  }
+  .btn-play{background:#fff;color:#111}
+  .btn-ghost{background:rgba(255,255,255,.14);color:#fff;backdrop-filter:blur(4px)}
+  .btn:focus-visible,.btn.kfocus{box-shadow:0 0 0 3px var(--red);transform:translateY(-1px)}
+
+  /* rows */
+  .rows{flex:1;min-height:0;overflow:hidden;padding:14px 0 10px;display:flex;flex-direction:column;gap:6px}
+  .row-title{font-size:14px;font-weight:800;padding:0 26px 7px}
+  .row-strip{display:flex;gap:12px;padding:2px 26px 6px;overflow:hidden;outline:none}
+  .card{
+    flex:0 0 auto;width:132px;border-radius:9px;cursor:pointer;outline:none;
+    background:#16162a;overflow:hidden;position:relative;
+    transition:transform .12s ease, box-shadow .12s ease
+  }
+  .card .art{height:74px;display:flex;align-items:center;justify-content:center;font-size:24px}
+  .card.song{width:104px}
+  .card.song .art{height:88px}
+  .card.artist .art{border-radius:50% 50% 0 0}
+  .card .label{padding:7px 9px;font-size:11px;font-weight:600;color:#e6e6f2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .label small{display:block;color:var(--muted);font-weight:400;font-size:10px}
+  .card.kfocus,.card:focus-visible{transform:translateY(-4px) scale(1.04);box-shadow:0 0 0 2px #fff, 0 10px 26px rgba(0,0,0,.55);z-index:2}
+
+  /* footer meta */
+  .meta{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:1280px;margin:0 auto;width:100%}
+  .hint{color:#55556e;font-size:11.5px;text-align:center}
+
+  @media (max-width:760px){
+    :root{--nav-w:112px}
+    .card{width:104px}.card .art{height:58px}
+    .hero p{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="chrome">
+  <div>
+    <h1>Hamrahang <span style="color:var(--muted);font-weight:400">· همراهنگ</span></h1>
+    <div class="sub">Android TV (leanback) app — interactive UI preview generated from app resources</div>
+  </div>
+  <span class="chip ok" id="buildChip">assembleDebug: <b>✓ BUILD SUCCESSFUL (3m 27s, app-debug.apk 13.7 MB)</b></span>
+  <span class="chip">package <b>ir.hamrahang.tv</b></span>
+  <span class="chip">Kotlin <b>1.9.24</b> · AGP <b>8.5.2</b> · Gradle <b>8.7</b></span>
+  <span class="chip">minSdk <b>21</b> · compileSdk <b>34</b></span>
+  <button class="lang-btn" id="langBtn" type="button">فارسی</button>
+</div>
+
+<div class="tv" id="tv">
+  <!-- SIDE MENU (fragment_nav.xml) -->
+  <nav class="nav">
+    <div class="brand">
+      <svg viewBox="0 0 1260 435" aria-label="Hamrah Music logo" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#fff" d="M127.17 0.22l127.28 127.28 825.53 0 180.13 180 -127.28 127.28 -127.28 -127.28 -825.57 0 -180.09 -180 127.28 -127.28zm215.13 277.78l-31.29 0 0 -55 -42.41 0 0 55 -31.29 0 0 -124.19 31.29 0 0 45.44 42.41 0 0 -45.44 31.29 0 0 124.19zm680.39 0l-31.29 0 0 -55 -42.41 0 0 55 -31.29 0 0 -124.19 31.29 0 0 45.44 42.41 0 0 -45.44 31.29 0 0 124.19z"/>
+        <path fill="#E50914" d="M523.69 417.25l-21.24 0 0 -56.23 -15.44 36.28 -14.5 0 -15.44 -36.28 0 56.23 -20.07 0 0 -84.82 24.56 0 18.8 41.87 18.73 -41.87 24.6 0 0 84.82z"/>
+      </svg>
+      <span class="fallback">Hamrah<i>Music</i></span>
+    </div>
+    <ul class="menu" id="menu"><!-- injected --></ul>
+  </nav>
+
+  <!-- STAGE (fragment_home.xml: hero 280dp + rows) -->
+  <div class="stage">
+    <section class="hero" id="hero">
+      <div class="kicker" data-en="Featured · Music Video" data-fa="ویژه · موزیک ویدیو">Featured · Music Video</div>
+      <h2 data-en="New release from top Persian artists" data-fa="تازه‌ترین اثر هنرمندان برتر ایرانی">New release from top Persian artists</h2>
+      <p data-en="Hero cycles music videos, songs, artists and albums (HeroEngine) with background artwork and one-tap playback."
+         data-fa="بنر اصلی میان موزیک ویدیو، آهنگ، هنرمند و آلبوم چرخش دارد و با یک کلیک پخش می‌شود.">Hero cycles music videos, songs, artists and albums (HeroEngine) with background artwork and one-tap playback.</p>
+      <div class="actions">
+        <button class="btn btn-play" id="heroPlay" type="button">▶ <span data-en="Play" data-fa="پخش">Play</span></button>
+        <button class="btn btn-ghost" type="button"><span data-en="Details" data-fa="جزئیات">Details</span></button>
+      </div>
+    </section>
+
+    <div class="rows" id="rows"><!-- injected --></div>
+  </div>
+</div>
+
+<div class="meta" id="meta"><!-- injected --></div>
+<div class="hint">Static preview · no emulator or dev server required · arrow keys / Tab move focus like the TV D-pad · run doc: <b>.freebuff/run.md</b></div>
+
+<script>
+/* ---------- data from app resources ---------- */
+const NAV = [
+  {id:"home",      fa:"خانه",         en:"Home",
+   icon:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>'},
+  {id:"live",      fa:"پخش زنده",     en:"Live",
+   icon:'<circle cx="12" cy="12" r="3"/><path d="M6.5 6.5a8 8 0 0 0 0 11M17.5 6.5a8 8 0 0 1 0 11M3.5 3.5a12 12 0 0 0 0 17M20.5 3.5a12 12 0 0 1 0 17"/>'},
+  {id:"search",    fa:"جستجو",        en:"Search",
+   icon:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/>'},
+  {id:"kids",      fa:"کودک",         en:"Kids",
+   icon:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a5 5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>'},
+  {id:"categories",fa:"دسته‌بندی‌",     en:"Categories",
+   icon:'<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'},
+  {id:"settings",  fa:"تنظیمات",      en:"Settings",
+   icon:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3H9.8l-.4 2.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2l.4 2.6h4.4l.4-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"/>'},
+  {id:"profile",   fa:"پروفایل",      en:"Profile",
+   icon:'<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>'},
+];
+
+/* HomeRowType.kt + values(-fa)/strings.xml */
+const ROWS = [
+  {en:"Music Videos", fa:"موزیک ویدیو",  kind:"video",  emoji:"🎬", hue:[265,295]},
+  {en:"Top Songs",    fa:"آهنگ های جدید", kind:"song",   emoji:"🎵", hue:[170,200]},
+  {en:"Artists",      fa:"هنرمندان",     kind:"artist", emoji:"🎤", hue:[340,10]},
+  {en:"Trending",     fa:"پر بازدید",    kind:"video",  emoji:"🔥", hue:[20,45]},
+  {en:"New Albums",   fa:"آلبوم های جدید", kind:"album", emoji:"💿", hue:[230,260]},
+  {en:"New Videos",   fa:"ویدئو های جدید", kind:"video", emoji:"📺", hue:[120,150]},
+];
+const CARD_NAMES = [
+  {en:"Track One",fa:"قطعه یک"},{en:"Track Two",fa:"قطعه دو"},{en:"Track Three",fa:"قطعه سه"},
+  {en:"Track Four",fa:"قطعه چهار"},{en:"Track Five",fa:"قطعه پنج"},{en:"Track Six",fa:"قطعه شش"},
+];
+
+const META = [
+  ["Build", "gradlew assembleDebug"],
+  ["Output", "app/build/outputs/apk/debug/app-debug.apk"],
+  ["Sources", "app/src/main/java/ir/hamrahang/tv/"],
+  ["Stack", "Retrofit · Room · Media3/ExoPlayer · Glide · Lottie · Leanback"],
+  ["Locales", "values (en) + values-fa (فارسی, RTL)"],
+];
+
+/* ---------- render ---------- */
+let lang = "en";
+const $ = s => document.querySelector(s);
+
+const menuEl = $("#menu");
+NAV.forEach((n,i)=>{
+  const li = document.createElement("li");
+  li.className = "menu-item" + (i===0 ? " active":"");
+  li.tabIndex = 0; li.dataset.id = n.id;
+  li.innerHTML = `<span class="indicator"></span>
+    <svg viewBox="0 0 24 24">${n.icon}</svg>
+    <span class="lbl" data-en="${n.en}" data-fa="${n.fa}">${n.en}</span>`;
+  li.addEventListener("click", ()=>selectMenu(li));
+  li.addEventListener("focus", ()=>{ li.classList.add("kfocus"); });
+  li.addEventListener("blur",  ()=>li.classList.remove("kfocus"));
+  menuEl.appendChild(li);
+});
+
+function selectMenu(li){
+  document.querySelectorAll(".menu-item").forEach(m=>m.classList.remove("active"));
+  li.classList.add("active");
+}
+
+const rowsEl = $("#rows");
+ROWS.forEach((r,ri)=>{
+  const t = document.createElement("div");
+  t.className = "row-title";
+  t.dataset.en = r.en; t.dataset.fa = r.fa; t.textContent = r.en;
+  const strip = document.createElement("div");
+  strip.className = "row-strip"; strip.tabIndex = -1;
+  for(let i=0;i<7;i++){
+    const c = document.createElement("div");
+    c.className = "card " + r.kind; c.tabIndex = 0;
+    const h = (r.hue[0] + (r.hue[1]-r.hue[0]) * (i/6)) % 360;
+    const h2 = (h + 18) % 360;
+    c.querySelector; // noop
+    c.innerHTML = `<div class="art" style="background:linear-gradient(135deg,hsl(${h} 62% 38%),hsl(${h2} 65% 22%))">${r.emoji}</div>
+      <div class="label" data-en="${CARD_NAMES[i%6].en}" data-fa="${CARD_NAMES[i%6].fa}">${CARD_NAMES[i%6].en}
+        <small data-en="${r.en}" data-fa="${r.fa}">${r.en}</small></div>`;
+    c.addEventListener("focus", ()=>c.classList.add("kfocus"));
+    c.addEventListener("blur",  ()=>c.classList.remove("kfocus"));
+    strip.appendChild(c);
+  }
+  rowsEl.appendChild(t);
+  rowsEl.appendChild(strip);
+});
+
+const metaEl = $("#meta");
+META.forEach(([k,v])=>{
+  const s = document.createElement("span");
+  s.className = "chip"; s.innerHTML = `${k} <b>${v}</b>`;
+  metaEl.appendChild(s);
+});
+
+/* ---------- language toggle (values vs values-fa, RTL) ---------- */
+function applyLang(){
+  document.querySelectorAll("[data-en]").forEach(el=>{
+    el.childNodes[0] && el.firstChild.nodeType===3
+      ? (el.firstChild.textContent = el.dataset[lang])
+      : (el.textContent = el.dataset[lang]);
+  });
+  // keep <small> subtitles in sync (they are child elements with data attrs too — handled above)
+  document.body.classList.toggle("fa", lang==="fa");
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang==="fa" ? "rtl" : "ltr";
+  $("#langBtn").textContent = lang==="fa" ? "English" : "فارسی";
+}
+$("#langBtn").addEventListener("click", ()=>{ lang = lang==="en" ? "fa":"en"; applyLang(); });
+
+/* ---------- D-pad style navigation ---------- */
+function groups(){
+  return [
+    [...document.querySelectorAll(".menu-item")],
+    [$("#heroPlay"), ...document.querySelectorAll(".hero .btn")],
+    ...[...document.querySelectorAll(".row-strip")].map(s=>[...s.querySelectorAll(".card")]),
+  ];
+}
+document.addEventListener("keydown", e=>{
+  const g = groups();
+  const cur = document.activeElement;
+  let gi = g.findIndex(arr=>arr.includes(cur));
+  if(gi<0) return;
+  let ii = g[gi].indexOf(cur);
+  let next = null;
+  if(e.key==="ArrowRight"||e.key==="ArrowLeft"){
+    const dir = (e.key==="ArrowRight") === (document.documentElement.dir!=="rtl") ? 1 : -1;
+    next = g[gi][Math.min(g[gi].length-1, Math.max(0, ii+dir))];
+  }else if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+    const dir = e.key==="ArrowDown" ? 1 : -1;
+    for(let j=gi+dir; j>=0 && j<g.length; j+=dir){
+      if(g[j].length){ next = g[j][Math.min(g[j].length-1, ii)]; break; }
+    }
+  }else return;
+  if(next){ e.preventDefault(); next.focus(); next.scrollIntoView({block:"nearest"}); }
+});
+document.addEventListener("focusin", e=>{
+  const el = e.target;
+  if(el.classList.contains("card")) selectMenu(document.querySelector(".menu-item"));
+});
+applyLang();
+</script>
+</body>
+</html>
