@@ -109,22 +109,14 @@ class ArtistRepository {
             DatabaseUpdater.podcast.syncMini(it)
         }
 
-        // MusicVideos
-        response.artist.musicvideos?.
-            forEach {DatabaseUpdater.musicVideo.syncMini(it)}
-/*
-//----------------------------------------------------
-// Videos
-//----------------------------------------------------
+        // Videos and MusicVideos share the same API and Room table.
+        response.artist.musicvideos?.forEach {
+            DatabaseUpdater.video.syncMini(it)
+        }
 
-        response.artist.videos
-            ?.forEach {
-
-                DatabaseUpdater.video.syncMini(it)
-
-            }
-
-*/
+        response.artist.videos?.forEach {
+            DatabaseUpdater.video.syncMini(it)
+        }
 
         // ---------- Sync child tables ----------
 /*
