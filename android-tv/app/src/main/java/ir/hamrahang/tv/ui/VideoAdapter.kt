@@ -14,11 +14,12 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.domain.video.Video
+import ir.hamrahang.tv.util.displayTitle
 
 class VideoAdapter(
     private var items: List<Video>,
     private val onFocus: (Video) -> Unit,
-    private val onClick: (Video) -> Unit
+    private val onClick: (Video, Int) -> Unit
 ) : RecyclerView.Adapter<VideoAdapter.VH>() {
     companion object {
         @LayoutRes
@@ -39,10 +40,10 @@ class VideoAdapter(
 
         val item = items[position]
 
-        holder.title.text = item.title
+        holder.title.text = item.displayTitle()
 
         Glide.with(holder.itemView.context)
-            .load(item.meta?.tmb)
+            .load(item.thumb)
             .transform(CenterCrop(), RoundedCorners(7))
             .placeholder(android.R.color.darker_gray)
             .error(android.R.color.darker_gray)
@@ -54,13 +55,14 @@ class VideoAdapter(
             holder.cover.isSelected = hasFocus
 
             if (hasFocus) {
-                Log.d("FOCUS_TEST", item.title ?: "")
+                Log.d("FOCUS_TEST", item.displayTitle())
                 onFocus(item)
             }
         }
 
         holder.itemView.setOnClickListener {
-            onClick(item)
+            val index = holder.bindingAdapterPosition
+            if (index != RecyclerView.NO_POSITION) onClick(item, index)
         }
 
 
