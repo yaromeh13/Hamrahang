@@ -24,7 +24,7 @@ object HeroManager {
             is HeroContent.AlbumHero ->
                 HeroEvent.AlbumFocused(content.album)
 
-            is HeroContent.VideoHero -> return
+            is HeroContent.VideoHero -> HeroEvent.VideoFocused(content.video)
 
         }
 
