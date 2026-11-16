@@ -98,7 +98,7 @@ class HomeRepository(
                         history.map {
                             it.mediaId.toString()
                         }
-                    )
+                    ).filter { it.isMusicVideo }
 
                 if (musicVideos.isEmpty()) {
                     return@map null
