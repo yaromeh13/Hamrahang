@@ -4,6 +4,8 @@ import ir.hamrahang.tv.data.artist.ArtistRepository
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.DatabaseUpdater
 import ir.hamrahang.tv.data.local.PodcastEntityMapper
+import ir.hamrahang.tv.data.local.entity.PodcastEntity
+import ir.hamrahang.tv.data.song.SongDto
 import ir.hamrahang.tv.domain.podcast.Podcast
 import ir.hamrahang.tv.network.ApiClient
 
@@ -21,6 +23,31 @@ class PodcastRepository {
 
     private val artistRepository = ArtistRepository()
 
+    suspend fun sync(items: List<PodcastDto>) {
+        items.forEach { dto ->
+            dto.artists?.forEach { DatabaseUpdater.artist.syncMini(it) }
+            DatabaseUpdater.syncParents(dto.parents)
+            DatabaseUpdater.podcast.syncMini(
+                SongDto(
+                    id = dto.id,
+                    name = dto.name,
+                    name_fa = dto.name_fa,
+                    artists = dto.artists,
+                    parents = dto.parents,
+                    meta = dto.meta,
+                    sources = dto.sources
+                )
+            )
+        }
+    }
+
+    private suspend fun toDomain(entity: PodcastEntity): Podcast {
+        val artists = artistRepository.getByIds(
+            PodcastEntityMapper.jsonToIds(entity.artistIds)
+        )
+        return PodcastEntityMapper.toDomain(entity, artists)
+    }
+
     suspend fun getPodcast(id: String): Podcast {
 
         val local = dao.get(id)
@@ -30,7 +57,7 @@ class PodcastRepository {
             local.isFull &&
             System.currentTimeMillis() - local.updatedAt < CACHE_TIME
         ) {
-            return PodcastEntityMapper.toDomain(local)
+            return toDomain(local)
         }
 
         // Song and Podcast use the same API endpoint.
@@ -51,13 +78,11 @@ class PodcastRepository {
         val entity = dao.get(id)
             ?: error("Podcast sync failed")
 
-        return PodcastEntityMapper.toDomain(entity)
+        return toDomain(entity)
     }
 
     suspend fun getAll(): List<Podcast> {
-        return dao.getAll().map {
-            PodcastEntityMapper.toDomain(it)
-        }
+        return dao.getAll().map { toDomain(it) }
     }
 
     suspend fun getByIds(ids: List<String>): List<Podcast> {
@@ -67,7 +92,7 @@ class PodcastRepository {
         val map = dao.getByIds(ids).associateBy { it.id }
 
         return ids.mapNotNull { id ->
-            map[id]?.let(PodcastEntityMapper::toDomain)
+            map[id]?.let { toDomain(it) }
         }
     }
 }
