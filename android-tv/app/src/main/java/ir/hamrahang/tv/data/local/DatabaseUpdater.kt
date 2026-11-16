@@ -150,7 +150,8 @@ object DatabaseUpdater {
                             id = parent.id,
                             name = parent.name,
                             name_fa = parent.name_fa,
-                            meta = parent.meta
+                            meta = parent.meta?.copy(type = parent.type)
+                                ?: MediaMeta(type = parent.type)
                         )
 
                     )
@@ -316,7 +317,7 @@ object DatabaseUpdater {
         override suspend fun syncMini(dto: VideoDto) = sync(dto, false)
         override suspend fun syncFull(dto: VideoDto) = sync(dto, true)
 
-        private suspend fun sync(dto: VideoDto, isFull: Boolean) {
+        internal suspend fun sync(dto: VideoDto, isFull: Boolean) {
             if (dto.meta?.type != "musicvideo") return
             val id = dto.id ?: return
             val local = dao.get(id)
