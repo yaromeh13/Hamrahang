@@ -33,7 +33,7 @@ object VideoEntityMapper {
     fun merge(old: VideoEntity, dto: VideoDto, isFull: Boolean): VideoEntity {
         val oldMeta = jsonToMeta(old.meta)
         val newMeta = dto.meta
-        val mergedMeta = if (newMeta == null) oldMeta else MediaMeta(
+        val mergedMeta = if (newMeta == null) oldMeta ?: emptyVideoMeta() else MediaMeta(
             type = newMeta.type ?: oldMeta?.type ?: "musicvideo",
             tmb = newMeta.tmb ?: oldMeta?.tmb,
             art = newMeta.art ?: oldMeta?.art,
@@ -86,7 +86,7 @@ object VideoEntityMapper {
     }
 
     private fun emptyVideoMeta() = MediaMeta(
-        type = "video",
+        type = "musicvideo",
         tmb = null,
         art = null,
         lrc = null,
