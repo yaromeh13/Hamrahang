@@ -3,7 +3,6 @@ package ir.hamrahang.tv.data.album
 import ir.hamrahang.tv.data.local.AlbumEntityMapper
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.DatabaseUpdater
-import ir.hamrahang.tv.data.video.toArtistDto
 import ir.hamrahang.tv.domain.album.Album
 import ir.hamrahang.tv.network.ApiClient
 import kotlinx.coroutines.CancellationException
