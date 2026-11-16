@@ -6,7 +6,6 @@ import ir.hamrahang.tv.data.artist.ArtistDto
 import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.song.SongDto
 import ir.hamrahang.tv.data.local.entity.PodcastEntity
-import ir.hamrahang.tv.data.local.entity.VideoEntity
 
 object DatabaseUpdater {
 
