@@ -1672,7 +1672,6 @@ progress {
     overflow: hidden;
     position: relative;
     flex-shrink: 0;
-    background-color: hsla(0, 0%, 100%, 0.08);
 }
 .maximum-player-desktop .owner .owner-thumb img,
 .maximum-player-desktop .owner .owner-thumb .placeholder {
@@ -3628,12 +3627,6 @@ to {
         grid-template-columns: 1fr 1fr 1fr
     }
 
-.page-detail-header-container {
-        grid-template-areas: "artwork headings";
-        grid-template-columns: auto 1fr;
-        grid-template-rows: 1fr auto;
-        justify-items: start
-    }
 
 .page-detail-header-container .content {
         align-items: flex-start;
