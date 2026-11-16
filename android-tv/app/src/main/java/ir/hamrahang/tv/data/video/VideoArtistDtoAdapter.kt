@@ -34,7 +34,7 @@ class VideoArtistDtoAdapter : JsonDeserializer<VideoArtistDto> {
             id = idElement.asString,
             name = obj.get("name")?.takeUnless { it.isJsonNull }?.asString,
             name_fa = obj.get("name_fa")?.takeUnless { it.isJsonNull }?.asString,
-            names = obj.get("names")?.takeUnless { it.isJsonNull }?.takeIf { it.isJsonObject }?.asJsonObject?.entrySet()?.mapNotNull { entry -> if (entry.value.isJsonNull) null else entry.key to entry.value.asString }?.toMap(),
+            names = obj.get("names")?.takeUnless { it.isJsonNull },
             meta = meta
         )
     }
