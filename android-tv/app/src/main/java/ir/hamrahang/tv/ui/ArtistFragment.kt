@@ -89,18 +89,18 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
 
             val rowsData = ContentRows {
 
-                musicvideos(
-                    items = musicvideos,
-                    title = "Music Videos",
+                videos(
+                    items = videos,
+                    title = "Videos",
                     showSubtitle = false,
                     sessionId = artist.id,
                     sessionTitle = artist.title ?: "",
                     sessionSource = PlaybackSource.ARTIST
                 )
 
-                videos(
-                    items = videos,
-                    title = "Videos",
+                musicvideos(
+                    items = musicvideos,
+                    title = "Music Videos",
                     showSubtitle = false,
                     sessionId = artist.id,
                     sessionTitle = artist.title ?: "",
