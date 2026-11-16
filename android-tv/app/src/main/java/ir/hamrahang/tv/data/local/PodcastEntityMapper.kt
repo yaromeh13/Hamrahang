@@ -1,6 +1,7 @@
 package ir.hamrahang.tv.data.local
 
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
@@ -139,14 +140,29 @@ object PodcastEntityMapper {
         return gson.fromJson(json, type)
     }
 
-    private fun jsonToParents(json: String) =
-        if (json.isBlank()) {
-            emptyList<ir.hamrahang.tv.data.ParentMini>()
-        } else {
-            val type =
-                object : TypeToken<List<ir.hamrahang.tv.data.ParentMini>>() {}.type
-            gson.fromJson<List<ir.hamrahang.tv.data.ParentMini>>(json, type)
+    private fun jsonToParents(json: String): List<ir.hamrahang.tv.data.ParentMini> {
+        if (json.isBlank()) return emptyList()
+
+        val array = JsonParser().parse(json).asJsonArray
+        return array.mapNotNull { element ->
+            when {
+                element.isJsonObject ->
+                    gson.fromJson(
+                        element,
+                        ir.hamrahang.tv.data.ParentMini::class.java
+                    )
+
+                // Backward compatibility with older rows that stored only parent IDs.
+                element.isJsonPrimitive ->
+                    ir.hamrahang.tv.data.ParentMini(
+                        id = element.asString,
+                        type = ""
+                    )
+
+                else -> null
+            }
         }
+    }
 
     fun jsonToMeta(json: String): MediaMeta? {
         if (json.isBlank()) return null
