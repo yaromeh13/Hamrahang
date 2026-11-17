@@ -5,6 +5,6 @@ import ir.hamrahang.tv.domain.LocalizedTitle
 data class AlbumMini(
     val id: String? = null,
     override val name: String? = null,
-    override val names: Map<String, String> = emptyMap(),
+    override val names: Map<String, String>? = null,
     val thumb: String? = null
 ) : LocalizedTitle
