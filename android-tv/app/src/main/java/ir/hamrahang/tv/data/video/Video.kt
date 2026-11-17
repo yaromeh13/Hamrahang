@@ -20,5 +20,5 @@ data class Video(
     val isMusicVideo: Boolean get() = meta?.type == "musicvideo"
     val contentType: ContentType get() = if (isMusicVideo) ContentType.MUSICVIDEO else ContentType.VIDEO
     val thumb: String get() = if (isMusicVideo) ImageResolver.musicVideo(meta) else ImageResolver.video(meta)
-    val heroBackground: String? get() = ImageResolver.hero(meta)
+    val heroBackground: String? get() = thumb
 }
