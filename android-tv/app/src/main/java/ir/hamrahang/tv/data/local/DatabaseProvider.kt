@@ -194,13 +194,59 @@ object DatabaseProvider {
         }
     }
 
+
+    private val MIGRATION_31_32 = object : Migration(31, 32) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            val tables = listOf(
+                Triple("songs", "artistIds, parentIds, meta, sources, isFull, updatedAt", "artistIds, parentIds, meta, sources, isFull, updatedAt"),
+                Triple("podcasts", "artistIds, parentIds, meta, sources, isFull, updatedAt", "artistIds, parentIds, meta, sources, isFull, updatedAt"),
+                Triple("albums", "artistIds, songIds, meta, isFull, updatedAt", "artistIds, songIds, meta, isFull, updatedAt"),
+                Triple("artists", "meta, albumIds, songIds, musicvideoIds, videoIds, podcastIds, isFull, updatedAt", "meta, albumIds, songIds, musicvideoIds, videoIds, podcastIds, isFull, updatedAt"),
+                Triple("videos", "artistIds, songIds, meta, sources, isFull, updatedAt", "artistIds, songIds, meta, sources, isFull, updatedAt"),
+                Triple("musicvideos", "artistIds, songIds, meta, sources, isFull, updatedAt", "artistIds, songIds, meta, sources, isFull, updatedAt")
+            )
+
+            tables.forEach { (table, columns, copyColumns) ->
+                database.execSQL("ALTER TABLE $table RENAME TO ${table}_legacy_31")
+                val extraColumns = when (table) {
+                    "songs", "podcasts", "videos", "musicvideos" ->
+                        "artistIds TEXT NOT NULL, parentIds TEXT NOT NULL, meta TEXT NOT NULL, sources TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL"
+                    "albums" ->
+                        "artistIds TEXT NOT NULL, songIds TEXT NOT NULL, meta TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL"
+                    else ->
+                        "meta TEXT NOT NULL, albumIds TEXT NOT NULL, songIds TEXT NOT NULL, musicvideoIds TEXT NOT NULL, videoIds TEXT NOT NULL, podcastIds TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL"
+                }
+                database.execSQL("""
+                    CREATE TABLE $table (
+                        id TEXT NOT NULL,
+                        name TEXT,
+                        names TEXT NOT NULL DEFAULT '{}',
+                        $extraColumns,
+                        PRIMARY KEY(id)
+                    )
+                """.trimIndent())
+                val oldColumns = when (table) {
+                    "songs", "podcasts", "videos", "musicvideos" ->
+                        "artistIds, parentIds, meta, sources, isFull, updatedAt"
+                    "albums" -> "artistIds, songIds, meta, isFull, updatedAt"
+                    else -> "meta, albumIds, songIds, musicvideoIds, videoIds, podcastIds, isFull, updatedAt"
+                }
+                database.execSQL("""
+                    INSERT INTO $table (id, name, names, $copyColumns)
+                    SELECT id, title, '{}', $oldColumns FROM ${table}_legacy_31
+                """.trimIndent())
+                database.execSQL("DROP TABLE ${table}_legacy_31")
+            }
+        }
+    }
+
     fun init(context: Context) {
         db = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "hamrahang.db"
         )
-            .addMigrations(MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31)
+            .addMigrations(MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32)
             .fallbackToDestructiveMigration()
             .build()
     }
