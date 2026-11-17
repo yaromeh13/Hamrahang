@@ -103,7 +103,7 @@ class ContentRowsAdapter(
                                     items = row.items.map { item ->
                                         PlaybackItem(
                                             id = item.id,
-                                            title = item.titleFa ?: item.title,
+                                            title = item.displayTitle(),
                                             artwork = item.thumb,
                                             artists = item.artists,
                                             contentType = ContentType.PODCAST
