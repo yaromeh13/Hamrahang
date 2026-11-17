@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import com.bumptech.glide.Glide
+import ir.hamrahang.tv.util.ImageResolver
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
@@ -42,11 +42,8 @@ class VideoAdapter(
 
         holder.title.text = item.displayTitle()
 
-        Glide.with(holder.itemView.context)
-            .load(item.thumb)
+        ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_video)
             .transform(CenterCrop(), RoundedCorners(7))
-            .placeholder(android.R.color.darker_gray)
-            .error(android.R.color.darker_gray)
             .into(holder.cover)
 
         holder.cover.clipToOutline = true
