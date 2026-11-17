@@ -7,27 +7,26 @@ artist image.
 
 ## 1. Standard media artwork
 
-| Content type | Primary image | Fallback image | Final fallback |
-|---|---|---|---|
-| Song | `meta.tmb` | Song icon | — |
-| Podcast | `meta.tmb` | Song icon | — |
-| Artist | `meta.tmb` | Artist icon | — |
-| Album | `meta.tmb` | Album icon | — |
-| Playlist | `meta.tmb` | Playlist icon | — |
+| Content type | Primary image | Fallback image |
+|---|---|---|
+| Song | `meta.tmb` | Song icon (`svg_sng`) |
+| Podcast | `meta.tmb` | Song icon (`svg_sng`) |
+| Artist | `meta.tmb` | Artist/user icon (`svg_usr`) |
+| Album | `meta.tmb` | Disk icon (`svg_dsk`) |
+| Playlist | `meta.tmb` | Playlist icon (`svg_pls`) |
 
 For these types, no image is borrowed from an associated artist. The type's
-own icon is shown when `meta.tmb` is absent.
+own icon is shown when `meta.tmb` is absent or the image fails to load.
 
 ## 2. Video artwork
 
 | Content type | Priority 1 | Priority 2 | Priority 3 |
 |---|---|---|---|
-| MusicVideo | `meta.tmv` | `meta.tmb` | Video icon |
-| Video | `meta.cvr` | `meta.tmb` | Video icon |
+| MusicVideo | `meta.tmv` | `meta.tmb` | Video icon (`svg_vdo`) |
+| Video | `meta.cvr` | `meta.tmb` | Video icon (`svg_vdo`) |
 
-MusicVideo and Video must remain distinct when resolving artwork. In
-particular, Video uses `cvr` before `tmb`, while MusicVideo uses `tmv`
-before `tmb`.
+MusicVideo and Video remain distinct when resolving artwork. Video uses
+`cvr` before `tmb`; MusicVideo uses `tmv` before `tmb`.
 
 ## 3. Source owner artwork
 
@@ -35,15 +34,17 @@ For the owner/provider attached to a playback source:
 
 1. `owner.meta.ico`
 2. `owner.meta.tmb`
-3. The source's own icon, if the source payload provides one.
+3. The source's own icon, only if the source payload provides one.
 4. No image if none of the above exists.
 
-The owner icon key may contain its file extension (the web implementation
-supports the owner `ico` key's extension convention). Do not automatically
-append `.jpg` to an `ico` key when it already encodes an extension.
+The owner `ico` key follows the web convention: if it has no dot, its last
+three characters encode the extension (for example, `u11210725ipng` becomes
+`u11210725i.png`). A `tmb` key always receives `.jpg`.
 
-The owner profile and the source/provider icon are different concepts. Do not
-store a source icon as the owner's profile icon.
+The owner profile artwork and source/provider icon are different concepts.
+Do not store a source icon as the owner's profile icon. Current Android
+`MediaSource` does not declare a source-icon field, so that fallback is not
+assumed until the API payload/model confirms one.
 
 ## 4. Hero wide background
 
@@ -60,32 +61,26 @@ background fallbacks.
 
 - Treat null, empty, and whitespace-only keys as missing.
 - Preserve the exact priority order above.
-- Resolve image keys using the project's existing media-image URL convention;
-  do not invent a new API host or image domain.
-- A missing/broken image must fall back to the appropriate type icon and must
-  not break the card, list, Hero, or playback UI.
-- Keep image selection in one shared resolver so cards, detail pages, search,
-  favorites, history, mini-player, and other surfaces do not implement
-  conflicting priorities.
-- Hero resolution is a separate resolver because its priority differs from
-  thumbnail resolution.
-- Keep image loading/cache behavior non-blocking and independent of playback.
+- Resolve image keys using the existing Hamrahang image URL convention:
+  `https://hamrahang.ir/thumb/{key}.jpg` and
+  `https://hamrahang.ir/art/{key}.jpg`.
+- A missing/broken image falls back to the appropriate type icon and must not
+  break the card, list, Hero, or playback UI.
+- Keep image-key selection in the shared `ImageResolver`; card loaders use
+  the same resolver request helper and a type-specific placeholder/error.
+- Hero resolution is separate because its priority differs from thumbnails.
+- Image loading remains asynchronous and independent of playback.
 
-## 6. Web reference and icon mapping
+## 6. Web reference
 
-The reference `index.html` defines the following relevant SVG variables:
+The reference `index.html` contains these SVG variables:
 
 - Song icon: `svg_sng`
-- Artist/user icon currently available: `svg_usr`
+- Artist/user icon: `svg_usr`
+- Album disk icon: `svg_dsk`
 - Video icon: `svg_vdo`
-- Playlist icon currently available: `svg_pls`
+- Playlist icon: `svg_pls`
 
-The inspected `index.html` does not define a dedicated `svg_alb` album
-icon variable. Before Android implementation, locate the intended album SVG
-in the web assets or choose an existing project asset; do not substitute an
-unrelated icon without recording that decision.
-
-The web reference's current helper uses `tmv → tmb` for video-like artwork
-and `art → tmv` for Hero backgrounds. This Android policy deliberately
-extends the type-specific rules requested for Video (`cvr → tmb`) and the
-explicit fallback icons above.
+The existing web thumbnail helper currently uses `tmv → tmb` for generic
+video-like content. The Android policy intentionally distinguishes Video
+(`cvr → tmb`) from MusicVideo (`tmv → tmb`), as specified above.
