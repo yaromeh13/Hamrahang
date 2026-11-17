@@ -20,7 +20,7 @@ object DatabaseUpdater {
     private val ownerGson = Gson()
 
     /** The web client keeps the first cached owner for each public ID. */
-    private suspend fun syncSourceOwners(sources: List<MediaSource>?) {
+    internal suspend fun syncSourceOwners(sources: List<MediaSource>?) {
         ownerDao.insertIfAbsent(
             OwnerEntity(id = 0L, name = "Hamrahang", meta = "{}", updatedAt = 0L)
         )
