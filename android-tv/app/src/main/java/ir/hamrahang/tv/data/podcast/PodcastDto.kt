@@ -6,10 +6,9 @@ import ir.hamrahang.tv.data.ParentMini
 import ir.hamrahang.tv.data.video.VideoArtistDto
 
 data class PodcastDto(
-
     val id: String?,
     val name: String?,
-    val name_fa: String?,
+    val names: Map<String, String>? = null,
     val url: String?,
     val artists: List<VideoArtistDto>?,
     val parents: List<ParentMini>?,
