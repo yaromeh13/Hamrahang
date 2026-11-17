@@ -12,7 +12,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import ir.hamrahang.tv.util.ImageResolver
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 
@@ -85,8 +85,7 @@ class HeroWidget(
                         VideoTitle.text = musicVideo.displayTitle()
                         VideoSubTitle.text = musicVideo.title ?: ""
 
-                        Glide.with(root)
-                            .load(musicVideo.thumb)
+                        ImageResolver.request(VideoArt, musicVideo.thumb, R.drawable.ic_video)
                             .into(VideoArt)
 
                         VideoArt.fadeStart = 0.4f
@@ -103,8 +102,7 @@ class HeroWidget(
                         showSong()
                         val song = state.song ?: return@collect
                         songTitle.text = song.displayTitle()
-                        Glide.with(root)
-                            .load(song.thumb)
+                        ImageResolver.request(songCover, song.thumb, R.drawable.ic_song)
                             .transform(
                                 CenterCrop(),
                                 RoundedCorners(24)
@@ -131,8 +129,7 @@ class HeroWidget(
 
                         artistBio.text = artist.meta?.des.orEmpty()
 
-                        Glide.with(root)
-                            .load(artist.thumb)
+                        ImageResolver.request(artistCover, artist.thumb, R.drawable.ic_profile)
                             .circleCrop()
                             .into(artistCover)
 
@@ -146,8 +143,7 @@ class HeroWidget(
                         albumTitle.text = state.title
                         albumArtist.text = state.subtitle ?: ""
 
-                        Glide.with(root)
-                            .load(state.imageUrl)
+                        ImageResolver.request(albumCover, state.imageUrl, R.drawable.ic_album_disk)
                             .transform(
                                 CenterCrop(),
                                 RoundedCorners(24)
