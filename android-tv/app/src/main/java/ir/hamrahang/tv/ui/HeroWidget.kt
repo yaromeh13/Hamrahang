@@ -160,13 +160,11 @@ class HeroWidget(
                             )
                             .into(albumCover)
 
-                        var albumArtistsLoaded = false
                         owner.lifecycleScope.launch {
                             var artists = ArtistRepository().getByIds(album.artists)
 
-                            // If artist mini-records are not cached yet, load the album once
-                            // so its related artists are synchronized into the local database.
-                            if (artists.isEmpty() && album.artists.isNotEmpty()) {
+                            // Load album details if one or more related artists are missing locally.
+                            if (artists.size < album.artists.size && album.artists.isNotEmpty()) {
                                 runCatching {
                                     AlbumRepository().getAlbum(album.id)
                                 }
