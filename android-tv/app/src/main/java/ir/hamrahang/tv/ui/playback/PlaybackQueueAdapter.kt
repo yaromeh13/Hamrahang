@@ -59,12 +59,24 @@ class PlaybackQueueAdapter(
                 it.displayTitle()
             }
 
+        val fallback = when (item.contentType) {
+            ir.hamrahang.tv.data.local.ContentType.VIDEO,
+            ir.hamrahang.tv.data.local.ContentType.MUSICVIDEO -> R.drawable.ic_video
+            ir.hamrahang.tv.data.local.ContentType.ARTIST -> R.drawable.ic_profile
+            ir.hamrahang.tv.data.local.ContentType.ALBUM -> R.drawable.ic_album_disk
+            ir.hamrahang.tv.data.local.ContentType.PLAYLIST -> R.drawable.ic_playlist
+            else -> R.drawable.ic_song
+        }
+
         Glide.with(holder.itemView)
             .load(item.artwork)
             .transform(
                 CenterCrop(),
                 RoundedCorners(8)
             )
+            .placeholder(fallback)
+            .error(fallback)
+            .fallback(fallback)
             .into(holder.cover)
 
         holder.itemView.isSelected =
