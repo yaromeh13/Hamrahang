@@ -7,6 +7,8 @@ data class MediaSource(
     val bit: String? = null,
     val type: String? = null,
     val mime: String? = null,
-    val size: Long? = null
+    val size: Long? = null,
+    val owner: SourceOwner? = null,
+    val user: Long? = null
 
 )
