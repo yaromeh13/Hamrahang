@@ -4,7 +4,6 @@ import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
-import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.SourceOwner
 import ir.hamrahang.tv.data.artist.ArtistMeta
