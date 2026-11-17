@@ -1,8 +1,10 @@
 package ir.hamrahang.tv.data
 
+import ir.hamrahang.tv.domain.LocalizedTitle
+
 data class AlbumMini(
     val id: String? = null,
-    val name: String? = null,
-    val names: Map<String, String>? = null,
+    override val name: String? = null,
+    override val names: Map<String, String> = emptyMap(),
     val thumb: String? = null
-)
+) : LocalizedTitle
