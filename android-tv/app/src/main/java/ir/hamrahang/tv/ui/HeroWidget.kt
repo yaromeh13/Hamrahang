@@ -18,6 +18,8 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.local.DatabaseUpdater
+import ir.hamrahang.tv.data.album.AlbumRepository
+import ir.hamrahang.tv.data.artist.ArtistRepository
 import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.hero.HeroStyle
 import ir.hamrahang.tv.ui.widget.FadeImageView
@@ -54,7 +56,8 @@ class HeroWidget(
     // ALBUM
     private val albumTitle: TextView = root.findViewById(R.id.albumTitle)
 
-    private val albumArtist: TextView = root.findViewById(R.id.albumArtist)
+    private val albumArtists: LinearLayout = root.findViewById(R.id.albumArtist)
+    private val albumMetaBinder = HeroMetaBinder(root.findViewById(R.id.albumMetaContainer))
 
     private val albumCover: ImageView = root.findViewById(R.id.albumCover)
 
@@ -123,8 +126,14 @@ class HeroWidget(
                         showArtist()
                         val artist = state.artist ?: return@collect
                         artistName.text = artist.displayTitle()
-                        if (AppState.isPersian()) {
-                            artistSubName.text = artist.title ?: ""
+                        val globalName = artist.name?.trim().orEmpty()
+                        val localizedTitle = artist.displayTitle().trim()
+                        if (globalName.isNotEmpty() && !globalName.equals(localizedTitle, ignoreCase = true)) {
+                            artistSubName.text = globalName
+                            artistSubName.visibility = View.VISIBLE
+                        } else {
+                            artistSubName.text = ""
+                            artistSubName.visibility = View.GONE
                         }
 
                         artistBio.text = artist.meta?.des.orEmpty()
@@ -142,7 +151,7 @@ class HeroWidget(
                         val album = state.album ?: return@collect
 
                         albumTitle.text = album.displayTitle()
-                        albumArtist.text = album.artists.joinToString(" • ")
+                        albumMetaBinder.bind(album.meta)
 
                         ImageResolver.request(albumCover, album.thumb, R.drawable.ic_album_disk)
                             .transform(
@@ -150,6 +159,22 @@ class HeroWidget(
                                 RoundedCorners(24)
                             )
                             .into(albumCover)
+
+                        var albumArtistsLoaded = false
+                        owner.lifecycleScope.launch {
+                            var artists = ArtistRepository().getByIds(album.artists)
+
+                            // If artist mini-records are not cached yet, load the album once
+                            // so its related artists are synchronized into the local database.
+                            if (artists.isEmpty() && album.artists.isNotEmpty()) {
+                                runCatching {
+                                    AlbumRepository().getAlbum(album.id)
+                                }
+                                artists = ArtistRepository().getByIds(album.artists)
+                            }
+
+                            HeroArtistsBinder.bind(albumArtists, artists)
+                        }
                     }
                 }
             }
