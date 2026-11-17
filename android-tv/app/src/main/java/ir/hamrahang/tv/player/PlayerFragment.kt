@@ -911,6 +911,9 @@ private fun closeQueuePanel() {
 
         val request = Glide.with(playbackBackdrop)
             .load(source)
+            .placeholder(R.drawable.bg_default)
+            .error(R.drawable.bg_default)
+            .fallback(R.drawable.bg_default)
             .centerCrop()
 
         if (blur) {
@@ -1071,9 +1074,17 @@ private fun closeQueuePanel() {
         )
 
         headerImgCover?.let { iv ->
+            val fallback = if (info.mediaType == MediaType.VIDEO) {
+                R.drawable.ic_video
+            } else {
+                R.drawable.ic_song
+            }
             Glide.with(iv)
                 .load(info.artwork)
                 .transform(CenterCrop(), RoundedCorners(24))
+                .placeholder(fallback)
+                .error(fallback)
+                .fallback(fallback)
                 .into(iv)
         }
 
