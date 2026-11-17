@@ -56,7 +56,7 @@ class ContentRowsAdapter(
                     recycler.adapter = SongAdapter(
                         items = row.items,
                         onFocus = { song ->
-                            onBackgroundChange(song.thumb)
+                            onBackgroundChange(song.heroBackground)
                             onHeroFocus(HeroContent.SongHero(song))
                         },
                         onClick = { song, index ->
@@ -91,7 +91,7 @@ class ContentRowsAdapter(
                     recycler.adapter = PodcastAdapter(
                         items = row.items,
                         onFocus = { podcast ->
-                            onBackgroundChange(podcast.meta?.tmb)
+                            onBackgroundChange(podcast.heroBackground)
                             onHeroFocus(HeroContent.PodcastHero(podcast))
                         },
                         onClick = { podcast, index ->
@@ -123,7 +123,7 @@ class ContentRowsAdapter(
                     recycler.adapter = VideoAdapter(
                         items = row.items,
                         onFocus = { video ->
-                            onBackgroundChange(video.thumb)
+                            onBackgroundChange(video.heroBackground)
                             onHeroFocus(HeroContent.VideoHero(video))
                         },
                         onClick = { video, index ->
@@ -187,7 +187,7 @@ class ContentRowsAdapter(
                     recycler.adapter = ArtistAdapter(
                         items = row.items,
                         onFocus = { artist ->
-                            onBackgroundChange(artist.thumb)
+                            onBackgroundChange(artist.heroBackground)
                             onHeroFocus(HeroContent.ArtistHero(artist))
                         },
                         onClick = { artist ->
@@ -201,7 +201,7 @@ class ContentRowsAdapter(
                     recycler.adapter = AlbumAdapter(
                         items = row.items,
                         onFocus = { album ->
-                            onBackgroundChange(album.thumb)
+                            onBackgroundChange(album.heroBackground)
                             onHeroFocus(HeroContent.AlbumHero(album))
                         },
                         onClick = { album ->
