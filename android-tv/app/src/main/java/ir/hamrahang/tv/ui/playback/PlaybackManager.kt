@@ -301,7 +301,7 @@ object PlaybackManager {
                 mediaId = podcast.id,
                 mediaType = MediaType.AUDIO,
                 artwork = cover,
-                title = podcast.titleFa ?: podcast.title,
+                title = podcast.displayTitle(),
                 song = null,
                 album = null,
                 artists = podcast.artists,
@@ -321,7 +321,7 @@ object PlaybackManager {
             context,
             PlayerMedia(
                 id = podcast.id,
-                title = podcast.titleFa ?: podcast.title,
+                title = podcast.displayTitle(),
                 artist = podcast.artists.joinToString(" - ") { it.displayTitle() },
                 artwork = cover,
                 sources = selectedSources,
