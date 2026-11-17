@@ -6,6 +6,7 @@ import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.local.entity.AlbumEntity
 import ir.hamrahang.tv.data.album.AlbumDto
 import ir.hamrahang.tv.domain.album.Album
+import ir.hamrahang.tv.util.localizedName
 
 object AlbumEntityMapper {
 
@@ -15,7 +16,8 @@ object AlbumEntityMapper {
         return AlbumEntity(
             id = dto.id,
             title = dto.name,
-            titleFa = dto.name_fa,
+            titleFa = dto.name_fa?.takeIf { it.isNotBlank() }
+                ?: dto.names.localizedName("fa"),
             artistIds = gson.toJson(dto.artists?.map { it.id } ?: emptyList<String>()),
             songIds = gson.toJson(dto.songs?.map { it.id } ?: emptyList<String>()),
             meta = gson.toJson(dto.meta),
@@ -24,11 +26,7 @@ object AlbumEntityMapper {
         )
     }
 
-    fun merge(
-        old: AlbumEntity,
-        dto: AlbumDto,
-        isFull: Boolean
-    ): AlbumEntity {
+    fun merge(old: AlbumEntity, dto: AlbumDto, isFull: Boolean): AlbumEntity {
         val oldMeta = jsonToMeta(old.meta)
         val mergedMeta = dto.meta?.let { new ->
             new.copy(
@@ -52,7 +50,9 @@ object AlbumEntityMapper {
 
         return old.copy(
             title = dto.name ?: old.title,
-            titleFa = dto.name_fa ?: old.titleFa,
+            titleFa = dto.name_fa?.takeIf { it.isNotBlank() }
+                ?: dto.names.localizedName("fa")
+                ?: old.titleFa,
             artistIds = dto.artists?.let { gson.toJson(it.map { artist -> artist.id }) } ?: old.artistIds,
             songIds = dto.songs?.let { gson.toJson(it.map { song -> song.id }) } ?: old.songIds,
             meta = gson.toJson(mergedMeta),
