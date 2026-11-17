@@ -77,6 +77,9 @@ object BackgroundManager {
 
         val request = Glide.with(imageView)
             .load(source)
+            .placeholder(R.drawable.bg_default)
+            .error(R.drawable.bg_default)
+            .fallback(R.drawable.bg_default)
             .centerCrop()
 
         if (blurEnabled) {
