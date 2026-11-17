@@ -1,16 +1,49 @@
 package ir.hamrahang.tv.data.local
 
 import ir.hamrahang.tv.data.ParentMini
+import com.google.gson.Gson
 import ir.hamrahang.tv.data.MediaMeta
+import ir.hamrahang.tv.data.MediaSource
+import ir.hamrahang.tv.data.SourceOwner
 import ir.hamrahang.tv.data.album.AlbumDto
 import ir.hamrahang.tv.data.artist.ArtistDto
 import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.song.SongDto
 import ir.hamrahang.tv.data.local.entity.PodcastEntity
+import ir.hamrahang.tv.data.local.entity.OwnerEntity
 import ir.hamrahang.tv.data.local.VideoEntityMapper
 import ir.hamrahang.tv.data.local.MusicVideoEntityMapper
 
 object DatabaseUpdater {
+
+    private val ownerDao = DatabaseProvider.database().ownerDao()
+    private val ownerGson = Gson()
+
+    /** The web client keeps the first cached owner for each public ID. */
+    private suspend fun syncSourceOwners(sources: List<MediaSource>?) {
+        ownerDao.insertIfAbsent(
+            OwnerEntity(id = 0L, name = "Hamrahang", meta = "{}", updatedAt = 0L)
+        )
+
+        sources.orEmpty().forEach { source ->
+            val owner = source.owner ?: source.user
+                ?.takeIf { it >= 0L }
+                ?.let { SourceOwner(id = it, name = if (it == 0L) "Hamrahang" else "User #$it") }
+                ?: return@forEach
+
+            if (owner.id < 0L) return@forEach
+            ownerDao.insertIfAbsent(
+                OwnerEntity(
+                    id = owner.id,
+                    name = owner.name?.takeIf { it.isNotBlank() }
+                        ?: if (owner.id == 0L) "Hamrahang" else "User #${owner.id}",
+                    meta = ownerGson.toJson(owner.meta ?: emptyMap<String, String>()),
+                    updatedAt = System.currentTimeMillis()
+                )
+            )
+        }
+    }
+
 
     //==================================================
     // Song
@@ -62,6 +95,7 @@ object DatabaseUpdater {
                     )
                 }
             dao.insert(entity)
+            syncSourceOwners(dto.sources)
         }
     }
 
@@ -113,6 +147,7 @@ object DatabaseUpdater {
                 }
 
             dao.insert(entity)
+            syncSourceOwners(dto.sources)
         }
     }
 
@@ -308,6 +343,7 @@ object DatabaseUpdater {
                 VideoEntityMapper.merge(local, normalized, full)
             }
             dao.insert(entity)
+            syncSourceOwners(normalized.sources)
         }
     }
 
@@ -329,6 +365,7 @@ object DatabaseUpdater {
                 MusicVideoEntityMapper.merge(local, dto, full)
             }
             dao.insert(entity)
+            syncSourceOwners(dto.sources)
         }
     }
 
