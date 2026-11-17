@@ -6,15 +6,12 @@ import ir.hamrahang.tv.util.ImageResolver
 
 data class Album(
     val id: String,
-    override val title: String? = null,
-    override val titleFa: String? = null,
+    override val name: String? = null,
+    override val names: Map<String, String> = emptyMap(),
     val artists: List<String> = emptyList(),
     val songs: List<String> = emptyList(),
     val meta: MediaMeta? = null
 ) : LocalizedTitle {
-    val thumb: String
-        get() = ImageResolver.album(meta)
-
-    val heroBackground: String?
-        get() = ImageResolver.hero(meta)
+    val thumb: String get() = ImageResolver.album(meta)
+    val heroBackground: String? get() = ImageResolver.hero(meta)
 }
