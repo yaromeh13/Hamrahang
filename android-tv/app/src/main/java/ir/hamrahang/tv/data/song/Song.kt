@@ -17,5 +17,5 @@ data class Song(
     val sources: List<MediaSource> = emptyList()
 ) : LocalizedTitle {
     val thumb: String get() = ImageResolver.song(meta)
-    val heroBackground: String? get() = ImageResolver.hero(meta)
+    val heroBackground: String? get() = thumb
 }
