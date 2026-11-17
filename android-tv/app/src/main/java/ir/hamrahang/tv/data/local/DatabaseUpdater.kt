@@ -37,7 +37,7 @@ object DatabaseUpdater {
                     id = owner.id,
                     name = owner.name?.takeIf { it.isNotBlank() }
                         ?: if (owner.id == 0L) "Hamrahang" else "User #${owner.id}",
-                    meta = ownerGson.toJson(owner.meta ?: emptyMap<String, String>()),
+                    meta = owner.meta?.let { ownerGson.toJson(it) } ?: "{}",
                     updatedAt = System.currentTimeMillis()
                 )
             )
@@ -95,7 +95,7 @@ object DatabaseUpdater {
                     )
                 }
             dao.insert(entity)
-            syncSourceOwners(dto.sources)
+            DatabaseUpdater.syncSourceOwners(dto.sources)
         }
     }
 
@@ -343,7 +343,7 @@ object DatabaseUpdater {
                 VideoEntityMapper.merge(local, normalized, full)
             }
             dao.insert(entity)
-            syncSourceOwners(normalized.sources)
+            DatabaseUpdater.syncSourceOwners(normalized.sources)
         }
     }
 
