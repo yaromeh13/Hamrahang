@@ -175,13 +175,32 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_30_31 = object : Migration(30, 31) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("""
+                CREATE TABLE IF NOT EXISTS owners (
+                    id INTEGER NOT NULL,
+                    name TEXT NOT NULL,
+                    meta TEXT NOT NULL,
+                    updatedAt INTEGER NOT NULL,
+                    PRIMARY KEY(id)
+                )
+            """.trimIndent())
+
+            database.execSQL("""
+                INSERT OR IGNORE INTO owners (id, name, meta, updatedAt)
+                VALUES (0, 'Hamrahang', '{}', 0)
+            """.trimIndent())
+        }
+    }
+
     fun init(context: Context) {
         db = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "hamrahang.db"
         )
-            .addMigrations(MIGRATION_28_29, MIGRATION_29_30)
+            .addMigrations(MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31)
             .fallbackToDestructiveMigration()
             .build()
     }
