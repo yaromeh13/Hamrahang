@@ -135,21 +135,22 @@ class HeroWidget(
 
                         artistDetailsBinder.bind(artist)
                     }
-/*
+
                     HeroStyle.ALBUM -> {
 
                         showAlbum()
+                        val album = state.album ?: return@collect
 
-                        albumTitle.text = state.title
-                        albumArtist.text = state.subtitle ?: ""
+                        albumTitle.text = album.displayTitle()
+                        albumArtist.text = album.artists.joinToString(" • ")
 
-                        ImageResolver.request(albumCover, state.imageUrl, R.drawable.ic_album_disk)
+                        ImageResolver.request(albumCover, album.thumb, R.drawable.ic_album_disk)
                             .transform(
                                 CenterCrop(),
                                 RoundedCorners(24)
                             )
                             .into(albumCover)
-                    }*/
+                    }
                 }
             }
         }
