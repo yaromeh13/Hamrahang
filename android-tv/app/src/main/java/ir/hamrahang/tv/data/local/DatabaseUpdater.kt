@@ -168,7 +168,7 @@ object DatabaseUpdater {
                         AlbumDto(
                             id = parent.id,
                             name = parent.name,
-                            name_fa = parent.name_fa,
+                            names = parent.names,
                             meta = parent.meta?.copy(type = parent.type)
                                 ?: MediaMeta(type = parent.type)
                         )
@@ -184,7 +184,7 @@ object DatabaseUpdater {
                         VideoDto(
                             id = parent.id,
                             name = parent.name,
-                            name_fa = parent.name_fa,
+                            names = parent.names,
                             meta = parent.meta?.copy(type = parent.type)
                                 ?: MediaMeta(type = parent.type)
                         )
@@ -199,7 +199,7 @@ object DatabaseUpdater {
                         VideoDto(
                             id = parent.id,
                             name = parent.name,
-                            name_fa = parent.name_fa,
+                            names = parent.names,
                             meta = parent.meta
                         )
                     )
@@ -210,7 +210,7 @@ object DatabaseUpdater {
                         PodcastDto(
                             id = parent.id,
                             name = parent.name,
-                            name_fa = parent.name_fa,
+                            names = parent.names,
                             meta = parent.meta
                         )
                     )
