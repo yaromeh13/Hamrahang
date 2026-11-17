@@ -16,5 +16,5 @@ data class Artist(
     val podcastIds: List<String> = emptyList()
 ) : LocalizedTitle {
     val thumb: String get() = ImageResolver.artist(meta)
-    val heroBackground: String? get() = ImageResolver.hero(meta)
+    val heroBackground: String? get() = thumb
 }
