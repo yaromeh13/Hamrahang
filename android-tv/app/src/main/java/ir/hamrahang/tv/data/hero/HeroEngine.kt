@@ -8,7 +8,6 @@ class HeroEngine {
     private val _state = MutableStateFlow<HeroState?>(null)
     val state: StateFlow<HeroState?> = _state
 
-    private var lastState: HeroState? = null
     private var lastKey: String? = null
 
     fun dispatch(event: HeroEvent) {
@@ -25,34 +24,35 @@ class HeroEngine {
                 artist = event.artist
             )
 
-            is HeroEvent.AlbumFocused -> return(
-                    return
-                    )
+            is HeroEvent.AlbumFocused -> HeroState(
+                style = HeroStyle.ALBUM,
+                album = event.album
+            )
+
             is HeroEvent.SongFocused -> HeroState(
                 style = HeroStyle.SONG,
                 song = event.song
             )
         }
+
         val key = when (newState.style) {
 
             HeroStyle.ARTIST ->
                 "artist:${newState.artist?.id}:${newState.artist?.meta.hashCode()}"
+
+            HeroStyle.ALBUM ->
+                "album:${newState.album?.id}:${newState.album?.meta.hashCode()}"
 
             HeroStyle.SONG ->
                 "song:${newState.song?.id}:${newState.song?.sources.hashCode()}"
 
             HeroStyle.VIDEO ->
                 "musicvideo:${newState.musicVideo?.id}:${newState.musicVideo?.meta.hashCode()}"
-
         }
+
         if (key == lastKey) return
 
         lastKey = key
         _state.value = newState
-        // 🔥 مهم: جلوگیری از آپدیت تکراری
-       // if (newState == lastState) return
-
-        //lastState = newState
-        //_state.value = newState
     }
 }
