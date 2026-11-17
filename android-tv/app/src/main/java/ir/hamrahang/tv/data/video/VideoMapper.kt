@@ -5,18 +5,12 @@ import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.domain.artist.ArtistMapper
 
 object VideoMapper {
-
     fun map(dto: VideoDto): Video {
-        val globalName = dto.name?.takeIf { it.isNotBlank() }
-            ?: dto.names?.get("en")?.takeIf { it.isNotBlank() }
-        val localizedNameFa = dto.name_fa?.takeIf { it.isNotBlank() }
-            ?: dto.names?.get("fa")?.takeIf { it.isNotBlank() }
         val meta = dto.meta ?: MediaMeta(type = "video")
-
         return Video(
             id = dto.id ?: "",
-            title = globalName,
-            titleFa = localizedNameFa,
+            name = dto.name,
+            names = dto.names ?: emptyMap(),
             url = dto.url,
             artists = dto.artists?.map { ArtistMapper.map(it.toArtistDto()) } ?: emptyList(),
             songs = dto.songs?.mapNotNull { it.id } ?: emptyList(),
@@ -25,6 +19,5 @@ object VideoMapper {
         )
     }
 
-    fun mapList(list: List<VideoDto>): List<Video> =
-        list.map(::map)
+    fun mapList(list: List<VideoDto>): List<Video> = list.map(::map)
 }
