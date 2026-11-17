@@ -8,7 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import ir.hamrahang.tv.util.ImageResolver
 import ir.hamrahang.tv.domain.album.Album
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -43,11 +43,8 @@ class AlbumAdapter(
 
         holder.title.text = item.title
 
-        Glide.with(holder.itemView)
-            .load(item.thumb)
+        ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_album_disk)
             .transform(CenterCrop(), RoundedCorners(7))
-            .placeholder(android.R.color.darker_gray)
-            .error(android.R.color.darker_gray)
             .into(holder.cover)
 
         holder.itemView.setOnFocusChangeListener { v, hasFocus ->
