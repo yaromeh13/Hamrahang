@@ -31,7 +31,7 @@ class PodcastRepository {
                 SongDto(
                     id = dto.id,
                     name = dto.name,
-                    name_fa = dto.name_fa,
+                    names = dto.names,
                     artists = dto.artists,
                     parents = dto.parents,
                     meta = dto.meta,
