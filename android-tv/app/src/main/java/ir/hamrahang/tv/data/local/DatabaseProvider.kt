@@ -217,14 +217,14 @@ object DatabaseProvider {
                     CREATE TABLE $table (
                         id TEXT NOT NULL,
                         name TEXT,
-                        names TEXT NOT NULL DEFAULT '{}',
+                        names TEXT NOT NULL,
                         $newColumns,
                         PRIMARY KEY(id)
                     )
                 """.trimIndent())
                 database.execSQL("""
                     INSERT INTO $table (id, name, names, $oldColumns)
-                    SELECT id, title, '{}', $oldColumns FROM $legacy
+                    SELECT id, title, CASE WHEN titleFa IS NULL OR titleFa = '' THEN '{}' ELSE '{"fa":"' || replace(replace(titleFa, char(92), char(92) || char(92)), '"', char(92) || '"') || '"}' END, $oldColumns FROM $legacy
                 """.trimIndent())
                 database.execSQL("DROP TABLE $legacy")
             }
