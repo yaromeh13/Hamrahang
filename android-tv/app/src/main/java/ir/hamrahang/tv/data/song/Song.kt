@@ -8,18 +8,17 @@ import ir.hamrahang.tv.domain.artist.Artist
 import ir.hamrahang.tv.util.ImageResolver
 
 data class Song(
-
     val id: String,
     override val title: String? = null,
     override val titleFa: String? = null,
-    //val url: String? = null,
     val artists: List<Artist> = emptyList(),
     val parents: List<ParentMini> = emptyList(),
     val meta: MediaMeta? = null,
     val sources: List<MediaSource> = emptyList()
+) : LocalizedTitle {
+    val thumb: String
+        get() = ImageResolver.song(meta)
 
-): LocalizedTitle{
-    val thumb:String
-        get() = ImageResolver.thumb(meta?.tmb)
+    val heroBackground: String?
+        get() = ImageResolver.hero(meta)
 }
-
