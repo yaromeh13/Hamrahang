@@ -6,8 +6,8 @@ import ir.hamrahang.tv.util.ImageResolver
 
 data class Artist(
     val id: String,
-    override val title: String? = null,
-    override val titleFa: String? = null,
+    override val name: String? = null,
+    override val names: Map<String, String> = emptyMap(),
     val meta: ArtistMeta? = null,
     val albumIds: List<String> = emptyList(),
     val songIds: List<String> = emptyList(),
@@ -15,9 +15,6 @@ data class Artist(
     val videoIds: List<String> = emptyList(),
     val podcastIds: List<String> = emptyList()
 ) : LocalizedTitle {
-    val thumb: String
-        get() = ImageResolver.artist(meta)
-
-    val heroBackground: String?
-        get() = ImageResolver.hero(meta)
+    val thumb: String get() = ImageResolver.artist(meta)
+    val heroBackground: String? get() = ImageResolver.hero(meta)
 }
