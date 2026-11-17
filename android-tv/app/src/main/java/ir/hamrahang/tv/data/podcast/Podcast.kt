@@ -18,5 +18,8 @@ data class Podcast(
     val sources: List<MediaSource> = emptyList()
 ) : LocalizedTitle {
     val thumb: String
-        get() = ImageResolver.thumb(meta?.tmb)
+        get() = ImageResolver.podcast(meta)
+
+    val heroBackground: String?
+        get() = ImageResolver.hero(meta)
 }
