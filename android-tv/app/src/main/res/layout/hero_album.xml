@@ -27,11 +27,20 @@
             android:textSize="@dimen/_24sdp"
             android:textColor="#FFFFFF"/>
 
-        <TextView
+        <LinearLayout
             android:id="@+id/albumArtist"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#BBBBBB"/>
+            android:layout_marginTop="@dimen/_8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"/>
+
+        <include
+            android:id="@+id/albumMetaContainer"
+            layout="@layout/layout_meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_8dp"/>
 
     </LinearLayout>
 
