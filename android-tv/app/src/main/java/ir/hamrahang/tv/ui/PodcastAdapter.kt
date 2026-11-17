@@ -1,7 +1,6 @@
 package ir.hamrahang.tv.ui
 
 import android.util.Log
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,11 +11,9 @@ import androidx.recyclerview.widget.RecyclerView
 import ir.hamrahang.tv.util.ImageResolver
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.domain.podcast.Podcast
-import ir.hamrahang.tv.utils.AppState
-
+import ir.hamrahang.tv.util.displayTitle
 
 class PodcastAdapter(
     private var items: List<Podcast>,
@@ -25,10 +22,10 @@ class PodcastAdapter(
 ) : RecyclerView.Adapter<PodcastAdapter.VH>() {
     companion object {
         @LayoutRes
-        val ITEM_LAYOUT_RES = R.layout.item_song   // اسم فایل XML واقعی خودت رو بذار
+        val ITEM_LAYOUT_RES = R.layout.item_song
     }
-    inner class VH(view: View) : RecyclerView.ViewHolder(view) {
 
+    inner class VH(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.songTitle)
         val artist: TextView = view.findViewById(R.id.songArtist)
         val cover: ImageView = view.findViewById(R.id.songCover)
@@ -41,44 +38,26 @@ class PodcastAdapter(
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {
-
         val item = items[position]
-
-        holder.title.text =
-            if (AppState.isPersian()) item.titleFa ?: item.title
-            else item.title
-        holder.artist.text =
-            item.artists
-                .joinToString(" • ") {
-
-                    if (AppState.isPersian())
-                        it.titleFa ?: it.title ?: ""
-                    else
-                        it.title ?: it.titleFa ?: ""
-
-                }
+        holder.title.text = item.displayTitle()
+        holder.artist.text = item.artists.joinToString(" • ") {
+            it.displayTitle()
+        }
 
         ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_song)
             .transform(CenterCrop(), RoundedCorners(7))
             .into(holder.cover)
 
-        holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+        holder.itemView.setOnFocusChangeListener { _, hasFocus ->
             holder.cover.isSelected = hasFocus
             if (hasFocus) {
-                Log.d("FOCUS_TEST", item.title)
+                Log.d("FOCUS_TEST", item.title ?: "")
                 onFocus(item)
             }
         }
         holder.itemView.setOnClickListener {
-
             val index = holder.bindingAdapterPosition
-
-            if (index != RecyclerView.NO_POSITION) {
-
-                onClick(item, index)
-
-            }
-
+            if (index != RecyclerView.NO_POSITION) onClick(item, index)
         }
     }
 
