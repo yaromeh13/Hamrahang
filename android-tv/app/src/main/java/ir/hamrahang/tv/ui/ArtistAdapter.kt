@@ -7,7 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import ir.hamrahang.tv.util.ImageResolver
 import ir.hamrahang.tv.domain.artist.Artist
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.util.displayTitle
@@ -43,10 +43,7 @@ class ArtistAdapter(
         holder.name.text = item.displayTitle()
         //holder.subname.text = item.title
 
-        Glide.with(holder.itemView)
-            .load(item.thumb)
-            .placeholder(android.R.color.darker_gray)
-            .error(android.R.color.darker_gray)
+        ImageResolver.request(holder.image, item.thumb, R.drawable.ic_profile)
             .circleCrop()
             .into(holder.image)
 
