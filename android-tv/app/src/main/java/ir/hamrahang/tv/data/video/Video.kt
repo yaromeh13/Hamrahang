@@ -9,27 +9,16 @@ import ir.hamrahang.tv.util.ImageResolver
 
 data class Video(
     val id: String,
-    override val title: String?,
-    override val titleFa: String? = null,
+    override val name: String?,
+    override val names: Map<String, String> = emptyMap(),
     val url: String? = null,
     val artists: List<Artist> = emptyList(),
     val songs: List<String> = emptyList(),
     val meta: MediaMeta? = null,
     val sources: List<MediaSource> = emptyList()
 ) : LocalizedTitle {
-    val isMusicVideo: Boolean
-        get() = meta?.type == "musicvideo"
-
-    val contentType: ContentType
-        get() = if (isMusicVideo) ContentType.MUSICVIDEO else ContentType.VIDEO
-
-    val thumb: String
-        get() = if (isMusicVideo) {
-            ImageResolver.musicVideo(meta)
-        } else {
-            ImageResolver.video(meta)
-        }
-
-    val heroBackground: String?
-        get() = ImageResolver.hero(meta)
+    val isMusicVideo: Boolean get() = meta?.type == "musicvideo"
+    val contentType: ContentType get() = if (isMusicVideo) ContentType.MUSICVIDEO else ContentType.VIDEO
+    val thumb: String get() = if (isMusicVideo) ImageResolver.musicVideo(meta) else ImageResolver.video(meta)
+    val heroBackground: String? get() = ImageResolver.hero(meta)
 }
