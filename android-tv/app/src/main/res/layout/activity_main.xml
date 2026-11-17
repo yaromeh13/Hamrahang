@@ -26,14 +26,13 @@
     <!-- NAV (ONLY ONE CONTROL SYSTEM) -->
     <FrameLayout
         android:id="@+id/nav_fragment"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/nav_collapsed_width"
         android:layout_height="match_parent"
         android:background="@android:color/transparent"
         android:translationZ="10dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintWidth_percent="0.16"/>
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <!-- CONTENT -->
     <FrameLayout
@@ -41,7 +40,8 @@
         android:nextFocusLeft="@id/nav_fragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintStart_toEndOf="@id/nav_fragment"
+        android:layout_marginStart="@dimen/nav_collapsed_width"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>

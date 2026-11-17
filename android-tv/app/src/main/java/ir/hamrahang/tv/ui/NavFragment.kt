@@ -29,7 +29,7 @@ class NavFragment : Fragment(R.layout.fragment_nav) {
     interface NavCallback {
         fun onMenuSelected(menuId: Int)
         fun onRequestMainFocus()
-      }
+    }
     private lateinit var imgMiniCover: ImageView
     private lateinit var btnMiniPlayPause: ImageView
     private lateinit var btnMiniFullscreen: ImageView
@@ -113,92 +113,54 @@ class NavFragment : Fragment(R.layout.fragment_nav) {
         }
         return false
     }
-    private fun isMenuExpanded(): Boolean {
 
-        val navContainer =
-            activity?.findViewById<FrameLayout>(R.id.nav_fragment)
-                ?: return false
+    private var isExpanded = false
+    private var navAnimator: ValueAnimator? = null
+    private var expandedWidthPx = 0
+    private var collapsedWidthPx = 0
 
-        val params =
-            navContainer.layoutParams as ConstraintLayout.LayoutParams
-
-        return params.matchConstraintPercentWidth > 0.10f
-    }
     private fun setupSideMenuWidth() {
-
+        collapsedWidthPx = resources.getDimensionPixelSize(R.dimen.nav_collapsed_width)
         sideMenu.post {
-
             if (!isAdded) return@post
-            val activity = activity ?: return@post
-            val navContainer = activity.findViewById<View>(R.id.nav_fragment)
-            val parent = navContainer.parent as? View ?: return@post
-            val expandedWidth = (parent.width * 0.16f).toInt()
-
-            sideMenu.layoutParams.width = expandedWidth
+            sideMenu.measure(
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+            expandedWidthPx = maxOf(sideMenu.measuredWidth, collapsedWidthPx)
+            sideMenu.layoutParams.width = expandedWidthPx
             sideMenu.requestLayout()
-            //isExpanded = true
         }
     }
 
-    // ===== EXPAND =====
-    private fun expand() {
-        Log.d("MENU", "expand()")
-        //if (isExpanded) return
-        //isExpanded = true
-        if (isMenuExpanded()) return
-        animateNavPercent(0.05f, 0.16f)
-        btnMiniPlayPause.visibility = View.VISIBLE
-        btnMiniFullscreen.visibility = View.VISIBLE
-    }
+    private fun animateMenu(expand: Boolean) {
+        if (expand == isExpanded) return
+        isExpanded = expand
 
-    // ===== COLLAPSE =====
-    fun collapseMenuFromOutside() {
-        Log.d("MENU", "collapse()")
-        //if (!isExpanded) return
-        //isExpanded = false
-        if (!isMenuExpanded()) return
-        animateNavPercent(0.16f, 0.05f)
-        btnMiniPlayPause.visibility = View.GONE
-        btnMiniFullscreen.visibility = View.GONE
-    }
+        val act = activity ?: return
+        val navContainer = act.findViewById<View>(R.id.nav_fragment) ?: return
+        val content = act.findViewById<View>(R.id.contentContainer) ?: return
+        val dir = if (navContainer.layoutDirection == View.LAYOUT_DIRECTION_RTL) -1 else 1
+        val endW = if (expand) expandedWidthPx else collapsedWidthPx
 
-    // ===== ONLY WIDTH CONTROLLER (SAFE) =====
-    private fun animateNav(start: Int, end: Int) {
-
-        val nav = view ?: return
-
-        val anim = ValueAnimator.ofInt(start, end)
-        anim.duration = 200
-        anim.interpolator = DecelerateInterpolator()
-
-        anim.addUpdateListener {
-            val value = it.animatedValue as Int
-            val params = nav.layoutParams
-            params.width = value
-            nav.layoutParams = params
+        navAnimator?.cancel()
+        navAnimator = ValueAnimator.ofInt(navContainer.layoutParams.width, endW).apply {
+            duration = 200
+            interpolator = DecelerateInterpolator()
+            addUpdateListener {
+                val w = it.animatedValue as Int
+                navContainer.layoutParams = navContainer.layoutParams.apply { width = w }
+                content.translationX = dir * (w - collapsedWidthPx).toFloat()
+            }
+            start()
         }
-        anim.start()
+        val vis = if (expand) View.VISIBLE else View.GONE
+        btnMiniPlayPause.visibility = vis
+        btnMiniFullscreen.visibility = vis
     }
 
-    private fun animateNavPercent(start: Float, end: Float) {
-        Log.d("MENU", "animate $start -> $end")
-        val navContainer = activity
-            ?.findViewById<FrameLayout>(R.id.nav_fragment)
-            ?: return
-
-        val animator = ValueAnimator.ofFloat(start, end)
-
-        animator.duration = 200
-        animator.interpolator = DecelerateInterpolator()
-
-        animator.addUpdateListener {
-            val percent = it.animatedValue as Float
-            val params = navContainer.layoutParams as ConstraintLayout.LayoutParams
-            params.matchConstraintPercentWidth = percent
-            navContainer.layoutParams = params
-        }
-        animator.start()
-    }
+    private fun expand() = animateMenu(true)
+    fun collapseMenuFromOutside() = animateMenu(false)
 
     // ===== INDICATOR =====
     private fun updateIndicator(root: View, selectedId: Int) {
@@ -267,46 +229,46 @@ class NavFragment : Fragment(R.layout.fragment_nav) {
             }
         }
     }
-/*
-    private fun observePlayer() {
+    /*
+        private fun observePlayer() {
 
-        // بخش داینامیک: وضعیت پخش، چرخش کاور
-        viewLifecycleOwner.lifecycleScope.launch {
-            PlayerState.uiState.collectLatest { ui ->
+            // بخش داینامیک: وضعیت پخش، چرخش کاور
+            viewLifecycleOwner.lifecycleScope.launch {
+                PlayerState.uiState.collectLatest { ui ->
 
-                if (ui.playbackState == PlaybackState.IDLE) {
-                    playerMiniContainer.visibility = View.GONE
-                    return@collectLatest
-                }
+                    if (ui.playbackState == PlaybackState.IDLE) {
+                        playerMiniContainer.visibility = View.GONE
+                        return@collectLatest
+                    }
 
-                showMiniPlayer()
+                    showMiniPlayer()
 
-                btnMiniPlayPause.setImageResource(
-                    if (ui.playbackState == PlaybackState.PLAYING)
-                        R.drawable.ic_pause
-                    else
-                        R.drawable.ic_play_arrow
-                )
+                    btnMiniPlayPause.setImageResource(
+                        if (ui.playbackState == PlaybackState.PLAYING)
+                            R.drawable.ic_pause
+                        else
+                            R.drawable.ic_play_arrow
+                    )
 
-                if (ui.playbackState == PlaybackState.PLAYING) {
-                    startCoverRotation()
-                } else {
-                    stopCoverRotation()
+                    if (ui.playbackState == PlaybackState.PLAYING) {
+                        startCoverRotation()
+                    } else {
+                        stopCoverRotation()
+                    }
                 }
             }
-        }
 
-        // بخش استاتیک: عکس کاور
-        viewLifecycleOwner.lifecycleScope.launch {
-            PlayerState.playbackInfo.collectLatest { info ->
+            // بخش استاتیک: عکس کاور
+            viewLifecycleOwner.lifecycleScope.launch {
+                PlayerState.playbackInfo.collectLatest { info ->
 
-                Glide.with(this@NavFragment)
-                    .load(info.artwork)
-                    .circleCrop()
-                    .into(imgMiniCover)
+                    Glide.with(this@NavFragment)
+                        .load(info.artwork)
+                        .circleCrop()
+                        .into(imgMiniCover)
+                }
             }
-        }
-    }*/
+        }*/
     private fun startCoverRotation() {
 
         if (coverAnimator == null) {
