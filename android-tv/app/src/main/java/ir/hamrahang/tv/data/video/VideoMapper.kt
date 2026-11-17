@@ -3,21 +3,20 @@ package ir.hamrahang.tv.domain.video
 import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.domain.artist.ArtistMapper
-import ir.hamrahang.tv.utils.AppState
 
 object VideoMapper {
 
     fun map(dto: VideoDto): Video {
-        val isFa = AppState.isPersian()
-
-        val title = dto.name ?: dto.names?.get("en")
-        val titleFa = dto.name_fa ?: dto.names?.get("fa")
+        val globalName = dto.name?.takeIf { it.isNotBlank() }
+            ?: dto.names?.get("en")?.takeIf { it.isNotBlank() }
+        val localizedNameFa = dto.name_fa?.takeIf { it.isNotBlank() }
+            ?: dto.names?.get("fa")?.takeIf { it.isNotBlank() }
         val meta = dto.meta ?: MediaMeta(type = "video")
 
         return Video(
             id = dto.id ?: "",
-            title = if (isFa) titleFa ?: title else title ?: titleFa,
-            titleFa = titleFa,
+            title = globalName,
+            titleFa = localizedNameFa,
             url = dto.url,
             artists = dto.artists?.map { ArtistMapper.map(it.toArtistDto()) } ?: emptyList(),
             songs = dto.songs?.mapNotNull { it.id } ?: emptyList(),
