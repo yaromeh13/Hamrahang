@@ -48,11 +48,11 @@ object ImageResolver {
      * meta.art first, then meta.tmv, and no other fallback.
      */
     fun hero(meta: MediaMeta?): String? =
-        clean(meta?.art)?.let(::art)
+        clean(meta?.art)?.let(::thumb)
             ?: clean(meta?.tmv)?.let(::thumb)
 
     fun hero(meta: ArtistMeta?): String? =
-        clean(meta?.art)?.let(::art)
+        clean(meta?.art)?.let(::thumb)
             ?: clean(meta?.tmv)?.let(::thumb)
 
     /**
