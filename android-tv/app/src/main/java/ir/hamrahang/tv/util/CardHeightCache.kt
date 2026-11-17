@@ -8,8 +8,19 @@ import androidx.annotation.LayoutRes
 
 object CardHeightCache {
     private val cache = mutableMapOf<Int, Int>()
+    private var cachedDensity = 0f
+
+    fun clear() {
+        cache.clear()
+        cachedDensity = 0f
+    }
 
     fun getHeight(context: Context, @LayoutRes layoutRes: Int, parent: ViewGroup): Int {
+        val density = context.resources.displayMetrics.density
+        if (density != cachedDensity) {
+            cache.clear()
+            cachedDensity = density
+        }
         return cache.getOrPut(layoutRes) {
             val sample = LayoutInflater.from(context).inflate(layoutRes, parent, false)
             sample.measure(

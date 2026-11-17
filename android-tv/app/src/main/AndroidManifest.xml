@@ -29,6 +29,7 @@
         <activity
             android:name=".SplashActivity"
             android:exported="true"
+            android:resizeableActivity="true"
             android:screenOrientation="landscape">
 
             <intent-filter>
@@ -47,7 +48,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
-            android:resizeableActivity="false"
+            android:resizeableActivity="true"
             android:screenOrientation="landscape" />
 
     </application>
