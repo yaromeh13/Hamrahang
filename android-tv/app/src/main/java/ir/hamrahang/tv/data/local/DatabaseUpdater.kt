@@ -147,7 +147,7 @@ object DatabaseUpdater {
                 }
 
             dao.insert(entity)
-            syncSourceOwners(dto.sources)
+            DatabaseUpdater.syncSourceOwners(dto.sources)
         }
     }
 
