@@ -22,9 +22,4 @@ interface OwnerDao {
     @Query("SELECT * FROM owners")
     suspend fun getAll(): List<OwnerEntity>
 
-    @Query("""
-        INSERT OR IGNORE INTO owners (id, name, meta, updatedAt)
-        VALUES (0, 'Hamrahang', '{}', :updatedAt)
-    """)
-    suspend fun ensureDefault(updatedAt: Long)
 }
