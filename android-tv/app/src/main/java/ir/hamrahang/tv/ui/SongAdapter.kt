@@ -8,7 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import ir.hamrahang.tv.util.ImageResolver
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.domain.song.Song
@@ -46,11 +46,8 @@ class SongAdapter(
         holder.title.text = item.displayTitle()
         //holder.artist.text = item.artists.joinToString(" - ") { it.displayTitle() }
 
-        Glide.with(holder.itemView)
-            .load(item.thumb)
+        ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_song)
             .transform(CenterCrop(), RoundedCorners(7))
-            .placeholder(android.R.color.darker_gray)
-            .error(android.R.color.darker_gray)
             .into(holder.cover)
 
         holder.itemView.setOnFocusChangeListener { v, hasFocus ->
