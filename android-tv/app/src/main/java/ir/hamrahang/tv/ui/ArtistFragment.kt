@@ -76,7 +76,7 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
         viewLifecycleOwner.lifecycleScope.launch {
 
             val artist = repository.getArtist(id)
-            BackgroundManager.set(artist.thumb)
+            BackgroundManager.set(artist.heroBackground)
             HeroManager.show(HeroContent.ArtistHero(artist))
 
             heroWidget.showPlayButton()
