@@ -14,10 +14,12 @@ import ir.hamrahang.tv.data.local.entity.SongEntity
 import ir.hamrahang.tv.data.local.entity.VideoEntity
 import ir.hamrahang.tv.data.local.entity.MusicVideoEntity
 import ir.hamrahang.tv.data.local.entity.UserEntity
+import ir.hamrahang.tv.data.local.entity.OwnerEntity
 import ir.hamrahang.tv.data.local.entity.FavoriteEntity
 import androidx.room.TypeConverters
 import ir.hamrahang.tv.data.local.dao.FavoriteDao
 import ir.hamrahang.tv.data.local.dao.UserDao
+import ir.hamrahang.tv.data.local.dao.OwnerDao
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryEntity
 import ir.hamrahang.tv.data.local.dao.PodcastDao
 import ir.hamrahang.tv.data.local.entity.PodcastEntity
@@ -31,9 +33,10 @@ import ir.hamrahang.tv.data.local.entity.PodcastEntity
         MusicVideoEntity::class,
         PlaybackHistoryEntity::class,
         FavoriteEntity::class,
-        UserEntity::class
+        UserEntity::class,
+        OwnerEntity::class
     ],
-    version = 30,
+    version = 31,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -47,4 +50,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun playbackHistoryDao(): PlaybackHistoryDao
     abstract fun favoriteDao(): FavoriteDao
     abstract fun userDao(): UserDao
+    abstract fun ownerDao(): OwnerDao
 }
