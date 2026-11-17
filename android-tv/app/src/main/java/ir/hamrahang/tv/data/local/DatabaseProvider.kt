@@ -197,45 +197,36 @@ object DatabaseProvider {
 
     private val MIGRATION_31_32 = object : Migration(31, 32) {
         override fun migrate(database: SupportSQLiteDatabase) {
-            val tables = listOf(
-                Triple("songs", "artistIds, parentIds, meta, sources, isFull, updatedAt", "artistIds, parentIds, meta, sources, isFull, updatedAt"),
-                Triple("podcasts", "artistIds, parentIds, meta, sources, isFull, updatedAt", "artistIds, parentIds, meta, sources, isFull, updatedAt"),
-                Triple("albums", "artistIds, songIds, meta, isFull, updatedAt", "artistIds, songIds, meta, isFull, updatedAt"),
-                Triple("artists", "meta, albumIds, songIds, musicvideoIds, videoIds, podcastIds, isFull, updatedAt", "meta, albumIds, songIds, musicvideoIds, videoIds, podcastIds, isFull, updatedAt"),
-                Triple("videos", "artistIds, songIds, meta, sources, isFull, updatedAt", "artistIds, songIds, meta, sources, isFull, updatedAt"),
-                Triple("musicvideos", "artistIds, songIds, meta, sources, isFull, updatedAt", "artistIds, songIds, meta, sources, isFull, updatedAt")
+            val definitions = listOf(
+                arrayOf("songs", "artistIds TEXT NOT NULL, parentIds TEXT NOT NULL, meta TEXT NOT NULL, sources TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL", "artistIds, parentIds, meta, sources, isFull, updatedAt"),
+                arrayOf("podcasts", "artistIds TEXT NOT NULL, parentIds TEXT NOT NULL, meta TEXT NOT NULL, sources TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL", "artistIds, parentIds, meta, sources, isFull, updatedAt"),
+                arrayOf("albums", "artistIds TEXT NOT NULL, songIds TEXT NOT NULL, meta TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL", "artistIds, songIds, meta, isFull, updatedAt"),
+                arrayOf("artists", "meta TEXT NOT NULL, albumIds TEXT NOT NULL, songIds TEXT NOT NULL, musicvideoIds TEXT NOT NULL, videoIds TEXT NOT NULL, podcastIds TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL", "meta, albumIds, songIds, musicvideoIds, videoIds, podcastIds, isFull, updatedAt"),
+                arrayOf("videos", "artistIds TEXT NOT NULL, songIds TEXT NOT NULL, meta TEXT NOT NULL, sources TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL", "artistIds, songIds, meta, sources, isFull, updatedAt"),
+                arrayOf("musicvideos", "artistIds TEXT NOT NULL, songIds TEXT NOT NULL, meta TEXT NOT NULL, sources TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL", "artistIds, songIds, meta, sources, isFull, updatedAt")
             )
 
-            tables.forEach { (table, columns, copyColumns) ->
-                database.execSQL("ALTER TABLE $table RENAME TO ${table}_legacy_31")
-                val extraColumns = when (table) {
-                    "songs", "podcasts", "videos", "musicvideos" ->
-                        "artistIds TEXT NOT NULL, parentIds TEXT NOT NULL, meta TEXT NOT NULL, sources TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL"
-                    "albums" ->
-                        "artistIds TEXT NOT NULL, songIds TEXT NOT NULL, meta TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL"
-                    else ->
-                        "meta TEXT NOT NULL, albumIds TEXT NOT NULL, songIds TEXT NOT NULL, musicvideoIds TEXT NOT NULL, videoIds TEXT NOT NULL, podcastIds TEXT NOT NULL, isFull INTEGER NOT NULL, updatedAt INTEGER NOT NULL"
-                }
+            definitions.forEach { definition ->
+                val table = definition[0]
+                val newColumns = definition[1]
+                val oldColumns = definition[2]
+                val legacy = "${table}_legacy_31"
+
+                database.execSQL("ALTER TABLE $table RENAME TO $legacy")
                 database.execSQL("""
                     CREATE TABLE $table (
                         id TEXT NOT NULL,
                         name TEXT,
                         names TEXT NOT NULL DEFAULT '{}',
-                        $extraColumns,
+                        $newColumns,
                         PRIMARY KEY(id)
                     )
                 """.trimIndent())
-                val oldColumns = when (table) {
-                    "songs", "podcasts", "videos", "musicvideos" ->
-                        "artistIds, parentIds, meta, sources, isFull, updatedAt"
-                    "albums" -> "artistIds, songIds, meta, isFull, updatedAt"
-                    else -> "meta, albumIds, songIds, musicvideoIds, videoIds, podcastIds, isFull, updatedAt"
-                }
                 database.execSQL("""
-                    INSERT INTO $table (id, name, names, $copyColumns)
-                    SELECT id, title, '{}', $oldColumns FROM ${table}_legacy_31
+                    INSERT INTO $table (id, name, names, $oldColumns)
+                    SELECT id, title, '{}', $oldColumns FROM $legacy
                 """.trimIndent())
-                database.execSQL("DROP TABLE ${table}_legacy_31")
+                database.execSQL("DROP TABLE $legacy")
             }
         }
     }
