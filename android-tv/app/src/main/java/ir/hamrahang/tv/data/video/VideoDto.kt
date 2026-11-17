@@ -7,7 +7,6 @@ import ir.hamrahang.tv.data.song.SongDto
 data class VideoDto(
     val id: String?,
     val name: String?,
-    val name_fa: String? = null,
     val names: Map<String, String>? = null,
     val url: String? = null,
     val artists: List<VideoArtistDto>? = null,
