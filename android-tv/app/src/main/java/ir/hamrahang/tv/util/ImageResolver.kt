@@ -14,17 +14,14 @@ import ir.hamrahang.tv.data.artist.ArtistMeta
  */
 object ImageResolver {
 
-    private const val THUMB_BASE = "https://hamrahang.ir/thumb/"
-    private const val ART_BASE = "https://hamrahang.ir/art/"
+    // Match index.html: media artwork is served from the CDN, not the API host.
+    private const val THUMB_BASE = "https://cdn.hamrahang.ir/thumb/"
 
     private fun clean(value: String?): String? =
         value?.trim()?.takeIf { it.isNotEmpty() }
 
     fun thumb(value: String?): String =
         clean(value)?.let { THUMB_BASE + it + ".jpg" }.orEmpty()
-
-    fun art(value: String?): String =
-        clean(value)?.let { ART_BASE + it + ".jpg" }.orEmpty()
 
     fun song(meta: MediaMeta?): String = thumb(meta?.tmb)
 
