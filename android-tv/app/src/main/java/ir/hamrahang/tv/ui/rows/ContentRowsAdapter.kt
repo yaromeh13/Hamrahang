@@ -155,7 +155,7 @@ class ContentRowsAdapter(
                     recycler.adapter = VideoAdapter(
                         items = row.items,
                         onFocus = { video ->
-                            onBackgroundChange(video.thumb)
+                            onBackgroundChange(video.heroBackground)
                             onHeroFocus(HeroContent.MusicVideoHero(video))
                         },
                         onClick = { video, index ->
