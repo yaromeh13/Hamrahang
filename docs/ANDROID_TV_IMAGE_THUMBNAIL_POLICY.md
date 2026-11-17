@@ -61,9 +61,10 @@ background fallbacks.
 
 - Treat null, empty, and whitespace-only keys as missing.
 - Preserve the exact priority order above.
-- Resolve image keys using the existing Hamrahang image URL convention:
-  `https://hamrahang.ir/thumb/{key}.jpg` and
-  `https://hamrahang.ir/art/{key}.jpg`.
+- Resolve thumbnail keys using the existing Android convention:
+  `https://hamrahang.ir/thumb/{key}.jpg`.
+- For Hero backgrounds, both `meta.art` and `meta.tmv` use the thumbnail
+  URL builder, matching the web reference's `resolveHeroBgUrl()` behavior.
 - A missing/broken image falls back to the appropriate type icon and must not
   break the card, list, Hero, or playback UI.
 - Keep image-key selection in the shared `ImageResolver`; card loaders use
