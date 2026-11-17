@@ -365,7 +365,7 @@ object DatabaseUpdater {
                 MusicVideoEntityMapper.merge(local, dto, full)
             }
             dao.insert(entity)
-            syncSourceOwners(dto.sources)
+            DatabaseUpdater.syncSourceOwners(dto.sources)
         }
     }
 
