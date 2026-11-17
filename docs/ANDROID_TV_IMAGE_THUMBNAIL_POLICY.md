@@ -69,6 +69,9 @@ background fallbacks.
 - Keep image-key selection in the shared `ImageResolver`; card loaders use
   the same resolver request helper and a type-specific placeholder/error.
 - Hero resolution is separate because its priority differs from thumbnails.
+- Playlist artwork resolution is available in `ImageResolver`, but the current
+  Android TV tree has no Playlist domain model/card adapter; the fallback is
+  ready for the point where Playlist UI is introduced.
 - Image loading remains asynchronous and independent of playback.
 
 ## 6. Web reference
