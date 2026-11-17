@@ -35,6 +35,8 @@ object ImageResolver {
 
     fun album(meta: MediaMeta?): String = thumb(meta?.tmb)
 
+    fun playlist(meta: MediaMeta?): String = thumb(meta?.tmb)
+
     fun musicVideo(meta: MediaMeta?): String =
         thumb(clean(meta?.tmv) ?: meta?.tmb)
 
