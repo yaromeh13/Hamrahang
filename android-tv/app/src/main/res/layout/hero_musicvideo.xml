@@ -49,6 +49,13 @@
             android:textColor="#DDFFFFFF"
             android:textSize="16sp"/>
 
+        <include
+            android:id="@+id/videoMetaContainer"
+            layout="@layout/layout_meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_8dp"/>
+
         <LinearLayout
             android:id="@+id/layoutVideoArtists"
             android:layout_width="wrap_content"
