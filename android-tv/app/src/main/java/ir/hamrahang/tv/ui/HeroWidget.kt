@@ -46,6 +46,7 @@ class HeroWidget(
     private val VideoArt: FadeImageView = root.findViewById(R.id.VideoArt)
 //    private val VideoArt: ImageView =        root.findViewById(R.id.VideoArt)
     private val layoutVideoArtists: LinearLayout = root.findViewById(R.id.layoutVideoArtists)
+    private val videoMetaBinder = HeroMetaBinder(root.findViewById(R.id.videoMetaContainer))
 
     // SONG
     private val songTitle: TextView = root.findViewById(R.id.songTitle)
@@ -92,6 +93,7 @@ class HeroWidget(
                             .into(VideoArt)
 
                         VideoArt.fadeStart = 0.4f
+                        videoMetaBinder.bind(musicVideo.meta)
 
                         HeroArtistsBinder.bind(
                             layoutVideoArtists,
