@@ -42,7 +42,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"/>
 
-            <!-- Meta Row: moved to the former title position -->
+            <!-- Meta Row -->
 
             <LinearLayout
                 android:id="@+id/layoutMeta"
@@ -53,7 +53,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/imgCover"/>
 
-            <!-- Song Title: moved to the former meta position, below cover -->
+            <!-- Song Title: the only item below the cover -->
 
             <TextView
                 android:id="@+id/txtTitle"
@@ -70,7 +70,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/imgCover"/>
 
-            <!-- Album -->
+            <!-- Album: below metadata -->
 
             <TextView
                 android:id="@+id/txtAlbum"
@@ -79,10 +79,10 @@
                 android:layout_marginTop="8dp"
                 android:textColor="#DDFFFFFF"
                 android:textSize="15sp"
-                app:layout_constraintStart_toStartOf="@id/txtTitle"
-                app:layout_constraintTop_toBottomOf="@id/txtTitle"/>
+                app:layout_constraintStart_toStartOf="@id/layoutMeta"
+                app:layout_constraintTop_toBottomOf="@id/layoutMeta"/>
 
-            <!-- Artists -->
+            <!-- Artists: below album and metadata -->
 
             <LinearLayout
                 android:id="@+id/layoutArtists"
@@ -91,7 +91,7 @@
                 android:layout_marginTop="12dp"
                 android:orientation="vertical"
 
-                app:layout_constraintStart_toStartOf="@id/txtTitle"
+                app:layout_constraintStart_toStartOf="@id/layoutMeta"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/txtAlbum"/>
 
@@ -104,7 +104,7 @@
                 android:layout_marginTop="16dp"
                 android:orientation="vertical"
 
-                app:layout_constraintTop_toBottomOf="@id/layoutMeta"
+                app:layout_constraintTop_toBottomOf="@id/layoutArtists"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
