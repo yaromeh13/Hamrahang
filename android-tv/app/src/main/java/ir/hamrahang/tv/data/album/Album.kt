@@ -13,5 +13,5 @@ data class Album(
     val meta: MediaMeta? = null
 ) : LocalizedTitle {
     val thumb: String get() = ImageResolver.album(meta)
-    val heroBackground: String? get() = ImageResolver.hero(meta)
+    val heroBackground: String get() = thumb
 }
