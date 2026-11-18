@@ -39,16 +39,9 @@
             android:id="@+id/layoutSongArtists"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/_8dp"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"/>
-
-        <TextView
-            android:id="@+id/songArtist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/_8dp"
-            android:textColor="#BBBBBB"/>
 
     </LinearLayout>
 
