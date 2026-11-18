@@ -8,7 +8,7 @@ object AlbumMapper {
         name = dto.name,
         names = dto.names ?: emptyMap(),
         artists = dto.artists?.map { it.id } ?: emptyList(),
-        songs = dto.songs?.map { it.id } ?: emptyList(),
+        songs = dto.songs?.mapNotNull { it.id } ?: emptyList(),
         meta = dto.meta
     )
 
