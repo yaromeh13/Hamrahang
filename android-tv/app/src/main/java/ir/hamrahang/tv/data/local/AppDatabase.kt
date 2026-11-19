@@ -36,7 +36,7 @@ import ir.hamrahang.tv.data.local.entity.PodcastEntity
         UserEntity::class,
         OwnerEntity::class
     ],
-    version = 32,
+    version = 33,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
