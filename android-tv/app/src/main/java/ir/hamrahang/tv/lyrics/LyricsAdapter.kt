@@ -102,7 +102,7 @@ class LyricsAdapter(
                 cornerRadius = 14f
             }
         } else null
-        text.minHeight = if (active) 56 else 44
+        text.minHeight = (56 * context.resources.displayMetrics.density).toInt()
     }
 
     class LineHolder(val text: TextView) : RecyclerView.ViewHolder(text)
