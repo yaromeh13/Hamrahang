@@ -20,7 +20,9 @@ import ir.hamrahang.tv.util.displayTitle
 class SongAdapter(
     private var items: List<Song>,
     private val onFocus: (Song) -> Unit,
-    private val onClick: (Song, Int) -> Unit
+    private val onClick: (Song, Int) -> Unit,
+    private val onNavigateUp: (() -> Unit)? = null,
+    private val onNavigateLeft: (() -> Unit)? = null
 ) : RecyclerView.Adapter<SongAdapter.VH>() {
 
     companion object {
@@ -55,6 +57,22 @@ class SongAdapter(
             if (hasFocus) {
                 android.util.Log.d("FOCUS_TEST", item.displayTitle())
                 onFocus(item)
+            }
+        }
+        holder.itemView.setOnKeyListener { _, keyCode, event ->
+            if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP -> {
+                    onNavigateUp?.invoke()
+                    onNavigateUp != null
+                }
+                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    if (holder.bindingAdapterPosition == 0 && onNavigateLeft != null) {
+                        onNavigateLeft.invoke()
+                        true
+                    } else false
+                }
+                else -> false
             }
         }
         holder.itemView.setOnClickListener {
