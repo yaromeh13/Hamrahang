@@ -8,6 +8,7 @@ import ir.hamrahang.tv.data.local.entity.PodcastEntity
 import ir.hamrahang.tv.data.song.SongDto
 import ir.hamrahang.tv.domain.podcast.Podcast
 import ir.hamrahang.tv.network.ApiClient
+import kotlinx.coroutines.CancellationException
 
 class PodcastRepository {
 
@@ -61,7 +62,14 @@ class PodcastRepository {
         }
 
         // Song and Podcast use the same API endpoint.
-        val response = ApiClient.api.getSong(id)
+        val response = try {
+            ApiClient.api.getSong(id)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            if (local != null) return toDomain(local)
+            throw error
+        }
         val dto = response.song
 
         if (dto.meta?.type != "podcast") {
