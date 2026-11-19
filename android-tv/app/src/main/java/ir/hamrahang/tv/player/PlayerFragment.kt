@@ -635,7 +635,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         val isVideo = info.mediaType == MediaType.VIDEO
 
         headerContainer.visibility =
-            if ((ui.headerVisible && !isVideo) || (ui.playerlyricsVisible && isVideo)) View.VISIBLE
+            if ((!isVideo && ui.headerVisible) || ui.playerlyricsVisible) View.VISIBLE
             else View.GONE
 
         leftHeaderContainer.visibility =
