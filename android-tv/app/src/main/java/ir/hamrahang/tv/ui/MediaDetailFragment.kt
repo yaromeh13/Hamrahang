@@ -31,6 +31,8 @@ import ir.hamrahang.tv.ui.hero.HeroWidget
 import ir.hamrahang.tv.ui.rows.ContentRows
 import ir.hamrahang.tv.ui.rows.ContentRowsAdapter
 import ir.hamrahang.tv.lyrics.LyricsParser
+import ir.hamrahang.tv.lyrics.LyricsEngine
+import ir.hamrahang.tv.lyrics.LyricsScope
 import ir.hamrahang.tv.util.displayTitle
 import kotlinx.coroutines.launch
 
@@ -181,8 +183,11 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         rows.visibility = View.GONE
         actions.visibility = View.VISIBLE
 
-        val selected = LyricsParser.selectEntry(lyrics, "fa")
-        val parsed = LyricsParser.parse(selected?.body)
+        val cardPreferences = LyricsEngine.defaultPreferences(LyricsScope.CARD)
+        val selected = LyricsParser.selectEntry(lyrics, cardPreferences.language)
+        val cardEngine = LyricsEngine().apply { load(selected?.body) }
+        val parsed = cardEngine.current()
+        lyricsView.textSize = cardPreferences.fontSize.toFloat()
         val text = parsed.lines
             .filterNot { it.isIntro }
             .joinToString("\n") { it.text }
