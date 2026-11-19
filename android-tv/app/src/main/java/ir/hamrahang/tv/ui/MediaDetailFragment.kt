@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.leanback.widget.VerticalGridView
+import androidx.leanback.widget.HorizontalGridView
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.local.ContentType
@@ -106,10 +107,10 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         BackgroundManager.set(item.heroBackground)
         HeroManager.show(HeroContent.AlbumHero(item))
 
-        val songs = SongRepository().getByIds(item.songs)
+        val albumSongs = SongRepository().getByIds(item.songs)
         val data = ContentRows {
             songs(
-                items = songs,
+                items = albumSongs,
                 title = null,
                 sessionId = item.id,
                 sessionTitle = item.displayTitle(),
@@ -126,7 +127,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         )
         rows.visibility = View.VISIBLE
         actions.visibility = View.GONE
-        rows.post { rows.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus() }
+        requestAlbumListFocus()
     }
 
     private suspend fun loadSong() {
@@ -165,6 +166,18 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         // not parsed lyric text. Keep the lyrics panel clean until a lyrics renderer exists.
         lyricsView.text = ""
         lyricsView.visibility = View.GONE
+        playButton.post { playButton.requestFocus() }
+    }
+
+    private fun requestAlbumListFocus() {
+        rows.post {
+            val rowView = rows.findViewHolderForAdapterPosition(0)?.itemView
+            val horizontal = rowView?.findViewById<HorizontalGridView>(R.id.horizontalRecycler)
+            horizontal?.post {
+                horizontal.setSelectedPosition(0)
+                horizontal.requestFocus()
+            }
+        }
     }
 
     private suspend fun loadFavorite(type: ContentType) {
