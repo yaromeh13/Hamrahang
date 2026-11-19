@@ -10,12 +10,14 @@ import ir.hamrahang.tv.domain.artist.Artist
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.playback.PlaybackFragment
 import ir.hamrahang.tv.playback.PlaybackManager
+import ir.hamrahang.tv.playback.PlaybackSession
 import ir.hamrahang.tv.player.*
 import kotlinx.coroutines.launch
 
 object UiNavigator {
 
     private var activity: FragmentActivity? = null
+    private var pendingDetailSession: PlaybackSession? = null
 
     fun init(activity: FragmentActivity) {
         this.activity = activity
@@ -47,8 +49,13 @@ object UiNavigator {
 
     // ---------------- Generic media details ----------------
 
-    fun openMediaDetail(type: ContentType, id: String) {
+    fun openMediaDetail(
+        type: ContentType,
+        id: String,
+        session: PlaybackSession? = null
+    ) {
         val act = activity ?: return
+        pendingDetailSession = session
         act.supportFragmentManager.beginTransaction()
             .replace(
                 R.id.contentContainer,
@@ -56,6 +63,12 @@ object UiNavigator {
             )
             .addToBackStack("media_detail")
             .commit()
+    }
+
+    fun consumePendingDetailSession(): PlaybackSession? {
+        val session = pendingDetailSession
+        pendingDetailSession = null
+        return session
     }
 
     // ---------------- Playback ----------------
