@@ -46,10 +46,6 @@ class LyricsAdapter(
         }
     }
 
-    private fun adapterPosition(lineIndex: Int): Int =
-        if (effectiveMode() == LyricsViewMode.LINE || effectiveMode() == LyricsViewMode.CARD) 0
-        else lineIndex
-
     private fun effectiveMode(): LyricsViewMode =
         if (!timed) LyricsViewMode.NORMAL else frame.viewMode
 
