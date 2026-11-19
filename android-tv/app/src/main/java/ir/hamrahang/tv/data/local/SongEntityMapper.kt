@@ -2,6 +2,7 @@ package ir.hamrahang.tv.data.local
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.ParentMini
@@ -22,6 +23,7 @@ object SongEntityMapper {
         parentIds = gson.toJson(dto.parents ?: emptyList<ParentMini>()),
         meta = gson.toJson(dto.meta),
         sources = gson.toJson(dto.sources ?: emptyList<MediaSource>()),
+        lyrics = gson.toJson(dto.lyrics ?: emptyList<LyricsEntry>()),
         isFull = isFull,
         updatedAt = System.currentTimeMillis()
     )
@@ -33,6 +35,7 @@ object SongEntityMapper {
         parentIds = dto.parents?.let { gson.toJson(it) } ?: old.parentIds,
         meta = gson.toJson(mergeMeta(jsonToMeta(old.meta), dto.meta)),
         sources = dto.sources?.let { gson.toJson(it) } ?: old.sources,
+        lyrics = dto.lyrics?.let { gson.toJson(it) } ?: old.lyrics,
         isFull = old.isFull || isFull,
         updatedAt = System.currentTimeMillis()
     )
@@ -44,7 +47,8 @@ object SongEntityMapper {
         artists = artists,
         parents = jsonToParents(entity.parentIds),
         meta = jsonToMeta(entity.meta),
-        sources = jsonToSources(entity.sources)
+        sources = jsonToSources(entity.sources),
+        lyrics = jsonToLyrics(entity.lyrics)
     )
 
     fun toEntityList(list: List<SongDto>, isFull: Boolean) = list.map { fromDto(it, isFull) }
@@ -61,6 +65,9 @@ object SongEntityMapper {
 
     fun jsonToMeta(json: String): MediaMeta? =
         if (json.isBlank()) null else gson.fromJson(json, MediaMeta::class.java)
+
+    fun jsonToLyrics(json: String): List<LyricsEntry> =
+        if (json.isBlank()) emptyList() else gson.fromJson(json, object : TypeToken<List<LyricsEntry>>() {}.type)
 
     fun jsonToSources(json: String): List<MediaSource> =
         if (json.isBlank()) emptyList() else gson.fromJson(json, object : TypeToken<List<MediaSource>>() {}.type)
