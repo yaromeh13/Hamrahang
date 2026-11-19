@@ -19,9 +19,4 @@
         layout="@layout/hero_artist"
         android:visibility="gone"/>
 
-    <include
-        android:id="@+id/albumHero"
-        layout="@layout/hero_album"
-        android:visibility="gone"/>
-
 </FrameLayout>
