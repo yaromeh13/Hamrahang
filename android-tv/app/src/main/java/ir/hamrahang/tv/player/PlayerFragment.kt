@@ -577,6 +577,11 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                     lyricsPreferences.language
                 )?.body ?: info.lyrics
                 val hasLyrics = !selectedLyrics.isNullOrBlank()
+                if (hasLyrics && lyricsPreferences.enabled &&
+                    !PlayerState.uiState.value.playerlyricsVisible
+                ) {
+                    PlayerState.setPlayerLyricsVisible(true)
+                }
                 if (selectedLyrics != lastLyricsBody) {
                     lastLyricsBody = selectedLyrics
                     lyricsEngine.load(selectedLyrics)
