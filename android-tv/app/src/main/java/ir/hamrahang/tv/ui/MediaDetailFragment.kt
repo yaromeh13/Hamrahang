@@ -39,8 +39,6 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
     private lateinit var rows: VerticalGridView
     private lateinit var actions: View
     private lateinit var playButton: Button
-    private lateinit var albumPlayButton: Button
-    private lateinit var albumActions: View
     private lateinit var bookmarkButton: ImageButton
     private lateinit var infoButton: ImageButton
     private lateinit var moreButton: ImageButton
@@ -75,15 +73,12 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
 
         actions = view.findViewById(R.id.singleItemActions)
         playButton = view.findViewById(R.id.btnDetailPlay)
-        albumPlayButton = view.findViewById(R.id.btnAlbumPlay)
-        albumActions = view.findViewById(R.id.albumActions)
         bookmarkButton = view.findViewById(R.id.btnDetailBookmark)
         infoButton = view.findViewById(R.id.btnDetailInfo)
         moreButton = view.findViewById(R.id.btnDetailMore)
         lyricsView = view.findViewById(R.id.detailLyrics)
 
         playButton.setOnClickListener { playCurrentDetail() }
-        albumPlayButton.setOnClickListener { playCurrentDetail() }
         infoButton.setOnClickListener { }
         moreButton.setOnClickListener {
             Toast.makeText(requireContext(), "More options will be available here", Toast.LENGTH_SHORT).show()
@@ -135,9 +130,8 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
             }
         )
         rows.visibility = View.VISIBLE
-        actions.visibility = View.GONE
-        albumActions.visibility = View.VISIBLE
-        albumPlayButton.setOnKeyListener { _, keyCode, event ->
+        actions.visibility = View.VISIBLE
+        playButton.setOnKeyListener { _, keyCode, event ->
             if (event.action == android.view.KeyEvent.ACTION_DOWN &&
                 keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN
             ) {
@@ -145,7 +139,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
                 true
             } else false
         }
-        albumPlayButton.post { albumPlayButton.requestFocus() }
+        playButton.post { playButton.requestFocus() }
     }
 
     private suspend fun loadSong() {
@@ -176,7 +170,6 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         HeroManager.show(hero)
         rows.visibility = View.GONE
         actions.visibility = View.VISIBLE
-        albumActions.visibility = View.GONE
 
         // meta.lrc is a lyrics resource reference in the current data model,
         // not parsed lyric text. Keep the lyrics panel clean until a lyrics renderer exists.
