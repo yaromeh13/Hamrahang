@@ -30,9 +30,23 @@ class ContentRowsAdapter(
         fun bind(row: ContentRow) {
             if (row.title.isNullOrBlank()) {
                 title.visibility = View.GONE
+                val compactPadding = 0
+                itemView.setPadding(
+                    itemView.paddingLeft,
+                    compactPadding,
+                    itemView.paddingRight,
+                    compactPadding
+                )
             } else {
                 title.visibility = View.VISIBLE
                 title.text = row.title
+                val rowPadding = itemView.resources.getDimensionPixelSize(R.dimen._18dp)
+                itemView.setPadding(
+                    itemView.paddingLeft,
+                    rowPadding,
+                    itemView.paddingRight,
+                    rowPadding
+                )
             }
 
             recycler.setNumRows(1)
