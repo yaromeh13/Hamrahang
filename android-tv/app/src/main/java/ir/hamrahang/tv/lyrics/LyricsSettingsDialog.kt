@@ -78,15 +78,34 @@ object LyricsSettingsDialog {
         )
         root.addView(fontGroup)
 
+        label("Size presets")
+        val presets = radioGroup(
+            listOf("13" to "13", "16" to "16", "20" to "20", "24" to "24"),
+            if (current.fontSize in listOf(13, 16, 20, 24)) current.fontSize.toString() else ""
+        )
+        root.addView(presets)
+
         val sizeLabel = label("Font size: ${current.fontSize}sp")
         val sizeSeek = SeekBar(context).apply {
             max = 20
             progress = current.fontSize.coerceIn(12, 32) - 12
             isFocusable = true
         }
+        presets.setOnCheckedChangeListener { group, checkedId ->
+            val value = group.findViewById<RadioButton>(checkedId)
+                ?.tag as? String
+            value?.toIntOrNull()?.let { sizeSeek.progress = it - 12 }
+        }
         sizeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 sizeLabel.text = "Font size: ${progress + 12}sp"
+                val presetId = (0 until presets.childCount)
+                    .map { presets.getChildAt(it) as RadioButton }
+                    .firstOrNull { (it.tag as? String)?.toIntOrNull() == progress + 12 }
+                    ?.id ?: View.NO_ID
+                if (presets.checkedRadioButtonId != presetId) {
+                    if (presetId == View.NO_ID) presets.clearCheck() else presets.check(presetId)
+                }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
             override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
