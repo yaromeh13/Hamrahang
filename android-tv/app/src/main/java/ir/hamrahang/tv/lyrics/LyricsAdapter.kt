@@ -89,7 +89,7 @@ class LyricsAdapter(
             "f4" -> Typeface.MONOSPACE
             else -> Typeface.DEFAULT
         }
-        text.alpha = when {
+        text.alpha = if (!timed) 1f else when {
             active -> 1f
             mode == LyricsViewMode.NORMAL && frame.activeIndex > lineIndex -> 0.42f
             mode == LyricsViewMode.FOCUS && kotlin.math.abs(frame.activeIndex - lineIndex) > 1 -> 0.55f
