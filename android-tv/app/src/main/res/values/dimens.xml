@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="nav_collapsed_width">48dp</dimen>
-    <dimen name="content_edge_spacing">8dp</dimen>
+    <dimen name="content_edge_spacing">6dp</dimen>
 
     <dimen name="_.25dp">0.25dp</dimen>
     <dimen name="_100dp">100dp</dimen>
