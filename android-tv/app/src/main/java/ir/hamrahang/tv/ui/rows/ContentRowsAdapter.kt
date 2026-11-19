@@ -56,7 +56,7 @@ class ContentRowsAdapter(
             recycler.setHorizontalSpacing(0)
 
             // Keep equal 8dp spacing at both ends of the horizontal row.
-            val edgePadding = itemView.resources.getDimensionPixelSize(R.dimen._8dp)
+            val edgePadding = itemView.resources.getDimensionPixelSize(R.dimen.content_edge_spacing)
             recycler.setPaddingRelative(
                 recycler.paddingStart,
                 recycler.paddingTop,
