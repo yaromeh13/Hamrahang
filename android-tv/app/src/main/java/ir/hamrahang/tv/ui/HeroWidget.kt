@@ -36,16 +36,18 @@ class HeroWidget(
     private val videoArt: FadeImageView = root.findViewById(R.id.VideoArt)
     private val layoutVideoArtists: LinearLayout =
         root.findViewById(R.id.layoutVideoArtists)
-    private val videoMetaBinder =
-        HeroMetaBinder(root.findViewById(R.id.videoMetaContainer))
+    private val videoMetaContainer: LinearLayout =
+        videoHero.findViewById(R.id.itemMetaContainer)
 
     // SHARED ITEM: SONG / PODCAST / ALBUM / PLAYLIST
     private val itemTitle: TextView = root.findViewById(R.id.itemTitle)
     private val layoutItemArtists: LinearLayout =
         root.findViewById(R.id.layoutItemArtists)
     private val itemCover: ImageView = root.findViewById(R.id.itemCover)
-    private val itemMetaBinder =
-        HeroMetaBinder(root.findViewById(R.id.itemMetaContainer))
+    private val itemMetaContainer: LinearLayout =
+        itemHero.findViewById(R.id.itemMetaContainer)
+
+    private val heroMetaBinder = HeroMetaBinder()
 
     // ARTIST
     private val artistName: TextView = root.findViewById(R.id.artistName)
@@ -82,7 +84,7 @@ class HeroWidget(
                         ).into(videoArt)
 
                         videoArt.fadeStart = 0.4f
-                        videoMetaBinder.bind(musicVideo.meta)
+                        heroMetaBinder.bind(videoMetaContainer, musicVideo.meta)
                         HeroArtistsBinder.bind(
                             layoutVideoArtists,
                             musicVideo.artists
@@ -103,7 +105,7 @@ class HeroWidget(
                             RoundedCorners(24)
                         ).into(itemCover)
 
-                        itemMetaBinder.bind(song.meta)
+                        heroMetaBinder.bind(itemMetaContainer, song.meta)
                         HeroArtistsBinder.bind(
                             layoutItemArtists,
                             song.artists
@@ -124,7 +126,7 @@ class HeroWidget(
                             RoundedCorners(24)
                         ).into(itemCover)
 
-                        itemMetaBinder.bind(podcast.meta)
+                        heroMetaBinder.bind(itemMetaContainer, podcast.meta)
                         HeroArtistsBinder.bind(
                             layoutItemArtists,
                             podcast.artists
@@ -145,7 +147,7 @@ class HeroWidget(
                             RoundedCorners(24)
                         ).into(itemCover)
 
-                        itemMetaBinder.bind(album.meta)
+                        heroMetaBinder.bind(itemMetaContainer, album.meta)
 
                         owner.lifecycleScope.launch {
                             var artists = ArtistRepository().getByIds(album.artists)
