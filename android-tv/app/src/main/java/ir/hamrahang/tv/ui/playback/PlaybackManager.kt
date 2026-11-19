@@ -384,7 +384,7 @@ object PlaybackManager {
                 downloaded = false,
                 metadata = fullVideo.meta,
                 lyricsEntries = fullVideo.lyrics,
-                lyrics = fullVideo.lyrics.firstOrNull { it.lng.equals("fa", true) && !it.body.isNullOrBlank() }?.body
+                lyrics = fullVideo.lyrics.firstOrNull { it.lng?.equals("fa", true) == true && !it.body.isNullOrBlank() }?.body
                     ?: fullVideo.lyrics.firstOrNull { !it.body.isNullOrBlank() }?.body,
                 sources = selectedSources,
                 selectedSource = selectedSources.firstOrNull()
