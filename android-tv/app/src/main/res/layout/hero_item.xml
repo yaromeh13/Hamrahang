@@ -27,6 +27,15 @@
             android:textSize="@dimen/_24sdp"
             android:textColor="#FFFFFF"/>
 
+        <TextView
+            android:id="@+id/itemSubTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_2dp"
+            android:textSize="@dimen/_20sdp"
+            android:textColor="#FFFFFF"
+            android:visibility="gone"/>
+
         <include
             android:id="@+id/itemMetaContainer"
             layout="@layout/layout_meta"
