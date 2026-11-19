@@ -48,7 +48,7 @@ class HeroWidget(
     private val layoutVideoArtists: LinearLayout = root.findViewById(R.id.layoutVideoArtists)
     private val videoMetaBinder = HeroMetaBinder(root.findViewById(R.id.videoMetaContainer))
 
-    // SONG
+    // ITEM
     private val itemTitle: TextView = root.findViewById(R.id.itemTitle)
     private val layoutItemArtists: LinearLayout = root.findViewById(R.id.layoutItemArtists)
     private val itemCover: ImageView = root.findViewById(R.id.itemCover)
@@ -104,7 +104,7 @@ class HeroWidget(
 
                     HeroStyle.SONG -> {
 
-                        showSong()
+                        showItem()
                         val song = state.song ?: return@collect
                         itemTitle.text = song.displayTitle()
                         ImageResolver.request(itemCover, song.thumb, R.drawable.ic_song)
@@ -196,10 +196,10 @@ class HeroWidget(
         //updateVideoLayout()
     }
 
-    private fun showSong() {
+    private fun showItem() {
 
         hideAll()
-        songHero.visibility = View.VISIBLE
+        itemHero.visibility = View.VISIBLE
     }
     private fun showAlbum() {
 
