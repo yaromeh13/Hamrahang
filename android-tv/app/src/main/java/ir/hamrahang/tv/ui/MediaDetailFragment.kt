@@ -2,6 +2,7 @@ package ir.hamrahang.tv.ui
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -37,8 +38,8 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
     private lateinit var heroWidget: HeroWidget
     private lateinit var rows: VerticalGridView
     private lateinit var actions: View
-    private lateinit var playButton: ImageButton
-    private lateinit var albumPlayButton: ImageButton
+    private lateinit var playButton: Button
+    private lateinit var albumPlayButton: Button
     private lateinit var favoriteButton: ImageButton
     private lateinit var moreButton: ImageButton
     private lateinit var lyricsView: TextView
