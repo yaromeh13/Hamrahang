@@ -54,7 +54,7 @@ class ContentRowsAdapter(
 
             recycler.setNumRows(1)
             recycler.setHorizontalSpacing(0)
-            recycler.setWindowAlignment(BaseGridView.WINDOW_ALIGN_BOTH_EDGE)
+            recycler.setWindowAlignment(BaseGridView.WINDOW_ALIGN_LOW_EDGE)
             recycler.setWindowAlignmentOffset(0)
             recycler.setWindowAlignmentOffsetPercent(50f)
             recycler.setItemAlignmentOffset(0)
