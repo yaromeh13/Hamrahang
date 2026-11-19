@@ -10,8 +10,8 @@
         android:visibility="gone"/>
 
     <include
-        android:id="@+id/songHero"
-        layout="@layout/hero_song"
+        android:id="@+id/itemHero"
+        layout="@layout/hero_item"
         android:visibility="gone"/>
 
     <include
