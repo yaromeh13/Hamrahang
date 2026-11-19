@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.leanback.widget.VerticalGridView
 import androidx.leanback.widget.HorizontalGridView
 import ir.hamrahang.tv.R
+import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
@@ -28,6 +29,7 @@ import ir.hamrahang.tv.player.MediaType
 import ir.hamrahang.tv.ui.hero.HeroWidget
 import ir.hamrahang.tv.ui.rows.ContentRows
 import ir.hamrahang.tv.ui.rows.ContentRowsAdapter
+import ir.hamrahang.tv.lyrics.LyricsParser
 import ir.hamrahang.tv.util.displayTitle
 import kotlinx.coroutines.launch
 
@@ -151,13 +153,13 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
     private suspend fun loadSong() {
         val item = SongRepository().getSong(contentId)
         song = item
-        showSingle(HeroContent.SongHero(item), item.heroBackground, item.meta?.lrc)
+        showSingle(HeroContent.SongHero(item), item.heroBackground, item.lyrics)
     }
 
     private suspend fun loadPodcast() {
         val item = PodcastRepository().getPodcast(contentId)
         podcast = item
-        showSingle(HeroContent.PodcastHero(item), item.heroBackground, item.meta?.lrc)
+        showSingle(HeroContent.PodcastHero(item), item.heroBackground, item.lyrics)
     }
 
     private suspend fun loadVideo(isMusicVideo: Boolean) {
@@ -168,20 +170,24 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         }
         video = item
         val hero = if (isMusicVideo) HeroContent.MusicVideoHero(item) else HeroContent.VideoHero(item)
-        showSingle(hero, item.heroBackground, item.meta?.lrc)
+        showSingle(hero, item.heroBackground, item.lyrics)
     }
 
-    private fun showSingle(hero: HeroContent, background: String?, lyrics: String?) {
+    private fun showSingle(hero: HeroContent, background: String?, lyrics: List<LyricsEntry>) {
         BackgroundManager.set(background)
         HeroManager.show(hero)
         rows.visibility = View.GONE
         actions.visibility = View.VISIBLE
 
-        // meta.lrc is a lyrics resource reference in the current data model,
-        // not parsed lyric text. Keep the lyrics panel clean until a lyrics renderer exists.
-        lyricsView.text = ""
+        val selected = LyricsParser.selectEntry(lyrics, "fa")
+        val parsed = LyricsParser.parse(selected?.body)
+        val text = parsed.lines
+            .filterNot { it.isIntro }
+            .joinToString("\n") { it.text }
+        lyricsView.text = text
         lyricsView.visibility = if (
-            contentType == ContentType.SONG || contentType == ContentType.PODCAST
+            (contentType == ContentType.SONG || contentType == ContentType.PODCAST) &&
+            text.isNotBlank()
         ) View.VISIBLE else View.GONE
         playButton.post { playButton.requestFocus() }
     }
