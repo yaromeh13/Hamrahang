@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.domain.song
 
+import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.ParentMini
 import ir.hamrahang.tv.data.MediaMeta
@@ -14,7 +15,8 @@ data class Song(
     val artists: List<Artist> = emptyList(),
     val parents: List<ParentMini> = emptyList(),
     val meta: MediaMeta? = null,
-    val sources: List<MediaSource> = emptyList()
+    val sources: List<MediaSource> = emptyList(),
+    val lyrics: List<LyricsEntry> = emptyList()
 ) : LocalizedTitle {
     val thumb: String get() = ImageResolver.song(meta)
     val heroBackground: String? get() = thumb
