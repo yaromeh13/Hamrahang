@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.Player
@@ -28,6 +29,10 @@ import ir.hamrahang.tv.ui.UiNavigator
 import ir.hamrahang.tv.ui.message.MessageManager
 import ir.hamrahang.tv.ui.message.MessageWidget
 import ir.hamrahang.tv.util.displayTitle
+import ir.hamrahang.tv.lyrics.LyricsAdapter
+import ir.hamrahang.tv.lyrics.LyricsEngine
+import ir.hamrahang.tv.lyrics.LyricsParser
+import ir.hamrahang.tv.lyrics.LyricsScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -55,6 +60,12 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
 
     private lateinit var lyricsContainer: View
     private lateinit var txtNoLyrics: TextView
+    private lateinit var lyricsAdapter: LyricsAdapter
+    private lateinit var lyricsRecycler: RecyclerView
+    private val lyricsEngine = LyricsEngine()
+    private val miniLyricsPreferences = LyricsEngine.defaultPreferences(LyricsScope.MINI)
+    private var miniLyricsBody: String? = null
+    private var miniLyricsActiveIndex = Int.MIN_VALUE
     private lateinit var messageWidget: MessageWidget
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -79,6 +90,22 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         playlist = view.findViewById(R.id.listQueue)
         lyricsContainer = view.findViewById(R.id.lyricsContainer)
         txtNoLyrics = view.findViewById(R.id.txtNoLyrics)
+
+        lyricsAdapter = LyricsAdapter(requireContext())
+        lyricsRecycler = RecyclerView(requireContext()).apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = lyricsAdapter
+            overScrollMode = View.OVER_SCROLL_NEVER
+            isFocusable = false
+            isFocusableInTouchMode = false
+        }
+        (lyricsContainer as FrameLayout).addView(
+            lyricsRecycler,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
 
         playlist.layoutManager = LinearLayoutManager(requireContext())
         QueueAdapter = PlaybackQueueAdapter { PlaybackManager.play(it) }
@@ -210,6 +237,8 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
                         View.VISIBLE
                     else
                         View.GONE
+
+                bindMiniLyrics(PlayerState.playbackInfo.value, ui.position)
             }
 
         }
@@ -236,6 +265,7 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         viewLifecycleOwner.lifecycleScope.launch {
             PlayerState.playbackInfo.collectLatest { info ->
                 txtTitle.text = info.title
+                bindMiniLyrics(info, PlayerState.uiState.value.position)
                 bindArtists(info.artists)
                 txtAlbum.text = ""
                 txtAlbum.visibility = View.GONE
@@ -251,6 +281,41 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
             }
         }
     }
+    private fun bindMiniLyrics(info: PlaybackInfoState, positionMs: Long) {
+        val body = LyricsParser.selectEntry(
+            info.lyricsEntries,
+            miniLyricsPreferences.language
+        )?.body ?: info.lyrics
+
+        if (body != miniLyricsBody) {
+            miniLyricsBody = body
+            lyricsEngine.load(body)
+            miniLyricsActiveIndex = Int.MIN_VALUE
+        }
+
+        val hasLyrics = !body.isNullOrBlank()
+        txtNoLyrics.visibility = if (hasLyrics) View.GONE else View.VISIBLE
+        lyricsRecycler.visibility = if (hasLyrics) View.VISIBLE else View.GONE
+
+        val frame = lyricsEngine.frame(
+            positionMs = positionMs,
+            preferences = miniLyricsPreferences,
+            scope = LyricsScope.MINI
+        )
+        val parsed = lyricsEngine.current()
+        lyricsAdapter.submit(frame, miniLyricsPreferences, parsed.hasTimedLines)
+
+        if (frame.activeIndex != miniLyricsActiveIndex) {
+            miniLyricsActiveIndex = frame.activeIndex
+            if (frame.activeIndex >= 0 && lyricsRecycler.isAttachedToWindow) {
+                lyricsRecycler.post {
+                    (lyricsRecycler.layoutManager as? LinearLayoutManager)
+                        ?.scrollToPositionWithOffset(frame.activeIndex, lyricsRecycler.height / 2)
+                }
+            }
+        }
+    }
+
     private fun bindArtists(artists: List<Artist>) {
         layoutArtists.removeAllViews()
         val inflater = layoutInflater
