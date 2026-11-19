@@ -2,6 +2,7 @@ package ir.hamrahang.tv.lyrics
 
 import android.content.Context
 import android.graphics.Typeface
+import androidx.core.content.res.ResourcesCompat
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -82,7 +83,7 @@ class LyricsAdapter(
         text.text = line.text
         text.textSize = preferences.fontSize.toFloat()
         text.typeface = when (preferences.fontFamily) {
-            "f1" -> Typeface.create("sans-serif", Typeface.NORMAL)
+            "f1" -> ResourcesCompat.getFont(context, ir.hamrahang.tv.R.font.vazir) ?: Typeface.DEFAULT
             "f2" -> Typeface.SERIF
             "f3" -> Typeface.create("sans-serif", Typeface.NORMAL)
             "f4" -> Typeface.MONOSPACE
