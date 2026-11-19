@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.leanback.widget.BaseGridView
 import androidx.leanback.widget.HorizontalGridView
 import androidx.recyclerview.widget.RecyclerView
 import ir.hamrahang.tv.R
@@ -52,6 +53,12 @@ class ContentRowsAdapter(
             }
 
             recycler.setNumRows(1)
+            recycler.setHorizontalSpacing(0)
+            recycler.setWindowAlignment(BaseGridView.WINDOW_ALIGN_BOTH_EDGE)
+            recycler.setWindowAlignmentOffset(0)
+            recycler.setWindowAlignmentOffsetPercent(50f)
+            recycler.setItemAlignmentOffset(0)
+            recycler.setItemAlignmentOffsetPercent(50f)
 
             val cardLayoutRes = when (row) {
                 is ContentRow.Songs -> {
