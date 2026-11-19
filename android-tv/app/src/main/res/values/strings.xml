@@ -37,4 +37,5 @@
     <string name="quality_medium">Medium</string>
     <string name="quality_low">Lowest</string>
 
+    <string name="play">Play</string>
 </resources>
