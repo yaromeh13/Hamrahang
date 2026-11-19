@@ -586,8 +586,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 txtNoLyrics.isVisible = !hasLyrics
                 lyricsRecycler.isVisible = hasLyrics
                 bindLyrics(info, PlayerState.uiState.value.position)
-                if (!hasLyrics && switchLyrics.isChecked) {
+                if (!hasLyrics && PlayerState.uiState.value.playerlyricsVisible) {
                     switchLyrics.isChecked = false
+                    switchLyricsVideo.isChecked = false
                     PlayerState.setPlayerLyricsVisible(false)
                 }
 
