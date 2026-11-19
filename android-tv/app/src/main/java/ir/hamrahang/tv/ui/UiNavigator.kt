@@ -7,6 +7,7 @@ import ir.hamrahang.tv.MainActivity
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.domain.album.Album
 import ir.hamrahang.tv.domain.artist.Artist
+import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.playback.PlaybackFragment
 import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.player.*
@@ -41,6 +42,19 @@ object UiNavigator {
                 //ArtistFragment.newInstance(artist.id)
             )
             .addToBackStack("artist")
+            .commit()
+    }
+
+    // ---------------- Generic media details ----------------
+
+    fun openMediaDetail(type: ContentType, id: String) {
+        val act = activity ?: return
+        act.supportFragmentManager.beginTransaction()
+            .replace(
+                R.id.contentContainer,
+                MediaDetailFragment.newInstance(type, id)
+            )
+            .addToBackStack("media_detail")
             .commit()
     }
 
