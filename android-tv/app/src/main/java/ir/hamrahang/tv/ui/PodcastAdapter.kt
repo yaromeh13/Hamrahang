@@ -22,18 +22,18 @@ class PodcastAdapter(
 ) : RecyclerView.Adapter<PodcastAdapter.VH>() {
     companion object {
         @LayoutRes
-        val ITEM_LAYOUT_RES = R.layout.item_song
+        val ITEM_LAYOUT_RES = R.layout.item_content
     }
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val title: TextView = view.findViewById(R.id.songTitle)
-        val artist: TextView = view.findViewById(R.id.songArtist)
-        val cover: ImageView = view.findViewById(R.id.songCover)
+        val title: TextView = view.findViewById(R.id.itemTitle)
+        val artist: TextView = view.findViewById(R.id.itemSubtitle)
+        val cover: ImageView = view.findViewById(R.id.itemCover)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_song, parent, false)
+            .inflate(ITEM_LAYOUT_RES, parent, false)
         return VH(view)
     }
 
