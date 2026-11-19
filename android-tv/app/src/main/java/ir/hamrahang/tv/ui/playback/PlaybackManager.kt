@@ -313,7 +313,7 @@ object PlaybackManager {
                 downloaded = false,
                 metadata = podcast.meta,
                 lyricsEntries = podcast.lyrics,
-                lyrics = podcast.lyrics.firstOrNull { it.lng.equals("fa", true) && !it.body.isNullOrBlank() }?.body
+                lyrics = podcast.lyrics.firstOrNull { it.lng?.equals("fa", true) == true && !it.body.isNullOrBlank() }?.body
                     ?: podcast.lyrics.firstOrNull { !it.body.isNullOrBlank() }?.body,
                 sources = selectedSources,
                 selectedSource = selectedSources.firstOrNull()
