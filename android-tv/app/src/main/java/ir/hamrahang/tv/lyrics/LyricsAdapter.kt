@@ -93,7 +93,7 @@ class LyricsAdapter(
             active -> 1f
             mode == LyricsViewMode.NORMAL && frame.activeIndex > lineIndex -> 0.42f
             mode == LyricsViewMode.FOCUS && kotlin.math.abs(frame.activeIndex - lineIndex) > 1 -> 0.55f
-            else -> 0.78f
+            else -> 1f
         }
         text.setTypeface(text.typeface, if (active) Typeface.BOLD else Typeface.NORMAL)
         text.background = if (active && mode == LyricsViewMode.CARD) {
