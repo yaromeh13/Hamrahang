@@ -50,6 +50,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
     private var podcast: ir.hamrahang.tv.domain.podcast.Podcast? = null
     private var video: ir.hamrahang.tv.domain.video.Video? = null
     private var favorite = false
+    private var pendingPlaybackSession: PlaybackSession? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +58,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
             it.name == arguments?.getString(ARG_TYPE)
         } ?: ContentType.SONG
         contentId = arguments?.getString(ARG_ID).orEmpty()
+        pendingPlaybackSession = UiNavigator.consumePendingDetailSession()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -216,33 +218,38 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
 
     private fun playCurrentDetail() {
         viewLifecycleOwner.lifecycleScope.launch {
-            when (contentType) {
-                ContentType.ALBUM -> {
-                    val item = album ?: return@launch
-                    PlaybackManager.startAlbum(item)
+            val rowSession = pendingPlaybackSession
+            if (rowSession != null) {
+                PlaybackManager.start(rowSession)
+            } else {
+                when (contentType) {
+                    ContentType.ALBUM -> {
+                        val item = album ?: return@launch
+                        PlaybackManager.startAlbum(item)
+                    }
+                    ContentType.SONG -> {
+                        val item = song ?: return@launch
+                        PlaybackManager.start(singleSession(
+                            item.id, item.displayTitle(), item.thumb, item.artists,
+                            ContentType.SONG, MediaType.AUDIO
+                        ))
+                    }
+                    ContentType.PODCAST -> {
+                        val item = podcast ?: return@launch
+                        PlaybackManager.start(singleSession(
+                            item.id, item.displayTitle(), item.thumb, item.artists,
+                            ContentType.PODCAST, MediaType.AUDIO
+                        ))
+                    }
+                    ContentType.VIDEO, ContentType.MUSICVIDEO -> {
+                        val item = video ?: return@launch
+                        PlaybackManager.start(singleSession(
+                            item.id, item.displayTitle(), item.thumb, item.artists,
+                            item.contentType, MediaType.VIDEO
+                        ))
+                    }
+                    else -> return@launch
                 }
-                ContentType.SONG -> {
-                    val item = song ?: return@launch
-                    PlaybackManager.start(singleSession(
-                        item.id, item.displayTitle(), item.thumb, item.artists,
-                        ContentType.SONG, MediaType.AUDIO
-                    ))
-                }
-                ContentType.PODCAST -> {
-                    val item = podcast ?: return@launch
-                    PlaybackManager.start(singleSession(
-                        item.id, item.displayTitle(), item.thumb, item.artists,
-                        ContentType.PODCAST, MediaType.AUDIO
-                    ))
-                }
-                ContentType.VIDEO, ContentType.MUSICVIDEO -> {
-                    val item = video ?: return@launch
-                    PlaybackManager.start(singleSession(
-                        item.id, item.displayTitle(), item.thumb, item.artists,
-                        item.contentType, MediaType.VIDEO
-                    ))
-                }
-                else -> return@launch
             }
             UiNavigator.openPlayback()
         }
