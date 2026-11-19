@@ -11,19 +11,23 @@ import ir.hamrahang.tv.playback.PlaybackSession
 sealed class UiClickEvent {
 
     data class VideoClick(
-        val video: Video
+        val video: Video,
+        val session: PlaybackSession? = null
     ) : UiClickEvent()
 
     data class MusicVideoClick(
-        val video: MusicVideo
+        val video: MusicVideo,
+        val session: PlaybackSession? = null
     ) : UiClickEvent()
 
     data class SongClick(
-        val song: Song
+        val song: Song,
+        val session: PlaybackSession? = null
     ) : UiClickEvent()
 
     data class PodcastClick(
-        val podcast: Podcast
+        val podcast: Podcast,
+        val session: PlaybackSession? = null
     ) : UiClickEvent()
 
     data class ArtistClick(
