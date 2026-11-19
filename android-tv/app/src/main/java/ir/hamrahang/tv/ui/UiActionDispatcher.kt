@@ -1,6 +1,6 @@
 package ir.hamrahang.tv.ui
 
-import android.util.Log
+import ir.hamrahang.tv.data.local.ContentType
 
 object UiActionDispatcher {
 
@@ -8,35 +8,27 @@ object UiActionDispatcher {
         navigator: UiNavigator,
         event: UiClickEvent
     ) {
-
         when (event) {
+            is UiClickEvent.MusicVideoClick ->
+                navigator.openMediaDetail(ContentType.MUSICVIDEO, event.video.id)
 
-            is UiClickEvent.MusicVideoClick -> {
-                //navigator.openFullscreenPlayer()
-                navigator.openVideo()
-            }
+            is UiClickEvent.VideoClick ->
+                navigator.openMediaDetail(ContentType.VIDEO, event.video.id)
 
-            is UiClickEvent.VideoClick -> navigator.openVideo()
+            is UiClickEvent.SongClick ->
+                navigator.openMediaDetail(ContentType.SONG, event.song.id)
 
-            is UiClickEvent.SongClick -> {
-                navigator.openPlayback()
-            }
-
-            is UiClickEvent.ArtistClick -> {
+            is UiClickEvent.ArtistClick ->
                 navigator.openArtist(event.artist)
-            }
 
-            is UiClickEvent.AlbumClick -> {
-                navigator.openPlayback(event.album)
-            }
+            is UiClickEvent.AlbumClick ->
+                navigator.openMediaDetail(ContentType.ALBUM, event.album.id)
 
-            is UiClickEvent.PodcastClick -> {
+            is UiClickEvent.PodcastClick ->
+                navigator.openMediaDetail(ContentType.PODCAST, event.podcast.id)
+
+            is UiClickEvent.PlaySession ->
                 navigator.openPlayback()
-            }
-
-            is UiClickEvent.PlaySession -> {
-                navigator.openPlayback()
-            }
         }
     }
 }
