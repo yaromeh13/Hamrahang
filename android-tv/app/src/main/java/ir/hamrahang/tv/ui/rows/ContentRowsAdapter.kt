@@ -20,7 +20,9 @@ class ContentRowsAdapter(
     private var rows: List<ContentRow>,
     private val onHeroFocus: (HeroContent) -> Unit,
     private val onBackgroundChange: (String?) -> Unit,
-    private val onItemClick: (UiClickEvent) -> Unit
+    private val onItemClick: (UiClickEvent) -> Unit,
+    private val onNavigateUp: (() -> Unit)? = null,
+    private val onNavigateLeft: (() -> Unit)? = null
 ) : RecyclerView.Adapter<ContentRowsAdapter.RowVH>() {
 
     inner class RowVH(view: View) : RecyclerView.ViewHolder(view) {
@@ -55,6 +57,8 @@ class ContentRowsAdapter(
                 is ContentRow.Songs -> {
                     recycler.adapter = SongAdapter(
                         items = row.items,
+                        onNavigateUp = onNavigateUp,
+                        onNavigateLeft = onNavigateLeft,
                         onFocus = { item ->
                             onBackgroundChange(item.heroBackground)
                             onHeroFocus(HeroContent.SongHero(item))
