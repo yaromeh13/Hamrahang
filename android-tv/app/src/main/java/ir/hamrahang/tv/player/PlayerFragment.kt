@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.lyrics.LyricsAdapter
+import ir.hamrahang.tv.lyrics.LyricsAutoScroller
 import ir.hamrahang.tv.lyrics.LyricsParser
 import ir.hamrahang.tv.lyrics.LyricsPreferences
 import ir.hamrahang.tv.lyrics.LyricsSettings
@@ -280,6 +281,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         lyricsRecycler = RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = lyricsAdapter
+            itemAnimator = null
             overScrollMode = View.OVER_SCROLL_NEVER
             isFocusable = false
             isFocusableInTouchMode = false
@@ -695,10 +697,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 else -> frame.activeIndex
             }
             if (target >= 0 && lyricsRecycler.isAttachedToWindow) {
-                lyricsRecycler.post {
-                    (lyricsRecycler.layoutManager as? LinearLayoutManager)
-                        ?.scrollToPositionWithOffset(target, lyricsRecycler.height / 2)
-                }
+                LyricsAutoScroller.centerOn(lyricsRecycler, target)
             }
         }
     }
