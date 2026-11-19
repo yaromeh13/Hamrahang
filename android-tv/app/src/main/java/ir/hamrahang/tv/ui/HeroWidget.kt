@@ -36,7 +36,7 @@ class HeroWidget(
 ) {
 
     private val videoHero: View = root.findViewById(R.id.musicVideoHero)
-    private val songHero: View = root.findViewById(R.id.songHero)
+    private val itemHero: View = root.findViewById(R.id.itemHero)
     private val artistHero: View = root.findViewById(R.id.artistHero)
     private val albumHero: View = root.findViewById(R.id.albumHero)
 
@@ -49,10 +49,10 @@ class HeroWidget(
     private val videoMetaBinder = HeroMetaBinder(root.findViewById(R.id.videoMetaContainer))
 
     // SONG
-    private val songTitle: TextView = root.findViewById(R.id.songTitle)
-    private val layoutSongArtists: LinearLayout = root.findViewById(R.id.layoutSongArtists)
-    private val songCover: ImageView = root.findViewById(R.id.songCover)
-    private val metaBinder = HeroMetaBinder(root.findViewById(R.id.metaContainer))
+    private val itemTitle: TextView = root.findViewById(R.id.itemTitle)
+    private val layoutItemArtists: LinearLayout = root.findViewById(R.id.layoutItemArtists)
+    private val itemCover: ImageView = root.findViewById(R.id.itemCover)
+    private val itemMetaBinder = HeroMetaBinder(root.findViewById(R.id.itemMetaContainer))
 
     // ALBUM
     private val albumTitle: TextView = root.findViewById(R.id.albumTitle)
@@ -106,20 +106,20 @@ class HeroWidget(
 
                         showSong()
                         val song = state.song ?: return@collect
-                        songTitle.text = song.displayTitle()
-                        ImageResolver.request(songCover, song.thumb, R.drawable.ic_song)
+                        itemTitle.text = song.displayTitle()
+                        ImageResolver.request(itemCover, song.thumb, R.drawable.ic_song)
                             .transform(
                                 CenterCrop(),
                                 RoundedCorners(24)
                             )
-                            .into(songCover)
+                            .into(itemCover)
 
                         HeroArtistsBinder.bind(
-                            layoutSongArtists,
+                            layoutItemArtists,
                             song.artists
 
                         )
-                        metaBinder.bind(song.meta)
+                        itemMetaBinder.bind(song.meta)
 
                     }
 
@@ -184,7 +184,7 @@ class HeroWidget(
     private fun hideAll() {
 
         videoHero.visibility = View.GONE
-        songHero.visibility = View.GONE
+        itemHero.visibility = View.GONE
         artistHero.visibility = View.GONE
         albumHero.visibility = View.GONE
     }
