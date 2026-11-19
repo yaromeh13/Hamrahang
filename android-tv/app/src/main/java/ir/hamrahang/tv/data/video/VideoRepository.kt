@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.data.video
 
+import android.util.Log
 import ir.hamrahang.tv.data.artist.ArtistRepository
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.DatabaseUpdater
@@ -38,6 +39,7 @@ class VideoRepository {
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
+            Log.e("DETAIL_FETCH", "Video detail request failed. id=$id", error)
             if (local != null) return toDomain(local)
             throw error
         }
