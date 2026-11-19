@@ -21,17 +21,17 @@ class AlbumAdapter(
 ) : RecyclerView.Adapter<AlbumAdapter.VH>() {
     companion object {
         @LayoutRes
-        val ITEM_LAYOUT_RES = R.layout.item_album
+        val ITEM_LAYOUT_RES = R.layout.item_content
     }
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val title: TextView = view.findViewById(R.id.albumTitle)
-        val cover: ImageView = view.findViewById(R.id.albumCover)
+        val title: TextView = view.findViewById(R.id.itemTitle)
+        val cover: ImageView = view.findViewById(R.id.itemCover)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_album, parent, false)
+            .inflate(R.layout.item_content, parent, false)
         return VH(view)
     }
 
