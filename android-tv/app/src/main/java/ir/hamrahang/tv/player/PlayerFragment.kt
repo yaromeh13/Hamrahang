@@ -92,6 +92,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private var lastLyricsBody: String? = null
     private var lastLyricsActiveIndex = Int.MIN_VALUE
     private lateinit var switchLyrics: SwitchCompat
+    private lateinit var switchLyricsVideo: SwitchCompat
     private lateinit var btnPlaylist: ImageButton
     private lateinit var btnQueue: ImageButton
     private lateinit var queuePanel: View
@@ -255,6 +256,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         view.viewTreeObserver.addOnGlobalFocusChangeListener(focusChangeListener)
 
         switchLyrics = view.findViewById(R.id.switchLyrics)
+        switchLyricsVideo = view.findViewById(R.id.switchLyricsVideo)
         switchHeader = view.findViewById(R.id.switchHeader)
         switchrotatingHeader = view.findViewById(R.id.switchHeaderRotate)
         switchController = view.findViewById(R.id.switchController)
@@ -263,6 +265,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
         val currentState = PlayerState.uiState.value
         switchLyrics.isChecked = currentState.playerlyricsVisible
+        switchLyricsVideo.isChecked = currentState.playerlyricsVisible
         switchHeader.isChecked = currentState.headerVisible
         switchrotatingHeader.isChecked = currentState.rotatingHeaderEnabled
         switchController.isChecked = currentState.controllerPinned
@@ -296,6 +299,11 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         rowItemLyrics.setOnClickListener {
             switchLyrics.isChecked = !switchLyrics.isChecked
             PlayerState.setPlayerLyricsVisible(switchLyrics.isChecked)
+        }
+
+        view.findViewById<LinearLayout>(R.id.rowItemLyricsVideo).setOnClickListener {
+            switchLyricsVideo.isChecked = !switchLyricsVideo.isChecked
+            PlayerState.setPlayerLyricsVisible(switchLyricsVideo.isChecked)
         }
 
         view.findViewById<LinearLayout>(R.id.rowItemLyricsSettings).setOnClickListener {
@@ -433,6 +441,10 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             PlayerState.uiState.collect { ui ->
+
+                // Keep the shared lyrics visibility toggle synchronized in audio/video settings.
+                switchLyrics.isChecked = ui.playerlyricsVisible
+                switchLyricsVideo.isChecked = ui.playerlyricsVisible
 
                 // فقط وضعیت UI
                 if (ui.rotatingHeaderEnabled != isRotatingHeader) {
