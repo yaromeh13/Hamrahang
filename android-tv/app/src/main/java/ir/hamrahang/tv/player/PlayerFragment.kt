@@ -275,6 +275,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         txtNoLyrics = view.findViewById(R.id.txtNoLyrics)
         lyricsSettings = LyricsSettings(requireContext())
         lyricsPreferences = lyricsSettings.read()
+        PlayerState.setPlayerLyricsVisible(lyricsPreferences.enabled)
         lyricsAdapter = LyricsAdapter(requireContext())
         lyricsRecycler = RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -299,11 +300,15 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         rowItemLyrics = view.findViewById(R.id.rowItemLyrics)
         rowItemLyrics.setOnClickListener {
             switchLyrics.isChecked = !switchLyrics.isChecked
+            lyricsPreferences = lyricsPreferences.copy(enabled = switchLyrics.isChecked)
+            lyricsSettings.update(lyricsPreferences)
             PlayerState.setPlayerLyricsVisible(switchLyrics.isChecked)
         }
 
         view.findViewById<LinearLayout>(R.id.rowItemLyricsVideo).setOnClickListener {
             switchLyricsVideo.isChecked = !switchLyricsVideo.isChecked
+            lyricsPreferences = lyricsPreferences.copy(enabled = switchLyricsVideo.isChecked)
+            lyricsSettings.update(lyricsPreferences)
             PlayerState.setPlayerLyricsVisible(switchLyricsVideo.isChecked)
         }
 
