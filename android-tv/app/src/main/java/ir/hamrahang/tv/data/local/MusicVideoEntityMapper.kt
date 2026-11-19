@@ -20,7 +20,7 @@ object MusicVideoEntityMapper {
 
     private fun MusicVideoEntity.toVideoEntity() = VideoEntity(
         id = id, name = name, names = names, artistIds = artistIds,
-        songIds = songIds, meta = meta, sources = sources,
+        songIds = songIds, meta = meta, sources = sources, lyrics = lyrics,
         isFull = isFull, updatedAt = updatedAt
     )
 
