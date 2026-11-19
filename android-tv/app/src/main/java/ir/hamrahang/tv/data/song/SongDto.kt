@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.data.song
 
+import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.ParentMini
@@ -13,5 +14,6 @@ data class SongDto(
     val parents: List<ParentMini>? = null,
     val meta: MediaMeta? = null,
     val sources: List<MediaSource>? = null,
+    val lyrics: List<LyricsEntry>? = null,
     val trk: Int? = null
 )
