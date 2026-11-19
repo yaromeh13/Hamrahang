@@ -41,6 +41,7 @@ import ir.hamrahang.tv.lyrics.LyricsAdapter
 import ir.hamrahang.tv.lyrics.LyricsParser
 import ir.hamrahang.tv.lyrics.LyricsPreferences
 import ir.hamrahang.tv.lyrics.LyricsSettings
+import ir.hamrahang.tv.lyrics.LyricsSettingsDialog
 import ir.hamrahang.tv.lyrics.LyricsSynchronizer
 import ir.hamrahang.tv.lyrics.LyricsViewMode
 import ir.hamrahang.tv.lyrics.ParsedLyrics
@@ -295,6 +296,23 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         rowItemLyrics.setOnClickListener {
             switchLyrics.isChecked = !switchLyrics.isChecked
             PlayerState.setPlayerLyricsVisible(switchLyrics.isChecked)
+        }
+
+        view.findViewById<LinearLayout>(R.id.rowItemLyricsSettings).setOnClickListener {
+            val entries = PlayerState.playbackInfo.value.lyricsEntries
+            LyricsSettingsDialog.show(
+                requireContext(),
+                lyricsPreferences,
+                entries.mapNotNull { it.lng }.distinct()
+            ) { updated ->
+                lyricsPreferences = updated
+                lyricsSettings.update(updated)
+                lastLyricsBody = null
+                bindLyrics(
+                    PlayerState.playbackInfo.value,
+                    PlayerState.uiState.value.position
+                )
+            }
         }
         val rowItemHeader = view.findViewById<LinearLayout>(R.id.rowItemHeader)
         rowItemHeader.setOnClickListener {
