@@ -41,6 +41,7 @@ class HeroWidget(
 
     // SHARED ITEM: SONG / PODCAST / ALBUM / PLAYLIST
     private val itemTitle: TextView = root.findViewById(R.id.itemTitle)
+    private val itemSubTitle: TextView = root.findViewById(R.id.itemSubTitle)
     private val layoutItemArtists: LinearLayout =
         root.findViewById(R.id.layoutItemArtists)
     private val itemCover: ImageView = root.findViewById(R.id.itemCover)
@@ -95,7 +96,7 @@ class HeroWidget(
                         val song = state.song ?: return@collect
                         showItem()
 
-                        itemTitle.text = song.displayTitle()
+                        bindItemTitle(song.displayTitle(), song.name)
                         ImageResolver.request(
                             itemCover,
                             song.thumb,
@@ -116,7 +117,7 @@ class HeroWidget(
                         val podcast = state.podcast ?: return@collect
                         showItem()
 
-                        itemTitle.text = podcast.displayTitle()
+                        bindItemTitle(podcast.displayTitle(), podcast.name)
                         ImageResolver.request(
                             itemCover,
                             podcast.thumb,
@@ -137,7 +138,7 @@ class HeroWidget(
                         val album = state.album ?: return@collect
                         showItem()
 
-                        itemTitle.text = album.displayTitle()
+                        bindItemTitle(album.displayTitle(), album.name)
                         ImageResolver.request(
                             itemCover,
                             album.thumb,
@@ -200,6 +201,24 @@ class HeroWidget(
                     }
                 }
             }
+        }
+    }
+
+
+    private fun bindItemTitle(localizedTitle: String, globalName: String?) {
+        itemTitle.text = localizedTitle
+
+        val global = globalName?.trim().orEmpty()
+        val localized = localizedTitle.trim()
+
+        if (global.isNotEmpty() &&
+            !global.equals(localized, ignoreCase = true)
+        ) {
+            itemSubTitle.text = global
+            itemSubTitle.visibility = View.VISIBLE
+        } else {
+            itemSubTitle.text = ""
+            itemSubTitle.visibility = View.GONE
         }
     }
 
