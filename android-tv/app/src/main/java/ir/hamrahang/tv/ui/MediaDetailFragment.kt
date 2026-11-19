@@ -1,7 +1,6 @@
 package ir.hamrahang.tv.ui
 
 import android.os.Bundle
-import android.text.method.ScrollingMovementMethod
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
@@ -82,7 +81,6 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         infoButton = view.findViewById(R.id.btnDetailInfo)
         moreButton = view.findViewById(R.id.btnDetailMore)
         lyricsView = view.findViewById(R.id.detailLyrics)
-        lyricsView.movementMethod = ScrollingMovementMethod()
 
         playButton.setOnClickListener { playCurrentDetail() }
         infoButton.setOnClickListener { }
