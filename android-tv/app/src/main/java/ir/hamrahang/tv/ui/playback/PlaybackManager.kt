@@ -249,7 +249,7 @@ object PlaybackManager {
                 favorite = false,
                 downloaded = false,
                 metadata = fullSong.meta,
-                lyrics = fullSong.lyrics.firstOrNull { it.lng.equals("fa", true) && !it.body.isNullOrBlank() }?.body
+                lyrics = fullSong.lyrics.firstOrNull { it.lng?.equals("fa", true) == true && !it.body.isNullOrBlank() }?.body
                     ?: fullSong.lyrics.firstOrNull { !it.body.isNullOrBlank() }?.body,
                 sources = selectedSources,
                 selectedSource = selectedSources.firstOrNull()
