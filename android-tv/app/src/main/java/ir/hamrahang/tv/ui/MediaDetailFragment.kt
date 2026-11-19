@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -19,7 +18,6 @@ import ir.hamrahang.tv.data.podcast.PodcastRepository
 import ir.hamrahang.tv.data.song.SongRepository
 import ir.hamrahang.tv.data.video.VideoRepository
 import ir.hamrahang.tv.domain.hero.HeroContent
-import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.playback.PlaybackItem
 import ir.hamrahang.tv.playback.PlaybackManager
@@ -174,7 +172,9 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         // meta.lrc is a lyrics resource reference in the current data model,
         // not parsed lyric text. Keep the lyrics panel clean until a lyrics renderer exists.
         lyricsView.text = ""
-        lyricsView.visibility = View.GONE
+        lyricsView.visibility = if (
+            contentType == ContentType.SONG || contentType == ContentType.PODCAST
+        ) View.VISIBLE else View.GONE
         playButton.post { playButton.requestFocus() }
     }
 
