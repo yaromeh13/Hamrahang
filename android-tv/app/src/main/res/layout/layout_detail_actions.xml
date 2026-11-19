@@ -22,7 +22,7 @@
         android:textAlignment="center"
         android:includeFontPadding="false"
         app:backgroundTint="@null"
-        app:icon="@drawable/ic_play_arrow"
+        app:icon="@drawable/ic_detail_play_arrow"
         app:iconTint="@android:color/white"
         app:iconSize="20dp"
         app:iconPadding="0dp"
