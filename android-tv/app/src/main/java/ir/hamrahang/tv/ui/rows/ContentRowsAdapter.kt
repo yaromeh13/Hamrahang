@@ -7,9 +7,14 @@ import android.widget.TextView
 import androidx.leanback.widget.HorizontalGridView
 import androidx.recyclerview.widget.RecyclerView
 import ir.hamrahang.tv.R
+import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.domain.hero.HeroContent
+import ir.hamrahang.tv.playback.PlaybackItem
+import ir.hamrahang.tv.playback.PlaybackSession
+import ir.hamrahang.tv.player.MediaType
 import ir.hamrahang.tv.ui.*
 import ir.hamrahang.tv.util.CardHeightCache
+import ir.hamrahang.tv.util.displayTitle
 
 class ContentRowsAdapter(
     private var rows: List<ContentRow>,
@@ -40,8 +45,24 @@ class ContentRowsAdapter(
                             onBackgroundChange(item.heroBackground)
                             onHeroFocus(HeroContent.SongHero(item))
                         },
-                        onClick = { item, _ ->
-                            onItemClick(UiClickEvent.SongClick(item))
+                        onClick = { item, index ->
+                            val session = PlaybackSession(
+                                id = row.sessionId,
+                                title = row.sessionTitle,
+                                source = row.sessionSource,
+                                items = row.items.map { song ->
+                                    PlaybackItem(
+                                        id = song.id,
+                                        title = song.displayTitle(),
+                                        artwork = song.thumb,
+                                        artists = song.artists,
+                                        contentType = ContentType.SONG
+                                    )
+                                },
+                                currentIndex = index,
+                                mediaType = MediaType.AUDIO
+                            )
+                            onItemClick(UiClickEvent.SongClick(item, session))
                         }
                     )
                     SongAdapter.ITEM_LAYOUT_RES
@@ -54,8 +75,24 @@ class ContentRowsAdapter(
                             onBackgroundChange(item.heroBackground)
                             onHeroFocus(HeroContent.PodcastHero(item))
                         },
-                        onClick = { item, _ ->
-                            onItemClick(UiClickEvent.PodcastClick(item))
+                        onClick = { item, index ->
+                            val session = PlaybackSession(
+                                id = row.sessionId,
+                                title = row.sessionTitle,
+                                source = row.sessionSource,
+                                items = row.items.map { podcast ->
+                                    PlaybackItem(
+                                        id = podcast.id,
+                                        title = podcast.displayTitle(),
+                                        artwork = podcast.thumb,
+                                        artists = podcast.artists,
+                                        contentType = ContentType.PODCAST
+                                    )
+                                },
+                                currentIndex = index,
+                                mediaType = MediaType.AUDIO
+                            )
+                            onItemClick(UiClickEvent.PodcastClick(item, session))
                         }
                     )
                     PodcastAdapter.ITEM_LAYOUT_RES
@@ -68,8 +105,24 @@ class ContentRowsAdapter(
                             onBackgroundChange(item.heroBackground)
                             onHeroFocus(HeroContent.VideoHero(item))
                         },
-                        onClick = { item, _ ->
-                            onItemClick(UiClickEvent.VideoClick(item))
+                        onClick = { item, index ->
+                            val session = PlaybackSession(
+                                id = row.sessionId,
+                                title = row.sessionTitle,
+                                source = row.sessionSource,
+                                items = row.items.map { video ->
+                                    PlaybackItem(
+                                        id = video.id,
+                                        title = video.displayTitle(),
+                                        artwork = video.thumb,
+                                        artists = video.artists,
+                                        contentType = ContentType.VIDEO
+                                    )
+                                },
+                                currentIndex = index,
+                                mediaType = MediaType.VIDEO
+                            )
+                            onItemClick(UiClickEvent.VideoClick(item, session))
                         }
                     )
                     VideoAdapter.ITEM_LAYOUT_RES
@@ -82,8 +135,24 @@ class ContentRowsAdapter(
                             onBackgroundChange(item.heroBackground)
                             onHeroFocus(HeroContent.MusicVideoHero(item))
                         },
-                        onClick = { item, _ ->
-                            onItemClick(UiClickEvent.MusicVideoClick(item))
+                        onClick = { item, index ->
+                            val session = PlaybackSession(
+                                id = row.sessionId,
+                                title = row.sessionTitle,
+                                source = row.sessionSource,
+                                items = row.items.map { video ->
+                                    PlaybackItem(
+                                        id = video.id,
+                                        title = video.displayTitle(),
+                                        artwork = video.thumb,
+                                        artists = video.artists,
+                                        contentType = ContentType.MUSICVIDEO
+                                    )
+                                },
+                                currentIndex = index,
+                                mediaType = MediaType.VIDEO
+                            )
+                            onItemClick(UiClickEvent.MusicVideoClick(item, session))
                         }
                     )
                     VideoAdapter.ITEM_LAYOUT_RES
