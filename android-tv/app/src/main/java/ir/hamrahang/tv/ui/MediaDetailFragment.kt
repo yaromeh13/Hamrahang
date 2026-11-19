@@ -67,7 +67,9 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         rows.setNumColumns(1)
         rows.setItemAlignmentOffset(0)
         rows.setItemAlignmentOffsetPercent(0f)
-        rows.setWindowAlignment(androidx.leanback.widget.BaseGridView.WINDOW_ALIGN_NO_EDGE)
+        rows.setWindowAlignment(androidx.leanback.widget.BaseGridView.WINDOW_ALIGN_LOW_EDGE)
+        rows.setWindowAlignmentOffset(0)
+        rows.setWindowAlignmentOffsetPercent(0f)
 
         actions = view.findViewById(R.id.singleItemActions)
         playButton = view.findViewById(R.id.btnDetailPlay)
@@ -125,6 +127,12 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
             onBackgroundChange = { },
             onItemClick = { event ->
                 UiActionDispatcher.dispatch(UiNavigator, event)
+            },
+            onNavigateUp = {
+                playButton.requestFocus()
+            },
+            onNavigateLeft = {
+                requireActivity().findViewById<View>(R.id.menuHome)?.requestFocus()
             }
         )
         rows.visibility = View.VISIBLE
@@ -184,7 +192,9 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
             val horizontal = rowView?.findViewById<HorizontalGridView>(R.id.horizontalRecycler)
             horizontal?.post {
                 horizontal.setSelectedPosition(0)
-                horizontal.requestFocus()
+                horizontal.post {
+                    horizontal.getChildAt(0)?.requestFocus() ?: horizontal.requestFocus()
+                }
             }
         }
     }
