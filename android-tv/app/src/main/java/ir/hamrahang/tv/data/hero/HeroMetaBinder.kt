@@ -21,6 +21,13 @@ class HeroMetaBinder(
             meta.rls
         )
 
+        // Duration is stored in meta.dur as seconds.
+        addItem(
+            container,
+            R.drawable.ic_time,
+            meta.dur?.takeIf { it > 0 }?.let(::formatDuration)
+        )
+
         addItem(
             container,
             R.drawable.ic_play_arrow,
@@ -46,6 +53,18 @@ class HeroMetaBinder(
         )
 
     }
+    private fun formatDuration(totalSeconds: Long): String {
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+
+        return if (hours > 0) {
+            "%02d:%02d:%02d".format(hours, minutes, seconds)
+        } else {
+            "%02d:%02d".format(minutes, seconds)
+        }
+    }
+
     /*private fun formatCount(value: Long): String {
 
         return when {
