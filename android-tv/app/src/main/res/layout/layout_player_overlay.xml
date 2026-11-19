@@ -442,6 +442,32 @@
                 android:textSize="18sp"/>
 
             <LinearLayout
+                android:id="@+id/rowItemLyricsVideo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:padding="8dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:background="@drawable/bg_settings_row_focus"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="متن ترانه"
+                    android:textColor="#FFF"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switchLyricsVideo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:focusable="false"
+                    android:clickable="false"/>
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/rowItemSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
