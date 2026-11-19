@@ -7,6 +7,7 @@ import ir.hamrahang.tv.data.local.SongEntityMapper
 import ir.hamrahang.tv.domain.song.Song
 
 import ir.hamrahang.tv.network.ApiClient
+import kotlinx.coroutines.CancellationException
 
 class SongRepository {
 
@@ -50,7 +51,19 @@ class SongRepository {
             )
         }
 
-        val response = ApiClient.api.getSong(id)
+        val response = try {
+            ApiClient.api.getSong(id)
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            if (local != null) {
+                val artists = artistRepository.getByIds(
+                    SongEntityMapper.jsonToIds(local.artistIds)
+                )
+                return SongEntityMapper.toDomain(local, artists)
+            }
+            throw error
+        }
 
         if (response.song.meta?.type == "podcast") {
             error("Item $id is a podcast; use PodcastRepository")
