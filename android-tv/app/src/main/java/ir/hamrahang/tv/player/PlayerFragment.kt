@@ -42,7 +42,7 @@ import ir.hamrahang.tv.lyrics.LyricsParser
 import ir.hamrahang.tv.lyrics.LyricsPreferences
 import ir.hamrahang.tv.lyrics.LyricsSettings
 import ir.hamrahang.tv.lyrics.LyricsSettingsDialog
-import ir.hamrahang.tv.lyrics.LyricsSynchronizer
+import ir.hamrahang.tv.lyrics.LyricsEngine
 import ir.hamrahang.tv.lyrics.LyricsViewMode
 import ir.hamrahang.tv.lyrics.ParsedLyrics
 
@@ -88,6 +88,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private lateinit var txtNoLyrics: TextView
     private lateinit var lyricsSettings: LyricsSettings
     private var lyricsPreferences = LyricsPreferences()
+    private val lyricsEngine = LyricsEngine()
     private var parsedLyrics = ParsedLyrics(emptyList())
     private var lastLyricsBody: String? = null
     private var lastLyricsActiveIndex = Int.MIN_VALUE
@@ -573,7 +574,8 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 val hasLyrics = !selectedLyrics.isNullOrBlank()
                 if (selectedLyrics != lastLyricsBody) {
                     lastLyricsBody = selectedLyrics
-                    parsedLyrics = LyricsParser.parse(selectedLyrics)
+                    lyricsEngine.load(selectedLyrics)
+                    parsedLyrics = lyricsEngine.current()
                     lastLyricsActiveIndex = Int.MIN_VALUE
                 }
                 txtNoLyrics.isVisible = !hasLyrics
@@ -657,17 +659,17 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
         if (body != lastLyricsBody) {
             lastLyricsBody = body
-            parsedLyrics = LyricsParser.parse(body)
+            lyricsEngine.load(body)
+            parsedLyrics = lyricsEngine.current()
             lastLyricsActiveIndex = Int.MIN_VALUE
         }
 
         val video = info.mediaType == MediaType.VIDEO
         val mode = if (video) LyricsViewMode.LINE else lyricsPreferences.viewMode
-        val frame = LyricsSynchronizer.frame(
-            parsed = parsedLyrics,
+        val frame = lyricsEngine.frame(
             positionMs = positionMs,
-            viewMode = mode,
-            playerScope = true
+            preferences = lyricsPreferences.copy(viewMode = mode),
+            isVideo = video
         )
         lyricsAdapter.submit(
             frame,
