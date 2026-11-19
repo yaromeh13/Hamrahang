@@ -158,7 +158,13 @@ class HeroWidget(
                                 artists = ArtistRepository().getByIds(album.artists)
                             }
 
-                            HeroArtistsBinder.bind(layoutItemArtists, artists)
+                            // A slower album lookup must not overwrite artists for a newer focus.
+                            val currentState = HeroManager.engine.state.value
+                            if (currentState?.style == HeroStyle.ALBUM &&
+                                currentState.album?.id == album.id
+                            ) {
+                                HeroArtistsBinder.bind(layoutItemArtists, artists)
+                            }
                         }
                     }
 
