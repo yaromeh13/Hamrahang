@@ -106,11 +106,6 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
                     else -> Unit
                 }
             } catch (error: Exception) {
-                android.util.Log.e(
-                    "DETAIL_FETCH",
-                    "Media detail processing failed. type=$contentType id=$contentId",
-                    error
-                )
                 Toast.makeText(requireContext(), "Unable to load item details", Toast.LENGTH_SHORT).show()
             }
         }
