@@ -1,6 +1,7 @@
 package ir.hamrahang.tv.player
 
 import android.R
+import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.domain.album.Album
@@ -18,6 +19,7 @@ data class PlaybackInfoState(
     val album: Album? = null,
     val artists: List<Artist> = emptyList(),
     val lyrics: String? = null,
+    val lyricsEntries: List<LyricsEntry> = emptyList(),
     val liked: Boolean = false,
     val favorite: Boolean = false,
     val downloaded: Boolean = false,
