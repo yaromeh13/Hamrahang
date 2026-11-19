@@ -37,6 +37,13 @@ import kotlinx.coroutines.launch
 
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.favorite.FavoriteManager
+import ir.hamrahang.tv.lyrics.LyricsAdapter
+import ir.hamrahang.tv.lyrics.LyricsParser
+import ir.hamrahang.tv.lyrics.LyricsPreferences
+import ir.hamrahang.tv.lyrics.LyricsSettings
+import ir.hamrahang.tv.lyrics.LyricsSynchronizer
+import ir.hamrahang.tv.lyrics.LyricsViewMode
+import ir.hamrahang.tv.lyrics.ParsedLyrics
 
 
 
@@ -75,6 +82,14 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private lateinit var controlContainer: View
     private lateinit var seekContainer: View
     private lateinit var lyricsContainer: View
+    private lateinit var lyricsRecycler: RecyclerView
+    private lateinit var lyricsAdapter: LyricsAdapter
+    private lateinit var txtNoLyrics: TextView
+    private lateinit var lyricsSettings: LyricsSettings
+    private var lyricsPreferences = LyricsPreferences()
+    private var parsedLyrics = ParsedLyrics(emptyList())
+    private var lastLyricsBody: String? = null
+    private var lastLyricsActiveIndex = Int.MIN_VALUE
     private lateinit var switchLyrics: SwitchCompat
     private lateinit var btnPlaylist: ImageButton
     private lateinit var btnQueue: ImageButton
@@ -252,6 +267,25 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         switchController.isChecked = currentState.controllerPinned
 
         lyricsContainer = view.findViewById(R.id.lyricsContainer)
+        txtNoLyrics = view.findViewById(R.id.txtNoLyrics)
+        lyricsSettings = LyricsSettings(requireContext())
+        lyricsPreferences = lyricsSettings.read()
+        lyricsAdapter = LyricsAdapter(requireContext())
+        lyricsRecycler = RecyclerView(requireContext()).apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = lyricsAdapter
+            overScrollMode = View.OVER_SCROLL_NEVER
+            isFocusable = false
+            isFocusableInTouchMode = false
+            setHasFixedSize(false)
+        }
+        (lyricsContainer as FrameLayout).addView(
+            lyricsRecycler,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        )
         headerContainer = view.findViewById(R.id.headerContainer)
         controlContainer = view.findViewById(R.id.controlContainer)
         seekContainer = view.findViewById(R.id.seekContainer)
@@ -391,6 +425,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 //controlContainer.isVisible = ui.controllerVisible
                 //lyricsContainer.isVisible = ui.playerlyricsVisible
                 applyOverlayVisibility(ui)
+                bindLyrics(PlayerState.playbackInfo.value, ui.position)
 
                 // Progress
                 if (ui.duration > 0) {
@@ -501,7 +536,19 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
                 bindHeaderInfo(info)
 
-                val hasLyrics = !info.lyrics.isNullOrBlank()
+                val selectedLyrics = LyricsParser.selectEntry(
+                    info.lyricsEntries,
+                    lyricsPreferences.language
+                )?.body ?: info.lyrics
+                val hasLyrics = !selectedLyrics.isNullOrBlank()
+                if (selectedLyrics != lastLyricsBody) {
+                    lastLyricsBody = selectedLyrics
+                    parsedLyrics = LyricsParser.parse(selectedLyrics)
+                    lastLyricsActiveIndex = Int.MIN_VALUE
+                }
+                txtNoLyrics.isVisible = !hasLyrics
+                lyricsRecycler.isVisible = hasLyrics
+                bindLyrics(info, PlayerState.uiState.value.position)
                 if (!hasLyrics && switchLyrics.isChecked) {
                     switchLyrics.isChecked = false
                     PlayerState.setPlayerLyricsVisible(false)
@@ -565,6 +612,47 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         } else {
             seekContainer.visibility = View.GONE
             controlContainer.visibility = View.GONE
+        }
+    }
+
+    private fun bindLyrics(info: PlaybackInfoState, positionMs: Long) {
+        val body = LyricsParser.selectEntry(
+            info.lyricsEntries,
+            lyricsPreferences.language
+        )?.body ?: info.lyrics
+
+        if (body != lastLyricsBody) {
+            lastLyricsBody = body
+            parsedLyrics = LyricsParser.parse(body)
+            lastLyricsActiveIndex = Int.MIN_VALUE
+        }
+
+        val video = info.mediaType == MediaType.VIDEO
+        val mode = if (video) LyricsViewMode.LINE else lyricsPreferences.viewMode
+        val frame = LyricsSynchronizer.frame(
+            parsed = parsedLyrics,
+            positionMs = positionMs,
+            viewMode = mode,
+            playerScope = true
+        )
+        lyricsAdapter.submit(
+            frame,
+            lyricsPreferences.copy(viewMode = mode),
+            parsedLyrics.hasTimedLines
+        )
+
+        if (frame.activeIndex != lastLyricsActiveIndex) {
+            lastLyricsActiveIndex = frame.activeIndex
+            val target = when (mode) {
+                LyricsViewMode.LINE, LyricsViewMode.CARD -> 0
+                else -> frame.activeIndex
+            }
+            if (target >= 0 && lyricsRecycler.isAttachedToWindow) {
+                lyricsRecycler.post {
+                    (lyricsRecycler.layoutManager as? LinearLayoutManager)
+                        ?.scrollToPositionWithOffset(target, lyricsRecycler.height / 2)
+                }
+            }
         }
     }
 
