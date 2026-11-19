@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/transparent">
+
+    <include
+        android:id="@+id/heroContainer"
+        layout="@layout/layout_hero"
+        android:layout_width="match_parent"
+        android:layout_height="280dp" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.leanback.widget.VerticalGridView
+            android:id="@+id/detailRows"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:paddingTop="8dp"
+            android:paddingBottom="24dp" />
+
+        <LinearLayout
+            android:id="@+id/singleItemActions"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_marginEnd="40dp">
+
+                <ImageButton
+                    android:id="@+id/btnDetailPlay"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_artist_play"
+                    android:src="@drawable/ic_play_arrow"
+                    android:tint="@android:color/black"
+                    android:contentDescription="Play"
+                    android:focusable="true" />
+
+                <ImageButton
+                    android:id="@+id/btnDetailFavorite"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_playlist_item"
+                    android:src="@drawable/ic_favorite"
+                    android:tint="@android:color/white"
+                    android:contentDescription="Favorite"
+                    android:focusable="true" />
+
+                <ImageButton
+                    android:id="@+id/btnDetailMore"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_playlist_item"
+                    android:src="@drawable/ic_info"
+                    android:tint="@android:color/white"
+                    android:contentDescription="More"
+                    android:focusable="true" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/detailLyrics"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </FrameLayout>
+</LinearLayout>
