@@ -78,7 +78,7 @@ object LyricsSettingsDialog {
         )
         root.addView(fontGroup)
 
-        val sizeLabel = label("Font size: \${current.fontSize}sp")
+        val sizeLabel = label("Font size: ${current.fontSize}sp")
         val sizeSeek = SeekBar(context).apply {
             max = 20
             progress = current.fontSize.coerceIn(12, 32) - 12
@@ -86,7 +86,7 @@ object LyricsSettingsDialog {
         }
         sizeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                sizeLabel.text = "Font size: \${progress + 12}sp"
+                sizeLabel.text = "Font size: ${progress + 12}sp"
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
             override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
