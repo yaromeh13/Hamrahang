@@ -105,7 +105,12 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
                     ContentType.MUSICVIDEO -> loadVideo(true)
                     else -> Unit
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
+                android.util.Log.e(
+                    "DETAIL_FETCH",
+                    "Media detail processing failed. type=$contentType id=$contentId",
+                    error
+                )
                 Toast.makeText(requireContext(), "Unable to load item details", Toast.LENGTH_SHORT).show()
             }
         }
