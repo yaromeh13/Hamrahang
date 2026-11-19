@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.domain.video
 
+import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.local.ContentType
@@ -15,7 +16,8 @@ data class Video(
     val artists: List<Artist> = emptyList(),
     val songs: List<String> = emptyList(),
     val meta: MediaMeta? = null,
-    val sources: List<MediaSource> = emptyList()
+    val sources: List<MediaSource> = emptyList(),
+    val lyrics: List<LyricsEntry> = emptyList()
 ) : LocalizedTitle {
     val isMusicVideo: Boolean get() = meta?.type == "musicvideo"
     val contentType: ContentType get() = if (isMusicVideo) ContentType.MUSICVIDEO else ContentType.VIDEO
