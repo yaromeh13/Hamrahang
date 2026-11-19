@@ -54,7 +54,18 @@ class ContentRowsAdapter(
 
             recycler.setNumRows(1)
             recycler.setHorizontalSpacing(0)
-            recycler.setWindowAlignment(BaseGridView.WINDOW_ALIGN_LOW_EDGE)
+
+            // Keep equal 8dp spacing at both ends of the horizontal row.
+            val edgePadding = itemView.resources.getDimensionPixelSize(R.dimen._8dp)
+            recycler.setPaddingRelative(
+                recycler.paddingStart,
+                recycler.paddingTop,
+                edgePadding,
+                recycler.paddingBottom
+            )
+
+            // Align the first and last cards to the padded viewport edges.
+            recycler.setWindowAlignment(BaseGridView.WINDOW_ALIGN_BOTH_EDGE)
             recycler.setWindowAlignmentOffset(0)
             recycler.setWindowAlignmentOffsetPercent(50f)
             recycler.setItemAlignmentOffset(0)
