@@ -56,7 +56,7 @@ object LyricsSettingsDialog {
         )
         root.addView(modeGroup)
 
-        val languages = (listOf("auto", "fa", "en") + availableLanguages)
+        val languages = (listOf("auto") + availableLanguages)
             .distinct()
             .map { code ->
                 code to when (code) {
