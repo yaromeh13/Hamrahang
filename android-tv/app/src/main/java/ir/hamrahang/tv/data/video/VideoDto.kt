@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.data.video
 
+import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.song.SongDto
@@ -12,5 +13,6 @@ data class VideoDto(
     val artists: List<VideoArtistDto>? = null,
     val songs: List<SongDto>? = null,
     val meta: MediaMeta? = null,
-    val sources: List<MediaSource>? = null
+    val sources: List<MediaSource>? = null,
+    val lyrics: List<LyricsEntry>? = null
 )
