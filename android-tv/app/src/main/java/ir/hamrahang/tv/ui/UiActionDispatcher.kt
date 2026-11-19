@@ -10,13 +10,13 @@ object UiActionDispatcher {
     ) {
         when (event) {
             is UiClickEvent.MusicVideoClick ->
-                navigator.openMediaDetail(ContentType.MUSICVIDEO, event.video.id)
+                navigator.openMediaDetail(ContentType.MUSICVIDEO, event.video.id, event.session)
 
             is UiClickEvent.VideoClick ->
-                navigator.openMediaDetail(ContentType.VIDEO, event.video.id)
+                navigator.openMediaDetail(ContentType.VIDEO, event.video.id, event.session)
 
             is UiClickEvent.SongClick ->
-                navigator.openMediaDetail(ContentType.SONG, event.song.id)
+                navigator.openMediaDetail(ContentType.SONG, event.song.id, event.session)
 
             is UiClickEvent.ArtistClick ->
                 navigator.openArtist(event.artist)
@@ -25,7 +25,7 @@ object UiActionDispatcher {
                 navigator.openMediaDetail(ContentType.ALBUM, event.album.id)
 
             is UiClickEvent.PodcastClick ->
-                navigator.openMediaDetail(ContentType.PODCAST, event.podcast.id)
+                navigator.openMediaDetail(ContentType.PODCAST, event.podcast.id, event.session)
 
             is UiClickEvent.PlaySession ->
                 navigator.openPlayback()
