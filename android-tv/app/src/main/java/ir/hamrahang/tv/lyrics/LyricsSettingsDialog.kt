@@ -67,7 +67,8 @@ object LyricsSettingsDialog {
                 }
             }
         label("Language")
-        val languageGroup = radioGroup(languages, current.language)
+        val languageSelection = if (languages.any { it.first == current.language }) current.language else "auto"
+        val languageGroup = radioGroup(languages, languageSelection)
         root.addView(languageGroup)
 
         label("Font")
