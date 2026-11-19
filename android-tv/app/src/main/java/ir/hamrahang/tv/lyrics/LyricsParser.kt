@@ -56,7 +56,7 @@ object LyricsParser {
 
     fun selectEntry(entries: List<LyricsEntry>, language: String): LyricsEntry? {
         val usable = entries.filter { !it.body.isNullOrBlank() }
-        return usable.firstOrNull { it.lng.equals(language, true) }
+        return usable.firstOrNull { it.lng?.equals(language, true) == true }
             ?: usable.firstOrNull {
                 it.lng?.substringBefore("-")?.equals(language.substringBefore("-"), true) == true
             }
