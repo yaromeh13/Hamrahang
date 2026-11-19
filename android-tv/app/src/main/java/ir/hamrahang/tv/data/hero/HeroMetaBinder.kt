@@ -4,7 +4,19 @@ import android.widget.LinearLayout
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.MediaMeta
 
-class HeroMetaBinder {
+class HeroMetaBinder() {
+
+    private var boundContainer: LinearLayout? = null
+
+    // Keeps compatibility with PlayerFragment's header binder.
+    constructor(container: LinearLayout) : this() {
+        boundContainer = container
+    }
+
+    fun bind(meta: MediaMeta?) {
+        val container = boundContainer ?: return
+        bind(container, meta)
+    }
 
     fun bind(container: LinearLayout, meta: MediaMeta?) {
         container.removeAllViews()
