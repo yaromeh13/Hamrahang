@@ -4,41 +4,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.leanback.widget.HorizontalGridView
 import androidx.recyclerview.widget.RecyclerView
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.domain.hero.HeroContent
-import android.view.KeyEvent
-import androidx.leanback.widget.HorizontalGridView
-import ir.hamrahang.tv.MainActivity
-import ir.hamrahang.tv.data.local.ContentType
-import ir.hamrahang.tv.playback.PlaybackItem
-import ir.hamrahang.tv.playback.PlaybackManager
-import ir.hamrahang.tv.playback.PlaybackSession
-import ir.hamrahang.tv.player.MediaType
 import ir.hamrahang.tv.ui.*
 import ir.hamrahang.tv.util.CardHeightCache
-import ir.hamrahang.tv.util.displayTitle
 
 class ContentRowsAdapter(
-
     private var rows: List<ContentRow>,
-
     private val onHeroFocus: (HeroContent) -> Unit,
-
     private val onBackgroundChange: (String?) -> Unit,
-
-    private val onItemClick: (UiClickEvent) -> Unit,
-
-
+    private val onItemClick: (UiClickEvent) -> Unit
 ) : RecyclerView.Adapter<ContentRowsAdapter.RowVH>() {
-    inner class RowVH(view: View) : RecyclerView.ViewHolder(view) {
 
+    inner class RowVH(view: View) : RecyclerView.ViewHolder(view) {
         private val title = view.findViewById<TextView>(R.id.rowTitle)
         private val recycler = view.findViewById<HorizontalGridView>(R.id.horizontalRecycler)
 
         fun bind(row: ContentRow) {
-
-            // ===== Title =====
             if (row.title.isNullOrBlank()) {
                 title.visibility = View.GONE
             } else {
@@ -46,74 +30,32 @@ class ContentRowsAdapter(
                 title.text = row.title
             }
 
-            // ===== LayoutManager =====
             recycler.setNumRows(1)
 
-            // ===== TYPE HANDLING (when به‌عنوان expression) =====
-            val cardLayoutRes: Int = when (row) {
-
+            val cardLayoutRes = when (row) {
                 is ContentRow.Songs -> {
                     recycler.adapter = SongAdapter(
                         items = row.items,
-                        onFocus = { song ->
-                            onBackgroundChange(song.heroBackground)
-                            onHeroFocus(HeroContent.SongHero(song))
+                        onFocus = { item ->
+                            onBackgroundChange(item.heroBackground)
+                            onHeroFocus(HeroContent.SongHero(item))
                         },
-                        onClick = { song, index ->
-
-                            PlaybackManager.start(
-                                PlaybackSession(
-                                    id = row.sessionId,
-                                    title = row.sessionTitle,
-                                    source = row.sessionSource,
-                                    items = row.items.map { item ->
-                                        PlaybackItem(
-                                            id = item.id,
-                                            title = item.displayTitle(),
-                                            artwork = item.thumb,
-                                            artists = item.artists
-                                        )
-                                    },
-                                    currentIndex = index,
-                                    mediaType = MediaType.AUDIO
-                                )
-                            )
-                            onItemClick(
-                                UiClickEvent.SongClick(song)
-                            )
+                        onClick = { item, _ ->
+                            onItemClick(UiClickEvent.SongClick(item))
                         }
                     )
-
                     SongAdapter.ITEM_LAYOUT_RES
                 }
 
                 is ContentRow.Podcasts -> {
                     recycler.adapter = PodcastAdapter(
                         items = row.items,
-                        onFocus = { podcast ->
-                            onBackgroundChange(podcast.heroBackground)
-                            onHeroFocus(HeroContent.PodcastHero(podcast))
+                        onFocus = { item ->
+                            onBackgroundChange(item.heroBackground)
+                            onHeroFocus(HeroContent.PodcastHero(item))
                         },
-                        onClick = { podcast, index ->
-                            PlaybackManager.start(
-                                PlaybackSession(
-                                    id = row.sessionId,
-                                    title = row.sessionTitle,
-                                    source = row.sessionSource,
-                                    items = row.items.map { item ->
-                                        PlaybackItem(
-                                            id = item.id,
-                                            title = item.displayTitle(),
-                                            artwork = item.thumb,
-                                            artists = item.artists,
-                                            contentType = ContentType.PODCAST
-                                        )
-                                    },
-                                    currentIndex = index,
-                                    mediaType = MediaType.AUDIO
-                                )
-                            )
-                            onItemClick(UiClickEvent.PodcastClick(podcast))
+                        onClick = { item, _ ->
+                            onItemClick(UiClickEvent.PodcastClick(item))
                         }
                     )
                     PodcastAdapter.ITEM_LAYOUT_RES
@@ -122,30 +64,12 @@ class ContentRowsAdapter(
                 is ContentRow.Videos -> {
                     recycler.adapter = VideoAdapter(
                         items = row.items,
-                        onFocus = { video ->
-                            onBackgroundChange(video.heroBackground)
-                            onHeroFocus(HeroContent.VideoHero(video))
+                        onFocus = { item ->
+                            onBackgroundChange(item.heroBackground)
+                            onHeroFocus(HeroContent.VideoHero(item))
                         },
-                        onClick = { video, index ->
-                            PlaybackManager.start(
-                                PlaybackSession(
-                                    id = row.sessionId,
-                                    title = row.sessionTitle,
-                                    source = row.sessionSource,
-                                    items = row.items.map { item ->
-                                        PlaybackItem(
-                                            id = item.id,
-                                            title = item.displayTitle(),
-                                            artwork = item.thumb,
-                                            artists = item.artists,
-                                            contentType = item.contentType
-                                        )
-                                    },
-                                    currentIndex = index,
-                                    mediaType = MediaType.VIDEO
-                                )
-                            )
-                            onItemClick(UiClickEvent.VideoClick(video))
+                        onClick = { item, _ ->
+                            onItemClick(UiClickEvent.VideoClick(item))
                         }
                     )
                     VideoAdapter.ITEM_LAYOUT_RES
@@ -154,30 +78,12 @@ class ContentRowsAdapter(
                 is ContentRow.MusicVideos -> {
                     recycler.adapter = VideoAdapter(
                         items = row.items,
-                        onFocus = { video ->
-                            onBackgroundChange(video.heroBackground)
-                            onHeroFocus(HeroContent.MusicVideoHero(video))
+                        onFocus = { item ->
+                            onBackgroundChange(item.heroBackground)
+                            onHeroFocus(HeroContent.MusicVideoHero(item))
                         },
-                        onClick = { video, index ->
-                            PlaybackManager.start(
-                                PlaybackSession(
-                                    id = row.sessionId,
-                                    title = row.sessionTitle,
-                                    source = row.sessionSource,
-                                    items = row.items.map { item ->
-                                        PlaybackItem(
-                                            id = item.id,
-                                            title = item.displayTitle(),
-                                            artwork = item.thumb,
-                                            artists = item.artists,
-                                            contentType = item.contentType
-                                        )
-                                    },
-                                    currentIndex = index,
-                                    mediaType = MediaType.VIDEO
-                                )
-                            )
-                            onItemClick(UiClickEvent.MusicVideoClick(video))
+                        onClick = { item, _ ->
+                            onItemClick(UiClickEvent.MusicVideoClick(item))
                         }
                     )
                     VideoAdapter.ITEM_LAYOUT_RES
@@ -186,12 +92,12 @@ class ContentRowsAdapter(
                 is ContentRow.Artists -> {
                     recycler.adapter = ArtistAdapter(
                         items = row.items,
-                        onFocus = { artist ->
-                            onBackgroundChange(artist.heroBackground)
-                            onHeroFocus(HeroContent.ArtistHero(artist))
+                        onFocus = { item ->
+                            onBackgroundChange(item.heroBackground)
+                            onHeroFocus(HeroContent.ArtistHero(item))
                         },
-                        onClick = { artist ->
-                            onItemClick(UiClickEvent.ArtistClick(artist))
+                        onClick = { item ->
+                            onItemClick(UiClickEvent.ArtistClick(item))
                         }
                     )
                     ArtistAdapter.ITEM_LAYOUT_RES
@@ -200,19 +106,18 @@ class ContentRowsAdapter(
                 is ContentRow.Albums -> {
                     recycler.adapter = AlbumAdapter(
                         items = row.items,
-                        onFocus = { album ->
-                            onBackgroundChange(album.heroBackground)
-                            onHeroFocus(HeroContent.AlbumHero(album))
+                        onFocus = { item ->
+                            onBackgroundChange(item.heroBackground)
+                            onHeroFocus(HeroContent.AlbumHero(item))
                         },
-                        onClick = { album ->
-                            onItemClick(UiClickEvent.AlbumClick(album))
+                        onClick = { item ->
+                            onItemClick(UiClickEvent.AlbumClick(item))
                         }
                     )
                     AlbumAdapter.ITEM_LAYOUT_RES
                 }
             }
 
-            // ===== Dynamic row height based on actual card content =====
             val cardHeight = CardHeightCache.getHeight(
                 itemView.context, cardLayoutRes, recycler
             )
@@ -223,22 +128,13 @@ class ContentRowsAdapter(
         }
     }
 
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): RowVH {
-
-        val view = LayoutInflater
-            .from(parent.context)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RowVH {
+        val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_row, parent, false)
-
         return RowVH(view)
     }
 
-    override fun onBindViewHolder(
-        holder: RowVH,
-        position: Int
-    ) {
+    override fun onBindViewHolder(holder: RowVH, position: Int) {
         holder.bind(rows[position])
     }
 
