@@ -16,7 +16,8 @@ object HeroManager {
             is HeroContent.SongHero ->
                 HeroEvent.SongFocused(content.song)
 
-            is HeroContent.PodcastHero -> return
+            is HeroContent.PodcastHero ->
+                HeroEvent.PodcastFocused(content.podcast)
 
             is HeroContent.ArtistHero ->
                 HeroEvent.ArtistFocused(content.artist)
