@@ -231,13 +231,23 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_32_33 = object : Migration(32, 33) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            listOf("songs", "podcasts", "videos", "musicvideos").forEach { table ->
+                database.execSQL(
+                    "ALTER TABLE $table ADD COLUMN lyrics TEXT NOT NULL DEFAULT '[]'"
+                )
+            }
+        }
+    }
+
     fun init(context: Context) {
         db = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "hamrahang.db"
         )
-            .addMigrations(MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32)
+            .addMigrations(MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33)
             .fallbackToDestructiveMigration()
             .build()
     }
