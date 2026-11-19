@@ -30,6 +30,7 @@ import ir.hamrahang.tv.ui.message.MessageManager
 import ir.hamrahang.tv.ui.message.MessageWidget
 import ir.hamrahang.tv.util.displayTitle
 import ir.hamrahang.tv.lyrics.LyricsAdapter
+import ir.hamrahang.tv.lyrics.LyricsAutoScroller
 import ir.hamrahang.tv.lyrics.LyricsEngine
 import ir.hamrahang.tv.lyrics.LyricsParser
 import ir.hamrahang.tv.lyrics.LyricsScope
@@ -95,6 +96,7 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         lyricsRecycler = RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = lyricsAdapter
+            itemAnimator = null
             overScrollMode = View.OVER_SCROLL_NEVER
             isFocusable = false
             isFocusableInTouchMode = false
@@ -308,10 +310,7 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         if (frame.activeIndex != miniLyricsActiveIndex) {
             miniLyricsActiveIndex = frame.activeIndex
             if (frame.activeIndex >= 0 && lyricsRecycler.isAttachedToWindow) {
-                lyricsRecycler.post {
-                    (lyricsRecycler.layoutManager as? LinearLayoutManager)
-                        ?.scrollToPositionWithOffset(frame.activeIndex, lyricsRecycler.height / 2)
-                }
+                LyricsAutoScroller.centerOn(lyricsRecycler, frame.activeIndex)
             }
         }
     }
