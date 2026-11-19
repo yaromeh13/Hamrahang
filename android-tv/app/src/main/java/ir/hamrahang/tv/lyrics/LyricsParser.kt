@@ -4,8 +4,8 @@ import ir.hamrahang.tv.data.LyricsEntry
 
 object LyricsParser {
     private val timestampRegex =
-        Regex("""\\[(\\d{1,3}):(\\d{2})(?:[.:](\\d{1,3}))?]""")
-    private val offsetRegex = Regex("""\\[offset:([+-]?\\d+)]""", RegexOption.IGNORE_CASE)
+        Regex("""\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?]""")
+    private val offsetRegex = Regex("""\[offset:([+-]?\d+)]""", RegexOption.IGNORE_CASE)
 
     fun parse(source: String?): ParsedLyrics {
         if (source.isNullOrBlank()) return ParsedLyrics(emptyList())
