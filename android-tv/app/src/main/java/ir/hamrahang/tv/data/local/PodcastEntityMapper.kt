@@ -3,6 +3,7 @@ package ir.hamrahang.tv.data.local
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
+import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.ParentMini
@@ -22,6 +23,7 @@ object PodcastEntityMapper {
         parentIds = gson.toJson(dto.parents ?: emptyList<ParentMini>()),
         meta = gson.toJson(dto.meta),
         sources = gson.toJson(dto.sources ?: emptyList<MediaSource>()),
+        lyrics = gson.toJson(dto.lyrics ?: emptyList<LyricsEntry>()),
         isFull = isFull, updatedAt = System.currentTimeMillis()
     )
 
@@ -32,13 +34,15 @@ object PodcastEntityMapper {
         parentIds = dto.parents?.let { gson.toJson(it) } ?: old.parentIds,
         meta = gson.toJson(mergeMeta(jsonToMeta(old.meta), dto.meta)),
         sources = dto.sources?.let { gson.toJson(it) } ?: old.sources,
+        lyrics = dto.lyrics?.let { gson.toJson(it) } ?: old.lyrics,
         isFull = old.isFull || isFull, updatedAt = System.currentTimeMillis()
     )
 
     fun toDomain(entity: PodcastEntity, artists: List<Artist> = emptyList()) = Podcast(
         id = entity.id, name = entity.name, names = jsonToNames(entity.names),
         artists = artists, parents = jsonToParents(entity.parentIds),
-        meta = jsonToMeta(entity.meta), sources = jsonToSources(entity.sources)
+        meta = jsonToMeta(entity.meta), sources = jsonToSources(entity.sources),
+        lyrics = jsonToLyrics(entity.lyrics)
     )
 
     fun jsonToIds(json: String): List<String> =
@@ -60,6 +64,9 @@ object PodcastEntityMapper {
 
     fun jsonToMeta(json: String): MediaMeta? =
         if (json.isBlank()) null else gson.fromJson(json, MediaMeta::class.java)
+
+    private fun jsonToLyrics(json: String): List<LyricsEntry> =
+        if (json.isBlank()) emptyList() else gson.fromJson(json, object : TypeToken<List<LyricsEntry>>() {}.type)
 
     fun jsonToSources(json: String): List<MediaSource> =
         if (json.isBlank()) emptyList() else gson.fromJson(json, object : TypeToken<List<MediaSource>>() {}.type)
