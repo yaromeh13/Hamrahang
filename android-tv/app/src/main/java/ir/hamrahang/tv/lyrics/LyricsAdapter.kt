@@ -97,7 +97,7 @@ class LyricsAdapter(
         text.setTypeface(text.typeface, if (active) Typeface.BOLD else Typeface.NORMAL)
         text.background = if (active && mode == LyricsViewMode.CARD) {
             GradientDrawable().apply {
-                setColor(0x332FFFFFF)
+                setColor(0x33FFFFFF)
                 cornerRadius = 14f
             }
         } else null
