@@ -249,6 +249,8 @@ object PlaybackManager {
                 favorite = false,
                 downloaded = false,
                 metadata = fullSong.meta,
+                lyrics = fullSong.lyrics.firstOrNull { it.lng.equals("fa", true) && !it.body.isNullOrBlank() }?.body
+                    ?: fullSong.lyrics.firstOrNull { !it.body.isNullOrBlank() }?.body,
                 sources = selectedSources,
                 selectedSource = selectedSources.firstOrNull()
             )
@@ -309,6 +311,8 @@ object PlaybackManager {
                 favorite = false,
                 downloaded = false,
                 metadata = podcast.meta,
+                lyrics = podcast.lyrics.firstOrNull { it.lng.equals("fa", true) && !it.body.isNullOrBlank() }?.body
+                    ?: podcast.lyrics.firstOrNull { !it.body.isNullOrBlank() }?.body,
                 sources = selectedSources,
                 selectedSource = selectedSources.firstOrNull()
             )
@@ -377,6 +381,8 @@ object PlaybackManager {
                 favorite = false,
                 downloaded = false,
                 metadata = fullVideo.meta,
+                lyrics = fullVideo.lyrics.firstOrNull { it.lng.equals("fa", true) && !it.body.isNullOrBlank() }?.body
+                    ?: fullVideo.lyrics.firstOrNull { !it.body.isNullOrBlank() }?.body,
                 sources = selectedSources,
                 selectedSource = selectedSources.firstOrNull()
             )
