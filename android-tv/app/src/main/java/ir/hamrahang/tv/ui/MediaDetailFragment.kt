@@ -38,6 +38,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
     private lateinit var rows: VerticalGridView
     private lateinit var actions: View
     private lateinit var playButton: ImageButton
+    private lateinit var albumPlayButton: ImageButton
     private lateinit var favoriteButton: ImageButton
     private lateinit var moreButton: ImageButton
     private lateinit var lyricsView: TextView
@@ -70,11 +71,13 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
 
         actions = view.findViewById(R.id.singleItemActions)
         playButton = view.findViewById(R.id.btnDetailPlay)
+        albumPlayButton = view.findViewById(R.id.btnAlbumPlay)
         favoriteButton = view.findViewById(R.id.btnDetailFavorite)
         moreButton = view.findViewById(R.id.btnDetailMore)
         lyricsView = view.findViewById(R.id.detailLyrics)
 
         playButton.setOnClickListener { playCurrentDetail() }
+        albumPlayButton.setOnClickListener { playCurrentDetail() }
         favoriteButton.setOnClickListener { toggleFavorite() }
         moreButton.setOnClickListener {
             Toast.makeText(requireContext(), "More options will be available here", Toast.LENGTH_SHORT).show()
@@ -127,7 +130,16 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         )
         rows.visibility = View.VISIBLE
         actions.visibility = View.GONE
-        requestAlbumListFocus()
+        albumPlayButton.visibility = View.VISIBLE
+        albumPlayButton.setOnKeyListener { _, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN &&
+                keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN
+            ) {
+                requestAlbumListFocus()
+                true
+            } else false
+        }
+        albumPlayButton.post { albumPlayButton.requestFocus() }
     }
 
     private suspend fun loadSong() {
@@ -161,6 +173,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         HeroManager.show(hero)
         rows.visibility = View.GONE
         actions.visibility = View.VISIBLE
+        albumPlayButton.visibility = View.GONE
 
         // meta.lrc is a lyrics resource reference in the current data model,
         // not parsed lyric text. Keep the lyrics panel clean until a lyrics renderer exists.
