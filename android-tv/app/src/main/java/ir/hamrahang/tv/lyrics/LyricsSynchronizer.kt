@@ -8,7 +8,7 @@ object LyricsSynchronizer {
         playerScope: Boolean = true
     ): LyricsFrame {
         val visible = if (playerScope) parsed.lines else parsed.lines.filterNot { it.isIntro }
-        val activeTime = (positionMs - parsed.offsetMs).coerceAtLeast(0L)
+        val activeTime = positionMs - parsed.offsetMs
         val activeIndex = visible.indexOfLast {
             it.timeMs != null && it.timeMs <= activeTime
         }
