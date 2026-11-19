@@ -27,6 +27,20 @@
             android:paddingTop="8dp"
             android:paddingBottom="24dp" />
 
+        <ImageButton
+            android:id="@+id/btnAlbumPlay"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_artist_play"
+            android:src="@drawable/ic_play_arrow"
+            android:tint="@android:color/black"
+            android:contentDescription="Play album"
+            android:focusable="true"
+            android:visibility="gone" />
+
         <LinearLayout
             android:id="@+id/singleItemActions"
             android:layout_width="match_parent"
