@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.data.song
 
+import android.util.Log
 import ir.hamrahang.tv.data.artist.ArtistRepository
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.DatabaseUpdater
@@ -56,6 +57,7 @@ class SongRepository {
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
+            Log.e("DETAIL_FETCH", "Song detail request failed. id=$id", error)
             if (local != null) {
                 val artists = artistRepository.getByIds(
                     SongEntityMapper.jsonToIds(local.artistIds)
