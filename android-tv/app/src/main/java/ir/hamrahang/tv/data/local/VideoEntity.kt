@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -12,6 +13,7 @@ data class VideoEntity(
     val songIds: String,
     val meta: String,
     val sources: String,
+    @ColumnInfo(defaultValue = "'[]'") val lyrics: String = "[]",
     val isFull: Boolean,
     val updatedAt: Long
 )
