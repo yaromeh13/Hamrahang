@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.domain.podcast
 
+import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.ParentMini
@@ -15,7 +16,8 @@ data class Podcast(
     val artists: List<Artist> = emptyList(),
     val parents: List<ParentMini> = emptyList(),
     val meta: MediaMeta? = null,
-    val sources: List<MediaSource> = emptyList()
+    val sources: List<MediaSource> = emptyList(),
+    val lyrics: List<LyricsEntry> = emptyList()
 ) : LocalizedTitle {
     val thumb: String get() = ImageResolver.podcast(meta)
     val heroBackground: String? get() = ImageResolver.hero(meta)
