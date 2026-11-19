@@ -1,66 +1,51 @@
 package ir.hamrahang.tv.ui.hero
 
-import android.util.Log
 import android.view.KeyEvent
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import ir.hamrahang.tv.util.ImageResolver
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-
 import ir.hamrahang.tv.R
-import ir.hamrahang.tv.data.local.DatabaseUpdater
 import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.artist.ArtistRepository
 import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.hero.HeroStyle
 import ir.hamrahang.tv.ui.widget.FadeImageView
-
+import ir.hamrahang.tv.util.ImageResolver
 import ir.hamrahang.tv.util.displayTitle
-import ir.hamrahang.tv.utils.AppState
 import kotlinx.coroutines.launch
 
 class HeroWidget(
-
     root: View,
     owner: LifecycleOwner
-
 ) {
 
     private val videoHero: View = root.findViewById(R.id.musicVideoHero)
     private val itemHero: View = root.findViewById(R.id.itemHero)
     private val artistHero: View = root.findViewById(R.id.artistHero)
-    private val albumHero: View = root.findViewById(R.id.albumHero)
 
     // VIDEO
-    private val VideoTitle: TextView = root.findViewById(R.id.VideoTitle)
-    private val VideoSubTitle: TextView = root.findViewById(R.id.VideoSubTitle)
-    private val VideoArt: FadeImageView = root.findViewById(R.id.VideoArt)
-//    private val VideoArt: ImageView =        root.findViewById(R.id.VideoArt)
-    private val layoutVideoArtists: LinearLayout = root.findViewById(R.id.layoutVideoArtists)
-    private val videoMetaBinder = HeroMetaBinder(root.findViewById(R.id.videoMetaContainer))
+    private val videoTitle: TextView = root.findViewById(R.id.VideoTitle)
+    private val videoSubTitle: TextView = root.findViewById(R.id.VideoSubTitle)
+    private val videoArt: FadeImageView = root.findViewById(R.id.VideoArt)
+    private val layoutVideoArtists: LinearLayout =
+        root.findViewById(R.id.layoutVideoArtists)
+    private val videoMetaBinder =
+        HeroMetaBinder(root.findViewById(R.id.videoMetaContainer))
 
-    // ITEM
+    // SHARED ITEM: SONG / PODCAST / ALBUM / PLAYLIST
     private val itemTitle: TextView = root.findViewById(R.id.itemTitle)
-    private val layoutItemArtists: LinearLayout = root.findViewById(R.id.layoutItemArtists)
+    private val layoutItemArtists: LinearLayout =
+        root.findViewById(R.id.layoutItemArtists)
     private val itemCover: ImageView = root.findViewById(R.id.itemCover)
-    private val itemMetaBinder = HeroMetaBinder(root.findViewById(R.id.itemMetaContainer))
-
-    // ALBUM
-    private val albumTitle: TextView = root.findViewById(R.id.albumTitle)
-
-    private val albumArtists: LinearLayout = root.findViewById(R.id.albumArtist)
-    private val albumMetaBinder = HeroMetaBinder(root.findViewById(R.id.albumMetaContainer))
-
-    private val albumCover: ImageView = root.findViewById(R.id.albumCover)
+    private val itemMetaBinder =
+        HeroMetaBinder(root.findViewById(R.id.itemMetaContainer))
 
     // ARTIST
     private val artistName: TextView = root.findViewById(R.id.artistName)
@@ -81,56 +66,113 @@ class HeroWidget(
         owner.lifecycleScope.launch {
             HeroManager.engine.state.collect { state ->
                 if (state == null) return@collect
-                when (state.style) {
 
+                when (state.style) {
                     HeroStyle.VIDEO -> {
                         showVideo()
+
                         val musicVideo = state.musicVideo ?: return@collect
-                        VideoTitle.text = musicVideo.displayTitle()
-                        VideoSubTitle.text = musicVideo.title ?: ""
+                        videoTitle.text = musicVideo.displayTitle()
+                        videoSubTitle.text = musicVideo.title.orEmpty()
 
-                        ImageResolver.request(VideoArt, musicVideo.thumb, R.drawable.ic_video)
-                            .into(VideoArt)
+                        ImageResolver.request(
+                            videoArt,
+                            musicVideo.thumb,
+                            R.drawable.ic_video
+                        ).into(videoArt)
 
-                        VideoArt.fadeStart = 0.4f
+                        videoArt.fadeStart = 0.4f
                         videoMetaBinder.bind(musicVideo.meta)
-
                         HeroArtistsBinder.bind(
                             layoutVideoArtists,
                             musicVideo.artists
-
                         )
                     }
 
                     HeroStyle.SONG -> {
-
-                        showItem()
                         val song = state.song ?: return@collect
-                        itemTitle.text = song.displayTitle()
-                        ImageResolver.request(itemCover, song.thumb, R.drawable.ic_song)
-                            .transform(
-                                CenterCrop(),
-                                RoundedCorners(24)
-                            )
-                            .into(itemCover)
+                        showItem()
 
+                        itemTitle.text = song.displayTitle()
+                        ImageResolver.request(
+                            itemCover,
+                            song.thumb,
+                            R.drawable.ic_song
+                        ).transform(
+                            CenterCrop(),
+                            RoundedCorners(24)
+                        ).into(itemCover)
+
+                        itemMetaBinder.bind(song.meta)
                         HeroArtistsBinder.bind(
                             layoutItemArtists,
                             song.artists
-
                         )
-                        itemMetaBinder.bind(song.meta)
+                    }
 
+                    HeroStyle.PODCAST -> {
+                        val podcast = state.podcast ?: return@collect
+                        showItem()
+
+                        itemTitle.text = podcast.displayTitle()
+                        ImageResolver.request(
+                            itemCover,
+                            podcast.thumb,
+                            R.drawable.ic_song
+                        ).transform(
+                            CenterCrop(),
+                            RoundedCorners(24)
+                        ).into(itemCover)
+
+                        itemMetaBinder.bind(podcast.meta)
+                        HeroArtistsBinder.bind(
+                            layoutItemArtists,
+                            podcast.artists
+                        )
+                    }
+
+                    HeroStyle.ALBUM -> {
+                        val album = state.album ?: return@collect
+                        showItem()
+
+                        itemTitle.text = album.displayTitle()
+                        ImageResolver.request(
+                            itemCover,
+                            album.thumb,
+                            R.drawable.ic_album_disk
+                        ).transform(
+                            CenterCrop(),
+                            RoundedCorners(24)
+                        ).into(itemCover)
+
+                        itemMetaBinder.bind(album.meta)
+
+                        owner.lifecycleScope.launch {
+                            var artists = ArtistRepository().getByIds(album.artists)
+
+                            // Fill missing local artist data when album details are available.
+                            if (artists.size < album.artists.size && album.artists.isNotEmpty()) {
+                                runCatching {
+                                    AlbumRepository().getAlbum(album.id)
+                                }
+                                artists = ArtistRepository().getByIds(album.artists)
+                            }
+
+                            HeroArtistsBinder.bind(layoutItemArtists, artists)
+                        }
                     }
 
                     HeroStyle.ARTIST -> {
-
                         showArtist()
+
                         val artist = state.artist ?: return@collect
                         artistName.text = artist.displayTitle()
+
                         val globalName = artist.name?.trim().orEmpty()
                         val localizedTitle = artist.displayTitle().trim()
-                        if (globalName.isNotEmpty() && !globalName.equals(localizedTitle, ignoreCase = true)) {
+                        if (globalName.isNotEmpty() &&
+                            !globalName.equals(localizedTitle, ignoreCase = true)
+                        ) {
                             artistSubName.text = globalName
                             artistSubName.visibility = View.VISIBLE
                         } else {
@@ -140,41 +182,13 @@ class HeroWidget(
 
                         artistBio.text = artist.meta?.des.orEmpty()
 
-                        ImageResolver.request(artistCover, artist.thumb, R.drawable.ic_profile)
-                            .circleCrop()
-                            .into(artistCover)
+                        ImageResolver.request(
+                            artistCover,
+                            artist.thumb,
+                            R.drawable.ic_profile
+                        ).circleCrop().into(artistCover)
 
                         artistDetailsBinder.bind(artist)
-                    }
-
-                    HeroStyle.ALBUM -> {
-
-                        showAlbum()
-                        val album = state.album ?: return@collect
-
-                        albumTitle.text = album.displayTitle()
-                        albumMetaBinder.bind(album.meta)
-
-                        ImageResolver.request(albumCover, album.thumb, R.drawable.ic_album_disk)
-                            .transform(
-                                CenterCrop(),
-                                RoundedCorners(24)
-                            )
-                            .into(albumCover)
-
-                        owner.lifecycleScope.launch {
-                            var artists = ArtistRepository().getByIds(album.artists)
-
-                            // Load album details if one or more related artists are missing locally.
-                            if (artists.size < album.artists.size && album.artists.isNotEmpty()) {
-                                runCatching {
-                                    AlbumRepository().getAlbum(album.id)
-                                }
-                                artists = ArtistRepository().getByIds(album.artists)
-                            }
-
-                            HeroArtistsBinder.bind(albumArtists, artists)
-                        }
                     }
                 }
             }
@@ -182,33 +196,23 @@ class HeroWidget(
     }
 
     private fun hideAll() {
-
         videoHero.visibility = View.GONE
         itemHero.visibility = View.GONE
         artistHero.visibility = View.GONE
-        albumHero.visibility = View.GONE
     }
 
     private fun showVideo() {
         updateVideoLayout()
         hideAll()
         videoHero.visibility = View.VISIBLE
-        //updateVideoLayout()
     }
 
     private fun showItem() {
-
         hideAll()
         itemHero.visibility = View.VISIBLE
     }
-    private fun showAlbum() {
-
-        hideAll()
-        albumHero.visibility = View.VISIBLE
-    }
 
     private fun showArtist() {
-
         hideAll()
         artistHero.visibility = View.VISIBLE
     }
@@ -232,17 +236,15 @@ class HeroWidget(
             btnPlayArtist.requestFocus()
         }
     }
+
     fun setPlayButtonKeyListener(rows: RecyclerView) {
-
         btnPlayArtist.setOnKeyListener { _, keyCode, event ->
-
             if (event.action == KeyEvent.ACTION_DOWN &&
-                keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-
+                keyCode == KeyEvent.KEYCODE_DPAD_DOWN
+            ) {
                 rows.findViewHolderForAdapterPosition(0)
                     ?.itemView
                     ?.requestFocus()
-
                 true
             } else {
                 false
@@ -251,14 +253,9 @@ class HeroWidget(
     }
 
     private fun updateVideoLayout() {
-
-        val lp = VideoArt.layoutParams as ConstraintLayout.LayoutParams
-
+        val lp = videoArt.layoutParams as ConstraintLayout.LayoutParams
         lp.startToStart = ConstraintLayout.LayoutParams.UNSET
         lp.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
-
-        VideoArt.layoutParams = lp
+        videoArt.layoutParams = lp
     }
-
-
 }
