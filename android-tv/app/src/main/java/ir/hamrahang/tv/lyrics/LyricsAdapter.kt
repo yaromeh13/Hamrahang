@@ -37,8 +37,12 @@ class LyricsAdapter(
         ) {
             notifyDataSetChanged()
         } else if (oldFrame.activeIndex != newFrame.activeIndex) {
-            if (oldFrame.activeIndex >= 0) notifyItemChanged(adapterPosition(oldFrame.activeIndex))
-            if (newFrame.activeIndex >= 0) notifyItemChanged(adapterPosition(newFrame.activeIndex))
+            if (effectiveMode() == LyricsViewMode.LINE || effectiveMode() == LyricsViewMode.CARD) {
+                notifyDataSetChanged()
+            } else {
+                if (oldFrame.activeIndex >= 0) notifyItemChanged(oldFrame.activeIndex)
+                if (newFrame.activeIndex >= 0) notifyItemChanged(newFrame.activeIndex)
+            }
         }
     }
 
