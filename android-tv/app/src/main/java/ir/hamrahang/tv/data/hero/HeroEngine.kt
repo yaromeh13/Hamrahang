@@ -33,6 +33,11 @@ class HeroEngine {
                 style = HeroStyle.SONG,
                 song = event.song
             )
+
+            is HeroEvent.PodcastFocused -> HeroState(
+                style = HeroStyle.PODCAST,
+                podcast = event.podcast
+            )
         }
 
         val key = when (newState.style) {
@@ -45,6 +50,9 @@ class HeroEngine {
 
             HeroStyle.SONG ->
                 "song:${newState.song?.id}:${newState.song?.sources.hashCode()}"
+
+            HeroStyle.PODCAST ->
+                "podcast:${newState.podcast?.id}:${newState.podcast?.sources.hashCode()}"
 
             HeroStyle.VIDEO ->
                 "musicvideo:${newState.musicVideo?.id}:${newState.musicVideo?.meta.hashCode()}"
