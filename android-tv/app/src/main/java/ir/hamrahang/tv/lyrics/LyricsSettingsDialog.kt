@@ -49,9 +49,9 @@ object LyricsSettingsDialog {
             }
         }
 
-        label("Display mode")
+        label("حالت نمایش")
         val modeGroup = radioGroup(
-            listOf("NORMAL" to "Normal", "FOCUS" to "Focus", "LINE" to "Line", "CARD" to "Card"),
+            listOf("NORMAL" to "عادی", "FOCUS" to "تمرکز", "LINE" to "خطی", "CARD" to "کارت"),
             current.viewMode.name
         )
         root.addView(modeGroup)
@@ -60,32 +60,32 @@ object LyricsSettingsDialog {
             .distinct()
             .map { code ->
                 code to when (code) {
-                    "auto" -> "Auto"
+                    "auto" -> "خودکار"
                     "fa" -> "فارسی"
-                    "en" -> "English"
+                    "en" -> "انگلیسی"
                     else -> code
                 }
             }
-        label("Language")
+        label("زبان")
         val languageSelection = if (languages.any { it.first == current.language }) current.language else "auto"
         val languageGroup = radioGroup(languages, languageSelection)
         root.addView(languageGroup)
 
-        label("Font")
+        label("فونت")
         val fontGroup = radioGroup(
-            listOf("" to "Default", "f1" to "Vazirmatn", "f2" to "Serif", "f3" to "Sans", "f4" to "Mono"),
+            listOf("" to "پیش‌فرض", "f1" to "وزیر", "f2" to "سریف", "f3" to "سن‌سریف", "f4" to "مونو"),
             current.fontFamily
         )
         root.addView(fontGroup)
 
-        label("Size presets")
+        label("اندازه‌های آماده")
         val presets = radioGroup(
             listOf("13" to "13", "16" to "16", "20" to "20", "24" to "24"),
             if (current.fontSize in listOf(13, 16, 20, 24)) current.fontSize.toString() else ""
         )
         root.addView(presets)
 
-        val sizeLabel = label("Font size: ${current.fontSize}sp")
+        val sizeLabel = label("اندازه قلم: ${current.fontSize}sp")
         val sizeSeek = SeekBar(context).apply {
             max = 20
             progress = current.fontSize.coerceIn(12, 32) - 12
@@ -98,7 +98,7 @@ object LyricsSettingsDialog {
         }
         sizeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                sizeLabel.text = "Font size: ${progress + 12}sp"
+                sizeLabel.text = "اندازه قلم: ${progress + 12}sp"
                 val presetId = (0 until presets.childCount)
                     .map { presets.getChildAt(it) as RadioButton }
                     .firstOrNull { (it.tag as? String)?.toIntOrNull() == progress + 12 }
@@ -113,10 +113,10 @@ object LyricsSettingsDialog {
         root.addView(sizeSeek)
 
         AlertDialog.Builder(context)
-            .setTitle("Lyrics settings")
+            .setTitle("تنظیمات متن ترانه")
             .setView(root)
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Apply") { _, _ ->
+            .setNegativeButton("لغو", null)
+            .setPositiveButton("اعمال") { _, _ ->
                 fun selected(group: RadioGroup, fallback: String): String =
                     group.findViewById<RadioButton>(group.checkedRadioButtonId)
                         ?.tag as? String ?: fallback
