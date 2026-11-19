@@ -40,7 +40,9 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
     private lateinit var actions: View
     private lateinit var playButton: Button
     private lateinit var albumPlayButton: Button
-    private lateinit var favoriteButton: ImageButton
+    private lateinit var albumActions: View
+    private lateinit var bookmarkButton: ImageButton
+    private lateinit var infoButton: ImageButton
     private lateinit var moreButton: ImageButton
     private lateinit var lyricsView: TextView
 
@@ -50,7 +52,6 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
     private var song: ir.hamrahang.tv.domain.song.Song? = null
     private var podcast: ir.hamrahang.tv.domain.podcast.Podcast? = null
     private var video: ir.hamrahang.tv.domain.video.Video? = null
-    private var favorite = false
     private var pendingPlaybackSession: PlaybackSession? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,13 +76,15 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         actions = view.findViewById(R.id.singleItemActions)
         playButton = view.findViewById(R.id.btnDetailPlay)
         albumPlayButton = view.findViewById(R.id.btnAlbumPlay)
-        favoriteButton = view.findViewById(R.id.btnDetailFavorite)
+        albumActions = view.findViewById(R.id.albumActions)
+        bookmarkButton = view.findViewById(R.id.btnDetailBookmark)
+        infoButton = view.findViewById(R.id.btnDetailInfo)
         moreButton = view.findViewById(R.id.btnDetailMore)
         lyricsView = view.findViewById(R.id.detailLyrics)
 
         playButton.setOnClickListener { playCurrentDetail() }
         albumPlayButton.setOnClickListener { playCurrentDetail() }
-        favoriteButton.setOnClickListener { toggleFavorite() }
+        infoButton.setOnClickListener { }
         moreButton.setOnClickListener {
             Toast.makeText(requireContext(), "More options will be available here", Toast.LENGTH_SHORT).show()
         }
@@ -133,7 +136,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         )
         rows.visibility = View.VISIBLE
         actions.visibility = View.GONE
-        albumPlayButton.visibility = View.VISIBLE
+        albumActions.visibility = View.VISIBLE
         albumPlayButton.setOnKeyListener { _, keyCode, event ->
             if (event.action == android.view.KeyEvent.ACTION_DOWN &&
                 keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN
@@ -149,14 +152,12 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         val item = SongRepository().getSong(contentId)
         song = item
         showSingle(HeroContent.SongHero(item), item.heroBackground, item.meta?.lrc)
-        loadFavorite(ContentType.SONG)
     }
 
     private suspend fun loadPodcast() {
         val item = PodcastRepository().getPodcast(contentId)
         podcast = item
         showSingle(HeroContent.PodcastHero(item), item.heroBackground, item.meta?.lrc)
-        loadFavorite(ContentType.PODCAST)
     }
 
     private suspend fun loadVideo(isMusicVideo: Boolean) {
@@ -168,7 +169,6 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         video = item
         val hero = if (isMusicVideo) HeroContent.MusicVideoHero(item) else HeroContent.VideoHero(item)
         showSingle(hero, item.heroBackground, item.meta?.lrc)
-        loadFavorite(item.contentType)
     }
 
     private fun showSingle(hero: HeroContent, background: String?, lyrics: String?) {
@@ -176,7 +176,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         HeroManager.show(hero)
         rows.visibility = View.GONE
         actions.visibility = View.VISIBLE
-        albumPlayButton.visibility = View.GONE
+        albumActions.visibility = View.GONE
 
         // meta.lrc is a lyrics resource reference in the current data model,
         // not parsed lyric text. Keep the lyrics panel clean until a lyrics renderer exists.
@@ -194,27 +194,6 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
                 horizontal.requestFocus()
             }
         }
-    }
-
-    private suspend fun loadFavorite(type: ContentType) {
-        val id = contentId.toLongOrNull() ?: return
-        favorite = FavoriteManager.isFavorite(id, type)
-        updateFavoriteButton()
-    }
-
-    private fun toggleFavorite() {
-        val id = contentId.toLongOrNull() ?: return
-        viewLifecycleOwner.lifecycleScope.launch {
-            favorite = FavoriteManager.toggle(id, contentType)
-            updateFavoriteButton()
-        }
-    }
-
-    private fun updateFavoriteButton() {
-        favoriteButton.setImageResource(
-            if (favorite) R.drawable.ic_favorite_filled else R.drawable.ic_favorite
-        )
-        favoriteButton.isSelected = favorite
     }
 
     private fun playCurrentDetail() {
