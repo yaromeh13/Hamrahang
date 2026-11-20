@@ -36,4 +36,50 @@
 
 
     <string name="play">پخش</string>
+    <!-- Player settings and lyrics panel -->
+    <string name="lyrics_language_title">زبان</string>
+    <string name="lyrics_language_auto">خودکار</string>
+    <string name="lyrics_language_persian">فارسی</string>
+    <string name="lyrics_language_english">انگلیسی</string>
+    <string name="lyrics_language_arabic">عربی</string>
+    <string name="lyrics_language_turkish">ترکی</string>
+    <string name="lyrics_language_kurdish">کردی</string>
+    <string name="lyrics_language_azerbaijani">آذربایجانی</string>
+    <string name="lyrics_language_german">آلمانی</string>
+    <string name="lyrics_language_french">فرانسوی</string>
+    <string name="lyrics_language_spanish">اسپانیایی</string>
+    <string name="lyrics_language_russian">روسی</string>
+    <string name="lyrics_style_title">استایل</string>
+    <string name="lyrics_style_normal">عادی</string>
+    <string name="lyrics_style_focus">تمرکز</string>
+    <string name="lyrics_style_line">خطی</string>
+    <string name="lyrics_style_card">کارت</string>
+    <string name="lyrics_font_title">فونت</string>
+    <string name="lyrics_font_default">پیش‌فرض</string>
+    <string name="lyrics_font_vazir">وزیر</string>
+    <string name="lyrics_font_serif">سریف</string>
+    <string name="lyrics_font_sans">سن‌سریف</string>
+    <string name="lyrics_font_monospace">تک‌عرض</string>
+    <string name="lyrics_size_title">اندازه فونت</string>
+    <string name="lyrics_size_small">کوچک</string>
+    <string name="lyrics_size_medium">متوسط</string>
+    <string name="lyrics_size_large">بزرگ</string>
+    <string name="lyrics_size_extra_large">خیلی بزرگ</string>
+    <string name="lyrics_size_value">%1$d واحد</string>
+    <string name="settings_title">تنظیمات</string>
+    <string name="settings_lyrics">متن ترانه</string>
+    <string name="settings_header">هدر</string>
+    <string name="settings_rotating_header">هدر چرخان</string>
+    <string name="settings_controller">کنترلر</string>
+    <string name="settings_subtitle">زیرنویس</string>
+    <string name="settings_image">تصویر</string>
+    <string name="settings_cover">کاور</string>
+    <string name="settings_quality">کیفیت پخش</string>
+    <string name="settings_text_color">رنگ متن</string>
+    <string name="settings_white">سفید</string>
+    <string name="settings_black">مشکی</string>
+    <string name="settings_yellow">زرد</string>
+    <string name="settings_blue">آبی</string>
+    <string name="source_none">منبعی در دسترس نیست</string>
+    <string name="source_fallback">منبع %1$d</string>
 </resources>
