@@ -170,7 +170,7 @@ object MoreOptionsPanel {
             }
         }
 
-        addTopAction(context, actionsColumn, R.drawable.ic_queue_music, "to Queue") {
+        addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Queue") {
             MessageManager.info(
                 if (ir.hamrahang.tv.playback.PlaybackManager.session.value?.items?.any {
                     it.id == item.id && it.contentType == item.contentType
@@ -178,7 +178,7 @@ object MoreOptionsPanel {
                 else "Adding items to the queue from this menu is not available yet"
             )
         }
-        addTopAction(context, actionsColumn, R.drawable.ic_playlist, "to Playlist") {
+        addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Playlist") {
             MessageManager.info("Playlists are not available on TV yet")
         }
         addTopAction(context, actionsColumn, R.drawable.ic_error, "Report") {
