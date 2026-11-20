@@ -87,6 +87,16 @@ class PlaybackQueueAdapter(
                 if (event.action != KeyEvent.ACTION_DOWN) return true
                 return handleReorderKey(keyCode)
             }
+
+            // Enter the row's action controls explicitly. Relying on Android's
+            // geometric focus search is unreliable on TV layouts.
+            if (event.action == KeyEvent.ACTION_DOWN &&
+                keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+            ) {
+                remove.requestFocus()
+                return true
+            }
+
             if (keyCode != KeyEvent.KEYCODE_DPAD_CENTER &&
                 keyCode != KeyEvent.KEYCODE_ENTER &&
                 keyCode != KeyEvent.KEYCODE_NUMPAD_ENTER
