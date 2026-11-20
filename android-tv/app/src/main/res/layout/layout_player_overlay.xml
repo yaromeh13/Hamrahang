@@ -122,19 +122,24 @@
 
         <TextView
             android:id="@+id/txtCurrentTime"
-            android:layout_width="wrap_content"
+            android:layout_width="64dp"
             android:layout_height="wrap_content"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:fontFamily="monospace"
             android:text="00:00"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"/>
+            android:textSize="14sp"
+            android:maxLines="1"/>
 
         <SeekBar
             android:id="@+id/seekBar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:minWidth="0dp"
             android:minHeight="3dp"
             android:maxHeight="3dp"
             android:splitTrack="false"
@@ -145,11 +150,15 @@
 
         <TextView
             android:id="@+id/txtDuration"
-            android:layout_width="wrap_content"
+            android:layout_width="64dp"
             android:layout_height="wrap_content"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:fontFamily="monospace"
             android:text="00:00"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"/>
+            android:textSize="14sp"
+            android:maxLines="1"/>
 
     </LinearLayout>
 
