@@ -39,14 +39,11 @@ import ir.hamrahang.tv.ui.hero.HeroMetaBinder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-import ir.hamrahang.tv.data.local.ContentType
-import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.lyrics.LyricsAdapter
 import ir.hamrahang.tv.lyrics.LyricsAutoScroller
 import ir.hamrahang.tv.lyrics.LyricsParser
 import ir.hamrahang.tv.lyrics.LyricsPreferences
 import ir.hamrahang.tv.lyrics.LyricsSettings
-import ir.hamrahang.tv.lyrics.LyricsSettingsDialog
 import ir.hamrahang.tv.lyrics.LyricsEngine
 import ir.hamrahang.tv.lyrics.LyricsViewMode
 import ir.hamrahang.tv.lyrics.ParsedLyrics
@@ -297,9 +294,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             PlayerState.setPlayerLyricsVisible(switchLyricsVideo.isChecked)
         }
 
-        view.findViewById<LinearLayout>(R.id.rowItemLyricsSettings).setOnClickListener {
-            openSettingsPanel("LYRICS", btnLyrics)
-        }
         val rowItemHeader = view.findViewById<LinearLayout>(R.id.rowItemHeader)
         rowItemHeader.setOnClickListener {
             switchHeader.isChecked = !switchHeader.isChecked
@@ -640,9 +634,10 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     }
 
     private fun bindLyrics(info: PlaybackInfoState, positionMs: Long) {
+        val language = if (lyricsPreferences.language == "auto") "fa" else lyricsPreferences.language
         val body = LyricsParser.selectEntry(
             info.lyricsEntries,
-            lyricsPreferences.language
+            language
         )?.body ?: info.lyrics
 
         if (body != lastLyricsBody) {
@@ -942,6 +937,32 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 background = requireContext().getDrawable(R.drawable.bg_settings_row_focus)
                 tag = "source_$index"
             }
+            val number = TextView(requireContext()).apply {
+                text = (index + 1).toString()
+                textSize = 14f
+                setTextColor(0xFF999999.toInt())
+                setPadding(0, 0, 12, 0)
+            }
+            row.addView(number)
+            val ownerImage = ImageView(requireContext()).apply {
+                val imageUrl = source.owner?.meta?.tmb
+                    ?: source.owner?.meta?.ico
+                    ?: source.owner?.meta?.photo
+                layoutParams = LinearLayout.LayoutParams(44.dp, 44.dp).apply {
+                    marginEnd = 12.dp
+                }
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                if (!imageUrl.isNullOrBlank()) {
+                    Glide.with(this)
+                        .load(imageUrl)
+                        .placeholder(R.drawable.ic_general)
+                        .error(R.drawable.ic_general)
+                        .into(this)
+                } else {
+                    setImageResource(R.drawable.ic_general)
+                }
+            }
+            row.addView(ownerImage)
             val label = source.owner?.name?.takeIf { it.isNotBlank() }
                 ?: runCatching { Uri.parse(source.url).host }.getOrNull()
                 ?: "Source ${index + 1}"
@@ -970,11 +991,14 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             val row = panelDynamicContent.getChildAt(index) as? LinearLayout ?: continue
             val sourceIndex = row.tag?.toString()?.removePrefix("source_")?.toIntOrNull() ?: continue
             val selected = sources.getOrNull(sourceIndex)?.url == selectedUrl
-            (row.getChildAt(0) as? TextView)?.setTextColor(
+            (row.getChildAt(2) as? TextView)?.setTextColor(
                 if (selected) 0xFFFF7777.toInt() else 0xFFFFFFFF.toInt()
             )
         }
     }
+
+    private val Int.dp: Int
+        get() = (this * resources.displayMetrics.density).toInt()
 
     private fun closeSettingsPanel() {
         cancelSettingsHide()
