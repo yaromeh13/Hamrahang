@@ -298,7 +298,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="تنظیمات"
+                android:text="@string/settings_title"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:textSize="18sp"/>
@@ -317,7 +317,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="متن ترانه"
+                    android:text="@string/settings_lyrics"
                     android:textColor="#FFF"/>
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -328,8 +328,6 @@
                     android:focusable="false"
                     android:clickable="false"/>
             </LinearLayout>
-
-inearLayout>
 
             <LinearLayout
                 android:id="@+id/rowItemHeader"
@@ -345,7 +343,7 @@ inearLayout>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="هدر"
+                    android:text="@string/settings_header"
                     android:textColor="#FFF"/>
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -371,7 +369,7 @@ inearLayout>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="هدر چرخان"
+                    android:text="@string/settings_rotating_header"
                     android:textColor="#FFF"/>
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -397,7 +395,7 @@ inearLayout>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="کنترلر"
+                    android:text="@string/settings_controller"
                     android:textColor="#FFF"/>
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -424,7 +422,7 @@ inearLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="تنظیمات"
+                android:text="@string/settings_title"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:textSize="18sp"/>
@@ -443,7 +441,7 @@ inearLayout>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="متن ترانه"
+                    android:text="@string/settings_lyrics"
                     android:textColor="#FFF"/>
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -469,7 +467,7 @@ inearLayout>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="زیرنویس"
+                    android:text="@string/settings_subtitle"
                     android:textColor="#FFF"/>
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -495,7 +493,7 @@ inearLayout>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="تصویر"
+                    android:text="@string/settings_image"
                     android:textColor="#FFF"/>
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -521,7 +519,7 @@ inearLayout>
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="کاور"
+                    android:text="@string/settings_cover"
                     android:textColor="#FFF"/>
 
                 <androidx.appcompat.widget.SwitchCompat
@@ -554,7 +552,7 @@ inearLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="کیفیت پخش"
+                android:text="@string/settings_quality"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:textSize="18sp"/>
@@ -584,7 +582,7 @@ inearLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="رنگ متن"
+                android:text="@string/settings_text_color"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:textSize="18sp"/>
@@ -601,7 +599,7 @@ inearLayout>
                     android:padding="8dp"
                     android:textColor="#FFFFFF"
                     android:background="@drawable/bg_settings_row_focus"
-                    android:text="سفید"
+                    android:text="@string/settings_white"
                     android:checked="true"/>
 
                 <RadioButton
@@ -610,7 +608,7 @@ inearLayout>
                     android:padding="8dp"
                     android:textColor="#FFFFFF"
                     android:background="@drawable/bg_settings_row_focus"
-                    android:text="مشکی"/>
+                    android:text="@string/settings_black"/>
 
                 <RadioButton
                     android:layout_width="wrap_content"
@@ -618,7 +616,7 @@ inearLayout>
                     android:padding="8dp"
                     android:textColor="#FFFFFF"
                     android:background="@drawable/bg_settings_row_focus"
-                    android:text="زرد"/>
+                    android:text="@string/settings_yellow"/>
 
                 <RadioButton
                     android:layout_width="wrap_content"
@@ -626,7 +624,7 @@ inearLayout>
                     android:padding="8dp"
                     android:textColor="#FFFFFF"
                     android:background="@drawable/bg_settings_row_focus"
-                    android:text="آبی"/>
+                    android:text="@string/settings_blue"/>
 
             </RadioGroup>
 
