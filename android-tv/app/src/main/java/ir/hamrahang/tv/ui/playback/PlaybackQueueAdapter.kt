@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.playback
 
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -30,6 +31,39 @@ class PlaybackQueueAdapter(
         val more: View = view.findViewById(R.id.btnQueueMore)
 
         init {
+            itemView.setOnKeyListener { _, keyCode, event ->
+                if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+                if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                    remove.requestFocus()
+                    true
+                } else {
+                    false
+                }
+            }
+            remove.setOnKeyListener { _, keyCode, event ->
+                if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        itemView.requestFocus()
+                        true
+                    }
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        more.requestFocus()
+                        true
+                    }
+                    else -> false
+                }
+            }
+            more.setOnKeyListener { _, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_DOWN &&
+                    keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+                ) {
+                    remove.requestFocus()
+                    true
+                } else {
+                    false
+                }
+            }
             remove.setOnClickListener {
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) onRemove(position)
