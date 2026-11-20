@@ -77,6 +77,13 @@ interface ApiService {
         @Query("_qjs") qjs: String = "ep"
     ): AlbumResponseDto
 
+    // Existing web endpoint: ?_qjs=own&ids=publicId,publicId
+    @GET("/")
+    suspend fun getOwners(
+        @Query("_qjs") qjs: String = "own",
+        @Query("ids") ids: String
+    ): ir.hamrahang.tv.data.SourceOwnersResponse
+
     @GET("favorite")
     suspend fun getFavorites(
         @Query("_qjs") qjs: String = "ep"
