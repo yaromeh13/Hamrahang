@@ -14,6 +14,7 @@ import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.LyricsEntry
 import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.local.ContentType
+import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
 import ir.hamrahang.tv.data.podcast.PodcastRepository
 import ir.hamrahang.tv.data.song.SongRepository
@@ -85,6 +86,19 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
 
         playButton.setOnClickListener { playCurrentDetail() }
         infoButton.setOnClickListener { }
+        bookmarkButton.setOnClickListener {
+            val mediaId = contentId.toLongOrNull()
+            if (mediaId == null) {
+                MessageManager.info("This item cannot be bookmarked")
+            } else {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val saved = FavoriteManager.toggle(mediaId, contentType)
+                    bookmarkButton.isSelected = saved
+                    bookmarkButton.alpha = if (saved) 1f else 0.65f
+                    MessageManager.info(if (saved) "Added to bookmarks" else "Removed from bookmarks")
+                }
+            }
+        }
         moreButton.setOnClickListener {
             val item = when (contentType) {
                 ContentType.ALBUM -> album?.let {
@@ -111,6 +125,15 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         loadDetails()
     }
 
+    private fun bindBookmarkState() {
+        val mediaId = contentId.toLongOrNull() ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val saved = FavoriteManager.isFavorite(mediaId, contentType)
+            bookmarkButton.isSelected = saved
+            bookmarkButton.alpha = if (saved) 1f else 0.65f
+        }
+    }
+
     private fun loadDetails() {
         if (contentId.isBlank()) return
         viewLifecycleOwner.lifecycleScope.launch {
@@ -132,6 +155,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
     private suspend fun loadAlbum() {
         val item = AlbumRepository().getAlbum(contentId)
         album = item
+        bindBookmarkState()
         BackgroundManager.set(item.heroBackground)
         HeroManager.show(HeroContent.AlbumHero(item))
 
@@ -175,12 +199,14 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
     private suspend fun loadSong() {
         val item = SongRepository().getSong(contentId)
         song = item
+        bindBookmarkState()
         showSingle(HeroContent.SongHero(item), item.heroBackground, item.lyrics)
     }
 
     private suspend fun loadPodcast() {
         val item = PodcastRepository().getPodcast(contentId)
         podcast = item
+        bindBookmarkState()
         showSingle(HeroContent.PodcastHero(item), item.heroBackground, item.lyrics)
     }
 
@@ -191,6 +217,7 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
             VideoRepository().getVideo(contentId)
         }
         video = item
+        bindBookmarkState()
         val hero = if (isMusicVideo) HeroContent.MusicVideoHero(item) else HeroContent.VideoHero(item)
         showSingle(hero, item.heroBackground, item.lyrics)
     }
