@@ -935,6 +935,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 isFocusableInTouchMode = true
                 isClickable = true
                 background = requireContext().getDrawable(R.drawable.bg_settings_row_focus)
+                isSelected = source.url == selectedUrl
                 tag = "source_$index"
             }
             val number = TextView(requireContext()).apply {
@@ -991,6 +992,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             val row = panelDynamicContent.getChildAt(index) as? LinearLayout ?: continue
             val sourceIndex = row.tag?.toString()?.removePrefix("source_")?.toIntOrNull() ?: continue
             val selected = sources.getOrNull(sourceIndex)?.url == selectedUrl
+            row.isSelected = selected
             (row.getChildAt(2) as? TextView)?.setTextColor(
                 if (selected) 0xFFFF7777.toInt() else 0xFFFFFFFF.toInt()
             )
