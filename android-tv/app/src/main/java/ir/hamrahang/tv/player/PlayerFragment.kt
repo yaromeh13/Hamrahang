@@ -677,9 +677,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         }
 
         // The web player shows #player-owner only while its controls are hidden.
-        playerOwnerImage.visibility =
-            if (!showController && playerOwnerImage.drawable != null) View.VISIBLE
-            else View.GONE
+        updatePlayerOwnerVisibility()
     }
 
     private fun bindLyrics(info: PlaybackInfoState, positionMs: Long) {
@@ -1081,24 +1079,40 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
     private fun sourceOwnerThumbUrl(owner: SourceOwner?): String? {
         val meta = owner?.meta ?: return null
-        // Match index.html: meta.ico has priority; meta.tmb is the fallback.
+        // Exact index.html rule: ico first, then tmb. Keep the key kind because
+        // only ico has its final three characters interpreted as the extension.
         val icon = meta.ico?.trim()?.takeIf { it.isNotEmpty() }
         val thumbnail = meta.tmb?.trim()?.takeIf { it.isNotEmpty() }
         val key = icon ?: thumbnail ?: return null
         if (key.startsWith("https://", true) || key.startsWith("http://", true)) return key
-        if (key.contains(".")) return "https://cdn.hamrahang.ir/thumb/$key"
+        val base = "https://cdn.hamrahang.ir/thumb/"
+        if (key.contains(".")) return base + key
 
         val fileName = if (icon != null && key.length > 3) {
-            key.dropLast(3) + "." + key.takeLast(3).lowercase()
+            val ext = key.takeLast(3).lowercase()
+            val name = key.dropLast(3)
+            if (name.isNotEmpty() && ext.matches(Regex("[a-z0-9]{3}"))) {
+                "$name.$ext"
+            } else {
+                "$key.jpg"
+            }
         } else {
             "$key.jpg"
         }
-        return "https://cdn.hamrahang.ir/thumb/$fileName"
+        return base + fileName
+    }
+
+    private fun updatePlayerOwnerVisibility() {
+        val ui = PlayerState.uiState.value
+        val hasImageUrl = (playerOwnerImage.tag as? String)
+            ?.let { it.startsWith("http://") || it.startsWith("https://") } == true
+        playerOwnerImage.visibility =
+            if (hasImageUrl && !ui.controllerVisible && !ui.controllerPinned && !isOverlayPanelOpen)
+                View.VISIBLE else View.GONE
     }
 
     private fun bindPlayerOwner(info: PlaybackInfoState) {
-        val selected = info.selectedSource
-            ?: info.sources.firstOrNull { it.url == PlayerManager.getCurrentMedia()?.sources?.firstOrNull()?.url }
+        val selected = info.selectedSource ?: info.sources.firstOrNull()
         val owner = selected?.owner
         val ownerId = owner?.id ?: selected?.user
 
@@ -1106,6 +1120,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             playerOwnerRequestId++
             lastPlayerOwnerId = null
             Glide.with(playerOwnerImage).clear(playerOwnerImage)
+            playerOwnerImage.tag = null
             playerOwnerImage.setImageDrawable(null)
             playerOwnerImage.visibility = View.GONE
             return
@@ -1122,15 +1137,16 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                     .dontAnimate()
                     .into(playerOwnerImage)
             }
-            playerOwnerImage.visibility =
-                if (!PlayerState.uiState.value.controllerVisible &&
-                    !PlayerState.uiState.value.controllerPinned &&
-                    !isOverlayPanelOpen
-                ) View.VISIBLE else View.GONE
+            updatePlayerOwnerVisibility()
             return
         }
 
-        if (lastPlayerOwnerId == ownerId) return
+        if (lastPlayerOwnerId == ownerId && playerOwnerImage.tag is String &&
+            (playerOwnerImage.tag as String).startsWith("https://")
+        ) {
+            updatePlayerOwnerVisibility()
+            return
+        }
         lastPlayerOwnerId = ownerId
         val requestId = ++playerOwnerRequestId
         playerOwnerImage.tag = "owner_$ownerId"
@@ -1157,11 +1173,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 .centerCrop()
                 .dontAnimate()
                 .into(playerOwnerImage)
-
-            val ui = PlayerState.uiState.value
-            playerOwnerImage.visibility =
-                if (!ui.controllerVisible && !ui.controllerPinned && !isOverlayPanelOpen)
-                    View.VISIBLE else View.GONE
+            updatePlayerOwnerVisibility()
         }
     }
 
@@ -1655,29 +1667,27 @@ private fun closeQueuePanel() {
         isRotatingHeader = rotating
         leftHeaderContainer.removeAllViews()
 
-        // Both modes share the same header layout; only cover clipping changes.
+        // Keep identical content positions in both layouts; only the cover's
+        // shape differs. The rotating layout reuses the proven CircleImage style.
+        val layoutRes = if (rotating) {
+            R.layout.layout_header_rotating
+        } else {
+            R.layout.layout_header_simple
+        }
         val headerView = layoutInflater.inflate(
-            R.layout.layout_header_simple,
+            layoutRes,
             leftHeaderContainer,
             false
         )
         leftHeaderContainer.addView(headerView)
 
         headerImgCover = headerView.findViewById(R.id.imgCover)
-        (headerImgCover as? com.google.android.material.imageview.ShapeableImageView)?.apply {
-            val shapeBuilder = com.google.android.material.shape.ShapeAppearanceModel.builder()
-            if (rotating) {
-                shapeBuilder.setAllCornerSizes(
-                    com.google.android.material.shape.RelativeCornerSize(0.5f)
-                )
-            } else {
-                shapeBuilder.setAllCornerSizes(12f * resources.displayMetrics.density)
-            }
-            shapeAppearanceModel = shapeBuilder.build()
+        headerImgCover?.apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
             visibility = View.VISIBLE
             alpha = 1f
             rotation = 0f
+            bringToFront()
             invalidate()
         }
         headerTxtTitle = headerView.findViewById(R.id.txtTitle)
