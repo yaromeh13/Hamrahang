@@ -1039,8 +1039,8 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         Glide.with(btnLyrics)
             .load(lyricsAsset)
             .override(24.dp, 24.dp)
-            .placeholder(if (mode == MediaType.VIDEO) R.drawable.ic_lyrics else R.drawable.ic_lyrics)
-            .error(if (mode == MediaType.VIDEO) R.drawable.ic_subtitles else R.drawable.ic_lyrics)
+            .placeholder(R.drawable.ic_lyrics)
+            .error(R.drawable.ic_lyrics)
             .dontAnimate()
             .into(btnLyrics)
 
