@@ -75,9 +75,13 @@ object MoreOptionsPanel {
         val context = fragment.requireContext()
         val mediaId = item.id.toLongOrNull()
 
-        val header = LinearLayout(context).apply {
+        val mainContent = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            gravity = Gravity.TOP
+        }
+        val infoColumn = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
         }
         val cover = ImageView(context).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
@@ -89,51 +93,61 @@ object MoreOptionsPanel {
             .placeholder(R.drawable.ic_song)
             .error(R.drawable.ic_song)
             .into(cover)
-        header.addView(cover, LinearLayout.LayoutParams(190.dp(context), 190.dp(context)))
-
-        val details = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(20.dp(context), 0, 0, 0)
-        }
-        details.addView(TextView(context).apply {
+        infoColumn.addView(cover, LinearLayout.LayoutParams(
+            220.dp(context), 220.dp(context)
+        ))
+        infoColumn.addView(TextView(context).apply {
             text = item.title
-            textSize = 23f
+            textSize = 22f
             setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
             maxLines = 2
-        })
+            setPadding(4.dp(context), 12.dp(context), 4.dp(context), 0)
+        }, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ))
         val artistNames = item.artists.joinToString("  •  ") { it.displayTitle() }
         if (artistNames.isNotBlank()) {
-            details.addView(TextView(context).apply {
+            infoColumn.addView(TextView(context).apply {
                 text = artistNames
-                textSize = 18f
-                setTextColor(0xFFFFB7B7.toInt())
-                maxLines = 2
-                setPadding(0, 8.dp(context), 0, 0)
-            })
-        }
-        header.addView(details, LinearLayout.LayoutParams(
-            0, ViewGroup.LayoutParams.MATCH_PARENT, 1f
-        ))
-        container.addView(header, LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply { bottomMargin = 8.dp(context) })
-
-        item.playCount?.let { count ->
-            container.addView(TextView(context).apply {
-                text = "$count Plays"
                 textSize = 17f
-                setTextColor(0xFFBDBDBD.toInt())
+                setTextColor(0xFFFFB7B7.toInt())
                 gravity = Gravity.CENTER
-                setPadding(0, 0, 0, 14.dp(context))
+                maxLines = 2
+                setPadding(4.dp(context), 6.dp(context), 4.dp(context), 0)
             }, LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
             ))
         }
+        item.playCount?.let { count ->
+            infoColumn.addView(TextView(context).apply {
+                text = "$count Plays"
+                textSize = 17f
+                setTextColor(0xFFBDBDBD.toInt())
+                gravity = Gravity.CENTER
+                setPadding(4.dp(context), 10.dp(context), 4.dp(context), 0)
+            }, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ))
+        }
+        mainContent.addView(infoColumn, LinearLayout.LayoutParams(
+            250.dp(context), ViewGroup.LayoutParams.WRAP_CONTENT
+        ))
+
+        val actionsColumn = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(14.dp(context), 0, 0, 0)
+        }
+        mainContent.addView(actionsColumn, LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+        ))
+        container.addView(mainContent, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ))
 
         var bookmarked = false
         val bookmarkCard = addTopAction(
-            context, container, R.drawable.ic_bookmark, "Bookmark"
+            context, actionsColumn, R.drawable.ic_bookmark, "Bookmark"
         ) {
             if (mediaId == null) {
                 MessageManager.info("This item cannot be bookmarked")
@@ -155,7 +169,7 @@ object MoreOptionsPanel {
             }
         }
 
-        addTopAction(context, container, R.drawable.ic_queue_music, "to Queue") {
+        addTopAction(context, actionsColumn, R.drawable.ic_queue_music, "to Queue") {
             MessageManager.info(
                 if (ir.hamrahang.tv.playback.PlaybackManager.session.value?.items?.any {
                     it.id == item.id && it.contentType == item.contentType
@@ -163,10 +177,10 @@ object MoreOptionsPanel {
                 else "Adding items to the queue from this menu is not available yet"
             )
         }
-        addTopAction(context, container, R.drawable.ic_playlist, "to Playlist") {
+        addTopAction(context, actionsColumn, R.drawable.ic_playlist, "to Playlist") {
             MessageManager.info("Playlists are not available on TV yet")
         }
-        addTopAction(context, container, R.drawable.ic_error, "Report") {
+        addTopAction(context, actionsColumn, R.drawable.ic_error, "Report") {
             MessageManager.info("Reporting via TV is not yet available.")
         }
 
@@ -180,7 +194,7 @@ object MoreOptionsPanel {
             ContentType.PLAYLIST -> "Go to playlist"
         }
         addNavigationAction(
-            context, container,
+            context, actionsColumn,
             mediaIcon(item.contentType),
             destinationLabel
         ) {
@@ -202,7 +216,7 @@ object MoreOptionsPanel {
 
         if (item.contentType != ContentType.ARTIST && item.artists.isNotEmpty()) {
             addNavigationAction(
-                context, container, R.drawable.ic_profile, "Go to artist"
+                context, actionsColumn, R.drawable.ic_profile, "Go to artist"
             ) {
                 close()
                 UiNavigator.runAfterPlayerDismiss {
