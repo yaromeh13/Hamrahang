@@ -30,7 +30,6 @@ import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.ui.UiNavigator
 import ir.hamrahang.tv.ui.MoreOptionsPanel
 import ir.hamrahang.tv.ui.message.MessageManager
-import ir.hamrahang.tv.ui.message.MessageWidget
 import ir.hamrahang.tv.util.displayTitle
 import ir.hamrahang.tv.lyrics.LyricsAdapter
 import ir.hamrahang.tv.lyrics.LyricsAutoScroller
@@ -71,7 +70,6 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
     private val miniLyricsPreferences = LyricsEngine.defaultPreferences(LyricsScope.MINI)
     private var miniLyricsBody: String? = null
     private var miniLyricsActiveIndex = Int.MIN_VALUE
-    private lateinit var messageWidget: MessageWidget
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -151,8 +149,6 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         observePlayerUi()
         observePlaybackInfo()
         observeSession()
-
-        messageWidget = MessageWidget(view,viewLifecycleOwner)
 
         btnPlayPause.setOnClickListener {PlayerManager.toggle()}
         btnNext.setOnClickListener {PlaybackManager.next()}
