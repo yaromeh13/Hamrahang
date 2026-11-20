@@ -13,6 +13,9 @@ interface OwnerDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIfAbsent(owner: OwnerEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(owner: OwnerEntity)
+
     @Query("SELECT * FROM owners WHERE id = :id LIMIT 1")
     suspend fun get(id: Long): OwnerEntity?
 
