@@ -48,6 +48,22 @@
 
     </LinearLayout>
 
+    <!-- Current source owner thumbnail: mirrors web #player-owner. -->
+    <ImageView
+        android:id="@+id/playerOwnerImage"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_player_owner"
+        android:clipToOutline="true"
+        android:contentDescription="Current source owner"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:elevation="8dp"/>
+
     <!-- Web-matching centered player title and fading reflection -->
     <LinearLayout
         android:id="@+id/playerTitleContainer"
