@@ -38,6 +38,7 @@ import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.playback.PlaybackQueueAdapter
 import ir.hamrahang.tv.ui.hero.HeroArtistsBinder
 import ir.hamrahang.tv.ui.hero.HeroMetaBinder
+import ir.hamrahang.tv.ui.message.MessageManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
