@@ -1081,21 +1081,17 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
     private fun sourceOwnerThumbUrl(owner: SourceOwner?): String? {
         val meta = owner?.meta ?: return null
+        // Match index.html: meta.ico has priority; meta.tmb is the fallback.
         val icon = meta.ico?.trim()?.takeIf { it.isNotEmpty() }
         val thumbnail = meta.tmb?.trim()?.takeIf { it.isNotEmpty() }
         val key = icon ?: thumbnail ?: return null
+        if (key.startsWith("https://", true) || key.startsWith("http://", true)) return key
+        if (key.contains(".")) return "https://cdn.hamrahang.ir/thumb/$key"
 
-        if (key.startsWith("https://", true) || key.startsWith("http://", true)) {
-            return key
-        }
-
-        // Match index.html ownerThumbUrl(): ico stores its extension in the
-        // last three characters; tmb keys always receive a .jpg suffix.
-        val fileName = when {
-            key.contains(".") -> key
-            icon != null && key.length > 3 ->
-                key.dropLast(3) + "." + key.takeLast(3).lowercase()
-            else -> "$key.jpg"
+        val fileName = if (icon != null && key.length > 3) {
+            key.dropLast(3) + "." + key.takeLast(3).lowercase()
+        } else {
+            "$key.jpg"
         }
         return "https://cdn.hamrahang.ir/thumb/$fileName"
     }
@@ -1123,8 +1119,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 Glide.with(playerOwnerImage)
                     .load(directUrl)
                     .centerCrop()
-                    .placeholder(R.drawable.ic_general)
-                    .error(R.drawable.ic_general)
+                    .dontAnimate()
                     .into(playerOwnerImage)
             }
             playerOwnerImage.visibility =
@@ -1160,8 +1155,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             Glide.with(playerOwnerImage)
                 .load(url)
                 .centerCrop()
-                .placeholder(R.drawable.ic_general)
-                .error(R.drawable.ic_general)
+                .dontAnimate()
                 .into(playerOwnerImage)
 
             val ui = PlayerState.uiState.value
@@ -1671,19 +1665,19 @@ private fun closeQueuePanel() {
 
         headerImgCover = headerView.findViewById(R.id.imgCover)
         (headerImgCover as? com.google.android.material.imageview.ShapeableImageView)?.apply {
-            shapeAppearanceModel =
-                com.google.android.material.shape.ShapeAppearanceModel.builder()
-                    .setAllCornerSizes(
-                        if (rotating) {
-                            999f
-                        } else {
-                            12f * resources.displayMetrics.density
-                        }
-                    )
-                    .build()
+            val shapeBuilder = com.google.android.material.shape.ShapeAppearanceModel.builder()
+            if (rotating) {
+                shapeBuilder.setAllCornerSizes(
+                    com.google.android.material.shape.RelativeCornerSize(0.5f)
+                )
+            } else {
+                shapeBuilder.setAllCornerSizes(12f * resources.displayMetrics.density)
+            }
+            shapeAppearanceModel = shapeBuilder.build()
             scaleType = ImageView.ScaleType.CENTER_CROP
             visibility = View.VISIBLE
             alpha = 1f
+            rotation = 0f
             invalidate()
         }
         headerTxtTitle = headerView.findViewById(R.id.txtTitle)
@@ -1716,12 +1710,15 @@ private fun closeQueuePanel() {
                 R.drawable.ic_song
             }
             iv.visibility = View.VISIBLE
+            iv.alpha = 1f
+            iv.scaleType = ImageView.ScaleType.CENTER_CROP
             Glide.with(iv)
                 .load(info.artwork)
                 .centerCrop()
-                .placeholder(fallback)
-                .error(fallback)
-                .fallback(fallback)
+                .placeholder(R.drawable.card_bg)
+                .error(R.drawable.card_bg)
+                .fallback(R.drawable.card_bg)
+                .dontAnimate()
                 .into(iv)
         }
 
