@@ -4,10 +4,13 @@ package ir.hamrahang.tv.ui
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
+import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.artist.ArtistRepository
+import ir.hamrahang.tv.data.local.ContentType
+import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.domain.hero.HeroContent
 import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.player.BackgroundManager
@@ -28,6 +31,7 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
     private lateinit var heroContainer: View
     private lateinit var rows: VerticalGridView
     private var artistId: String? = null
+    private lateinit var followButton: ImageButton
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,6 +46,8 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
     ) {
         super.onViewCreated(view, savedInstanceState)
         val heroView = view.findViewById<View>(R.id.heroContainer)
+        followButton = heroView.findViewById(R.id.btnFollowArtist)
+        followButton.setOnClickListener { toggleArtistFollow() }
 
         heroWidget =
             HeroWidget(
@@ -76,6 +82,7 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
         viewLifecycleOwner.lifecycleScope.launch {
 
             val artist = repository.getArtist(id)
+            bindArtistFollowState(artist.id)
             BackgroundManager.set(artist.heroBackground)
             HeroManager.show(HeroContent.ArtistHero(artist))
 
@@ -187,6 +194,32 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
             }
         }
 
+    }
+
+    private fun toggleArtistFollow() {
+        val id = artistId?.toLongOrNull()
+        if (id == null) {
+            MessageManager.info("This artist cannot be followed")
+            return
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            val followed = FavoriteManager.toggle(id, ContentType.ARTIST)
+            updateFollowButton(followed)
+            MessageManager.info(if (followed) "Artist followed" else "Artist unfollowed")
+        }
+    }
+
+    private fun bindArtistFollowState(id: String) {
+        val mediaId = id.toLongOrNull() ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            updateFollowButton(FavoriteManager.isFavorite(mediaId, ContentType.ARTIST))
+        }
+    }
+
+    private fun updateFollowButton(followed: Boolean) {
+        followButton.isSelected = followed
+        followButton.alpha = if (followed) 1f else 0.65f
+        followButton.contentDescription = if (followed) "Following" else "Follow"
     }
 
     override fun onDestroyView() {
