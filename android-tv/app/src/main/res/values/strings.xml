@@ -84,4 +84,9 @@
     <string name="settings_blue">Blue</string>
     <string name="source_none">No sources available</string>
     <string name="source_fallback">Source %1$d</string>
+    <string name="settings_font_size">Font size</string>
+    <string name="settings_small">Small</string>
+    <string name="settings_medium">Medium</string>
+    <string name="settings_large">Large</string>
+    <string name="no_lyrics">No lyrics</string>
 </resources>
