@@ -174,9 +174,11 @@ object MoreOptionsPanel {
             if (item.contentType == ContentType.ARTIST) {
                 val artist = item.artists.firstOrNull()
                 if (artist == null) MessageManager.info("No artist available")
-                else UiNavigator.openArtist(artist)
+                else UiNavigator.runAfterPlayerDismiss { UiNavigator.openArtist(artist) }
             } else {
-                UiNavigator.openMediaDetail(item.contentType, item.id)
+                UiNavigator.runAfterPlayerDismiss {
+                    UiNavigator.openMediaDetail(item.contentType, item.id)
+                }
             }
         }
 
@@ -185,7 +187,9 @@ object MoreOptionsPanel {
                 context, container, R.drawable.ic_profile, "Go to artist"
             ) {
                 close()
-                UiNavigator.openArtist(item.artists.first())
+                UiNavigator.runAfterPlayerDismiss {
+                    UiNavigator.openArtist(item.artists.first())
+                }
             }
         }
     }
