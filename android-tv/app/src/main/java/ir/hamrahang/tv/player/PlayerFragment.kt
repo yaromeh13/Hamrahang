@@ -1152,8 +1152,8 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(12.dp, 8.dp, 12.dp, 8.dp)
-                minimumHeight = 70.dp
+                setPadding(12.dp, 5.dp, 12.dp, 5.dp)
+                minimumHeight = 64.dp
                 isFocusable = true
                 isFocusableInTouchMode = true
                 isClickable = true
