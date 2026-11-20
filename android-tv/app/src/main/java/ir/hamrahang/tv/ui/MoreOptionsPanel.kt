@@ -39,7 +39,7 @@ object MoreOptionsPanel {
             orientation = LinearLayout.VERTICAL
             clipChildren = false
             clipToPadding = false
-            setPadding(16.dp(context), 16.dp(context), 16.dp(context), 16.dp(context))
+            setPadding(16.dp(context), 12.dp(context), 16.dp(context), 8.dp(context))
             background = context.getDrawable(R.drawable.bg_setting_player)
         }
         val scroll = ScrollView(context).apply {
@@ -54,7 +54,7 @@ object MoreOptionsPanel {
         dialog.window?.let { window ->
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             window.setLayout(
-                (context.resources.displayMetrics.widthPixels * 0.72f).toInt(),
+                (context.resources.displayMetrics.widthPixels * 0.82f).toInt(),
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
@@ -62,7 +62,7 @@ object MoreOptionsPanel {
         dialog.show()
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setLayout(
-            (context.resources.displayMetrics.widthPixels * 0.72f).toInt(),
+            (context.resources.displayMetrics.widthPixels * 0.82f).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         content.post { firstFocusable(content)?.requestFocus() }
@@ -87,7 +87,7 @@ object MoreOptionsPanel {
         }
         val infoColumn = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = Gravity.TOP
+            gravity = Gravity.TOP or Gravity.START
             clipChildren = false
             clipToPadding = false
         }
@@ -146,7 +146,7 @@ object MoreOptionsPanel {
             orientation = LinearLayout.VERTICAL
             clipChildren = false
             clipToPadding = false
-            setPadding(8.dp(context), 0, 0, 0)
+            setPadding(4.dp(context), 0, 0, 0)
         }
         mainContent.addView(actionsColumn, LinearLayout.LayoutParams(
             0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
@@ -274,8 +274,6 @@ object MoreOptionsPanel {
         }
         card.addView(actionIcon)
         card.setOnFocusChangeListener { view, hasFocus ->
-            val scale = if (hasFocus) 1.04f else 1f
-            view.animate().scaleX(scale).scaleY(scale).setDuration(140).start()
             actionIcon.animate()
                 .scaleX(if (hasFocus) 1.28f else 1f)
                 .scaleY(if (hasFocus) 1.28f else 1f)
@@ -291,12 +289,15 @@ object MoreOptionsPanel {
             maxLines = 1
             setPadding(0, 6.dp(context), 0, 0)
         })
-        val params = LinearLayout.LayoutParams(0, 1, 1f)
-        if (row.childCount > 0) params.marginStart = 8.dp(context)
+        val params = LinearLayout.LayoutParams(0, 104.dp(context), 1f)
+        if (row.childCount > 0) params.marginStart = 6.dp(context)
         row.addView(card, params)
         row.post {
-            val gap = 8.dp(context)
-            val tileSize = ((row.width - gap * 3) / 4).coerceAtLeast(1)
+            val gap = 6.dp(context)
+            val tileSize = minOf(
+                104.dp(context),
+                ((row.width - gap * 3) / 4).coerceAtLeast(1)
+            )
             for (index in 0 until row.childCount) {
                 val child = row.getChildAt(index)
                 child.layoutParams = (child.layoutParams as LinearLayout.LayoutParams).apply {
