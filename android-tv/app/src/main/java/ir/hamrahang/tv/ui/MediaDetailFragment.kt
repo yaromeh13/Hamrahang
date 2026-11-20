@@ -88,16 +88,16 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         moreButton.setOnClickListener {
             val item = when (contentType) {
                 ContentType.ALBUM -> album?.let {
-                    PlaybackItem(it.id, it.displayTitle(), it.thumb, emptyList(), ContentType.ALBUM)
+                    PlaybackItem(it.id, it.displayTitle(), it.thumb, emptyList(), ContentType.ALBUM, it.meta?.ncp)
                 }
                 ContentType.SONG -> song?.let {
-                    PlaybackItem(it.id, it.displayTitle(), it.thumb, it.artists, ContentType.SONG)
+                    PlaybackItem(it.id, it.displayTitle(), it.thumb, it.artists, ContentType.SONG, it.meta?.ncp)
                 }
                 ContentType.PODCAST -> podcast?.let {
-                    PlaybackItem(it.id, it.displayTitle(), it.thumb, it.artists, ContentType.PODCAST)
+                    PlaybackItem(it.id, it.displayTitle(), it.thumb, it.artists, ContentType.PODCAST, it.meta?.ncp)
                 }
                 ContentType.VIDEO, ContentType.MUSICVIDEO -> video?.let {
-                    PlaybackItem(it.id, it.displayTitle(), it.thumb, it.artists, it.contentType)
+                    PlaybackItem(it.id, it.displayTitle(), it.thumb, it.artists, it.contentType, it.meta?.ncp)
                 }
                 else -> null
             }
