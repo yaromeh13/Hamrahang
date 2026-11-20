@@ -49,4 +49,31 @@
 
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/btnQueueRemove"
+        android:layout_width="40dp"
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:text="×"
+        android:textColor="#FFFFFFFF"
+        android:textSize="26sp"
+        android:focusable="true"
+        android:clickable="true"
+        android:background="@drawable/bg_player_round"
+        android:contentDescription="Remove from queue"/>
+
+    <ImageButton
+        android:id="@+id/btnQueueMore"
+        android:layout_width="44dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="6dp"
+        android:src="@drawable/ic_more"
+        android:scaleType="centerInside"
+        android:padding="12dp"
+        android:tint="#FFFFFFFF"
+        android:focusable="true"
+        android:clickable="true"
+        android:background="@drawable/bg_player_round"
+        android:contentDescription="More options"/>
+
 </LinearLayout>
