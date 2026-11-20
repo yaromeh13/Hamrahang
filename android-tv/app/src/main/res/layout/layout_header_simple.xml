@@ -3,13 +3,14 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/_130sdp">
 
     <!-- The cover is the only element whose shape changes with rotating mode. -->
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/imgCover"
-        android:layout_width="@dimen/_120sdp"
-        android:layout_height="@dimen/_120sdp"
+        android:layout_width="@dimen/_130sdp"
+        android:layout_height="@dimen/_130sdp"
         android:scaleType="centerCrop"
         android:src="@drawable/card_bg"
         app:layout_constraintTop_toTopOf="parent"
