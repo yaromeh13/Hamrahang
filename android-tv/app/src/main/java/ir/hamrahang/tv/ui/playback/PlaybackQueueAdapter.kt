@@ -117,7 +117,9 @@ class PlaybackQueueAdapter(
             if (isReordering) {
                 if (event.action != KeyEvent.ACTION_DOWN) return true
                 if (isRemove &&
-                    (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER)
+                    (keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+                     keyCode == KeyEvent.KEYCODE_ENTER ||
+                     keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)
                 ) {
                     finishReorder(commit = true, focusPosition = movingIndex)
                     return true
@@ -140,6 +142,14 @@ class PlaybackQueueAdapter(
         private fun handleReorderKey(keyCode: Int): Boolean = when (keyCode) {
             KeyEvent.KEYCODE_DPAD_UP -> { moveReorderItem(movingIndex, movingIndex - 1); true }
             KeyEvent.KEYCODE_DPAD_DOWN -> { moveReorderItem(movingIndex, movingIndex + 1); true }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                remove.requestFocus()
+                true
+            }
+            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                itemView.requestFocus()
+                true
+            }
             KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_ESCAPE -> {
                 finishReorder(false, movingIndex)
                 true
@@ -288,11 +298,13 @@ class PlaybackQueueAdapter(
     }
 
     private fun focusActionAt(position: Int) {
+        // Keep focus on the row while the long-press key is still being released.
+        // The confirm button is focused explicitly with DPAD_RIGHT.
         attachedRecyclerView?.post {
             attachedRecyclerView?.scrollToPosition(position)
             attachedRecyclerView?.post {
                 attachedRecyclerView?.findViewHolderForAdapterPosition(position)
-                    ?.itemView?.findViewById<View>(R.id.btnQueueRemove)?.requestFocus()
+                    ?.itemView?.requestFocus()
             }
         }
     }
