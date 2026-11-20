@@ -116,6 +116,12 @@ class PlaybackQueueAdapter(
         private fun handleChildKey(keyCode: Int, event: KeyEvent, isRemove: Boolean): Boolean {
             if (isReordering) {
                 if (event.action != KeyEvent.ACTION_DOWN) return true
+                if (isRemove &&
+                    (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER)
+                ) {
+                    finishReorder(commit = true, focusPosition = movingIndex)
+                    return true
+                }
                 return handleReorderKey(keyCode)
             }
             if (event.action != KeyEvent.ACTION_DOWN) return false
