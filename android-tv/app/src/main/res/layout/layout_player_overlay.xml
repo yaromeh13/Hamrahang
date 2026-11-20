@@ -75,8 +75,8 @@
         <ir.hamrahang.tv.player.ReflectionTextView
             android:id="@+id/txtPlayerTitleReflection"
             android:layout_width="match_parent"
-            android:layout_height="26dp"
-            android:layout_marginTop="-10dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="-12dp"
             android:gravity="center"
             android:textColor="#FFFFFFFF"
             android:textSize="34sp"
