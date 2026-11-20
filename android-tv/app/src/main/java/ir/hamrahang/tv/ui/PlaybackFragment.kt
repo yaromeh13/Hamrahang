@@ -21,6 +21,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.google.android.material.imageview.ShapeableImageView
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.album.AlbumRepository
+import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.domain.artist.Artist
 import ir.hamrahang.tv.player.PlaybackInfoState
 import ir.hamrahang.tv.player.PlaybackState
@@ -60,6 +61,8 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
     private lateinit var btnLyrics: ImageButton
     private lateinit var btnPlaylist: ImageButton
     private lateinit var btnFullscreen: ImageButton
+    private lateinit var btnBookmark: ImageButton
+    private lateinit var btnMore: ImageButton
 
     private lateinit var lyricsContainer: View
     private lateinit var txtNoLyrics: TextView
@@ -85,6 +88,8 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         btnPlaylist = view.findViewById(R.id.btnPlaylist)
         btnFullscreen = view.findViewById(R.id.btnFullscreen)
         btnMute = view.findViewById(R.id.btnMute)
+        btnBookmark = view.findViewById(R.id.btnBookmark)
+        btnMore = view.findViewById(R.id.btnMore)
         imgCover = view.findViewById(R.id.imgCover)
         txtTitle = view.findViewById(R.id.txtTitle)
         txtAlbum = view.findViewById(R.id.txtAlbum)
@@ -155,6 +160,24 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         btnNext.setOnClickListener {PlaybackManager.next()}
         btnPrev.setOnClickListener {PlaybackManager.previous()}
         btnFullscreen.setOnClickListener {UiNavigator.openFullscreenPlayer()}
+        btnBookmark.setOnClickListener {
+            val item = currentPlaybackItem()
+            val mediaId = item?.id?.toLongOrNull()
+            if (item == null || mediaId == null) {
+                MessageManager.info("This item cannot be bookmarked")
+            } else {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val saved = FavoriteManager.toggle(mediaId, item.contentType)
+                    btnBookmark.isSelected = saved
+                    btnBookmark.alpha = if (saved) 1f else 0.65f
+                    MessageManager.info(if (saved) "Added to bookmarks" else "Removed from bookmarks")
+                }
+            }
+        }
+        btnMore.setOnClickListener {
+            currentPlaybackItem()?.let { MoreOptionsPanel.show(this, it, btnMore) }
+                ?: MessageManager.info("No current media")
+        }
         btnPlayPause.post {btnPlayPause.requestFocus()}
         view.post {btnPlayPause.requestFocus()}
         btnShuffle.setOnClickListener {PlayerManager.toggleShuffle()}
@@ -281,6 +304,7 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
                     session.items,
                     session.currentIndex
                 )
+                session.items.getOrNull(session.currentIndex)?.let(::bindBookmarkState)
                 playlist.post {
                     val lm = playlist.layoutManager as? LinearLayoutManager
                     val first = lm?.findFirstVisibleItemPosition() ?: RecyclerView.NO_POSITION
@@ -292,6 +316,28 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
             }
         }
     }
+    private fun currentPlaybackItem() =
+        PlaybackManager.session.value?.let { session ->
+            session.items.getOrNull(session.currentIndex)
+        }
+
+    private fun bindBookmarkState(item: PlaybackItem) {
+        val mediaId = item.id.toLongOrNull()
+        if (mediaId == null) {
+            btnBookmark.isEnabled = false
+            btnBookmark.alpha = 0.35f
+            return
+        }
+        btnBookmark.isEnabled = true
+        viewLifecycleOwner.lifecycleScope.launch {
+            val saved = FavoriteManager.isFavorite(mediaId, item.contentType)
+            if (::btnBookmark.isInitialized) {
+                btnBookmark.isSelected = saved
+                btnBookmark.alpha = if (saved) 1f else 0.65f
+            }
+        }
+    }
+
     private fun observePlaybackInfo() {
         viewLifecycleOwner.lifecycleScope.launch {
             PlayerState.playbackInfo.collectLatest { info ->
