@@ -3,11 +3,46 @@ package ir.hamrahang.tv.favorite
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.entity.FavoriteRepository
+import ir.hamrahang.tv.data.favorite.UacAction
+import ir.hamrahang.tv.data.favorite.UacRequest
+import ir.hamrahang.tv.network.ApiClient
 import ir.hamrahang.tv.player.MediaType
 import ir.hamrahang.tv.player.PlayerMedia
 import ir.hamrahang.tv.domain.video.Video
 
 object FavoriteManager {
+
+    @Volatile
+    private var accessToken: String? = null
+
+    fun setAccessToken(token: String?) {
+        accessToken = token?.takeIf { it.isNotBlank() }
+    }
+
+    private suspend fun sendServerAction(
+        action: String,
+        mediaId: Long,
+        type: ContentType
+    ) {
+        val token = accessToken ?: return
+        runCatching {
+            val response = ApiClient.api.favoriteAccountAction(
+                authorization = "Bearer $token",
+                body = UacRequest(
+                    UacAction(
+                        a = action,
+                        p = type.apiKey,
+                        q = listOf(mediaId.toString())
+                    )
+                )
+            )
+            if (response.error != null) {
+                android.util.Log.w("FavoriteManager", "Favorite API failed: ${response.error}")
+            }
+        }.onFailure {
+            android.util.Log.w("FavoriteManager", "Favorite API request failed", it)
+        }
+    }
 
     private val repository by lazy {
 
@@ -30,6 +65,7 @@ object FavoriteManager {
             type = type,
             userId = userId
         )
+        sendServerAction("fav_add", mediaId, type)
 
     }
 
@@ -44,6 +80,7 @@ object FavoriteManager {
             type = type,
             userId = userId
         )
+        sendServerAction("fav_remove", mediaId, type)
 
     }
 
@@ -53,11 +90,13 @@ object FavoriteManager {
         userId: Long = 0
     ): Boolean {
 
-        return repository.toggle(
+        val added = repository.toggle(
             mediaId = mediaId,
             type = type,
             userId = userId
         )
+        sendServerAction(if (added) "fav_add" else "fav_remove", mediaId, type)
+        return added
 
     }
 
@@ -111,6 +150,7 @@ object FavoriteManager {
         accessToken: String,
         userId: Long = 0
     ): Result<Int> {
+        setAccessToken(accessToken)
         val syncRepository = ir.hamrahang.tv.data.favorite.FavoriteSyncRepository(
             DatabaseProvider.database().favoriteDao()
         )
