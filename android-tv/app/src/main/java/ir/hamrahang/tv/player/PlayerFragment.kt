@@ -1158,7 +1158,6 @@ private fun closeQueuePanel() {
 
         if (except != settingsPanel && settingsPanel.isVisible) {
             settingsPanel.visibility = View.GONE
-            cancelSettingsHide()
         }
 
         if (except != queuePanel && queuePanel.isVisible) {
