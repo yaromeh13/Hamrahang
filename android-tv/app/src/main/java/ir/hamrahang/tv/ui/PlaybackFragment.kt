@@ -9,6 +9,7 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.FrameLayout
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.Player
@@ -111,10 +112,19 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         )
 
         playlist.layoutManager = LinearLayoutManager(requireContext())
+        val reorderBackCallback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() {
+                QueueAdapter.cancelReorder()
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, reorderBackCallback)
+
         QueueAdapter = PlaybackQueueAdapter(
             onClick = { PlaybackManager.play(it) },
             onRemove = { PlaybackManager.remove(it) },
-            onMore = { item -> MoreOptionsPanel.show(this, item) }
+            onMore = { item -> MoreOptionsPanel.show(this, item) },
+            onReorderCommit = { PlaybackManager.reorder(it) },
+            onReorderStateChanged = { reorderBackCallback.isEnabled = it }
         )
         playlist.adapter = QueueAdapter
 
