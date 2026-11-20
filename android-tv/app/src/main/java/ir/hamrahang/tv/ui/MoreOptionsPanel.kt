@@ -37,11 +37,15 @@ object MoreOptionsPanel {
         val dialog = Dialog(context)
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
+            clipChildren = false
+            clipToPadding = false
             setPadding(16.dp(context), 16.dp(context), 16.dp(context), 16.dp(context))
             background = context.getDrawable(R.drawable.bg_setting_player)
         }
         val scroll = ScrollView(context).apply {
-            isFillViewport = true
+            isFillViewport = false
+            clipChildren = false
+            clipToPadding = false
             overScrollMode = View.OVER_SCROLL_NEVER
             addView(content)
         }
@@ -51,7 +55,7 @@ object MoreOptionsPanel {
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             window.setLayout(
                 (context.resources.displayMetrics.widthPixels * 0.72f).toInt(),
-                (context.resources.displayMetrics.heightPixels * 0.78f).toInt()
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
         dialog.setOnDismissListener { returnFocus?.requestFocus() }
@@ -59,7 +63,7 @@ object MoreOptionsPanel {
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setLayout(
             (context.resources.displayMetrics.widthPixels * 0.72f).toInt(),
-            (context.resources.displayMetrics.heightPixels * 0.78f).toInt()
+            ViewGroup.LayoutParams.WRAP_CONTENT
         )
         content.post { firstFocusable(content)?.requestFocus() }
     }
@@ -78,10 +82,14 @@ object MoreOptionsPanel {
         val mainContent = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.TOP
+            clipChildren = false
+            clipToPadding = false
         }
         val infoColumn = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
+            gravity = Gravity.TOP
+            clipChildren = false
+            clipToPadding = false
         }
         val cover = ImageView(context).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
@@ -131,12 +139,14 @@ object MoreOptionsPanel {
             ))
         }
         mainContent.addView(infoColumn, LinearLayout.LayoutParams(
-            250.dp(context), ViewGroup.LayoutParams.WRAP_CONTENT
+            220.dp(context), ViewGroup.LayoutParams.WRAP_CONTENT
         ))
 
         val actionsColumn = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(14.dp(context), 0, 0, 0)
+            clipChildren = false
+            clipToPadding = false
+            setPadding(8.dp(context), 0, 0, 0)
         }
         mainContent.addView(actionsColumn, LinearLayout.LayoutParams(
             0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
@@ -237,10 +247,13 @@ object MoreOptionsPanel {
         if (row == null) {
             row = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                clipChildren = false
+                clipToPadding = false
                 tag = "top_actions"
             }
             container.addView(row, LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 112.dp(context)
+                ViewGroup.LayoutParams.MATCH_PARENT, 104.dp(context)
             ).apply { bottomMargin = 12.dp(context) })
         }
 
@@ -278,9 +291,20 @@ object MoreOptionsPanel {
             maxLines = 1
             setPadding(0, 6.dp(context), 0, 0)
         })
-        val params = LinearLayout.LayoutParams(104.dp(context), 104.dp(context))
-        if (row.childCount > 0) params.marginStart = 10.dp(context)
+        val params = LinearLayout.LayoutParams(0, 1, 1f)
+        if (row.childCount > 0) params.marginStart = 8.dp(context)
         row.addView(card, params)
+        row.post {
+            val gap = 8.dp(context)
+            val tileSize = ((row.width - gap * 3) / 4).coerceAtLeast(1)
+            for (index in 0 until row.childCount) {
+                val child = row.getChildAt(index)
+                child.layoutParams = (child.layoutParams as LinearLayout.LayoutParams).apply {
+                    width = tileSize
+                    height = tileSize
+                }
+            }
+        }
         return card
     }
 
