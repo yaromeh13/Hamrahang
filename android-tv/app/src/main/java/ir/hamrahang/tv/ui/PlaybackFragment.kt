@@ -26,6 +26,7 @@ import ir.hamrahang.tv.player.PlaybackState
 import ir.hamrahang.tv.player.PlayerManager
 import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.ui.UiNavigator
+import ir.hamrahang.tv.ui.MoreOptionsPanel
 import ir.hamrahang.tv.ui.message.MessageManager
 import ir.hamrahang.tv.ui.message.MessageWidget
 import ir.hamrahang.tv.util.displayTitle
@@ -113,7 +114,7 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         QueueAdapter = PlaybackQueueAdapter(
             onClick = { PlaybackManager.play(it) },
             onRemove = { PlaybackManager.remove(it) },
-            onMore = { MessageManager.info("More options are available in the fullscreen player") }
+            onMore = { item -> MoreOptionsPanel.show(this, item) }
         )
         playlist.adapter = QueueAdapter
 
