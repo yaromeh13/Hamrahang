@@ -92,7 +92,8 @@ class ContentRowsAdapter(
                                         title = song.displayTitle(),
                                         artwork = song.thumb,
                                         artists = song.artists,
-                                        contentType = ContentType.SONG
+                                        contentType = ContentType.SONG,
+                                        playCount = song.meta?.ncp
                                     )
                                 },
                                 currentIndex = index,
@@ -122,7 +123,8 @@ class ContentRowsAdapter(
                                         title = podcast.displayTitle(),
                                         artwork = podcast.thumb,
                                         artists = podcast.artists,
-                                        contentType = ContentType.PODCAST
+                                        contentType = ContentType.PODCAST,
+                                        playCount = podcast.meta?.ncp
                                     )
                                 },
                                 currentIndex = index,
@@ -152,7 +154,8 @@ class ContentRowsAdapter(
                                         title = video.displayTitle(),
                                         artwork = video.thumb,
                                         artists = video.artists,
-                                        contentType = ContentType.VIDEO
+                                        contentType = ContentType.VIDEO,
+                                        playCount = video.meta?.ncp
                                     )
                                 },
                                 currentIndex = index,
@@ -182,7 +185,8 @@ class ContentRowsAdapter(
                                         title = video.displayTitle(),
                                         artwork = video.thumb,
                                         artists = video.artists,
-                                        contentType = ContentType.MUSICVIDEO
+                                        contentType = ContentType.MUSICVIDEO,
+                                        playCount = video.meta?.ncp
                                     )
                                 },
                                 currentIndex = index,
