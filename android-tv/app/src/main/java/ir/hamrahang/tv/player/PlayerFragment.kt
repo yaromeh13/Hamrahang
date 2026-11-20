@@ -398,9 +398,11 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
         queueRecycler = view.findViewById(R.id.listQueue)
         queueRecycler.layoutManager = LinearLayoutManager(requireContext())
-        queueAdapter = PlaybackQueueAdapter {
-            PlaybackManager.play(it)
-        }
+        queueAdapter = PlaybackQueueAdapter(
+            onClick = { PlaybackManager.play(it) },
+            onRemove = { PlaybackManager.remove(it) },
+            onMore = { item -> openQueueMorePanel(item) }
+        )
         queueRecycler.adapter = queueAdapter
 
         playerView?.isFocusable = false
@@ -1477,8 +1479,67 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                     session.items,
                     session.currentIndex
                 )
+                queueRecycler.post {
+                    val lm = queueRecycler.layoutManager as? LinearLayoutManager
+                    val first = lm?.findFirstVisibleItemPosition() ?: RecyclerView.NO_POSITION
+                    val last = lm?.findLastVisibleItemPosition() ?: RecyclerView.NO_POSITION
+                    if (session.currentIndex !in first..last) {
+                        queueRecycler.smoothScrollToPosition(session.currentIndex)
+                    }
+                }
             }
         }
+    }
+
+    private fun openQueueMorePanel(item: ir.hamrahang.tv.playback.PlaybackItem) {
+        val contentType = item.contentType
+        val mediaId = item.id.toLongOrNull()
+        openSettingsPanel("MORE", btnQueue)
+        panelDynamicContent.orientation = LinearLayout.VERTICAL
+        panelDynamicContent.removeAllViews()
+
+        fun addAction(label: String, action: () -> Unit) {
+            val row = TextView(requireContext()).apply {
+                text = label
+                textSize = 17f
+                setTextColor(android.graphics.Color.WHITE)
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(18.dp, 12.dp, 18.dp, 12.dp)
+                minHeight = 54.dp
+                isFocusable = true
+                isFocusableInTouchMode = true
+                isClickable = true
+                background = requireContext().getDrawable(R.drawable.bg_player_source_row)
+                setOnClickListener { action() }
+            }
+            panelDynamicContent.addView(row)
+        }
+
+        addAction("Like / Favorite") {
+            if (mediaId == null) {
+                MessageManager.info("This item cannot be added to favorites")
+            } else {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val now = ir.hamrahang.tv.favorite.FavoriteManager.toggle(mediaId, contentType)
+                    MessageManager.info(if (now) "Added to favorites" else "Removed from favorites")
+                }
+            }
+        }
+        if (contentType != ir.hamrahang.tv.data.local.ContentType.ARTIST) {
+            addAction("to Queue") { MessageManager.info("Already in the current queue") }
+            addAction("to Playlist") { MessageManager.info("Playlists are not available on TV yet") }
+        }
+        addAction("Report") { MessageManager.info("Reporting via TV is not yet available.") }
+        addAction("Go to item") {
+            MessageManager.info("Opening this item is not available from the queue panel")
+        }
+        addAction("Go to artist") {
+            MessageManager.info(
+                if (item.artists.isEmpty()) "No artist available"
+                else "Open artist from the item details"
+            )
+        }
+        panelDynamicContent.post { firstFocusable(panelDynamicContent)?.requestFocus() }
     }
 
     private fun toggleQueuePanel() {
