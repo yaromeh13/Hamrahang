@@ -115,6 +115,19 @@ interface FavoriteDao {
         userId: Long = 0
     )
 
+    @Query(
+        """
+        SELECT *
+        FROM favorites
+        WHERE userId = :userId
+        AND deleted = 0
+        ORDER BY createdAt DESC
+        """
+    )
+    suspend fun getAllFavorites(
+        userId: Long = 0
+    ): List<FavoriteEntity>
+
     @Query("DELETE FROM favorites")
     suspend fun clearAll()
 }
