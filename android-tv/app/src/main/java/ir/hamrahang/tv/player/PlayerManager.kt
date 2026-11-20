@@ -97,8 +97,10 @@ object PlayerManager {
             ).build()*/
 
         player!!.volume = if (PlayerState.uiState.value.muted) 0f else 1f
-        PlayerState.setRepeatMode(player!!.repeatMode)
-        PlayerState.setShuffle(player!!.shuffleModeEnabled)
+        // Queue repeat/shuffle are managed by PlaybackManager because ExoPlayer
+        // holds only one media item at a time in this architecture.
+        player!!.repeatMode = Player.REPEAT_MODE_OFF
+        player!!.shuffleModeEnabled = false
         player!!.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 when (state) {
@@ -138,13 +140,9 @@ object PlayerManager {
             ) {
 
                 PlayerState.setPlaybackState(
-
-                    if (isPlaying)
-                        PlaybackState.PLAYING
-                    else
-                        PlaybackState.PAUSED
-
+                    if (isPlaying) PlaybackState.PLAYING else PlaybackState.PAUSED
                 )
+                if (isPlaying) PlaybackManager.onPlaybackStarted()
 
                 if (isPlaying) {
 
@@ -301,12 +299,7 @@ object PlayerManager {
         }
     }
     fun toggleRepeat() {
-        val p = player ?: return
-        p.repeatMode =
-            if (p.repeatMode == Player.REPEAT_MODE_OFF)
-                Player.REPEAT_MODE_ALL
-            else
-                Player.REPEAT_MODE_OFF
+        PlaybackManager.toggleRepeat()
     }
     fun toggleMute() {
         val muted = !PlayerState.uiState.value.muted
@@ -381,8 +374,13 @@ object PlayerManager {
         return currentMedia?.id == media.id
     }
     fun toggleShuffle() {
-        val p = player ?: return
-        p.shuffleModeEnabled = !p.shuffleModeEnabled
+        PlaybackManager.toggleShuffle()
+    }
+
+    fun restartCurrent() {
+        val activePlayer = player ?: return
+        activePlayer.seekTo(0L)
+        activePlayer.play()
     }
 
     private fun playNextUrl() {
@@ -403,7 +401,7 @@ object PlayerManager {
             /*PlayerState.setPlaybackState(
                 PlaybackState.ERROR
             )*/
-            PlaybackManager.next()
+            PlaybackManager.next(fromError = true)
         }
     }
 
