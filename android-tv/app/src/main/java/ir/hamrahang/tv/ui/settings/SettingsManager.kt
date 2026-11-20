@@ -12,6 +12,7 @@ object SettingsManager {
     private const val KEY_VIDEO_QUALITY = "video_quality"
     private const val KEY_THEME = "theme"
     private const val KEY_EXIT_MODE = "exit_mode"
+    private const val KEY_REPEAT_MODE = "repeat_mode"
 
     private lateinit var context: Context
 
@@ -114,6 +115,14 @@ object SettingsManager {
 
         AppState.exitMode = value
 
+    }
+
+    fun getRepeatMode(): String =
+        prefs.getString(KEY_REPEAT_MODE, "off") ?: "off"
+
+    fun saveRepeatMode(value: String) {
+        val safeValue = if (value == "one" || value == "all") value else "off"
+        prefs.edit().putString(KEY_REPEAT_MODE, safeValue).apply()
     }
 
 }
