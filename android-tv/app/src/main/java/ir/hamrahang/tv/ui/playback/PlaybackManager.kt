@@ -129,9 +129,6 @@ object PlaybackManager {
         resetShuffleMemory()
         _session.value = newSession
         updateCurrentItem()
-        if (PlayerManager.isPlaying()) {
-            markPlayed(newSession.items[newSession.currentIndex])
-        }
     }
 
     // CURRENT ITEM
@@ -347,8 +344,10 @@ object PlaybackManager {
 
         val currentItem = session.items.getOrNull(session.currentIndex) ?: return
         val activeMedia = PlayerManager.getCurrentMedia()
-        val isPendingLoad = activeMedia?.id != currentItem.id ||
-            activeMedia.contentType != currentItem.contentType
+        val isPendingLoad =
+            PlayerState.uiState.value.playbackState == ir.hamrahang.tv.player.PlaybackState.LOADING &&
+                (activeMedia?.id != currentItem.id ||
+                    activeMedia?.contentType != currentItem.contentType)
 
         // Match web PlayPrevious(): after 3 seconds restart this item instead of skipping.
         if (!isPendingLoad && PlayerManager.getCurrentPosition() > 3_000L) {
