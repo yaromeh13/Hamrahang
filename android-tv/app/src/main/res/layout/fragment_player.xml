@@ -28,6 +28,7 @@
         android:id="@+id/playerOverlay"
         layout="@layout/layout_player_overlay"/>
 
+    <!-- Queue Panel -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/playerQueuePanel"
         android:layout_width="0dp"
@@ -38,9 +39,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintWidth_percent="0.40">
+        app:layout_constraintWidth_percent="0.45">
 
-        <!-- محتوای پنل -->
+        <!-- Queue Panel Content -->
         <LinearLayout
             android:id="@+id/queueContent"
             android:layout_width="0dp"
