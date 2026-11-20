@@ -37,20 +37,21 @@ class OwnerRepository {
 
         if (needsDetails.isNotEmpty()) {
             try {
-                ApiClient.api.getOwners(ids = needsDetails.joinToString(","))
+                val resolvedOwners = ApiClient.api
+                    .getOwners(ids = needsDetails.joinToString(","))
                     .owners
-                    .forEach { owner ->
-                        dao.upsert(
-                            OwnerEntity(
-                                id = owner.id,
-                                name = owner.name?.takeIf { it.isNotBlank() }
-                                    ?: "User #${owner.id}",
-                                meta = owner.meta?.let { gson.toJson(it) } ?: "{}",
-                                updatedAt = System.currentTimeMillis()
-                            )
+                resolvedOwners.forEach { owner ->
+                    dao.upsert(
+                        OwnerEntity(
+                            id = owner.id,
+                            name = owner.name?.takeIf { it.isNotBlank() }
+                                ?: "User #${owner.id}",
+                            meta = owner.meta?.let { gson.toJson(it) } ?: "{}",
+                            updatedAt = System.currentTimeMillis()
                         )
-                    }
-                checkedWithoutThumb.addAll(needsDetails)
+                    )
+                }
+                checkedWithoutThumb.addAll(resolvedOwners.map { it.id })
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
