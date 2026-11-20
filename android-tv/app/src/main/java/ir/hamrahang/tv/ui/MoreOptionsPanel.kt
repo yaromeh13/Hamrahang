@@ -195,12 +195,14 @@ object MoreOptionsPanel {
         }
 
         addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Queue") {
-            MessageManager.info(
-                if (ir.hamrahang.tv.playback.PlaybackManager.session.value?.items?.any {
+            val added = ir.hamrahang.tv.playback.PlaybackManager.addToQueue(item)
+            when {
+                added -> MessageManager.info("Adding items to the queue")
+                ir.hamrahang.tv.playback.PlaybackManager.session.value?.items?.any {
                     it.id == item.id && it.contentType == item.contentType
-                } == true) "Already in the current queue"
-                else "Adding items to the queue from this menu is not available yet"
-            )
+                } == true -> MessageManager.info("Already in the current queue")
+                else -> MessageManager.info("Unable to add this item to the queue")
+            }
         }
         addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Playlist") {
             MessageManager.info("Playlists are not available on TV yet")
