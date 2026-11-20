@@ -164,6 +164,27 @@ object PlaybackManager {
         _session.value = current.copy(items = items.toList(), currentIndex = newIndex)
     }
 
+    /**
+     * Append a playable item to the active queue without changing the current item.
+     * The queue may contain both audio and video; each item determines its own player.
+     */
+    fun addToQueue(item: PlaybackItem): Boolean {
+        if (item.contentType !in setOf(
+                ContentType.SONG,
+                ContentType.PODCAST,
+                ContentType.VIDEO,
+                ContentType.MUSICVIDEO
+            )
+        ) return false
+
+        val current = _session.value ?: return false
+        val key = queueKey(item)
+        if (current.items.any { queueKey(it) == key }) return false
+
+        _session.value = current.copy(items = current.items + item)
+        return true
+    }
+
     // PLAY SPECIFIC INDEX
     // ==================================================
 
@@ -406,7 +427,11 @@ object PlaybackManager {
         val context = appContext ?: return
         val session = _session.value ?: return
         val item = _currentItem.value ?: return
-        val mediaType = session.mediaType
+        val mediaType = when (item.contentType) {
+            ContentType.SONG, ContentType.PODCAST -> MediaType.AUDIO
+            ContentType.VIDEO, ContentType.MUSICVIDEO -> MediaType.VIDEO
+            else -> return
+        }
 
         // ----------------------------------------------
         // جلوگیری از پخش مجدد همان Media
