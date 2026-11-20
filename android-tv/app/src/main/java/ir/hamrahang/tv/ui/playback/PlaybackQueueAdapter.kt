@@ -24,7 +24,8 @@ class PlaybackQueueAdapter(
     private val onClick: (Int) -> Unit,
     private val onRemove: (Int) -> Unit = {},
     private val onMore: (PlaybackItem) -> Unit = {},
-    private val onReorderCommit: (List<PlaybackItem>) -> Unit = {}
+    private val onReorderCommit: (List<PlaybackItem>) -> Unit = {},
+    private val onReorderStateChanged: (Boolean) -> Unit = {}
 ) : ListAdapter<PlaybackItem, PlaybackQueueAdapter.VH>(DIFF_CALLBACK) {
 
     private val handler = Handler(Looper.getMainLooper())
@@ -221,6 +222,7 @@ class PlaybackQueueAdapter(
     private fun beginReorder(position: Int) {
         if (isReordering || position !in currentList.indices) return
         isReordering = true
+        onReorderStateChanged(true)
         movingIndex = position
         originalItems = currentList.toList()
         workingItems = currentList.toList()
@@ -244,10 +246,17 @@ class PlaybackQueueAdapter(
         }
     }
 
+    fun cancelReorder(): Boolean {
+        if (!isReordering) return false
+        finishReorder(commit = false, focusPosition = movingIndex)
+        return true
+    }
+
     private fun finishReorder(commit: Boolean, focusPosition: Int) {
         if (!isReordering) return
         val finalItems = if (commit) workingItems.orEmpty() else originalItems.orEmpty()
         isReordering = false
+        onReorderStateChanged(false)
         movingIndex = RecyclerView.NO_POSITION
         originalItems = null
         workingItems = null
