@@ -21,6 +21,7 @@ import ir.hamrahang.tv.data.video.VideoRepository
 import ir.hamrahang.tv.domain.hero.HeroContent
 import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.playback.PlaybackItem
+import ir.hamrahang.tv.ui.MoreOptionsPanel
 import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.playback.PlaybackSession
 import ir.hamrahang.tv.playback.PlaybackSource
@@ -33,6 +34,7 @@ import ir.hamrahang.tv.lyrics.LyricsParser
 import ir.hamrahang.tv.lyrics.LyricsEngine
 import ir.hamrahang.tv.lyrics.LyricsScope
 import ir.hamrahang.tv.util.displayTitle
+import ir.hamrahang.tv.ui.message.MessageManager
 import kotlinx.coroutines.launch
 
 class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
@@ -85,7 +87,26 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         playButton.setOnClickListener { playCurrentDetail() }
         infoButton.setOnClickListener { }
         moreButton.setOnClickListener {
-            Toast.makeText(requireContext(), "More options will be available here", Toast.LENGTH_SHORT).show()
+            val item = when (contentType) {
+                ContentType.ALBUM -> album?.let {
+                    PlaybackItem(it.id, it.displayTitle(), it.thumb, emptyList(), ContentType.ALBUM)
+                }
+                ContentType.SONG -> song?.let {
+                    PlaybackItem(it.id, it.displayTitle(), it.thumb, it.artists, ContentType.SONG)
+                }
+                ContentType.PODCAST -> podcast?.let {
+                    PlaybackItem(it.id, it.displayTitle(), it.thumb, it.artists, ContentType.PODCAST)
+                }
+                ContentType.VIDEO, ContentType.MUSICVIDEO -> video?.let {
+                    PlaybackItem(it.id, it.displayTitle(), it.thumb, it.artists, it.contentType)
+                }
+                else -> null
+            }
+            if (item != null) {
+                MoreOptionsPanel.show(this, item, moreButton)
+            } else {
+                MessageManager.info("Item details are still loading")
+            }
         }
 
         loadDetails()
