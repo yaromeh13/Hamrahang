@@ -82,4 +82,9 @@
     <string name="settings_blue">آبی</string>
     <string name="source_none">منبعی در دسترس نیست</string>
     <string name="source_fallback">منبع %1$d</string>
+    <string name="settings_font_size">اندازه قلم</string>
+    <string name="settings_small">کوچک</string>
+    <string name="settings_medium">متوسط</string>
+    <string name="settings_large">بزرگ</string>
+    <string name="no_lyrics">متنی برای نمایش وجود ندارد</string>
 </resources>
