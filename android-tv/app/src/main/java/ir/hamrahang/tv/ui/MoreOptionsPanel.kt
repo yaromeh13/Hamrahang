@@ -157,8 +157,15 @@ object MoreOptionsPanel {
 
         var bookmarked = false
         lateinit var bookmarkCard: View
+        val favoriteLabel = if (item.contentType == ContentType.ARTIST) "Follow" else "Bookmark"
+        val favoriteDoneLabel = if (item.contentType == ContentType.ARTIST) "Following" else "Bookmarked"
+        val favoriteIcon = if (item.contentType == ContentType.ARTIST) {
+            R.drawable.ic_artist
+        } else {
+            R.drawable.ic_bookmark
+        }
         bookmarkCard = addTopAction(
-            context, actionsColumn, R.drawable.ic_bookmark, "Bookmark"
+            context, actionsColumn, favoriteIcon, favoriteLabel
         ) {
             if (mediaId == null) {
                 MessageManager.info("This item cannot be bookmarked")
@@ -166,8 +173,15 @@ object MoreOptionsPanel {
                 fragment.viewLifecycleOwner.lifecycleScope.launch {
                     bookmarked = FavoriteManager.toggle(mediaId, item.contentType)
                     bookmarkCard.findViewWithTag<TextView>("action_label")?.text =
-                        if (bookmarked) "Bookmarked" else "Bookmark"
-                    MessageManager.info(if (bookmarked) "Added to bookmarks" else "Removed from bookmarks")
+                        if (bookmarked) favoriteDoneLabel else favoriteLabel
+                    MessageManager.info(
+                        when {
+                            item.contentType == ContentType.ARTIST && bookmarked -> "Artist followed"
+                            item.contentType == ContentType.ARTIST -> "Artist unfollowed"
+                            bookmarked -> "Added to bookmarks"
+                            else -> "Removed from bookmarks"
+                        }
+                    )
                 }
             }
         }
@@ -176,7 +190,7 @@ object MoreOptionsPanel {
                 bookmarked = FavoriteManager.isFavorite(mediaId, item.contentType)
                 bookmarkCard.tag = if (bookmarked) "bookmarked" else "bookmark"
                 val label = bookmarkCard.findViewWithTag<TextView>("action_label")
-                label?.text = if (bookmarked) "Bookmarked" else "Bookmark"
+                label?.text = if (bookmarked) favoriteDoneLabel else favoriteLabel
             }
         }
 
