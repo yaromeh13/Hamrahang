@@ -130,6 +130,24 @@ object PlaybackManager {
             )
     }
 
+    /**
+     * Apply a queue order selected in the UI without restarting the current media.
+     * The current item is tracked by its media identity, not by its old index.
+     */
+    fun reorder(items: List<PlaybackItem>) {
+        val current = _session.value ?: return
+        if (items.size != current.items.size) return
+
+        fun key(item: PlaybackItem) = "${item.contentType.value}:${item.id}"
+        if (items.map(::key).toSet() != current.items.map(::key).toSet()) return
+
+        val currentKey = current.items.getOrNull(current.currentIndex)?.let(::key)
+        val newIndex = items.indexOfFirst { key(it) == currentKey }
+        if (newIndex == -1) return
+
+        _session.value = current.copy(items = items.toList(), currentIndex = newIndex)
+    }
+
     // PLAY SPECIFIC INDEX
     // ==================================================
 
