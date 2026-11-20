@@ -256,16 +256,6 @@
                 android:clickable="true"
                 android:tint="@android:color/white"/>
 
-            <ImageButton
-                android:id="@+id/btnMute"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="18dp"
-                android:src="@drawable/ic_volume_up"
-                android:background="@drawable/bg_player_square"
-                android:focusable="true"
-                android:clickable="true"
-                android:tint="@android:color/white"/>
 
             <ImageButton
                 android:id="@+id/btnLyrics"
