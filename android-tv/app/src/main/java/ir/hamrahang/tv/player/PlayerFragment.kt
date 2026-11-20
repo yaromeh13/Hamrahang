@@ -463,6 +463,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                     }
                 }
 
+                // Keep the rotating cover strictly synchronized with playback.
+                syncHeaderRotation(ui.playbackState)
+
                 // Playback state
                 when (ui.playbackState) {
                     PlaybackState.PLAYING -> {
@@ -1554,21 +1557,30 @@ private fun closeQueuePanel() {
 
         if (isRotatingHeader == rotating && leftHeaderContainer.childCount > 0) return
 
-        stopHeaderRotation()
+        // A mode switch replaces the cover view, so discard only the old
+        // animator here. Playback pause/resume must preserve its current angle.
+        stopHeaderRotation(resetCover = true)
         isRotatingHeader = rotating
         leftHeaderContainer.removeAllViews()
 
-        // The header layout is identical in both modes. Only the cover shape
-        // changes (square vs. circular rotation).
-        val layoutRes = R.layout.layout_header_simple
-
-        val headerView = layoutInflater.inflate(layoutRes, leftHeaderContainer, false)
+        // Both modes share the same header layout; only cover clipping changes.
+        val headerView = layoutInflater.inflate(
+            R.layout.layout_header_simple,
+            leftHeaderContainer,
+            false
+        )
         leftHeaderContainer.addView(headerView)
 
         headerImgCover = headerView.findViewById(R.id.imgCover)
         (headerImgCover as? com.google.android.material.imageview.ShapeableImageView)?.shapeAppearanceModel =
             com.google.android.material.shape.ShapeAppearanceModel.builder()
-                .setAllCornerSizes(if (rotating) 999f else 12f)
+                .setAllCornerSizes(
+                    if (rotating) {
+                        com.google.android.material.shape.RelativeCornerSize(0.5f)
+                    } else {
+                        12f * resources.displayMetrics.density
+                    }
+                )
                 .build()
         headerTxtTitle = headerView.findViewById(R.id.txtTitle)
         headerTxtTitle?.visibility = View.GONE
@@ -1601,39 +1613,46 @@ private fun closeQueuePanel() {
             }
             Glide.with(iv)
                 .load(info.artwork)
-                .transform(CenterCrop(), RoundedCorners(24))
+                .transform(CenterCrop())
                 .placeholder(fallback)
                 .error(fallback)
                 .fallback(fallback)
                 .into(iv)
         }
 
-        if (isRotatingHeader) {
-            if (
-                PlayerState.uiState.value.playbackState ==
-                PlaybackState.PLAYING
-            ) {
-                startHeaderRotation()
-            } else {
-                stopHeaderRotation()
-            }
+        syncHeaderRotation(PlayerState.uiState.value.playbackState)
+    }
+
+    private fun syncHeaderRotation(state: PlaybackState) {
+        if (!isRotatingHeader) {
+            coverAnimator?.pause()
+            headerImgCover?.rotation = 0f
+            return
+        }
+
+        if (state == PlaybackState.PLAYING) {
+            startHeaderRotation()
+        } else {
+            // Pause at the exact current angle; do not cancel or recreate it.
+            coverAnimator?.pause()
         }
     }
 
     private fun startHeaderRotation() {
         val cover = headerImgCover ?: return
-        if (coverAnimator == null) {
-            coverAnimator = android.animation.ObjectAnimator.ofFloat(
-                cover, View.ROTATION, 0f, 360f
-            ).apply {
-                duration = 12000
-                repeatCount = android.animation.ValueAnimator.INFINITE
-                interpolator = android.view.animation.LinearInterpolator()
-                start()
-                pause()
-            }
+        val animator = coverAnimator ?: android.animation.ObjectAnimator.ofFloat(
+            cover, View.ROTATION, cover.rotation, cover.rotation + 360f
+        ).apply {
+            duration = 12000
+            repeatCount = android.animation.ValueAnimator.INFINITE
+            interpolator = android.view.animation.LinearInterpolator()
+            coverAnimator = this
         }
-        coverAnimator?.resume()
+
+        when {
+            animator.isPaused -> animator.resume()
+            !animator.isStarted -> animator.start()
+        }
     }
 
 private fun applyVideoDisplayMode(
@@ -1670,10 +1689,10 @@ private fun applyVideoDisplayMode(
             }
         }
     }
-    private fun stopHeaderRotation() {
-        coverAnimator?.pause()
+    private fun stopHeaderRotation(resetCover: Boolean = false) {
         coverAnimator?.cancel()
         coverAnimator = null
+        if (resetCover) headerImgCover?.rotation = 0f
     }
 
     override fun onDestroyView() {
