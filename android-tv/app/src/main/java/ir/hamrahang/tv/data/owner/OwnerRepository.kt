@@ -9,6 +9,12 @@ import ir.hamrahang.tv.network.ApiClient
 
 class OwnerRepository {
 
+    companion object {
+        // Match the web owner's in-memory cache: do not repeatedly resolve a
+        // profile that was successfully checked but has no icon/thumbnail.
+        private val checkedWithoutThumb = mutableSetOf<Long>()
+    }
+
     private val dao = DatabaseProvider.database().ownerDao()
     private val gson = Gson()
 
@@ -24,11 +30,13 @@ class OwnerRepository {
             val meta = cached[id]?.meta
                 ?.takeIf { it.isNotBlank() && it != "null" }
                 ?.let { runCatching { gson.fromJson(it, OwnerMeta::class.java) }.getOrNull() }
-            meta?.ico.isNullOrBlank() && meta?.tmb.isNullOrBlank()
+            meta?.ico.isNullOrBlank() &&
+                meta?.tmb.isNullOrBlank() &&
+                id !in checkedWithoutThumb
         }
 
         if (needsDetails.isNotEmpty()) {
-            runCatching {
+            try {
                 ApiClient.api.getOwners(ids = needsDetails.joinToString(","))
                     .owners
                     .forEach { owner ->
@@ -42,6 +50,11 @@ class OwnerRepository {
                             )
                         )
                     }
+                checkedWithoutThumb.addAll(needsDetails)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // A failed request may be retried the next time the panel opens.
             }
         }
 
