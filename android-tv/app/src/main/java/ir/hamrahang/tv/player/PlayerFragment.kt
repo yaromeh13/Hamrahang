@@ -11,6 +11,10 @@ import androidx.activity.OnBackPressedCallback
 import androidx.lifecycle.lifecycleScope
 import android.view.KeyEvent
 import android.view.ViewTreeObserver
+import android.view.ViewGroup
+import android.view.Gravity
+import android.net.Uri
+import android.widget.ScrollView
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -74,7 +78,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private lateinit var btnForward15: ImageButton
     private lateinit var btnShuffle: ImageButton
     private lateinit var btnRepeat: ImageButton
-    private lateinit var btnLike: ImageButton
     private lateinit var btnPlayerSettings: ImageButton
     private lateinit var settingsPanel: View
     private lateinit var switchHeader: SwitchCompat
@@ -95,7 +98,12 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private var lastLyricsActiveIndex = Int.MIN_VALUE
     private lateinit var switchLyrics: SwitchCompat
     private lateinit var switchLyricsVideo: SwitchCompat
-    private lateinit var btnPlaylist: ImageButton
+    private lateinit var btnLyrics: ImageButton
+    private lateinit var btnSource: ImageButton
+    private lateinit var panelDynamicScroll: ScrollView
+    private lateinit var panelDynamicContent: LinearLayout
+    private var panelMode: String = "GENERAL"
+    private var panelReturnFocus: View? = null
     private lateinit var btnQueue: ImageButton
     private lateinit var queuePanel: View
     private lateinit var btnCloseQueue: View
@@ -207,31 +215,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             showControls()
         }
 
-        btnLike = view.findViewById(R.id.btnLike)
-        btnLike.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch {
-                val media =
-                    PlayerManager.getCurrentMedia()
-                        ?: return@launch
-
-                val mediaId =
-                    media.id?.toLongOrNull()
-                        ?: return@launch
-
-                val type =
-                    FavoriteManager.contentTypeOf(media)
-
-                val favorite =
-                    FavoriteManager.toggle(
-                        mediaId = mediaId,
-                        type = type
-                    )
-                updateLikeButton(favorite)
-                showControls()
-            }
-        }
-
-
         settingsPanel = view.findViewById(R.id.playerSettingsPanel)
         focusChangeListener = ViewTreeObserver.OnGlobalFocusChangeListener { oldFocus, newFocus ->
 
@@ -315,20 +298,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         }
 
         view.findViewById<LinearLayout>(R.id.rowItemLyricsSettings).setOnClickListener {
-            val entries = PlayerState.playbackInfo.value.lyricsEntries
-            LyricsSettingsDialog.show(
-                requireContext(),
-                lyricsPreferences,
-                entries.mapNotNull { it.lng }.distinct()
-            ) { updated ->
-                lyricsPreferences = updated
-                lyricsSettings.update(updated)
-                lastLyricsBody = null
-                bindLyrics(
-                    PlayerState.playbackInfo.value,
-                    PlayerState.uiState.value.position
-                )
-            }
+            openSettingsPanel("LYRICS", btnLyrics)
         }
         val rowItemHeader = view.findViewById<LinearLayout>(R.id.rowItemHeader)
         rowItemHeader.setOnClickListener {
@@ -370,15 +340,20 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         rowItemSubtitle = view.findViewById(R.id.rowItemSubtitle)
         btnPlayerSettings = view.findViewById(R.id.btnPlayerSettings)
         btnPlayerSettings.setOnClickListener {
-            if (settingsPanel.isVisible) {
-                closeSettingsPanel()
-            } else {
-                openSettingsPanel()
-            }
+            openSettingsPanel("GENERAL", btnPlayerSettings)
         }
-        btnPlaylist = view.findViewById(R.id.btnPlaylist)
+        btnLyrics = view.findViewById(R.id.btnLyrics)
+        btnLyrics.setOnClickListener {
+            openSettingsPanel("LYRICS", btnLyrics)
+        }
+        btnSource = view.findViewById(R.id.btnSource)
+        btnSource.setOnClickListener {
+            openSettingsPanel("SOURCE", btnSource)
+        }
         btnQueue = view.findViewById(R.id.btnQueue)
         queuePanel = view.findViewById(R.id.playerQueuePanel)
+        panelDynamicScroll = view.findViewById(R.id.playerPanelDynamicScroll)
+        panelDynamicContent = view.findViewById(R.id.playerPanelDynamicContent)
         btnCloseQueue = view.findViewById(R.id.btnCloseQueue)
         btnQueue.setOnClickListener {
             toggleQueuePanel()
@@ -752,63 +727,270 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         }
         overlay.postDelayed(hideRunnable!!, 4000)
     }
-    private fun openSettingsPanel() {
-        // اول پنل دیگر را ببند
+    private fun openSettingsPanel(mode: String = "GENERAL", returnFocus: View? = null) {
         closeOtherPanel(settingsPanel)
-        isOverlayPanelOpen = true
-        // وضعیت کنترلر قبل از باز شدن پنل را حفظ کن
-        controllerVisibleBeforePanel = PlayerState.uiState.value.controllerVisible
-        // تایمر کنترلر را متوقف کن
-        hideRunnable?.let { overlay.removeCallbacks(it) }
-        hideRunnable = null
-        // کنترلر را مخفی کن
-        seekContainer.visibility = View.GONE
-        controlContainer.visibility = View.GONE
-        // فقط visibility موقت را خاموش کن
-        // controllerPinned تغییر نمی‌کند
-        PlayerState.setControllerVisible(false)
-        settingsPanel.visibility = View.VISIBLE
-        settingsPanel.post {
-            val isVideo = PlayerState.playbackInfo.value.mediaType == MediaType.VIDEO
-            if (isVideo) {
-                rowItemSubtitle.requestFocus()
-            } else {
-                rowItemLyrics.requestFocus()
-            }
+        if (!settingsPanel.isVisible) {
+            isOverlayPanelOpen = true
+            controllerVisibleBeforePanel = PlayerState.uiState.value.controllerVisible
+            hideRunnable?.let { overlay.removeCallbacks(it) }
+            hideRunnable = null
+            seekContainer.visibility = View.GONE
+            controlContainer.visibility = View.GONE
+            PlayerState.setControllerVisible(false)
+            settingsPanel.visibility = View.VISIBLE
         }
+        if (returnFocus != null) panelReturnFocus = returnFocus
+        panelMode = mode
+        renderSharedPanel(mode)
         scheduleSettingsHide()
-        setupQualitySettings(PlayerState.playbackInfo.value)
     }
 
-  private fun closeSettingsPanel() {
+    private fun renderSharedPanel(mode: String, focusKey: String? = null) {
+        val panel = settingsPanel as ViewGroup
+        for (index in 0 until panel.childCount) {
+            val child = panel.getChildAt(index)
+            child.visibility = if (child == panelDynamicScroll) View.GONE else View.VISIBLE
+        }
+        if (mode == "GENERAL") {
+            val isVideo = PlayerState.playbackInfo.value.mediaType == MediaType.VIDEO
+            settingsColumnAudio.isVisible = !isVideo
+            settingsColumnVideo.isVisible = isVideo
+            setupQualitySettings(PlayerState.playbackInfo.value)
+            settingsPanel.post {
+                (if (isVideo) rowItemSubtitle else rowItemLyrics).requestFocus()
+            }
+            return
+        }
+        for (index in 0 until panel.childCount) {
+            val child = panel.getChildAt(index)
+            child.visibility = if (child == panelDynamicScroll) View.VISIBLE else View.GONE
+        }
+        panelDynamicContent.removeAllViews()
+        when (mode) {
+            "LYRICS" -> buildLyricsPanel()
+            "SOURCE" -> buildSourcePanel()
+        }
+        panelDynamicContent.post {
+            val target = focusKey?.let { panelDynamicContent.findViewWithTag<View>(it) }
+            (target ?: firstFocusable(panelDynamicContent))?.requestFocus()
+        }
+    }
 
-      cancelSettingsHide()
+    private fun firstFocusable(parent: ViewGroup): View? {
+        for (index in 0 until parent.childCount) {
+            val child = parent.getChildAt(index)
+            if (child.isFocusable && child.visibility == View.VISIBLE) return child
+            if (child is ViewGroup) firstFocusable(child)?.let { return it }
+        }
+        return null
+    }
 
-      if (!settingsPanel.isVisible) {
-          return
-      }
+    private fun addPanelLabel(value: String) {
+        panelDynamicContent.addView(TextView(requireContext()).apply {
+            text = value
+            textSize = 15f
+            setTextColor(0xFFBDBDC8.toInt())
+            setPadding(4, 18, 4, 8)
+        })
+    }
 
-      settingsPanel.visibility = View.GONE
+    private fun addPanelChoice(
+        title: String,
+        choices: List<Pair<String, String>>,
+        selected: String,
+        onSelected: (String) -> Unit
+    ) {
+        addPanelLabel(title)
+        val group = RadioGroup(requireContext()).apply {
+            orientation = RadioGroup.HORIZONTAL
+        }
+        choices.forEach { (value, label) ->
+            group.addView(RadioButton(requireContext()).apply {
+                id = View.generateViewId()
+                tag = value
+                text = label
+                textSize = 14f
+                setTextColor(0xFFFFFFFF.toInt())
+                setPadding(8, 8, 8, 8)
+                isFocusable = true
+                isFocusableInTouchMode = true
+                isChecked = value == selected
+                setOnClickListener {
+                    onSelected(value)
+                    for (index in 0 until group.childCount) {
+                        val child = group.getChildAt(index) as RadioButton
+                        child.isChecked = child.tag == value
+                    }
+                }
+            })
+        }
+        panelDynamicContent.addView(group)
+    }
 
-      isOverlayPanelOpen = false
+    private fun updateLyricsPreferences(updated: LyricsPreferences) {
+        lyricsPreferences = updated
+        lyricsSettings.update(updated)
+        PlayerState.setPlayerLyricsVisible(updated.enabled)
+        lastLyricsBody = null
+        bindLyrics(PlayerState.playbackInfo.value, PlayerState.uiState.value.position)
+    }
 
-      // وضعیت قبلی controllerVisible را برگردان
-      PlayerState.setControllerVisible(controllerVisibleBeforePanel)
+    private fun buildLyricsPanel() {
+        val info = PlayerState.playbackInfo.value
+        val isVideo = info.mediaType == MediaType.VIDEO
+        val enabledRow = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(4, 12, 4, 12)
+            isFocusable = true
+            isFocusableInTouchMode = true
+            tag = "lyrics_enabled"
+        }
+        enabledRow.addView(TextView(requireContext()).apply {
+            text = "Show lyrics"
+            textSize = 16f
+            setTextColor(0xFFFFFFFF.toInt())
+            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        })
+        val enabledSwitch = SwitchCompat(requireContext()).apply {
+            isChecked = lyricsPreferences.enabled
+            isFocusable = false
+            isClickable = false
+        }
+        enabledRow.addView(enabledSwitch)
+        enabledRow.setOnClickListener {
+            val next = !lyricsPreferences.enabled
+            enabledSwitch.isChecked = next
+            updateLyricsPreferences(lyricsPreferences.copy(enabled = next))
+        }
+        panelDynamicContent.addView(enabledRow)
 
-      // نمایش واقعی کنترلر بر اساس وضعیت قبلی
-      applyOverlayVisibility(PlayerState.uiState.value)
+        val languages = (listOf("auto" to "Automatic") +
+            info.lyricsEntries.filter { !it.body.isNullOrBlank() }
+                .mapNotNull { entry -> entry.lng?.let { it to it } }
+                .distinct())
+        addPanelChoice("Lyrics language", languages, lyricsPreferences.language) { value ->
+            updateLyricsPreferences(lyricsPreferences.copy(language = value))
+        }
 
-      // فوکوس روی Settings
-      btnPlayerSettings.requestFocus()
+        addPanelLabel("Lyrics size")
+        val sizeLabel = TextView(requireContext()).apply {
+            text = "${lyricsPreferences.fontSize}sp"
+            textSize = 14f
+            setTextColor(0xFFFFFFFF.toInt())
+        }
+        panelDynamicContent.addView(sizeLabel)
+        val sizeSeek = SeekBar(requireContext()).apply {
+            max = 20
+            progress = lyricsPreferences.fontSize.coerceIn(12, 32) - 12
+            isFocusable = true
+        }
+        sizeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(bar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val size = progress + 12
+                sizeLabel.text = "${size}sp"
+                if (fromUser) updateLyricsPreferences(lyricsPreferences.copy(fontSize = size))
+            }
+            override fun onStartTrackingTouch(bar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(bar: SeekBar?) = Unit
+        })
+        panelDynamicContent.addView(sizeSeek)
+        addPanelChoice(
+            "Size presets",
+            listOf("13" to "SM", "16" to "MD", "20" to "LG", "24" to "XL"),
+            lyricsPreferences.fontSize.toString()
+        ) { value ->
+            val size = value.toIntOrNull() ?: return@addPanelChoice
+            sizeSeek.progress = size - 12
+            updateLyricsPreferences(lyricsPreferences.copy(fontSize = size))
+        }
+        addPanelChoice(
+            "Lyrics font",
+            listOf("" to "Default", "f1" to "F1", "f2" to "F2", "f3" to "F3", "f4" to "F4"),
+            lyricsPreferences.fontFamily
+        ) { value ->
+            updateLyricsPreferences(lyricsPreferences.copy(fontFamily = value))
+        }
+        if (!isVideo) {
+            addPanelChoice(
+                "Lyrics style",
+                listOf("NORMAL" to "Normal", "LINE" to "Line", "FOCUS" to "Focus", "CARD" to "Card"),
+                lyricsPreferences.viewMode.name
+            ) { value ->
+                val selected = runCatching { LyricsViewMode.valueOf(value) }
+                    .getOrDefault(LyricsViewMode.FOCUS)
+                updateLyricsPreferences(lyricsPreferences.copy(viewMode = selected))
+            }
+        }
+    }
 
-      // اگر کنترلر قبل از باز شدن پنل موقتاً visible بوده،
-      // تایمرش را دوباره فعال کن.
-      if (controllerVisibleBeforePanel &&
-          !PlayerState.uiState.value.controllerPinned
-      ) {
-          scheduleHide()
-      }
-  }
+    private fun buildSourcePanel() {
+        val sources = SourceQualityUtils.playableSources(PlayerState.playbackInfo.value.sources)
+        if (sources.isEmpty()) {
+            addPanelLabel("No sources available")
+            return
+        }
+        val selectedUrl = PlayerState.playbackInfo.value.selectedSource?.url
+        sources.forEachIndexed { index, source ->
+            val row = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(12, 12, 12, 12)
+                isFocusable = true
+                isFocusableInTouchMode = true
+                isClickable = true
+                background = requireContext().getDrawable(R.drawable.bg_settings_row_focus)
+                tag = "source_$index"
+            }
+            val label = source.owner?.name?.takeIf { it.isNotBlank() }
+                ?: runCatching { Uri.parse(source.url).host }.getOrNull()
+                ?: "Source ${index + 1}"
+            row.addView(TextView(requireContext()).apply {
+                text = label
+                textSize = 16f
+                setTextColor(if (source.url == selectedUrl) 0xFFFF7777.toInt() else 0xFFFFFFFF.toInt())
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            })
+            row.addView(TextView(requireContext()).apply {
+                val bit = SourceQualityUtils.parseBit(source.bit)
+                text = if (bit == null) "—" else if (PlayerState.playbackInfo.value.mediaType == MediaType.VIDEO) "${bit}p" else "${bit}k"
+                textSize = 14f
+                setTextColor(0xFFCCCCCC.toInt())
+            })
+            row.setOnClickListener {
+                PlayerManager.switchToSource(source)
+                updateSourceSelection(sources, source.url)
+            }
+            panelDynamicContent.addView(row)
+        }
+    }
+
+    private fun updateSourceSelection(sources: List<MediaSource>, selectedUrl: String) {
+        for (index in 0 until panelDynamicContent.childCount) {
+            val row = panelDynamicContent.getChildAt(index) as? LinearLayout ?: continue
+            val sourceIndex = row.tag?.toString()?.removePrefix("source_")?.toIntOrNull() ?: continue
+            val selected = sources.getOrNull(sourceIndex)?.url == selectedUrl
+            (row.getChildAt(0) as? TextView)?.setTextColor(
+                if (selected) 0xFFFF7777.toInt() else 0xFFFFFFFF.toInt()
+            )
+        }
+    }
+
+    private fun closeSettingsPanel() {
+        cancelSettingsHide()
+        if (!settingsPanel.isVisible) return
+        settingsPanel.visibility = View.GONE
+        isOverlayPanelOpen = false
+        PlayerState.setControllerVisible(controllerVisibleBeforePanel)
+        applyOverlayVisibility(PlayerState.uiState.value)
+        (panelReturnFocus ?: when (panelMode) {
+            "LYRICS" -> btnLyrics
+            "SOURCE" -> btnSource
+            else -> btnPlayerSettings
+        }).requestFocus()
+        panelReturnFocus = null
+        if (controllerVisibleBeforePanel && !PlayerState.uiState.value.controllerPinned) scheduleHide()
+    }
 
     private fun scheduleSettingsHide() {
 
@@ -839,46 +1021,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         return String.format("%02d:%02d", m, s)
     }
 
-    private suspend fun isCurrentFavorite(): Boolean {
-
-        val media = PlayerManager.getCurrentMedia()
-            ?: return false
-
-        val mediaId = media.id
-            ?.toLongOrNull()
-            ?: return false
-
-        val type = FavoriteManager.contentTypeOf(media)
-
-        return FavoriteManager.isFavorite(
-            mediaId = mediaId,
-            type = type
-        )
-    }
-    private fun updateLikeButton(
-        favorite: Boolean
-    ) {
-
-        btnLike.isSelected = favorite
-
-        btnLike.setImageResource(
-            if (favorite) {
-                R.drawable.ic_favorite_filled
-            } else {
-                R.drawable.ic_favorite
-            }
-        )
-    }
-    private fun refreshLikeButton() {
-
-        viewLifecycleOwner.lifecycleScope.launch {
-
-            val favorite =
-                isCurrentFavorite()
-
-            updateLikeButton(favorite)
-        }
-    }
     private fun isViewInside(parent: View, child: View): Boolean {
 
         var current: View? = child
