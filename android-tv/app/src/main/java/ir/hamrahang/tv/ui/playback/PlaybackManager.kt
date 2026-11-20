@@ -343,11 +343,7 @@ object PlaybackManager {
         if (session.items.isEmpty()) return
 
         val currentItem = session.items.getOrNull(session.currentIndex) ?: return
-        val activeMedia = PlayerManager.getCurrentMedia()
-        val isPendingLoad =
-            PlayerState.uiState.value.playbackState == ir.hamrahang.tv.player.PlaybackState.LOADING &&
-                (activeMedia?.id != currentItem.id ||
-                    activeMedia?.contentType != currentItem.contentType)
+        val isPendingLoad = PlayerManager.isMediaPending()
 
         // Match web PlayPrevious(): after 3 seconds restart this item instead of skipping.
         if (!isPendingLoad && PlayerManager.getCurrentPosition() > 3_000L) {
