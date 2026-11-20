@@ -87,7 +87,10 @@ class PlaybackQueueAdapter(
                 if (event.action != KeyEvent.ACTION_DOWN) return true
                 return handleReorderKey(keyCode)
             }
-            if (keyCode != KeyEvent.KEYCODE_DPAD_CENTER && keyCode != KeyEvent.KEYCODE_ENTER) return false
+            if (keyCode != KeyEvent.KEYCODE_DPAD_CENTER &&
+                keyCode != KeyEvent.KEYCODE_ENTER &&
+                keyCode != KeyEvent.KEYCODE_NUMPAD_ENTER
+            ) return false
             when (event.action) {
                 KeyEvent.ACTION_DOWN -> {
                     if (!centerKeyDown) {
