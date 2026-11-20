@@ -6,21 +6,25 @@ import android.graphics.drawable.ColorDrawable
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.playback.PlaybackItem
 import ir.hamrahang.tv.ui.message.MessageManager
+import ir.hamrahang.tv.util.displayTitle
 import kotlinx.coroutines.launch
 
 /**
- * Shared More actions used by the fullscreen player, playback screen and item details.
- * The action list is intentionally kept aligned with the existing web/TV menu.
+ * Shared More panel styled like the web More menu and the native Settings cards.
  */
 object MoreOptionsPanel {
 
@@ -33,7 +37,7 @@ object MoreOptionsPanel {
         val dialog = Dialog(context)
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(20.dp(context), 18.dp(context), 20.dp(context), 18.dp(context))
+            setPadding(16.dp(context), 16.dp(context), 16.dp(context), 16.dp(context))
             background = context.getDrawable(R.drawable.bg_setting_player)
         }
         val scroll = ScrollView(context).apply {
@@ -46,16 +50,16 @@ object MoreOptionsPanel {
         dialog.window?.let { window ->
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             window.setLayout(
-                (context.resources.displayMetrics.widthPixels * 0.62f).toInt(),
-                (context.resources.displayMetrics.heightPixels * 0.72f).toInt()
+                (context.resources.displayMetrics.widthPixels * 0.72f).toInt(),
+                (context.resources.displayMetrics.heightPixels * 0.78f).toInt()
             )
         }
         dialog.setOnDismissListener { returnFocus?.requestFocus() }
         dialog.show()
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setLayout(
-            (context.resources.displayMetrics.widthPixels * 0.62f).toInt(),
-            (context.resources.displayMetrics.heightPixels * 0.72f).toInt()
+            (context.resources.displayMetrics.widthPixels * 0.72f).toInt(),
+            (context.resources.displayMetrics.heightPixels * 0.78f).toInt()
         )
         content.post { firstFocusable(content)?.requestFocus() }
     }
@@ -67,58 +71,105 @@ object MoreOptionsPanel {
         close: () -> Unit = {}
     ) {
         container.removeAllViews()
+        container.orientation = LinearLayout.VERTICAL
         val context = fragment.requireContext()
         val mediaId = item.id.toLongOrNull()
 
-        fun addAction(label: String, action: () -> Unit) {
-            val row = TextView(context).apply {
-                text = label
-                textSize = 17f
-                setTextColor(Color.WHITE)
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(18.dp(context), 12.dp(context), 18.dp(context), 12.dp(context))
-                minHeight = 54.dp(context)
-                isFocusable = true
-                isFocusableInTouchMode = true
-                isClickable = true
-                background = context.getDrawable(R.drawable.bg_player_source_row)
-                setOnClickListener { action() }
-            }
-            container.addView(row, LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ))
+        val header = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
         }
+        val cover = ImageView(context).apply {
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            contentDescription = item.title
+        }
+        Glide.with(fragment)
+            .load(item.artwork)
+            .transform(CenterCrop(), RoundedCorners(12.dp(context)))
+            .placeholder(R.drawable.ic_song)
+            .error(R.drawable.ic_song)
+            .into(cover)
+        header.addView(cover, LinearLayout.LayoutParams(190.dp(context), 190.dp(context)))
 
-        addAction("Like / Favorite") {
+        val details = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(20.dp(context), 0, 0, 0)
+        }
+        details.addView(TextView(context).apply {
+            text = item.title
+            textSize = 23f
+            setTextColor(Color.WHITE)
+            maxLines = 2
+        })
+        val artistNames = item.artists.joinToString("  •  ") { it.displayTitle() }
+        if (artistNames.isNotBlank()) {
+            details.addView(TextView(context).apply {
+                text = artistNames
+                textSize = 18f
+                setTextColor(0xFFFFB7B7.toInt())
+                maxLines = 2
+                setPadding(0, 8.dp(context), 0, 0)
+            })
+        }
+        header.addView(details, LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.MATCH_PARENT, 1f
+        ))
+        container.addView(header, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { bottomMargin = 14.dp(context) })
+
+        var bookmarked = false
+        val bookmarkCard = addTopAction(
+            context, container, R.drawable.ic_bookmark, "Bookmark"
+        ) {
             if (mediaId == null) {
-                MessageManager.info("This item cannot be added to favorites")
+                MessageManager.info("This item cannot be bookmarked")
             } else {
                 fragment.viewLifecycleOwner.lifecycleScope.launch {
-                    val now = FavoriteManager.toggle(mediaId, item.contentType)
-                    MessageManager.info(if (now) "Added to favorites" else "Removed from favorites")
+                    bookmarked = FavoriteManager.toggle(mediaId, item.contentType)
+                    MessageManager.info(if (bookmarked) "Added to bookmarks" else "Removed from bookmarks")
                 }
             }
         }
-
-        if (item.contentType != ContentType.ARTIST) {
-            addAction("to Queue") {
-                MessageManager.info(
-                    if (ir.hamrahang.tv.playback.PlaybackManager.session.value?.items?.any {
-                        it.id == item.id && it.contentType == item.contentType
-                    } == true) "Already in the current queue"
-                    else "Adding items to the queue from this menu is not available yet"
-                )
-            }
-            addAction("to Playlist") {
-                MessageManager.info("Playlists are not available on TV yet")
+        if (mediaId != null) {
+            fragment.viewLifecycleOwner.lifecycleScope.launch {
+                bookmarked = FavoriteManager.isFavorite(mediaId, item.contentType)
+                bookmarkCard.tag = if (bookmarked) "bookmarked" else "bookmark"
+                val label = bookmarkCard.findViewWithTag<TextView>("action_label")
+                label?.text = if (bookmarked) "Bookmarked" else "Bookmark"
             }
         }
 
-        addAction("Report") {
+        addTopAction(context, container, R.drawable.ic_queue_music, "to Queue") {
+            MessageManager.info(
+                if (ir.hamrahang.tv.playback.PlaybackManager.session.value?.items?.any {
+                    it.id == item.id && it.contentType == item.contentType
+                } == true) "Already in the current queue"
+                else "Adding items to the queue from this menu is not available yet"
+            )
+        }
+        addTopAction(context, container, R.drawable.ic_playlist, "to Playlist") {
+            MessageManager.info("Playlists are not available on TV yet")
+        }
+        addTopAction(context, container, R.drawable.ic_error, "Report") {
             MessageManager.info("Reporting via TV is not yet available.")
         }
-        addAction("Go to item") {
+
+        val destinationLabel = when (item.contentType) {
+            ContentType.SONG -> "Go to song"
+            ContentType.PODCAST -> "Go to podcast"
+            ContentType.ALBUM -> "Go to album"
+            ContentType.VIDEO -> "Go to video"
+            ContentType.MUSICVIDEO -> "Go to music video"
+            ContentType.ARTIST -> "Go to artist"
+            ContentType.PLAYLIST -> "Go to playlist"
+        }
+        addNavigationAction(
+            context, container,
+            mediaIcon(item.contentType),
+            destinationLabel
+        ) {
             close()
             if (item.contentType == ContentType.ARTIST) {
                 val artist = item.artists.firstOrNull()
@@ -128,12 +179,102 @@ object MoreOptionsPanel {
                 UiNavigator.openMediaDetail(item.contentType, item.id)
             }
         }
-        addAction("Go to artist") {
-            close()
-            val artist = item.artists.firstOrNull()
-            if (artist == null) MessageManager.info("No artist available")
-            else UiNavigator.openArtist(artist)
+
+        if (item.contentType != ContentType.ARTIST && item.artists.isNotEmpty()) {
+            addNavigationAction(
+                context, container, R.drawable.ic_profile, "Go to artist"
+            ) {
+                close()
+                UiNavigator.openArtist(item.artists.first())
+            }
         }
+    }
+
+    private fun addTopAction(
+        context: android.content.Context,
+        container: LinearLayout,
+        icon: Int,
+        label: String,
+        action: () -> Unit
+    ): View {
+        var row = container.findViewWithTag<LinearLayout>("top_actions")
+        if (row == null) {
+            row = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                tag = "top_actions"
+            }
+            container.addView(row, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 112.dp(context)
+            ).apply { bottomMargin = 12.dp(context) })
+        }
+
+        val card = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            isFocusable = true
+            isFocusableInTouchMode = true
+            isClickable = true
+            background = context.getDrawable(R.drawable.bg_setting_option)
+            setPadding(6.dp(context), 8.dp(context), 6.dp(context), 8.dp(context))
+            setOnClickListener { action() }
+        }
+        card.addView(ImageView(context).apply {
+            setImageResource(icon)
+            layoutParams = LinearLayout.LayoutParams(36.dp(context), 36.dp(context))
+        })
+        card.addView(TextView(context).apply {
+            text = label
+            tag = "action_label"
+            textSize = 16f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+            maxLines = 1
+            setPadding(0, 6.dp(context), 0, 0)
+        })
+        val params = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+        if (row.childCount > 0) params.marginStart = 10.dp(context)
+        row.addView(card, params)
+        return card
+    }
+
+    private fun addNavigationAction(
+        context: android.content.Context,
+        container: LinearLayout,
+        icon: Int,
+        label: String,
+        action: () -> Unit
+    ) {
+        val row = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            isFocusable = true
+            isFocusableInTouchMode = true
+            isClickable = true
+            background = context.getDrawable(R.drawable.bg_setting_option)
+            setPadding(22.dp(context), 10.dp(context), 22.dp(context), 10.dp(context))
+            setOnClickListener { action() }
+        }
+        row.addView(ImageView(context).apply {
+            setImageResource(icon)
+            layoutParams = LinearLayout.LayoutParams(32.dp(context), 32.dp(context))
+        })
+        row.addView(TextView(context).apply {
+            text = label
+            textSize = 19f
+            setTextColor(Color.WHITE)
+            setPadding(20.dp(context), 0, 0, 0)
+        })
+        container.addView(row, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 64.dp(context)
+        ).apply { bottomMargin = 10.dp(context) })
+    }
+
+    private fun mediaIcon(type: ContentType): Int = when (type) {
+        ContentType.VIDEO, ContentType.MUSICVIDEO -> R.drawable.ic_video
+        ContentType.ARTIST -> R.drawable.ic_profile
+        ContentType.ALBUM -> R.drawable.ic_album_disk
+        ContentType.PLAYLIST -> R.drawable.ic_playlist
+        else -> R.drawable.ic_song
     }
 
     private fun firstFocusable(parent: ViewGroup): View? {
