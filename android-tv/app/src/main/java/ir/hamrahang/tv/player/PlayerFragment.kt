@@ -569,6 +569,12 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                         0.5f
                     else
                         1f
+                btnRepeat.setImageResource(
+                    if (ui.repeatMode == Player.REPEAT_MODE_ONE)
+                        R.drawable.ic_repeat_one
+                    else
+                        R.drawable.ic_repeat
+                )
 
                 applyOverlayVisibility(ui)
             }
