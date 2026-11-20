@@ -1034,7 +1034,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         btnLyrics.apply {
             scaleType = ImageView.ScaleType.FIT_CENTER
             setPadding(16.dp, 16.dp, 16.dp, 16.dp)
-            setImageResource(if (mode == MediaType.VIDEO) R.drawable.ic_subtitles else R.drawable.ic_lyrics)
+            setImageResource(if (mode == MediaType.VIDEO) R.drawable.ic_lyrics else R.drawable.ic_lyrics)
         }
         Glide.with(btnLyrics)
             .load(lyricsAsset)
@@ -1092,60 +1092,138 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             addPanelLabel(getString(R.string.source_none))
             return
         }
+
+        renderSourceRows(sources, emptyMap())
+
+        val ownerIds = sources
+            .filter { sourceOwnerThumbUrl(it.owner) == null }
+            .mapNotNull { it.owner?.id ?: it.user }
+            .filter { it > 0L }
+            .distinct()
+
+        if (ownerIds.isEmpty()) return
+
+        val requestId = ++sourcePanelGeneration
+        viewLifecycleOwner.lifecycleScope.launch {
+            val owners = runCatching {
+                OwnerRepository().resolveByIds(ownerIds)
+            }.getOrDefault(emptyMap())
+
+            if (!isAdded ||
+                requestId != sourcePanelGeneration ||
+                panelMode != "SOURCE" ||
+                !settingsPanel.isVisible
+            ) return@launch
+
+            val focusedTag = panelDynamicContent.findFocus()?.tag?.toString()
+            renderSourceRows(sources, owners)
+            if (focusedTag != null) {
+                panelDynamicContent.post {
+                    panelDynamicContent.findViewWithTag<View>(focusedTag)?.requestFocus()
+                }
+            }
+        }
+    }
+
+    private fun renderSourceRows(
+        sources: List<MediaSource>,
+        resolvedOwners: Map<Long, SourceOwner>
+    ) {
+        panelDynamicContent.removeAllViews()
         val selectedUrl = PlayerState.playbackInfo.value.selectedSource?.url
+        val isVideo = PlayerState.playbackInfo.value.mediaType == MediaType.VIDEO
+
         sources.forEachIndexed { index, source ->
+            val ownerId = source.owner?.id ?: source.user
+            val resolvedOwner = ownerId?.let(resolvedOwners::get)
+            val ownerWithThumb = resolvedOwner?.takeIf {
+                sourceOwnerThumbUrl(it) != null
+            } ?: source.owner?.takeIf {
+                sourceOwnerThumbUrl(it) != null
+            } ?: resolvedOwner ?: source.owner
+
+            val ownerName = resolvedOwner?.name
+                ?.takeIf { it.isNotBlank() && !it.startsWith("User #") }
+                ?: source.owner?.name?.takeIf { it.isNotBlank() }
+                ?: resolvedOwner?.name?.takeIf { it.isNotBlank() }
+                ?: runCatching { Uri.parse(source.url).host }.getOrNull()
+                ?: getString(R.string.source_fallback, index + 1)
+
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(12, 12, 12, 12)
+                setPadding(12.dp, 8.dp, 12.dp, 8.dp)
+                minimumHeight = 70.dp
                 isFocusable = true
                 isFocusableInTouchMode = true
                 isClickable = true
-                background = requireContext().getDrawable(R.drawable.bg_settings_row_focus)
+                background = requireContext().getDrawable(R.drawable.bg_player_source_row)
                 isSelected = source.url == selectedUrl
                 tag = "source_$index"
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    topMargin = 4.dp
+                    bottomMargin = 4.dp
+                }
             }
-            val number = TextView(requireContext()).apply {
+
+            row.addView(TextView(requireContext()).apply {
                 text = (index + 1).toString()
                 textSize = 14f
+                gravity = Gravity.CENTER
                 setTextColor(0xFF999999.toInt())
-                setPadding(0, 0, 12, 0)
-            }
-            row.addView(number)
+                layoutParams = LinearLayout.LayoutParams(38.dp, ViewGroup.LayoutParams.MATCH_PARENT)
+            })
+
             val ownerImage = ImageView(requireContext()).apply {
-                val imageUrl = source.owner?.meta?.tmb
-                    ?: source.owner?.meta?.ico
-                    ?: source.owner?.meta?.photo
-                layoutParams = LinearLayout.LayoutParams(44.dp, 44.dp).apply {
-                    marginEnd = 12.dp
+                layoutParams = LinearLayout.LayoutParams(54.dp, 54.dp).apply {
+                    marginEnd = 10.dp
                 }
                 scaleType = ImageView.ScaleType.CENTER_CROP
-                if (!imageUrl.isNullOrBlank()) {
-                    Glide.with(this)
-                        .load(imageUrl)
-                        .placeholder(R.drawable.ic_general)
-                        .error(R.drawable.ic_general)
-                        .into(this)
-                } else {
-                    setImageResource(R.drawable.ic_general)
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(0xFF292929.toInt())
+                    cornerRadius = 8.dp.toFloat()
                 }
+                clipToOutline = true
+                setImageResource(R.drawable.ic_general)
+            }
+            val thumbUrl = sourceOwnerThumbUrl(ownerWithThumb)
+            if (!thumbUrl.isNullOrBlank()) {
+                Glide.with(ownerImage)
+                    .load(thumbUrl)
+                    .transform(CenterCrop(), RoundedCorners(8.dp))
+                    .placeholder(R.drawable.ic_general)
+                    .error(R.drawable.ic_general)
+                    .fallback(R.drawable.ic_general)
+                    .into(ownerImage)
             }
             row.addView(ownerImage)
-            val label = source.owner?.name?.takeIf { it.isNotBlank() }
-                ?: runCatching { Uri.parse(source.url).host }.getOrNull()
-                ?: getString(R.string.source_fallback, index + 1)
+
             row.addView(TextView(requireContext()).apply {
-                text = label
+                text = ownerName
                 textSize = 16f
-                setTextColor(if (source.url == selectedUrl) 0xFFFF7777.toInt() else 0xFFFFFFFF.toInt())
-                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                setTextColor(if (source.url == selectedUrl) 0xFFFFFFFF.toInt() else 0xFFE4E4E4.toInt())
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1f
+                )
             })
+
+            val bit = SourceQualityUtils.parseBit(source.bit)
             row.addView(TextView(requireContext()).apply {
-                val bit = SourceQualityUtils.parseBit(source.bit)
-                text = if (bit == null) "—" else if (PlayerState.playbackInfo.value.mediaType == MediaType.VIDEO) "${bit}p" else "${bit}k"
+                text = if (bit == null) "—" else if (isVideo) "${bit}p" else "${bit}k"
                 textSize = 14f
-                setTextColor(0xFFCCCCCC.toInt())
+                setTextColor(0xFFEAEAEA.toInt())
+                gravity = Gravity.CENTER
+                setPadding(12.dp, 6.dp, 12.dp, 6.dp)
+                background = requireContext().getDrawable(R.drawable.bg_source_quality_chip)
             })
+
             row.setOnClickListener {
                 PlayerManager.switchToSource(source)
                 updateSourceSelection(sources, source.url)
