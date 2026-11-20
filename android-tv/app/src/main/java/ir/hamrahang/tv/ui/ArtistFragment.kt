@@ -60,6 +60,16 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
         }
 
         rows = view.findViewById(R.id.listRows)
+        followButton.setOnKeyListener { _, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN &&
+                keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN
+            ) {
+                rows.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                true
+            } else {
+                false
+            }
+        }
         rows.setNumColumns(1)
         rows.setItemAlignmentOffset(0)
         rows.setItemAlignmentOffsetPercent(0f)
