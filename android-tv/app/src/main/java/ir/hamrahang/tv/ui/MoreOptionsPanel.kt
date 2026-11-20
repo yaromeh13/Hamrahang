@@ -54,7 +54,7 @@ object MoreOptionsPanel {
         dialog.window?.let { window ->
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             window.setLayout(
-                (context.resources.displayMetrics.widthPixels * 0.82f).toInt(),
+                (context.resources.displayMetrics.widthPixels * 0.85f).toInt(),
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }
@@ -62,7 +62,7 @@ object MoreOptionsPanel {
         dialog.show()
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setLayout(
-            (context.resources.displayMetrics.widthPixels * 0.82f).toInt(),
+            (context.resources.displayMetrics.widthPixels * 0.85f).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         content.post { firstFocusable(content)?.requestFocus() }
@@ -146,7 +146,7 @@ object MoreOptionsPanel {
             orientation = LinearLayout.VERTICAL
             clipChildren = false
             clipToPadding = false
-            setPadding(4.dp(context), 0, 0, 0)
+            setPadding(12.dp(context), 0, 0, 0)
         }
         mainContent.addView(actionsColumn, LinearLayout.LayoutParams(
             0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
@@ -226,7 +226,7 @@ object MoreOptionsPanel {
 
         if (item.contentType != ContentType.ARTIST && item.artists.isNotEmpty()) {
             addNavigationAction(
-                context, actionsColumn, R.drawable.ic_profile, "Go to artist"
+                context, actionsColumn, R.drawable.ic_artist, "Go to artist"
             ) {
                 close()
                 UiNavigator.runAfterPlayerDismiss {
@@ -326,10 +326,20 @@ object MoreOptionsPanel {
             setPadding(22.dp(context), 10.dp(context), 22.dp(context), 10.dp(context))
             setOnClickListener { action() }
         }
-        row.addView(ImageView(context).apply {
+        val navigationIcon = ImageView(context).apply {
             setImageResource(icon)
+            imageTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
             layoutParams = LinearLayout.LayoutParams(32.dp(context), 32.dp(context))
-        })
+        }
+        row.addView(navigationIcon)
+        row.setOnFocusChangeListener { _, hasFocus ->
+            navigationIcon.animate()
+                .scaleX(if (hasFocus) 1.35f else 1f)
+                .scaleY(if (hasFocus) 1.35f else 1f)
+                .setDuration(170)
+                .start()
+        }
         row.addView(TextView(context).apply {
             text = label
             textSize = 19f
@@ -343,7 +353,7 @@ object MoreOptionsPanel {
 
     private fun mediaIcon(type: ContentType): Int = when (type) {
         ContentType.VIDEO, ContentType.MUSICVIDEO -> R.drawable.ic_video
-        ContentType.ARTIST -> R.drawable.ic_profile
+        ContentType.ARTIST -> R.drawable.ic_artist
         ContentType.ALBUM -> R.drawable.ic_album_disk
         ContentType.PLAYLIST -> R.drawable.ic_playlist
         else -> R.drawable.ic_song
