@@ -1034,12 +1034,12 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         btnLyrics.apply {
             scaleType = ImageView.ScaleType.FIT_CENTER
             setPadding(16.dp, 16.dp, 16.dp, 16.dp)
-            setImageResource(if (mode == MediaType.VIDEO) R.drawable.ic_lyrics else R.drawable.ic_lyrics)
+            setImageResource(R.drawable.ic_lyrics)
         }
         Glide.with(btnLyrics)
             .load(lyricsAsset)
             .override(24.dp, 24.dp)
-            .placeholder(if (mode == MediaType.VIDEO) R.drawable.ic_subtitles else R.drawable.ic_lyrics)
+            .placeholder(if (mode == MediaType.VIDEO) R.drawable.ic_lyrics else R.drawable.ic_lyrics)
             .error(if (mode == MediaType.VIDEO) R.drawable.ic_subtitles else R.drawable.ic_lyrics)
             .dontAnimate()
             .into(btnLyrics)
