@@ -26,6 +26,7 @@ object PlayerManager {
     private var player: ExoPlayer? = null
     private var currentMedia: PlayerMedia? = null
     private var currentUrlIndex = 0
+    private var mediaPrepared = false
     private var progressJob: Job? = null
     private var loadingTimeoutJob: Job? = null
     private val supervisorJob = SupervisorJob()
@@ -105,6 +106,7 @@ object PlayerManager {
             override fun onPlaybackStateChanged(state: Int) {
                 when (state) {
                     Player.STATE_IDLE -> {
+                        mediaPrepared = false
                         stopProgressUpdates()
                         PlayerState.setPlaybackState(PlaybackState.IDLE)
                     }
@@ -116,6 +118,7 @@ object PlayerManager {
                     }
 
                     Player.STATE_READY -> {
+                        mediaPrepared = true
                         cancelLoadingTimeout()
                         if (player!!.isPlaying) {
                             PlayerState.setPlaybackState(PlaybackState.PLAYING)
@@ -193,6 +196,7 @@ object PlayerManager {
         getPlayer(context)
         currentMedia = media
         currentUrlIndex = 0
+        mediaPrepared = false
 
         //publishStatic()
        // PlayerState.setMediaType(media.type)
@@ -248,6 +252,7 @@ object PlayerManager {
         PlayerState.updatePlaybackInfo {
             copy(selectedSource = source)
         }
+        mediaPrepared = false
         player?.apply {
             stop()
             clearMediaItems()
@@ -327,6 +332,7 @@ object PlayerManager {
     fun stop() {
         cancelLoadingTimeout()
         stopProgressUpdates()
+        mediaPrepared = false
         player?.stop()
         PlayerState.update {
             copy(
@@ -341,6 +347,7 @@ object PlayerManager {
     fun release() {
         cancelLoadingTimeout()
         stopProgressUpdates()
+        mediaPrepared = false
         player?.release()
         player = null
         currentMedia = null
@@ -369,6 +376,8 @@ object PlayerManager {
     fun getCurrentMedia(): PlayerMedia? {
         return currentMedia
     }
+
+    fun isMediaPending(): Boolean = currentMedia != null && !mediaPrepared
 
     fun isCurrent(media: PlayerMedia): Boolean {
         return currentMedia?.id == media.id
