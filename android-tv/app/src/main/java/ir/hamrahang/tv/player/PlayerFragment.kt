@@ -118,7 +118,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private lateinit var rowItemLyrics: LinearLayout
     private lateinit var playbackBackdrop: ImageView
     private var lastBackdropUrl: Any? = null
-    private var settingsHideRunnable: Runnable? = null
     private var controllerVisibleBeforePanel = false
     private var isOverlayPanelOpen = false
     private var focusChangeListener: ViewTreeObserver.OnGlobalFocusChangeListener? = null
@@ -241,10 +240,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 scheduleHide()
             }
 
-            // اگه فوکوس داخل ستینگ، تایمر رو ریست کن
-            if (newFocus != null && isViewInside(settingsPanel, newFocus)) {
-                scheduleSettingsHide()
-            }
         }
         view.viewTreeObserver.addOnGlobalFocusChangeListener(focusChangeListener)
 
@@ -1013,7 +1008,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         get() = (this * resources.displayMetrics.density).toInt()
 
     private fun closeSettingsPanel() {
-        cancelSettingsHide()
         if (!settingsPanel.isVisible) return
         settingsPanel.visibility = View.GONE
         isOverlayPanelOpen = false
@@ -1026,28 +1020,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         }).requestFocus()
         panelReturnFocus = null
         if (controllerVisibleBeforePanel && !PlayerState.uiState.value.controllerPinned) scheduleHide()
-    }
-
-    private fun scheduleSettingsHide() {
-
-        settingsHideRunnable?.let {
-            overlay.removeCallbacks(it)
-        }
-
-        settingsHideRunnable = Runnable {
-            if (settingsPanel.isVisible) {
-                closeSettingsPanel()
-            }
-        }
-
-        overlay.postDelayed(
-            settingsHideRunnable!!,
-            5000
-        )
-    }
-    private fun cancelSettingsHide() {
-        settingsHideRunnable?.let {overlay.removeCallbacks(it)}
-        settingsHideRunnable = null
     }
 
     private fun format(ms: Long): String {
@@ -1077,10 +1049,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
         panel.visibility = View.GONE
         focusView.requestFocus()
-
-        if (panel == settingsPanel) {
-            cancelSettingsHide()
-        }
 
         return true
     }
@@ -1473,7 +1441,6 @@ private fun applyVideoDisplayMode(
         playerView?.player = null
         playerView = null
         hideRunnable?.let { overlay.removeCallbacks(it) }
-        settingsHideRunnable?.let { overlay.removeCallbacks(it) }
         view?.viewTreeObserver?.removeOnGlobalFocusChangeListener(focusChangeListener)
     }
 }
