@@ -1509,7 +1509,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             this,
             panelDynamicContent,
             item
-        )
+        ) {
+            closeSettingsPanel()
+        }
         panelDynamicContent.post {
             firstFocusable(panelDynamicContent)?.requestFocus()
         }
