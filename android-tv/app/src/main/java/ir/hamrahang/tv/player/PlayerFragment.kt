@@ -1008,7 +1008,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private fun buildSourcePanel() {
         val sources = SourceQualityUtils.playableSources(PlayerState.playbackInfo.value.sources)
         if (sources.isEmpty()) {
-            addPanelLabel("No sources available")
+            addPanelLabel(getString(R.string.source_none))
             return
         }
         val selectedUrl = PlayerState.playbackInfo.value.selectedSource?.url
@@ -1052,7 +1052,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             row.addView(ownerImage)
             val label = source.owner?.name?.takeIf { it.isNotBlank() }
                 ?: runCatching { Uri.parse(source.url).host }.getOrNull()
-                ?: "Source ${index + 1}"
+                ?: getString(R.string.source_fallback, index + 1)
             row.addView(TextView(requireContext()).apply {
                 text = label
                 textSize = 16f
