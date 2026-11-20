@@ -66,7 +66,11 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private var headerLayoutArtists: LinearLayout? = null
     private var headerLayoutMeta: LinearLayout? = null
     private var coverAnimator: android.animation.ObjectAnimator? = null
+    private var rotationStartPending = false
     private var lastHeaderSongId: String? = null
+    private lateinit var playerOwnerImage: ImageView
+    private var lastPlayerOwnerId: Long? = null
+    private var playerOwnerRequestId = 0
     private lateinit var metaBinder: HeroMetaBinder
     private var playerView: PlayerView? = null
     private var hideRunnable: Runnable? = null
@@ -170,6 +174,8 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         playerTitleContainer = view.findViewById(R.id.playerTitleContainer)
         txtPlayerTitle = view.findViewById(R.id.txtPlayerTitle)
         txtPlayerTitleReflection = view.findViewById(R.id.txtPlayerTitleReflection)
+        playerOwnerImage = view.findViewById(R.id.playerOwnerImage)
+        playerOwnerImage.visibility = View.GONE
 
         seekBar = view.findViewById(R.id.seekBar)
         txtCurrentTime = view.findViewById(R.id.txtCurrentTime)
@@ -319,7 +325,13 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         val rowItemHeaderRotate = view.findViewById<LinearLayout>(R.id.rowItemHeaderRotate)
         rowItemHeaderRotate.setOnClickListener {
             switchrotatingHeader.isChecked = !switchrotatingHeader.isChecked
-            PlayerState.setRotatingHeaderEnabled(switchrotatingHeader.isChecked)
+            val enabled = switchrotatingHeader.isChecked
+            PlayerState.setRotatingHeaderEnabled(enabled)
+            // Enabling the rotating header must also make the header visible.
+            if (enabled && !switchHeader.isChecked) {
+                switchHeader.isChecked = true
+                PlayerState.setHeaderVisible(true)
+            }
         }
         val rowItemController = view.findViewById<LinearLayout>(R.id.rowItemController)
         rowItemController.setOnClickListener {
@@ -563,6 +575,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             PlayerState.playbackInfo.collect { info ->
 
                 bindHeaderInfo(info)
+                bindPlayerOwner(info)
 
                 val selectedLyrics = LyricsParser.selectEntry(
                     info.lyricsEntries,
@@ -662,6 +675,11 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             seekContainer.visibility = View.GONE
             controlContainer.visibility = View.GONE
         }
+
+        // The web player shows #player-owner only while its controls are hidden.
+        playerOwnerImage.visibility =
+            if (!showController && playerOwnerImage.drawable != null) View.VISIBLE
+            else View.GONE
     }
 
     private fun bindLyrics(info: PlaybackInfoState, positionMs: Long) {
@@ -1071,6 +1089,8 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             return key
         }
 
+        // Match index.html ownerThumbUrl(): ico stores its extension in the
+        // last three characters; tmb keys always receive a .jpg suffix.
         val fileName = when {
             key.contains(".") -> key
             icon != null && key.length > 3 ->
@@ -1078,6 +1098,77 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             else -> "$key.jpg"
         }
         return "https://cdn.hamrahang.ir/thumb/$fileName"
+    }
+
+    private fun bindPlayerOwner(info: PlaybackInfoState) {
+        val selected = info.selectedSource
+            ?: info.sources.firstOrNull { it.url == PlayerManager.getCurrentMedia()?.sources?.firstOrNull()?.url }
+        val owner = selected?.owner
+        val ownerId = owner?.id ?: selected?.user
+
+        if (ownerId == null || ownerId <= 0L) {
+            playerOwnerRequestId++
+            lastPlayerOwnerId = null
+            Glide.with(playerOwnerImage).clear(playerOwnerImage)
+            playerOwnerImage.setImageDrawable(null)
+            playerOwnerImage.visibility = View.GONE
+            return
+        }
+
+        val directUrl = sourceOwnerThumbUrl(owner)
+        if (!directUrl.isNullOrBlank()) {
+            if (lastPlayerOwnerId != ownerId || playerOwnerImage.tag != directUrl) {
+                lastPlayerOwnerId = ownerId
+                playerOwnerImage.tag = directUrl
+                Glide.with(playerOwnerImage)
+                    .load(directUrl)
+                    .centerCrop()
+                    .placeholder(R.drawable.ic_general)
+                    .error(R.drawable.ic_general)
+                    .into(playerOwnerImage)
+            }
+            playerOwnerImage.visibility =
+                if (!PlayerState.uiState.value.controllerVisible &&
+                    !PlayerState.uiState.value.controllerPinned &&
+                    !isOverlayPanelOpen
+                ) View.VISIBLE else View.GONE
+            return
+        }
+
+        if (lastPlayerOwnerId == ownerId) return
+        lastPlayerOwnerId = ownerId
+        val requestId = ++playerOwnerRequestId
+        playerOwnerImage.tag = "owner_$ownerId"
+        playerOwnerImage.setImageDrawable(null)
+        playerOwnerImage.visibility = View.GONE
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val resolved = runCatching {
+                OwnerRepository().resolveByIds(listOf(ownerId))[ownerId]
+            }.getOrNull()
+
+            if (!isAdded || requestId != playerOwnerRequestId ||
+                PlayerState.playbackInfo.value.selectedSource?.let {
+                    (it.owner?.id ?: it.user) != ownerId
+                } == true
+            ) return@launch
+
+            val url = sourceOwnerThumbUrl(resolved)
+            if (url.isNullOrBlank()) return@launch
+
+            playerOwnerImage.tag = url
+            Glide.with(playerOwnerImage)
+                .load(url)
+                .centerCrop()
+                .placeholder(R.drawable.ic_general)
+                .error(R.drawable.ic_general)
+                .into(playerOwnerImage)
+
+            val ui = PlayerState.uiState.value
+            playerOwnerImage.visibility =
+                if (!ui.controllerVisible && !ui.controllerPinned && !isOverlayPanelOpen)
+                    View.VISIBLE else View.GONE
+        }
     }
 
     private fun addPanelLabel(value: String) {
@@ -1654,18 +1745,31 @@ private fun closeQueuePanel() {
 
     private fun startHeaderRotation() {
         val cover = headerImgCover ?: return
-        val animator = coverAnimator ?: android.animation.ObjectAnimator.ofFloat(
-            cover, View.ROTATION, cover.rotation, cover.rotation + 360f
-        ).apply {
-            duration = 12000
-            repeatCount = android.animation.ValueAnimator.INFINITE
-            interpolator = android.view.animation.LinearInterpolator()
-            coverAnimator = this
-        }
+        if (rotationStartPending) return
+        rotationStartPending = true
 
-        when {
-            animator.isPaused -> animator.resume()
-            !animator.isStarted -> animator.start()
+        // Wait until the replacement header has been measured and attached.
+        cover.post {
+            rotationStartPending = false
+            if (!isAdded || headerImgCover !== cover || !isRotatingHeader ||
+                PlayerState.uiState.value.playbackState != PlaybackState.PLAYING
+            ) return@post
+
+            cover.pivotX = cover.width / 2f
+            cover.pivotY = cover.height / 2f
+            val animator = coverAnimator ?: android.animation.ObjectAnimator.ofFloat(
+                cover, View.ROTATION, cover.rotation, cover.rotation + 360f
+            ).apply {
+                duration = 12000
+                repeatCount = android.animation.ValueAnimator.INFINITE
+                interpolator = android.view.animation.LinearInterpolator()
+                coverAnimator = this
+            }
+
+            when {
+                animator.isPaused -> animator.resume()
+                !animator.isStarted -> animator.start()
+            }
         }
     }
 
@@ -1704,6 +1808,7 @@ private fun applyVideoDisplayMode(
         }
     }
     private fun stopHeaderRotation(resetCover: Boolean = false) {
+        rotationStartPending = false
         coverAnimator?.cancel()
         coverAnimator = null
         if (resetCover) headerImgCover?.rotation = 0f
@@ -1711,6 +1816,10 @@ private fun applyVideoDisplayMode(
 
     override fun onDestroyView() {
         stopHeaderRotation(resetCover = true)
+        if (::playerOwnerImage.isInitialized) {
+            Glide.with(playerOwnerImage).clear(playerOwnerImage)
+        }
+        playerOwnerRequestId++
         super.onDestroyView()
         playerView?.player = null
         playerView = null
