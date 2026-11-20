@@ -38,6 +38,8 @@ object HeroArtistsBinder {
             Glide.with(container)
                 .load(artist.thumb)
                 .circleCrop()
+                .placeholder(R.drawable.ic_artist)
+                .error(R.drawable.ic_artist)
                 .into(img)
 
             item.setOnClickListener {
