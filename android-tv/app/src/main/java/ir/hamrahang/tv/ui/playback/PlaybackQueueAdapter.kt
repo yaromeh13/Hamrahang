@@ -1,8 +1,11 @@
 package ir.hamrahang.tv.playback
 
+import android.os.Handler
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
@@ -20,90 +23,140 @@ private const val PAYLOAD_SELECTION = "payload_selection"
 class PlaybackQueueAdapter(
     private val onClick: (Int) -> Unit,
     private val onRemove: (Int) -> Unit = {},
-    private val onMore: (PlaybackItem) -> Unit = {}
+    private val onMore: (PlaybackItem) -> Unit = {},
+    private val onReorderCommit: (List<PlaybackItem>) -> Unit = {}
 ) : ListAdapter<PlaybackItem, PlaybackQueueAdapter.VH>(DIFF_CALLBACK) {
+
+    private val handler = Handler(Looper.getMainLooper())
     private var currentIndex = 0
+    private var isReordering = false
+    private var movingIndex = RecyclerView.NO_POSITION
+    private var originalItems: List<PlaybackItem>? = null
+    private var workingItems: List<PlaybackItem>? = null
+    private var currentItemKey: String? = null
+    private var attachedRecyclerView: RecyclerView? = null
+
+    private fun itemKey(item: PlaybackItem): String = "${item.contentType.value}:${item.id}"
+
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.songTitle)
         val artist: TextView = view.findViewById(R.id.songArtist)
         val cover: ImageView = view.findViewById(R.id.PlsCover)
-        val remove: View = view.findViewById(R.id.btnQueueRemove)
+        val mediaTypeIcon: ImageView = view.findViewById(R.id.imgQueueMediaType)
+        val remove: TextView = view.findViewById(R.id.btnQueueRemove)
         val more: View = view.findViewById(R.id.btnQueueMore)
 
+        private var centerKeyDown = false
+        private var longPressStarted = false
+        private val longPressRunnable = Runnable {
+            val position = bindingAdapterPosition
+            if (centerKeyDown && !isReordering && position != RecyclerView.NO_POSITION) {
+                longPressStarted = true
+                beginReorder(position)
+            }
+        }
+
         init {
-            itemView.setOnKeyListener { _, keyCode, event ->
-                if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
-                if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                    remove.requestFocus()
-                    true
-                } else {
-                    false
-                }
-            }
-            remove.setOnKeyListener { _, keyCode, event ->
-                if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
-                when (keyCode) {
-                    KeyEvent.KEYCODE_DPAD_LEFT -> {
-                        itemView.requestFocus()
-                        true
-                    }
-                    KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                        more.requestFocus()
-                        true
-                    }
-                    else -> false
-                }
-            }
-            more.setOnKeyListener { _, keyCode, event ->
-                if (event.action == KeyEvent.ACTION_DOWN &&
-                    keyCode == KeyEvent.KEYCODE_DPAD_LEFT
-                ) {
-                    remove.requestFocus()
-                    true
-                } else {
-                    false
-                }
-            }
+            itemView.setOnKeyListener { _, keyCode, event -> handleItemKey(keyCode, event) }
+            remove.setOnKeyListener { _, keyCode, event -> handleChildKey(keyCode, event, true) }
+            more.setOnKeyListener { _, keyCode, event -> handleChildKey(keyCode, event, false) }
+
             remove.setOnClickListener {
                 val position = bindingAdapterPosition
-                if (position != RecyclerView.NO_POSITION) onRemove(position)
+                if (position == RecyclerView.NO_POSITION) return@setOnClickListener
+                if (isReordering) {
+                    if (position == movingIndex) finishReorder(true, position)
+                } else {
+                    onRemove(position)
+                }
             }
             more.setOnClickListener {
                 val position = bindingAdapterPosition
-                if (position != RecyclerView.NO_POSITION) onMore(getItem(position))
+                if (!isReordering && position != RecyclerView.NO_POSITION) onMore(getItem(position))
             }
             itemView.setOnClickListener {
                 val position = bindingAdapterPosition
-                if (position != RecyclerView.NO_POSITION) {
-                    onClick(position)
+                if (!isReordering && position != RecyclerView.NO_POSITION) onClick(position)
+            }
+        }
+
+        private fun handleItemKey(keyCode: Int, event: KeyEvent): Boolean {
+            if (isReordering) {
+                if (event.action != KeyEvent.ACTION_DOWN) return true
+                return handleReorderKey(keyCode)
+            }
+            if (keyCode != KeyEvent.KEYCODE_DPAD_CENTER && keyCode != KeyEvent.KEYCODE_ENTER) return false
+            when (event.action) {
+                KeyEvent.ACTION_DOWN -> {
+                    if (!centerKeyDown) {
+                        centerKeyDown = true
+                        longPressStarted = false
+                        handler.postDelayed(longPressRunnable, ViewConfiguration.getLongPressTimeout().toLong())
+                    }
+                    return true
+                }
+                KeyEvent.ACTION_UP -> {
+                    if (!centerKeyDown) return false
+                    centerKeyDown = false
+                    handler.removeCallbacks(longPressRunnable)
+                    if (longPressStarted) {
+                        longPressStarted = false
+                    } else {
+                        val position = bindingAdapterPosition
+                        if (position != RecyclerView.NO_POSITION) onClick(position)
+                    }
+                    return true
                 }
             }
+            return true
+        }
+
+        private fun handleChildKey(keyCode: Int, event: KeyEvent, isRemove: Boolean): Boolean {
+            if (isReordering) {
+                if (event.action != KeyEvent.ACTION_DOWN) return true
+                return handleReorderKey(keyCode)
+            }
+            if (event.action != KeyEvent.ACTION_DOWN) return false
+            return if (isRemove) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> { itemView.requestFocus(); true }
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> { more.requestFocus(); true }
+                    else -> false
+                }
+            } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                remove.requestFocus()
+                true
+            } else false
+        }
+
+        private fun handleReorderKey(keyCode: Int): Boolean = when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_UP -> { moveReorderItem(movingIndex, movingIndex - 1); true }
+            KeyEvent.KEYCODE_DPAD_DOWN -> { moveReorderItem(movingIndex, movingIndex + 1); true }
+            KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_ESCAPE -> {
+                finishReorder(false, movingIndex)
+                true
+            }
+            else -> true
+        }
+
+        fun bindActionState(position: Int) {
+            val moving = isReordering && position == movingIndex
+            remove.text = if (moving) "✓" else "×"
+            remove.contentDescription = if (moving) "Confirm new position" else "Remove from queue"
+            remove.visibility = if (isReordering && !moving) View.INVISIBLE else View.VISIBLE
+            more.visibility = if (isReordering) View.INVISIBLE else View.VISIBLE
         }
     }
 
-    override fun onCreateViewHolder(
-        parent: ViewGroup,
-        viewType: Int
-    ): VH {
-        val view = LayoutInflater
-            .from(parent.context)
-            .inflate(
-                R.layout.item_playback_song,
-                parent,
-                false
-            )
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_playback_song, parent, false)
         return VH(view)
     }
-    override fun onBindViewHolder(
-        holder: VH,
-        position: Int
-    ) {
+
+    override fun onBindViewHolder(holder: VH, position: Int) {
         val item = getItem(position)
         holder.title.text = item.title
-        holder.artist.text =
-            item.artists.joinToString(" - ") {
-                it.displayTitle()
-            }
+        holder.artist.text = item.artists.joinToString(" - ") { it.displayTitle() }
 
         val fallback = when (item.contentType) {
             ir.hamrahang.tv.data.local.ContentType.VIDEO,
@@ -113,93 +166,131 @@ class PlaybackQueueAdapter(
             ir.hamrahang.tv.data.local.ContentType.PLAYLIST -> R.drawable.ic_playlist
             else -> R.drawable.ic_song
         }
+        val typeIcon = when (item.contentType) {
+            ir.hamrahang.tv.data.local.ContentType.VIDEO,
+            ir.hamrahang.tv.data.local.ContentType.MUSICVIDEO -> R.drawable.ic_video
+            ir.hamrahang.tv.data.local.ContentType.ARTIST -> R.drawable.ic_profile
+            ir.hamrahang.tv.data.local.ContentType.ALBUM -> R.drawable.ic_album_disk
+            ir.hamrahang.tv.data.local.ContentType.PLAYLIST -> R.drawable.ic_playlist
+            else -> R.drawable.ic_song
+        }
+        holder.mediaTypeIcon.setImageResource(typeIcon)
 
         Glide.with(holder.itemView)
             .load(item.artwork)
-            .transform(
-                CenterCrop(),
-                RoundedCorners(8)
-            )
+            .transform(CenterCrop(), RoundedCorners(8))
             .placeholder(fallback)
             .error(fallback)
             .fallback(fallback)
             .into(holder.cover)
 
-        holder.itemView.isSelected =
-            position == currentIndex
+        holder.itemView.isSelected = position == currentIndex
+        holder.bindActionState(position)
     }
 
-    override fun onBindViewHolder(
-        holder: VH,
-        position: Int,
-        payloads: MutableList<Any>
-    ) {
-
+    override fun onBindViewHolder(holder: VH, position: Int, payloads: MutableList<Any>) {
         if (payloads.contains(PAYLOAD_SELECTION)) {
             holder.itemView.isSelected = position == currentIndex
+            holder.bindActionState(position)
+            return
+        }
+        super.onBindViewHolder(holder, position, payloads)
+    }
+
+    fun submit(list: List<PlaybackItem>, current: Int) {
+        val selectedKey = list.getOrNull(current)?.let(::itemKey)
+        if (isReordering) {
+            currentItemKey = selectedKey
+            currentIndex = (workingItems ?: currentList)
+                .indexOfFirst { itemKey(it) == selectedKey }.coerceAtLeast(0)
+            notifyItemRangeChanged(0, itemCount, PAYLOAD_SELECTION)
             return
         }
 
-        super.onBindViewHolder(
-            holder,
-            position,
-            payloads
-        )
-    }
-
-    fun submit(
-        list: List<PlaybackItem>,
-        current: Int
-    ) {
-
         val oldIndex = currentIndex
-
-        currentIndex = current
-
-        submitList(list) {
-
+        currentIndex = current.coerceIn(0, (list.size - 1).coerceAtLeast(0))
+        currentItemKey = selectedKey
+        submitList(list.toList()) {
             if (oldIndex != currentIndex) {
-
-                if (
-                    oldIndex in 0 until itemCount
-                ) {
-                    notifyItemChanged(
-                        oldIndex,
-                        PAYLOAD_SELECTION
-                    )
-                }
-
-                if (
-                    currentIndex in 0 until itemCount
-                ) {
-                    notifyItemChanged(
-                        currentIndex,
-                        PAYLOAD_SELECTION
-                    )
-                }
+                if (oldIndex in 0 until itemCount) notifyItemChanged(oldIndex, PAYLOAD_SELECTION)
+                if (currentIndex in 0 until itemCount) notifyItemChanged(currentIndex, PAYLOAD_SELECTION)
             }
         }
     }
 
-    companion object {
-        private val DIFF_CALLBACK =
-            object : DiffUtil.ItemCallback<PlaybackItem>() {
-                override fun areItemsTheSame(
-                    oldItem: PlaybackItem,
-                    newItem: PlaybackItem
-                ): Boolean {
-                    return oldItem.id == newItem.id
-                }
+    private fun beginReorder(position: Int) {
+        if (isReordering || position !in currentList.indices) return
+        isReordering = true
+        movingIndex = position
+        originalItems = currentList.toList()
+        workingItems = currentList.toList()
+        currentItemKey = currentList.getOrNull(currentIndex)?.let(::itemKey)
+        notifyItemRangeChanged(0, itemCount)
+        focusActionAt(position)
+    }
 
-                override fun areContentsTheSame(
-                    oldItem: PlaybackItem,
-                    newItem: PlaybackItem
-                ): Boolean {
-                    return oldItem == newItem
-                }
+    private fun moveReorderItem(from: Int, to: Int) {
+        val source = workingItems ?: return
+        if (!isReordering || from !in source.indices || to !in source.indices || from == to) return
+        val updated = source.toMutableList()
+        val moved = updated.removeAt(from)
+        updated.add(to, moved)
+        workingItems = updated
+        movingIndex = to
+        currentIndex = updated.indexOfFirst { itemKey(it) == currentItemKey }.coerceAtLeast(0)
+        submitList(updated) {
+            notifyItemRangeChanged(0, itemCount, PAYLOAD_SELECTION)
+            focusActionAt(movingIndex)
+        }
+    }
+
+    private fun finishReorder(commit: Boolean, focusPosition: Int) {
+        if (!isReordering) return
+        val finalItems = if (commit) workingItems.orEmpty() else originalItems.orEmpty()
+        isReordering = false
+        movingIndex = RecyclerView.NO_POSITION
+        originalItems = null
+        workingItems = null
+        currentIndex = finalItems.indexOfFirst { itemKey(it) == currentItemKey }.coerceAtLeast(0)
+
+        submitList(finalItems) {
+            notifyItemRangeChanged(0, itemCount)
+            if (commit) onReorderCommit(finalItems)
+            val target = focusPosition.coerceIn(0, (itemCount - 1).coerceAtLeast(0))
+            attachedRecyclerView?.post {
+                attachedRecyclerView?.findViewHolderForAdapterPosition(target)?.itemView?.requestFocus()
             }
+        }
+    }
+
+    private fun focusActionAt(position: Int) {
+        attachedRecyclerView?.post {
+            attachedRecyclerView?.findViewHolderForAdapterPosition(position)
+                ?.itemView?.findViewById<View>(R.id.btnQueueRemove)?.requestFocus()
+        }
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        attachedRecyclerView = recyclerView
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        if (attachedRecyclerView === recyclerView) attachedRecyclerView = null
+        super.onDetachedFromRecyclerView(recyclerView)
+    }
+
+    companion object {
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<PlaybackItem>() {
+            override fun areItemsTheSame(oldItem: PlaybackItem, newItem: PlaybackItem): Boolean =
+                oldItem.id == newItem.id && oldItem.contentType == newItem.contentType
+
+            override fun areContentsTheSame(oldItem: PlaybackItem, newItem: PlaybackItem): Boolean =
+                oldItem == newItem
+        }
     }
 }
+
 
 
 /*
