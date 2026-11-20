@@ -220,7 +220,18 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 isViewInside(settingsPanel, oldFocus) &&
                 (newFocus == null || !isViewInside(settingsPanel, newFocus))
             ) {
-                closeSettingsPanel()
+                settingsPanel.post {
+                    if (settingsPanel.isVisible) {
+                        val fallback = if (panelDynamicScroll.isVisible) {
+                            firstFocusable(panelDynamicContent)
+                        } else if (PlayerState.playbackInfo.value.mediaType == MediaType.VIDEO) {
+                            rowItemSubtitle
+                        } else {
+                            rowItemLyrics
+                        }
+                        fallback?.requestFocus()
+                    }
+                }
             }
 
             // اگه فوکوس داخل کنترلر پلیره، تایمر رو ریست کن
@@ -737,7 +748,6 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         if (returnFocus != null) panelReturnFocus = returnFocus
         panelMode = mode
         renderSharedPanel(mode)
-        scheduleSettingsHide()
     }
 
     private fun renderSharedPanel(mode: String, focusKey: String? = null) {
