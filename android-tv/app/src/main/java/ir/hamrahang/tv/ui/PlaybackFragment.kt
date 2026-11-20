@@ -110,7 +110,11 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         )
 
         playlist.layoutManager = LinearLayoutManager(requireContext())
-        QueueAdapter = PlaybackQueueAdapter { PlaybackManager.play(it) }
+        QueueAdapter = PlaybackQueueAdapter(
+            onClick = { PlaybackManager.play(it) },
+            onRemove = { PlaybackManager.remove(it) },
+            onMore = { MessageManager.info("More options are available in the fullscreen player") }
+        )
         playlist.adapter = QueueAdapter
 
         seekBar.setOnSeekBarChangeListener(object :
@@ -260,6 +264,14 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
                     session.items,
                     session.currentIndex
                 )
+                playlist.post {
+                    val lm = playlist.layoutManager as? LinearLayoutManager
+                    val first = lm?.findFirstVisibleItemPosition() ?: RecyclerView.NO_POSITION
+                    val last = lm?.findLastVisibleItemPosition() ?: RecyclerView.NO_POSITION
+                    if (session.currentIndex !in first..last) {
+                        playlist.smoothScrollToPosition(session.currentIndex)
+                    }
+                }
             }
         }
     }
