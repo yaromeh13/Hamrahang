@@ -283,8 +283,11 @@ class PlaybackQueueAdapter(
 
     private fun focusActionAt(position: Int) {
         attachedRecyclerView?.post {
-            attachedRecyclerView?.findViewHolderForAdapterPosition(position)
-                ?.itemView?.findViewById<View>(R.id.btnQueueRemove)?.requestFocus()
+            attachedRecyclerView?.scrollToPosition(position)
+            attachedRecyclerView?.post {
+                attachedRecyclerView?.findViewHolderForAdapterPosition(position)
+                    ?.itemView?.findViewById<View>(R.id.btnQueueRemove)?.requestFocus()
+            }
         }
     }
 
