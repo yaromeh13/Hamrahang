@@ -14,6 +14,7 @@ import ir.hamrahang.tv.network.NetworkMonitor
 import ir.hamrahang.tv.network.ReloadManager
 import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.ui.message.MessageManager
+import ir.hamrahang.tv.ui.message.MessageWidget
 import ir.hamrahang.tv.ui.network.NetworkOverlay
 import ir.hamrahang.tv.ui.profile.ProfileFragment
 import ir.hamrahang.tv.ui.settings.LanguageManager
@@ -38,6 +39,9 @@ class MainActivity : BaseActivity(),
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Keep messages visible across Home, detail screens and the player.
+        MessageWidget(binding.root, this)
 
         UiNavigator.init(this)
 
