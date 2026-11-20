@@ -329,23 +329,7 @@
                     android:clickable="false"/>
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/rowItemLyricsSettings"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:padding="8dp"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:background="@drawable/bg_settings_row_focus"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="تنظیمات متن ترانه"
-                    android:textColor="#FFF"/>
-            </LinearLayout>
+inearLayout>
 
             <LinearLayout
                 android:id="@+id/rowItemHeader"
