@@ -16,6 +16,7 @@ import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.player.BackgroundManager
 import ir.hamrahang.tv.playback.PlaybackSource
 import ir.hamrahang.tv.ui.hero.HeroWidget
+import ir.hamrahang.tv.ui.message.MessageManager
 import ir.hamrahang.tv.ui.rows.ContentRows
 import ir.hamrahang.tv.ui.rows.ContentRowsAdapter
 import kotlinx.coroutines.launch
