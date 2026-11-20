@@ -108,7 +108,7 @@
         android:layout_marginEnd="@dimen/_10sdp"
         android:layout_marginBottom="@dimen/_10sdp">
 
-        <!-- Left -->
+        <!-- Main player actions: Playlist, Lyrics, Settings -->
         <LinearLayout
             android:id="@+id/leftControls"
             android:layout_width="wrap_content"
@@ -119,22 +119,24 @@
             android:gravity="center">
 
             <ImageButton
-                android:id="@+id/btnLike"
+                android:id="@+id/btnQueue"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 android:layout_marginStart="8dp"
-                android:src="@drawable/ic_favorite"
+                android:src="@drawable/ic_queue_music"
+                android:contentDescription="Playlist"
                 android:focusable="true"
                 android:clickable="true"
                 android:focusableInTouchMode="true"
                 android:background="@drawable/bg_player_round"/>
 
             <ImageButton
-                android:id="@+id/btnPlaylist"
+                android:id="@+id/btnLyrics"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 android:layout_marginStart="8dp"
-                android:src="@drawable/ic_bookmark"
+                android:src="@drawable/ic_lyrics"
+                android:contentDescription="Lyrics"
                 android:focusable="true"
                 android:clickable="true"
                 android:focusableInTouchMode="true"
@@ -146,6 +148,7 @@
                 android:layout_height="56dp"
                 android:layout_marginStart="8dp"
                 android:src="@drawable/ic_settings"
+                android:contentDescription="Settings"
                 android:focusable="true"
                 android:clickable="true"
                 android:focusableInTouchMode="true"
@@ -223,7 +226,7 @@
 
         </LinearLayout>
 
-        <!-- Right -->
+        <!-- Secondary player actions: Source, Shuffle, Repeat -->
         <LinearLayout
             android:id="@+id/rightControls"
             android:layout_width="wrap_content"
@@ -234,11 +237,12 @@
             android:gravity="center">
 
             <ImageButton
-                android:id="@+id/btnQueue"
+                android:id="@+id/btnSource"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 android:layout_marginEnd="8dp"
-                android:src="@drawable/ic_queue_music"
+                android:src="@drawable/ic_general"
+                android:contentDescription="Source"
                 android:focusable="true"
                 android:clickable="true"
                 android:focusableInTouchMode="true"
@@ -701,6 +705,24 @@
             </RadioGroup>
 
         </LinearLayout>
+
+        <ScrollView
+            android:id="@+id/playerPanelDynamicScroll"
+            android:layout_width="0dp"
+            android:layout_height="420dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:overScrollMode="never"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/playerPanelDynamicContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="4dp"/>
+
+        </ScrollView>
 
     </LinearLayout>
 
