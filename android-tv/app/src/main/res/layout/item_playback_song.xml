@@ -13,6 +13,8 @@
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:clickable="true"
+    android:nextFocusRight="@id/btnQueueRemove"
+    android:descendantFocusability="beforeDescendants"
     android:background="@drawable/bg_playlist_item">
 
     <ImageView
@@ -58,8 +60,11 @@
         android:textColor="#FFFFFFFF"
         android:textSize="26sp"
         android:focusable="true"
+        android:focusableInTouchMode="true"
         android:clickable="true"
-        android:background="@drawable/bg_player_round"
+        android:nextFocusLeft="@id/songTitle"
+        android:nextFocusRight="@id/btnQueueMore"
+        android:background="@drawable/bg_queue_action_focus"
         android:contentDescription="Remove from queue"/>
 
     <ImageButton
@@ -72,8 +77,10 @@
         android:padding="12dp"
         android:tint="#FFFFFFFF"
         android:focusable="true"
+        android:focusableInTouchMode="true"
         android:clickable="true"
-        android:background="@drawable/bg_player_round"
+        android:nextFocusLeft="@id/btnQueueRemove"
+        android:background="@drawable/bg_queue_action_focus"
         android:contentDescription="More options"/>
 
 </LinearLayout>
