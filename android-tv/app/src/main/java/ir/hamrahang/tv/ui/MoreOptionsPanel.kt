@@ -47,7 +47,7 @@ object MoreOptionsPanel {
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             window.setLayout(
                 (context.resources.displayMetrics.widthPixels * 0.62f).toInt(),
-                ViewGroup.LayoutParams.WRAP_CONTENT
+                (context.resources.displayMetrics.heightPixels * 0.72f).toInt()
             )
         }
         dialog.setOnDismissListener { returnFocus?.requestFocus() }
@@ -55,7 +55,7 @@ object MoreOptionsPanel {
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.window?.setLayout(
             (context.resources.displayMetrics.widthPixels * 0.62f).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
+            (context.resources.displayMetrics.heightPixels * 0.72f).toInt()
         )
         content.post { firstFocusable(content)?.requestFocus() }
     }
@@ -120,7 +120,13 @@ object MoreOptionsPanel {
         }
         addAction("Go to item") {
             close()
-            UiNavigator.openMediaDetail(item.contentType, item.id)
+            if (item.contentType == ContentType.ARTIST) {
+                val artist = item.artists.firstOrNull()
+                if (artist == null) MessageManager.info("No artist available")
+                else UiNavigator.openArtist(artist)
+            } else {
+                UiNavigator.openMediaDetail(item.contentType, item.id)
+            }
         }
         addAction("Go to artist") {
             close()
