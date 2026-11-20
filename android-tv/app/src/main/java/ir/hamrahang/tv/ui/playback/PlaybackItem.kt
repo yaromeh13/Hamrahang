@@ -8,5 +8,6 @@ data class PlaybackItem(
     val title: String,
     val artwork: Any?,
     val artists: List<Artist>,
-    val contentType: ContentType = ContentType.SONG
+    val contentType: ContentType = ContentType.SONG,
+    val playCount: Long? = null
 )
