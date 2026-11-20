@@ -17,3 +17,8 @@ data class OwnerMeta(
     val des: String? = null,
     val url: String? = null
 )
+
+
+data class SourceOwnersResponse(
+    val owners: List<SourceOwner> = emptyList()
+)
