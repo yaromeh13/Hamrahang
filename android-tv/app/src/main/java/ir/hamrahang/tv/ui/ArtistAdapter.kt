@@ -43,7 +43,7 @@ class ArtistAdapter(
         holder.name.text = item.displayTitle()
         //holder.subname.text = item.title
 
-        ImageResolver.request(holder.image, item.thumb, R.drawable.ic_profile)
+        ImageResolver.request(holder.image, item.thumb, R.drawable.ic_artist)
             .circleCrop()
             .into(holder.image)
 
