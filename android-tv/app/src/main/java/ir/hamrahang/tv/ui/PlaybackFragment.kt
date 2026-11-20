@@ -237,6 +237,12 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
                         0.5f
                     else
                         1f
+                btnRepeat.setImageResource(
+                    if (ui.repeatMode == Player.REPEAT_MODE_ONE)
+                        R.drawable.ic_repeat_one
+                    else
+                        R.drawable.ic_repeat
+                )
                 btnMute.setImageResource(
                     if (ui.muted)
                         R.drawable.ic_volume_off
