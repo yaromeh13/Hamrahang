@@ -1025,37 +1025,30 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         if (lastPlayerIconMode == mode) return
         lastPlayerIconMode = mode
 
-        val lyricsAsset = if (mode == MediaType.VIDEO) {
-            "https://hamrahang.ir/assets/subtitle.png"
-        } else {
-            "https://hamrahang.ir/assets/svg_lrc.png"
-        }
-
         btnLyrics.apply {
             scaleType = ImageView.ScaleType.FIT_CENTER
             setPadding(16.dp, 16.dp, 16.dp, 16.dp)
             setImageResource(R.drawable.ic_lyrics)
         }
-        Glide.with(btnLyrics)
-            .load(lyricsAsset)
-            .override(24.dp, 24.dp)
-            .placeholder(R.drawable.ic_lyrics)
-            .error(R.drawable.ic_lyrics)
-            .dontAnimate()
-            .into(btnLyrics)
+        if (mode == MediaType.VIDEO) {
+            Glide.with(btnLyrics)
+                .load("https://hamrahang.ir/assets/subtitle.png")
+                .override(24.dp, 24.dp)
+                .placeholder(R.drawable.ic_lyrics)
+                .error(R.drawable.ic_lyrics)
+                .dontAnimate()
+                .into(btnLyrics)
+        } else {
+            Glide.with(btnLyrics).clear(btnLyrics)
+            btnLyrics.setImageResource(R.drawable.ic_lyrics)
+        }
 
         btnSource.apply {
             scaleType = ImageView.ScaleType.FIT_CENTER
             setPadding(16.dp, 16.dp, 16.dp, 16.dp)
             setImageResource(R.drawable.ic_source)
         }
-        Glide.with(btnSource)
-            .load("https://hamrahang.ir/assets/svg_dsk.png")
-            .override(24.dp, 24.dp)
-            .placeholder(R.drawable.ic_source)
-            .error(R.drawable.ic_source)
-            .dontAnimate()
-            .into(btnSource)
+        Glide.with(btnSource).clear(btnSource)
     }
 
     private fun sourceOwnerThumbUrl(owner: SourceOwner?): String? {
@@ -1565,14 +1558,18 @@ private fun closeQueuePanel() {
         isRotatingHeader = rotating
         leftHeaderContainer.removeAllViews()
 
-        val layoutRes =
-            if (rotating) R.layout.layout_header_rotating
-            else R.layout.layout_header_simple
+        // The header layout is identical in both modes. Only the cover shape
+        // changes (square vs. circular rotation).
+        val layoutRes = R.layout.layout_header_simple
 
         val headerView = layoutInflater.inflate(layoutRes, leftHeaderContainer, false)
         leftHeaderContainer.addView(headerView)
 
         headerImgCover = headerView.findViewById(R.id.imgCover)
+        (headerImgCover as? com.google.android.material.imageview.ShapeableImageView)?.shapeAppearanceModel =
+            com.google.android.material.shape.ShapeAppearanceModel.builder()
+                .setAllCornerSizes(if (rotating) 999f else 12f)
+                .build()
         headerTxtTitle = headerView.findViewById(R.id.txtTitle)
         headerTxtTitle?.visibility = View.GONE
         headerTxtAlbum = headerView.findViewById(R.id.txtAlbum)
