@@ -110,10 +110,10 @@
 
         <!-- Main player actions: Playlist, Lyrics, Settings -->
         <LinearLayout
-            android:id="@+id/leftControls"
+            android:id="@+id/rightControls"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
+            android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:orientation="horizontal"
             android:gravity="center">
@@ -228,10 +228,10 @@
 
         <!-- Secondary player actions: Source, Shuffle, Repeat -->
         <LinearLayout
-            android:id="@+id/rightControls"
+            android:id="@+id/leftControls"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:orientation="horizontal"
             android:gravity="center">
