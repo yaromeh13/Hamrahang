@@ -23,6 +23,19 @@ object UiNavigator {
         this.activity = activity
     }
 
+    /**
+     * A destination opened from the fullscreen More panel must be visible.
+     * Close the overlay player first, then execute the normal native navigation.
+     */
+    fun runAfterPlayerDismiss(action: () -> Unit) {
+        val act = activity ?: return
+        if (act is MainActivity) {
+            act.closeFullscreenPlayer()
+            act.supportFragmentManager.executePendingTransactions()
+        }
+        action()
+    }
+
     // ---------------- VIDEO ----------------
 
     fun openVideo() {
