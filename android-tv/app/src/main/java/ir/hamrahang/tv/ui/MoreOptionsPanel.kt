@@ -128,6 +128,8 @@ object MoreOptionsPanel {
             } else {
                 fragment.viewLifecycleOwner.lifecycleScope.launch {
                     bookmarked = FavoriteManager.toggle(mediaId, item.contentType)
+                    bookmarkCard.findViewWithTag<TextView>("action_label")?.text =
+                        if (bookmarked) "Bookmarked" else "Bookmark"
                     MessageManager.info(if (bookmarked) "Added to bookmarks" else "Removed from bookmarks")
                 }
             }
@@ -172,7 +174,11 @@ object MoreOptionsPanel {
         ) {
             close()
             if (item.contentType == ContentType.ARTIST) {
-                val artist = item.artists.firstOrNull()
+                val artist = if (item.contentType == ContentType.ARTIST) {
+                    ir.hamrahang.tv.domain.artist.Artist(id = item.id, name = item.title)
+                } else {
+                    item.artists.firstOrNull()
+                }
                 if (artist == null) MessageManager.info("No artist available")
                 else UiNavigator.runAfterPlayerDismiss { UiNavigator.openArtist(artist) }
             } else {
