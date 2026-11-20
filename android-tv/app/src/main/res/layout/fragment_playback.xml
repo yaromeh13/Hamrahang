@@ -178,10 +178,10 @@
                 android:tint="@android:color/white"/>
 
             <ImageButton
-                android:id="@+id/btnFav"
+                android:id="@+id/btnMore"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:src="@drawable/ic_favorite"
+                android:src="@drawable/ic_more"
                 android:background="@drawable/bg_player_round"
                 android:focusable="true"
                 android:clickable="true"
