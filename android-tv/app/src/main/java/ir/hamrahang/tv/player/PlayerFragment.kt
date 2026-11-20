@@ -1020,6 +1020,63 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         panelDynamicContent.addView(sizeSection)
     }
 
+    private fun loadPlayerActionIcons(info: PlaybackInfoState) {
+        val mode = info.mediaType
+        if (lastPlayerIconMode == mode) return
+        lastPlayerIconMode = mode
+
+        val lyricsAsset = if (mode == MediaType.VIDEO) {
+            "https://hamrahang.ir/assets/subtitle.png"
+        } else {
+            "https://hamrahang.ir/assets/svg_lrc.png"
+        }
+
+        btnLyrics.apply {
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setPadding(16.dp, 16.dp, 16.dp, 16.dp)
+            setImageResource(if (mode == MediaType.VIDEO) R.drawable.ic_subtitles else R.drawable.ic_lyrics)
+        }
+        Glide.with(btnLyrics)
+            .load(lyricsAsset)
+            .override(24.dp, 24.dp)
+            .placeholder(if (mode == MediaType.VIDEO) R.drawable.ic_subtitles else R.drawable.ic_lyrics)
+            .error(if (mode == MediaType.VIDEO) R.drawable.ic_subtitles else R.drawable.ic_lyrics)
+            .dontAnimate()
+            .into(btnLyrics)
+
+        btnSource.apply {
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setPadding(16.dp, 16.dp, 16.dp, 16.dp)
+            setImageResource(R.drawable.ic_source)
+        }
+        Glide.with(btnSource)
+            .load("https://hamrahang.ir/assets/svg_dsk.png")
+            .override(24.dp, 24.dp)
+            .placeholder(R.drawable.ic_source)
+            .error(R.drawable.ic_source)
+            .dontAnimate()
+            .into(btnSource)
+    }
+
+    private fun sourceOwnerThumbUrl(owner: SourceOwner?): String? {
+        val meta = owner?.meta ?: return null
+        val icon = meta.ico?.trim()?.takeIf { it.isNotEmpty() }
+        val thumbnail = meta.tmb?.trim()?.takeIf { it.isNotEmpty() }
+        val key = icon ?: thumbnail ?: return null
+
+        if (key.startsWith("https://", true) || key.startsWith("http://", true)) {
+            return key
+        }
+
+        val fileName = when {
+            key.contains(".") -> key
+            icon != null && key.length > 3 ->
+                key.dropLast(3) + "." + key.takeLast(3).lowercase()
+            else -> "$key.jpg"
+        }
+        return "https://cdn.hamrahang.ir/thumb/$fileName"
+    }
+
     private fun addPanelLabel(value: String) {
         panelDynamicContent.addView(TextView(requireContext()).apply {
             text = value
