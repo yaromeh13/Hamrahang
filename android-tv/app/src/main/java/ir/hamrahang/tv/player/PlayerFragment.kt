@@ -1006,6 +1006,15 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         panelDynamicContent.addView(sizeSection)
     }
 
+    private fun addPanelLabel(value: String) {
+        panelDynamicContent.addView(TextView(requireContext()).apply {
+            text = value
+            textSize = 15f
+            setTextColor(0xFFBDBDC8.toInt())
+            setPadding(8, 18, 8, 8)
+        })
+    }
+
     private fun buildSourcePanel() {
         val sources = SourceQualityUtils.playableSources(PlayerState.playbackInfo.value.sources)
         if (sources.isEmpty()) {
