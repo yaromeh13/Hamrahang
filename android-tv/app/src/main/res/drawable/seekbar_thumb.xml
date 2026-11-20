@@ -1,54 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Focus -->
+    <!-- Keep identical intrinsic bounds in focused and normal states so
+         Android TV focus changes do not resize the thumb or make it jump. -->
     <item android:state_focused="true">
         <layer-list>
-
-            <!-- Border -->
             <item>
                 <shape android:shape="oval">
-                    <size
-                        android:width="26dp"
-                        android:height="26dp"/>
-
+                    <size android:width="26dp" android:height="26dp"/>
                     <solid android:color="#00FFFFFF"/>
-
-                    <stroke
-                        android:width="3dp"
-                        android:height="3dp"
-                        android:color="#FFFFFF"/>
+                    <stroke android:width="2dp" android:color="#FFFFFFFF"/>
                 </shape>
             </item>
-
-            <!-- Thumb -->
             <item
                 android:left="5dp"
                 android:top="5dp"
                 android:right="5dp"
                 android:bottom="5dp">
-
                 <shape android:shape="oval">
-                    <solid android:color="#FF3B30"/>
+                    <solid android:color="#FFFF3B30"/>
                 </shape>
-
             </item>
-
         </layer-list>
     </item>
 
-    <!-- Normal -->
     <item>
-        <shape android:shape="oval">
-
-            <size
-                android:width="16dp"
-                android:height="16dp"/>
-
-            <solid android:color="#FF3B30"/>
-
-        </shape>
+        <layer-list>
+            <item>
+                <shape android:shape="oval">
+                    <size android:width="26dp" android:height="26dp"/>
+                    <solid android:color="#00FFFFFF"/>
+                </shape>
+            </item>
+            <item
+                android:left="5dp"
+                android:top="5dp"
+                android:right="5dp"
+                android:bottom="5dp">
+                <shape android:shape="oval">
+                    <solid android:color="#FFFF3B30"/>
+                </shape>
+            </item>
+        </layer-list>
     </item>
 
 </selector>
