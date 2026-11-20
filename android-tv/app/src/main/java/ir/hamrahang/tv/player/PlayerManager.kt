@@ -416,7 +416,7 @@ object PlayerManager {
             it.url == source.url
         }
 
-        if (index == -1) {
+        if (index == -1 || index == currentUrlIndex) {
             return
         }
 
