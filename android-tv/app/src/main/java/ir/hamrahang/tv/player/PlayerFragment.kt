@@ -402,7 +402,8 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         queueAdapter = PlaybackQueueAdapter(
             onClick = { PlaybackManager.play(it) },
             onRemove = { PlaybackManager.remove(it) },
-            onMore = { item -> openQueueMorePanel(item) }
+            onMore = { item -> openQueueMorePanel(item) },
+            onReorderCommit = { PlaybackManager.reorder(it) }
         )
         queueRecycler.adapter = queueAdapter
 
@@ -675,6 +676,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
+                    if (queueAdapter.cancelReorder()) {
+                        return
+                    }
                     if (closePanels()) {
                         return
                     }
