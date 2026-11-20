@@ -146,7 +146,8 @@ object MoreOptionsPanel {
         ))
 
         var bookmarked = false
-        val bookmarkCard = addTopAction(
+        lateinit var bookmarkCard: View
+        bookmarkCard = addTopAction(
             context, actionsColumn, R.drawable.ic_bookmark, "Bookmark"
         ) {
             if (mediaId == null) {
@@ -200,11 +201,10 @@ object MoreOptionsPanel {
         ) {
             close()
             if (item.contentType == ContentType.ARTIST) {
-                val artist = if (item.contentType == ContentType.ARTIST) {
-                    ir.hamrahang.tv.domain.artist.Artist(id = item.id, name = item.title)
-                } else {
-                    item.artists.firstOrNull()
-                }
+                val artist = ir.hamrahang.tv.domain.artist.Artist(
+                    id = item.id,
+                    name = item.title
+                )
                 if (artist == null) MessageManager.info("No artist available")
                 else UiNavigator.runAfterPlayerDismiss { UiNavigator.openArtist(artist) }
             } else {
