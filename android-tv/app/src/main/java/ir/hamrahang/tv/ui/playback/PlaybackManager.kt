@@ -17,6 +17,7 @@ import ir.hamrahang.tv.player.PlayerManager
 import ir.hamrahang.tv.player.PlayerMedia
 import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.player.SourceSelector
+import ir.hamrahang.tv.player.SourceQualityUtils
 import ir.hamrahang.tv.settings.PlaybackQualityManager
 import ir.hamrahang.tv.util.CoverArtBinder
 import ir.hamrahang.tv.util.displayTitle
@@ -252,7 +253,7 @@ object PlaybackManager {
                 lyricsEntries = fullSong.lyrics,
                 lyrics = fullSong.lyrics.firstOrNull { it.lng?.equals("fa", true) == true && !it.body.isNullOrBlank() }?.body
                     ?: fullSong.lyrics.firstOrNull { !it.body.isNullOrBlank() }?.body,
-                sources = selectedSources,
+                sources = SourceQualityUtils.playableSources(fullSong.sources),
                 selectedSource = selectedSources.firstOrNull()
             )
         }
@@ -315,7 +316,7 @@ object PlaybackManager {
                 lyricsEntries = podcast.lyrics,
                 lyrics = podcast.lyrics.firstOrNull { it.lng?.equals("fa", true) == true && !it.body.isNullOrBlank() }?.body
                     ?: podcast.lyrics.firstOrNull { !it.body.isNullOrBlank() }?.body,
-                sources = selectedSources,
+                sources = SourceQualityUtils.playableSources(podcast.sources),
                 selectedSource = selectedSources.firstOrNull()
             )
         }
@@ -386,7 +387,7 @@ object PlaybackManager {
                 lyricsEntries = fullVideo.lyrics,
                 lyrics = fullVideo.lyrics.firstOrNull { it.lng?.equals("fa", true) == true && !it.body.isNullOrBlank() }?.body
                     ?: fullVideo.lyrics.firstOrNull { !it.body.isNullOrBlank() }?.body,
-                sources = selectedSources,
+                sources = SourceQualityUtils.playableSources(fullVideo.sources),
                 selectedSource = selectedSources.firstOrNull()
             )
         }
