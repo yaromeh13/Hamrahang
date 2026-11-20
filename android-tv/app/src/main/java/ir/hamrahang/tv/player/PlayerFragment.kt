@@ -618,7 +618,14 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
     override fun onResume() {
         super.onResume()
-        if (::btnPlayPause.isInitialized) { btnPlayPause.requestFocus() }
+        if (::btnPlayPause.isInitialized) btnPlayPause.requestFocus()
+        if (isAdded) syncHeaderRotation(PlayerState.uiState.value.playbackState)
+    }
+
+    override fun onPause() {
+        // Do not let the artwork animator run while the player screen is stopped.
+        coverAnimator?.pause()
+        super.onPause()
     }
 
     private fun applyOverlayVisibility(ui: PlayerUiState) {
@@ -1572,16 +1579,22 @@ private fun closeQueuePanel() {
         leftHeaderContainer.addView(headerView)
 
         headerImgCover = headerView.findViewById(R.id.imgCover)
-        (headerImgCover as? com.google.android.material.imageview.ShapeableImageView)?.shapeAppearanceModel =
-            com.google.android.material.shape.ShapeAppearanceModel.builder()
-                .setAllCornerSizes(
-                    if (rotating) {
-                        com.google.android.material.shape.RelativeCornerSize(0.5f)
-                    } else {
-                        12f * resources.displayMetrics.density
-                    }
-                )
-                .build()
+        (headerImgCover as? com.google.android.material.imageview.ShapeableImageView)?.apply {
+            shapeAppearanceModel =
+                com.google.android.material.shape.ShapeAppearanceModel.builder()
+                    .setAllCornerSizes(
+                        if (rotating) {
+                            com.google.android.material.shape.RelativeCornerSize(0.5f)
+                        } else {
+                            12f * resources.displayMetrics.density
+                        }
+                    )
+                    .build()
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            visibility = View.VISIBLE
+            alpha = 1f
+            invalidate()
+        }
         headerTxtTitle = headerView.findViewById(R.id.txtTitle)
         headerTxtTitle?.visibility = View.GONE
         headerTxtAlbum = headerView.findViewById(R.id.txtAlbum)
@@ -1611,9 +1624,10 @@ private fun closeQueuePanel() {
             } else {
                 R.drawable.ic_song
             }
+            iv.visibility = View.VISIBLE
             Glide.with(iv)
                 .load(info.artwork)
-                .transform(CenterCrop())
+                .centerCrop()
                 .placeholder(fallback)
                 .error(fallback)
                 .fallback(fallback)
@@ -1696,6 +1710,7 @@ private fun applyVideoDisplayMode(
     }
 
     override fun onDestroyView() {
+        stopHeaderRotation(resetCover = true)
         super.onDestroyView()
         playerView?.player = null
         playerView = null
