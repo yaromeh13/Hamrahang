@@ -237,7 +237,10 @@ object PlayerManager {
 
         playCurrentUrl()
     }
-    private fun playCurrentUrl() {
+    private fun playCurrentUrl(
+        startPositionMs: Long = 0L,
+        autoplay: Boolean = true
+    ) {
         val media = currentMedia ?: return
         val source = media.sources.getOrNull(currentUrlIndex)
         if (source == null) {
@@ -245,19 +248,18 @@ object PlayerManager {
             return
         }
         PlayerState.updatePlaybackInfo {
-            copy(
-                selectedSource = source
-            )
+            copy(selectedSource = source)
         }
         player?.apply {
             stop()
             clearMediaItems()
             setMediaItem(
-                MediaItem.fromUri(source.url)
+                MediaItem.fromUri(source.url),
+                startPositionMs.coerceAtLeast(0L)
             )
+            playWhenReady = autoplay
             PlayerState.setPlaybackState(PlaybackState.LOADING)
             prepare()
-            play()
         }
     }
 
@@ -418,15 +420,19 @@ object PlayerManager {
             return
         }
 
-        currentUrlIndex = index
+        val activePlayer = player ?: return
+        val resumePosition = activePlayer.currentPosition.coerceAtLeast(0L)
+        val resumePlayback = activePlayer.playWhenReady
 
+        currentUrlIndex = index
         PlayerState.updatePlaybackInfo {
-            copy(
-                selectedSource = source
-            )
+            copy(selectedSource = source)
         }
 
-        playCurrentUrl()
+        playCurrentUrl(
+            startPositionMs = resumePosition,
+            autoplay = resumePlayback
+        )
     }
 }
 
