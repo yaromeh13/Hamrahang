@@ -455,6 +455,52 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             }
         )
 
+        // Android TV remote seeking: consume DPAD keys while the seek bar
+        // owns focus and seek in predictable 5-second steps.
+        seekBar.isFocusable = true
+        seekBar.isFocusableInTouchMode = true
+        seekBar.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                hideRunnable?.let { overlay.removeCallbacks(it) }
+                showControls()
+            } else {
+                scheduleHide()
+            }
+        }
+        seekBar.setOnKeyListener { _, keyCode, event ->
+            if (event.action != KeyEvent.ACTION_DOWN) {
+                return@setOnKeyListener true
+            }
+
+            val stepMs = 5_000L
+            val current = seekBar.progress.toLong()
+            val duration = PlayerState.uiState.value.duration
+                .takeIf { it > 0L } ?: seekBar.max.toLong()
+
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    val target = (current - stepMs).coerceAtLeast(0L)
+                    seekBar.progress = target.toInt()
+                    PlayerManager.seekTo(target)
+                    txtCurrentTime.text = format(target)
+                }
+                KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    val target = (current + stepMs).coerceAtMost(duration)
+                    seekBar.progress = target.toInt()
+                    PlayerManager.seekTo(target)
+                    txtCurrentTime.text = format(target)
+                }
+                KeyEvent.KEYCODE_DPAD_CENTER,
+                KeyEvent.KEYCODE_ENTER -> {
+                    seekBar.clearFocus()
+                    btnPlayPause.requestFocus()
+                }
+                else -> return@setOnKeyListener false
+            }
+            showControls()
+            true
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             PlayerState.uiState.collect { ui ->
 
@@ -771,10 +817,10 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
 
     private fun scheduleHide() {
         hideRunnable?.let {overlay.removeCallbacks(it)}
-        if (PlayerState.uiState.value.controllerPinned) return
+        if (PlayerState.uiState.value.controllerPinned || seekBar.hasFocus()) return
         //if (!PlayerManager.isPlaying()) return
         hideRunnable = Runnable {
-            if (!seekBar.isPressed &&
+            if (!seekBar.isPressed && !seekBar.hasFocus() &&
                 //PlayerManager.isPlaying() &&
                 PlayerState.uiState.value.controllerVisible &&
                 !PlayerState.uiState.value.controllerPinned) {
