@@ -63,8 +63,8 @@ class FavoriteSyncRepository(
         serverFavorites.forEach { (typeName, ids) ->
             val type = ContentType.values().firstOrNull { it.apiKey == typeName }
                 ?: return@forEach
-            ids.forEach { publicId ->
-                val mediaId = publicId.toLongOrNull() ?: return@forEach
+            ids.forEach idLoop@{ publicId ->
+                val mediaId = publicId.toLongOrNull() ?: return@idLoop
                 val existing = dao.find(mediaId, type.value, userId)
                 if (existing == null) {
                     dao.insert(
