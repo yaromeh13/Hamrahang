@@ -977,7 +977,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             setTextColor(0xFFFFFFFF.toInt())
             minWidth = 64.dp
         }
-        sizeSeekBar = SeekBar(requireContext()).apply {
+        val seekBar = SeekBar(requireContext()).apply {
             max = 20
             progress = lyricsPreferences.fontSize.coerceIn(12, 32) - 12
             isFocusable = true
@@ -999,8 +999,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 override fun onStopTrackingTouch(bar: SeekBar?) = Unit
             })
         }
+        sizeSeekBar = seekBar
         sizeControls.addView(sizeLabel)
-        sizeControls.addView(sizeSeekBar)
+        sizeControls.addView(seekBar)
         sizeSection.addView(sizeControls)
         panelDynamicContent.addView(sizeSection)
     }
