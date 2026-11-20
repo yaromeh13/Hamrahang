@@ -320,7 +320,16 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         val rowItemHeader = view.findViewById<LinearLayout>(R.id.rowItemHeader)
         rowItemHeader.setOnClickListener {
             switchHeader.isChecked = !switchHeader.isChecked
-            PlayerState.setHeaderVisible(switchHeader.isChecked)
+            val enabled = switchHeader.isChecked
+            // Header switch controls the entire audio header presentation,
+            // including the independent centered title/reflection overlay.
+            playerTitleContainer.visibility =
+                if (enabled && PlayerState.playbackInfo.value.mediaType != MediaType.VIDEO)
+                    View.VISIBLE else View.GONE
+            leftHeaderContainer.visibility =
+                if (enabled && PlayerState.playbackInfo.value.mediaType != MediaType.VIDEO)
+                    View.VISIBLE else View.GONE
+            PlayerState.setHeaderVisible(enabled)
         }
         val rowItemHeaderRotate = view.findViewById<LinearLayout>(R.id.rowItemHeaderRotate)
         rowItemHeaderRotate.setOnClickListener {
@@ -646,15 +655,20 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         val info = PlayerState.playbackInfo.value
         val isVideo = info.mediaType == MediaType.VIDEO
 
-        headerContainer.visibility =
-            if ((!isVideo && ui.headerVisible) || ui.playerlyricsVisible) View.VISIBLE
-            else View.GONE
+        val showAudioHeader = ui.headerVisible && !isVideo
 
+        // The title/reflection is a separate overlay, so bind it explicitly
+        // to the same Header switch as the cover, metadata and artists.
         playerTitleContainer.visibility =
-            if (!isVideo && ui.headerVisible) View.VISIBLE else View.GONE
+            if (showAudioHeader) View.VISIBLE else View.GONE
 
         leftHeaderContainer.visibility =
-            if (ui.headerVisible && !isVideo) View.VISIBLE
+            if (showAudioHeader) View.VISIBLE else View.GONE
+
+        // Lyrics may keep this parent container visible, but must never
+        // force the header title or artwork back on.
+        headerContainer.visibility =
+            if (showAudioHeader || ui.playerlyricsVisible) View.VISIBLE
             else View.GONE
 
         lyricsContainer.visibility =
