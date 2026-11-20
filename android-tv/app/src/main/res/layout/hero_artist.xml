@@ -83,6 +83,21 @@
             android:nextFocusDown="@id/btnPlayArtist"
 
             android:visibility="gone"/>
+        <ImageButton
+            android:id="@+id/btnFollowArtist"
+            android:layout_width="@dimen/_36sdp"
+            android:layout_height="@dimen/_36sdp"
+            android:layout_marginTop="@dimen/_10dp"
+            android:background="@drawable/bg_detail_action"
+            android:src="@drawable/ic_artist"
+            android:tint="@android:color/white"
+            android:contentDescription="Follow"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:clickable="true"
+            android:nextFocusLeft="@id/btnPlayArtist"
+            android:nextFocusUp="@id/artistBio"
+            android:nextFocusDown="@id/btnPlayArtist" />
     </LinearLayout>
 
 </LinearLayout>
