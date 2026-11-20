@@ -99,6 +99,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
     private lateinit var btnSource: ImageButton
     private lateinit var panelDynamicScroll: ScrollView
     private lateinit var panelDynamicContent: LinearLayout
+    private var sizeSeekBar: SeekBar? = null
     private var panelMode: String = "GENERAL"
     private var panelReturnFocus: View? = null
     private lateinit var btnQueue: ImageButton
@@ -785,143 +786,223 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         return null
     }
 
-    private fun addPanelLabel(value: String) {
-        panelDynamicContent.addView(TextView(requireContext()).apply {
-            text = value
-            textSize = 15f
-            setTextColor(0xFFBDBDC8.toInt())
-            setPadding(4, 18, 4, 8)
-        })
+    private fun updateLyricsPreferences(updated: LyricsPreferences) {
+        lyricsPreferences = updated
+        lyricsSettings.update(updated)
+        lastLyricsBody = null
+        bindLyrics(PlayerState.playbackInfo.value, PlayerState.uiState.value.position)
     }
 
-    private fun addPanelChoice(
+    private fun languageLabel(code: String): String = when (code.lowercase()) {
+        "auto" -> getString(R.string.lyrics_language_auto)
+        "fa", "fa-ir" -> getString(R.string.lyrics_language_persian)
+        "en", "en-us", "en-gb" -> getString(R.string.lyrics_language_english)
+        "ar" -> getString(R.string.lyrics_language_arabic)
+        "tr" -> getString(R.string.lyrics_language_turkish)
+        "ku" -> getString(R.string.lyrics_language_kurdish)
+        "az" -> getString(R.string.lyrics_language_azerbaijani)
+        "de" -> getString(R.string.lyrics_language_german)
+        "fr" -> getString(R.string.lyrics_language_french)
+        "es" -> getString(R.string.lyrics_language_spanish)
+        "ru" -> getString(R.string.lyrics_language_russian)
+        else -> code.uppercase()
+    }
+
+    private fun addLyricsColumn(
         title: String,
         choices: List<Pair<String, String>>,
         selected: String,
+        enabled: Boolean = true,
         onSelected: (String) -> Unit
-    ) {
-        addPanelLabel(title)
-        val group = RadioGroup(requireContext()).apply {
-            orientation = RadioGroup.HORIZONTAL
+    ): LinearLayout {
+        val column = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+            setPadding(8, 0, 8, 0)
         }
+
+        column.addView(TextView(requireContext()).apply {
+            text = title
+            textSize = 18f
+            setTextColor(0xFFFFFFFF.toInt())
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setPadding(0, 0, 0, 12)
+        })
+
+        val group = RadioGroup(requireContext()).apply {
+            orientation = RadioGroup.VERTICAL
+        }
+
         choices.forEach { (value, label) ->
-            group.addView(RadioButton(requireContext()).apply {
+            val option = RadioButton(requireContext()).apply {
                 id = View.generateViewId()
                 tag = value
                 text = label
                 textSize = 14f
                 setTextColor(0xFFFFFFFF.toInt())
                 setPadding(8, 8, 8, 8)
-                isFocusable = true
-                isFocusableInTouchMode = true
+                background = requireContext().getDrawable(R.drawable.bg_settings_row_focus)
+                isFocusable = enabled
+                isFocusableInTouchMode = enabled
+                isEnabled = enabled
                 isChecked = value == selected
+                textDirection = View.TEXT_DIRECTION_LOCALE
                 setOnClickListener {
+                    group.check(id)
                     onSelected(value)
-                    for (index in 0 until group.childCount) {
-                        val child = group.getChildAt(index) as RadioButton
-                        child.isChecked = child.tag == value
-                    }
                 }
+            }
+            group.addView(option, RadioGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = 4.dp
             })
         }
-        panelDynamicContent.addView(group)
-    }
-
-    private fun updateLyricsPreferences(updated: LyricsPreferences) {
-        lyricsPreferences = updated
-        lyricsSettings.update(updated)
-        PlayerState.setPlayerLyricsVisible(updated.enabled)
-        lastLyricsBody = null
-        bindLyrics(PlayerState.playbackInfo.value, PlayerState.uiState.value.position)
+        column.addView(group)
+        return column
     }
 
     private fun buildLyricsPanel() {
         val info = PlayerState.playbackInfo.value
         val isVideo = info.mediaType == MediaType.VIDEO
-        val enabledRow = LinearLayout(requireContext()).apply {
+
+        panelDynamicContent.orientation = LinearLayout.VERTICAL
+        panelDynamicContent.removeAllViews()
+
+        val columns = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(4, 12, 4, 12)
-            isFocusable = true
-            isFocusableInTouchMode = true
-            tag = "lyrics_enabled"
-        }
-        enabledRow.addView(TextView(requireContext()).apply {
-            text = "Show lyrics"
-            textSize = 16f
-            setTextColor(0xFFFFFFFF.toInt())
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-        })
-        val enabledSwitch = SwitchCompat(requireContext()).apply {
-            isChecked = lyricsPreferences.enabled
-            isFocusable = false
-            isClickable = false
-        }
-        enabledRow.addView(enabledSwitch)
-        enabledRow.setOnClickListener {
-            val next = !lyricsPreferences.enabled
-            enabledSwitch.isChecked = next
-            updateLyricsPreferences(lyricsPreferences.copy(enabled = next))
-        }
-        panelDynamicContent.addView(enabledRow)
-
-        val languages = (listOf("auto" to "Automatic") +
-            info.lyricsEntries.filter { !it.body.isNullOrBlank() }
-                .mapNotNull { entry -> entry.lng?.let { it to it } }
-                .distinct())
-        addPanelChoice("Lyrics language", languages, lyricsPreferences.language) { value ->
-            updateLyricsPreferences(lyricsPreferences.copy(language = value))
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
         }
 
-        addPanelLabel("Lyrics size")
-        val sizeLabel = TextView(requireContext()).apply {
-            text = "${lyricsPreferences.fontSize}sp"
-            textSize = 14f
-            setTextColor(0xFFFFFFFF.toInt())
-        }
-        panelDynamicContent.addView(sizeLabel)
-        val sizeSeek = SeekBar(requireContext()).apply {
-            max = 20
-            progress = lyricsPreferences.fontSize.coerceIn(12, 32) - 12
-            isFocusable = true
-        }
-        sizeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(bar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val size = progress + 12
-                sizeLabel.text = "${size}sp"
-                if (fromUser) updateLyricsPreferences(lyricsPreferences.copy(fontSize = size))
-            }
-            override fun onStartTrackingTouch(bar: SeekBar?) = Unit
-            override fun onStopTrackingTouch(bar: SeekBar?) = Unit
-        })
-        panelDynamicContent.addView(sizeSeek)
-        addPanelChoice(
-            "Size presets",
-            listOf("13" to "SM", "16" to "MD", "20" to "LG", "24" to "XL"),
-            lyricsPreferences.fontSize.toString()
+        val languageChoices = (
+            listOf("auto" to languageLabel("auto")) +
+                info.lyricsEntries
+                    .filter { !it.body.isNullOrBlank() }
+                    .mapNotNull { entry ->
+                        entry.lng?.let { it to languageLabel(it) }
+                    }
+                    .distinctBy { it.first.lowercase() }
+            )
+
+        columns.addView(addLyricsColumn(
+            getString(R.string.lyrics_language_title),
+            languageChoices,
+            lyricsPreferences.language
         ) { value ->
-            val size = value.toIntOrNull() ?: return@addPanelChoice
-            sizeSeek.progress = size - 12
-            updateLyricsPreferences(lyricsPreferences.copy(fontSize = size))
-        }
-        addPanelChoice(
-            "Lyrics font",
-            listOf("" to "Default", "f1" to "F1", "f2" to "F2", "f3" to "F3", "f4" to "F4"),
+            updateLyricsPreferences(lyricsPreferences.copy(language = value))
+        })
+
+        addLyricsColumn(
+            getString(R.string.lyrics_style_title),
+            listOf(
+                "NORMAL" to getString(R.string.lyrics_style_normal),
+                "FOCUS" to getString(R.string.lyrics_style_focus),
+                "LINE" to getString(R.string.lyrics_style_line),
+                "CARD" to getString(R.string.lyrics_style_card)
+            ),
+            if (isVideo) LyricsViewMode.LINE.name else lyricsPreferences.viewMode.name,
+            enabled = !isVideo
+        ) { value ->
+            val selected = runCatching { LyricsViewMode.valueOf(value) }
+                .getOrDefault(LyricsViewMode.FOCUS)
+            updateLyricsPreferences(lyricsPreferences.copy(viewMode = selected))
+        }.also { columns.addView(it) }
+
+        columns.addView(addLyricsColumn(
+            getString(R.string.lyrics_font_title),
+            listOf(
+                "" to getString(R.string.lyrics_font_default),
+                "f1" to getString(R.string.lyrics_font_vazir),
+                "f2" to getString(R.string.lyrics_font_serif),
+                "f3" to getString(R.string.lyrics_font_sans),
+                "f4" to getString(R.string.lyrics_font_monospace)
+            ),
             lyricsPreferences.fontFamily
         ) { value ->
             updateLyricsPreferences(lyricsPreferences.copy(fontFamily = value))
+        })
+
+        columns.addView(addLyricsColumn(
+            getString(R.string.lyrics_size_title),
+            listOf(
+                "13" to getString(R.string.lyrics_size_small),
+                "16" to getString(R.string.lyrics_size_medium),
+                "20" to getString(R.string.lyrics_size_large),
+                "24" to getString(R.string.lyrics_size_extra_large)
+            ),
+            lyricsPreferences.fontSize.toString()
+        ) { value ->
+            val size = value.toIntOrNull() ?: return@addLyricsColumn
+            sizeSeekBar?.progress = size - 12
+            updateLyricsPreferences(lyricsPreferences.copy(fontSize = size))
+        })
+
+        for (index in 0 until columns.childCount - 1) {
+            columns.addView(View(requireContext()).apply {
+                layoutParams = LinearLayout.LayoutParams(1.dp, 300.dp).apply {
+                    topMargin = 2.dp
+                    bottomMargin = 2.dp
+                }
+                setBackgroundColor(0x33FFFFFF)
+            }, index * 2 + 1)
         }
-        if (!isVideo) {
-            addPanelChoice(
-                "Lyrics style",
-                listOf("NORMAL" to "Normal", "LINE" to "Line", "FOCUS" to "Focus", "CARD" to "Card"),
-                lyricsPreferences.viewMode.name
-            ) { value ->
-                val selected = runCatching { LyricsViewMode.valueOf(value) }
-                    .getOrDefault(LyricsViewMode.FOCUS)
-                updateLyricsPreferences(lyricsPreferences.copy(viewMode = selected))
-            }
+        panelDynamicContent.addView(columns)
+
+        val sizeSection = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(8, 18, 8, 0)
         }
+        sizeSection.addView(TextView(requireContext()).apply {
+            text = getString(R.string.lyrics_size_title)
+            textSize = 16f
+            setTextColor(0xFFFFFFFF.toInt())
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        })
+
+        val sizeControls = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        val sizeLabel = TextView(requireContext()).apply {
+            text = getString(R.string.lyrics_size_value, lyricsPreferences.fontSize)
+            textSize = 14f
+            setTextColor(0xFFFFFFFF.toInt())
+            minWidth = 64.dp
+        }
+        sizeSeekBar = SeekBar(requireContext()).apply {
+            max = 20
+            progress = lyricsPreferences.fontSize.coerceIn(12, 32) - 12
+            isFocusable = true
+            isFocusableInTouchMode = true
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(bar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    val size = progress + 12
+                    sizeLabel.text = getString(R.string.lyrics_size_value, size)
+                    if (fromUser) {
+                        updateLyricsPreferences(lyricsPreferences.copy(fontSize = size))
+                    }
+                }
+                override fun onStartTrackingTouch(bar: SeekBar?) = Unit
+                override fun onStopTrackingTouch(bar: SeekBar?) = Unit
+            })
+        }
+        sizeControls.addView(sizeLabel)
+        sizeControls.addView(sizeSeekBar)
+        sizeSection.addView(sizeControls)
+        panelDynamicContent.addView(sizeSection)
     }
 
     private fun buildSourcePanel() {
