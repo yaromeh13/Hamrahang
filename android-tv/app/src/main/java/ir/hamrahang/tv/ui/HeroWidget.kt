@@ -194,7 +194,7 @@ class HeroWidget(
                         ImageResolver.request(
                             artistCover,
                             artist.thumb,
-                            R.drawable.ic_profile
+                            R.drawable.ic_artist
                         ).circleCrop().into(artistCover)
 
                         artistDetailsBinder.bind(artist)
