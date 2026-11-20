@@ -32,6 +32,8 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.MainActivity
 import ir.hamrahang.tv.data.MediaSource
+import ir.hamrahang.tv.data.SourceOwner
+import ir.hamrahang.tv.data.owner.OwnerRepository
 import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.playback.PlaybackQueueAdapter
 import ir.hamrahang.tv.ui.hero.HeroArtistsBinder
@@ -52,6 +54,11 @@ import ir.hamrahang.tv.lyrics.ParsedLyrics
 
 class PlayerFragment : Fragment(R.layout.fragment_player) {
     private lateinit var leftHeaderContainer: FrameLayout
+    private lateinit var playerTitleContainer: View
+    private lateinit var txtPlayerTitle: TextView
+    private lateinit var txtPlayerTitleReflection: ReflectionTextView
+    private var lastPlayerIconMode: MediaType? = null
+    private var sourcePanelGeneration = 0
     private var isRotatingHeader = false
     private var headerImgCover: ImageView? = null
     private var headerTxtTitle: TextView? = null
@@ -160,6 +167,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         leftHeaderContainer = view.findViewById(R.id.leftHeaderContainer)
         switchHeader(rotating = false)
         overlay = view.findViewById(R.id.playerOverlay)
+        playerTitleContainer = view.findViewById(R.id.playerTitleContainer)
+        txtPlayerTitle = view.findViewById(R.id.txtPlayerTitle)
+        txtPlayerTitleReflection = view.findViewById(R.id.txtPlayerTitleReflection)
 
         seekBar = view.findViewById(R.id.seekBar)
         txtCurrentTime = view.findViewById(R.id.txtCurrentTime)
@@ -351,6 +361,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         btnSource.setOnClickListener {
             openSettingsPanel("SOURCE", btnSource)
         }
+        loadPlayerActionIcons(PlayerState.playbackInfo.value)
         btnQueue = view.findViewById(R.id.btnQueue)
         queuePanel = view.findViewById(R.id.playerQueuePanel)
         panelDynamicScroll = view.findViewById(R.id.playerPanelDynamicScroll)
@@ -615,6 +626,9 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
         headerContainer.visibility =
             if ((!isVideo && ui.headerVisible) || ui.playerlyricsVisible) View.VISIBLE
             else View.GONE
+
+        playerTitleContainer.visibility =
+            if (!isVideo && ui.headerVisible) View.VISIBLE else View.GONE
 
         leftHeaderContainer.visibility =
             if (ui.headerVisible && !isVideo) View.VISIBLE
@@ -1425,6 +1439,7 @@ private fun closeQueuePanel() {
 
         headerImgCover = headerView.findViewById(R.id.imgCover)
         headerTxtTitle = headerView.findViewById(R.id.txtTitle)
+        headerTxtTitle?.visibility = View.GONE
         headerTxtAlbum = headerView.findViewById(R.id.txtAlbum)
         headerLayoutArtists = headerView.findViewById(R.id.layoutArtists)
         headerLayoutMeta = headerView.findViewById(R.id.layoutMeta)
@@ -1436,7 +1451,10 @@ private fun closeQueuePanel() {
     }
     private fun bindHeaderInfo(info: PlaybackInfoState) {
 
-        headerTxtTitle?.text = info.title
+        headerTxtTitle?.visibility = View.GONE
+        txtPlayerTitle.text = info.title
+        txtPlayerTitleReflection.text = info.title
+        loadPlayerActionIcons(info)
         metaBinder.bind(info.metadata)
         HeroArtistsBinder.bind(
             headerLayoutArtists ?: return,
