@@ -32,6 +32,7 @@ class PlaybackQueueAdapter(
     private var currentIndex = 0
     private var isReordering = false
     private var movingIndex = RecyclerView.NO_POSITION
+    private var movingItemKey: String? = null
     private var originalItems: List<PlaybackItem>? = null
     private var workingItems: List<PlaybackItem>? = null
     private var currentItemKey: String? = null
@@ -224,6 +225,7 @@ class PlaybackQueueAdapter(
         isReordering = true
         onReorderStateChanged(true)
         movingIndex = position
+        movingItemKey = itemKey(currentList[position])
         originalItems = currentList.toList()
         workingItems = currentList.toList()
         currentItemKey = currentList.getOrNull(currentIndex)?.let(::itemKey)
@@ -255,9 +257,12 @@ class PlaybackQueueAdapter(
     private fun finishReorder(commit: Boolean, focusPosition: Int) {
         if (!isReordering) return
         val finalItems = if (commit) workingItems.orEmpty() else originalItems.orEmpty()
+        val movedKey = movingItemKey
+        val restoredPosition = finalItems.indexOfFirst { itemKey(it) == movedKey }
         isReordering = false
         onReorderStateChanged(false)
         movingIndex = RecyclerView.NO_POSITION
+        movingItemKey = null
         originalItems = null
         workingItems = null
         currentIndex = finalItems.indexOfFirst { itemKey(it) == currentItemKey }.coerceAtLeast(0)
@@ -265,9 +270,13 @@ class PlaybackQueueAdapter(
         submitList(finalItems) {
             notifyItemRangeChanged(0, itemCount)
             if (commit) onReorderCommit(finalItems)
-            val target = focusPosition.coerceIn(0, (itemCount - 1).coerceAtLeast(0))
+            val target = (if (restoredPosition >= 0) restoredPosition else focusPosition)
+                .coerceIn(0, (itemCount - 1).coerceAtLeast(0))
             attachedRecyclerView?.post {
-                attachedRecyclerView?.findViewHolderForAdapterPosition(target)?.itemView?.requestFocus()
+                attachedRecyclerView?.scrollToPosition(target)
+                attachedRecyclerView?.post {
+                    attachedRecyclerView?.findViewHolderForAdapterPosition(target)?.itemView?.requestFocus()
+                }
             }
         }
     }
