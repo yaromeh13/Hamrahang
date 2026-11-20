@@ -17,15 +17,27 @@ import ir.hamrahang.tv.R
 private const val PAYLOAD_SELECTION = "payload_selection"
 
 class PlaybackQueueAdapter(
-    private val onClick: (Int) -> Unit
+    private val onClick: (Int) -> Unit,
+    private val onRemove: (Int) -> Unit = {},
+    private val onMore: (PlaybackItem) -> Unit = {}
 ) : ListAdapter<PlaybackItem, PlaybackQueueAdapter.VH>(DIFF_CALLBACK) {
     private var currentIndex = 0
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.songTitle)
         val artist: TextView = view.findViewById(R.id.songArtist)
         val cover: ImageView = view.findViewById(R.id.PlsCover)
+        val remove: View = view.findViewById(R.id.btnQueueRemove)
+        val more: View = view.findViewById(R.id.btnQueueMore)
 
         init {
+            remove.setOnClickListener {
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) onRemove(position)
+            }
+            more.setOnClickListener {
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) onMore(getItem(position))
+            }
             itemView.setOnClickListener {
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
