@@ -1584,7 +1584,7 @@ private fun closeQueuePanel() {
                 com.google.android.material.shape.ShapeAppearanceModel.builder()
                     .setAllCornerSizes(
                         if (rotating) {
-                            com.google.android.material.shape.RelativeCornerSize(0.5f)
+                            999f
                         } else {
                             12f * resources.displayMetrics.density
                         }
