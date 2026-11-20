@@ -61,6 +61,7 @@
         android:contentDescription="Current source owner"
         android:scaleType="centerCrop"
         android:visibility="gone"
+        android:background="@android:color/transparent"
         android:elevation="8dp"/>
 
     <!-- Web-matching centered player title and fading reflection -->
