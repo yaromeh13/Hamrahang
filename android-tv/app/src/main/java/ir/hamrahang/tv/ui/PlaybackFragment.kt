@@ -55,7 +55,6 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
     private lateinit var btnShuffle: ImageButton
     private lateinit var btnRepeat: ImageButton
     private lateinit var btnPlayPause: ImageButton
-    private lateinit var btnMute: ImageButton
     private lateinit var btnNext: ImageButton
     private lateinit var btnPrev: ImageButton
     private lateinit var btnLyrics: ImageButton
@@ -87,7 +86,6 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         btnLyrics = view.findViewById(R.id.btnLyrics)
         btnPlaylist = view.findViewById(R.id.btnPlaylist)
         btnFullscreen = view.findViewById(R.id.btnFullscreen)
-        btnMute = view.findViewById(R.id.btnMute)
         btnBookmark = view.findViewById(R.id.btnBookmark)
         btnMore = view.findViewById(R.id.btnMore)
         imgCover = view.findViewById(R.id.imgCover)
@@ -182,14 +180,6 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         view.post {btnPlayPause.requestFocus()}
         btnShuffle.setOnClickListener {PlayerManager.toggleShuffle()}
         btnRepeat.setOnClickListener {PlayerManager.toggleRepeat()}
-        btnMute.setOnClickListener {PlayerManager.toggleMute()
-            MessageManager.info(
-                if(PlayerState.uiState.value.muted)
-                    "Muted"
-                else
-                    "Unmuted"
-            )
-        }
         btnLyrics.setOnClickListener {
             val show = !PlayerState.uiState.value.lyricsVisible
             PlayerState.setLyricsVisible(show)
@@ -265,12 +255,6 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
                         R.drawable.ic_repeat_one
                     else
                         R.drawable.ic_repeat
-                )
-                btnMute.setImageResource(
-                    if (ui.muted)
-                        R.drawable.ic_volume_off
-                    else
-                        R.drawable.ic_volume_up
                 )
                 playlist.visibility =
                     if (ui.playlistVisible)
