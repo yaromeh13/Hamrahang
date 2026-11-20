@@ -2,6 +2,7 @@ package ir.hamrahang.tv.playback
 
 import android.content.Context
 import android.util.Log
+import androidx.media3.common.Player
 import ir.hamrahang.tv.data.album.AlbumRepository
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
@@ -19,6 +20,7 @@ import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.player.SourceSelector
 import ir.hamrahang.tv.player.SourceQualityUtils
 import ir.hamrahang.tv.settings.PlaybackQualityManager
+import ir.hamrahang.tv.settings.SettingsManager
 import ir.hamrahang.tv.util.CoverArtBinder
 import ir.hamrahang.tv.util.displayTitle
 import kotlinx.coroutines.CoroutineScope
@@ -66,12 +68,25 @@ object PlaybackManager {
 
     private var autoPlayJob: Job? = null
 
+    // Queue navigation state (mirrors web SN.player)
+    private val playedInShuffle = mutableSetOf<String>()
+    private val shuffleHistory = mutableListOf<String>()
+    private var shuffleHistoryIndex = -1
+
     // Init
     // --------------------------------------------------
 
     fun init(context: Context) {
         if (appContext != null) return
         appContext = context.applicationContext
+        PlayerState.setRepeatMode(
+            when (SettingsManager.getRepeatMode()) {
+                "one" -> Player.REPEAT_MODE_ONE
+                "all" -> Player.REPEAT_MODE_ALL
+                else -> Player.REPEAT_MODE_OFF
+            }
+        )
+        PlayerState.setShuffle(false)
         scope.launch {
             _currentItem.collectLatest {
                 it ?: return@collectLatest
@@ -111,8 +126,12 @@ object PlaybackManager {
             Log.e( "PLAYBACK", "Invalid currentIndex=${newSession.currentIndex}" )
             return
         }
+        resetShuffleMemory()
         _session.value = newSession
         updateCurrentItem()
+        if (PlayerManager.isPlaying()) {
+            markPlayed(newSession.items[newSession.currentIndex])
+        }
     }
 
     // CURRENT ITEM
@@ -161,30 +180,184 @@ object PlaybackManager {
         updateCurrentItem()
     }
 
-    fun next() {
-        val session = _session.value ?: return
-        if (session.items.isEmpty()) { return }
-        /*val nextIndex = (
-                    session.currentIndex + 1
-                    ) % session.items.size
-*/
-        val nextIndex = if ( session.currentIndex >= session.items.lastIndex ) { 0 } else { session.currentIndex + 1 }
-        _session.value = session.copy( currentIndex = nextIndex )
-        updateCurrentItem()
+    private fun queueKey(item: PlaybackItem): String =
+        "${item.contentType.value}:${item.id}"
+
+    private fun resetShuffleMemory() {
+        playedInShuffle.clear()
+        shuffleHistory.clear()
+        shuffleHistoryIndex = -1
     }
 
+    private fun markPlayed(item: PlaybackItem) {
+        if (!PlayerState.uiState.value.shuffle) return
+
+        val key = queueKey(item)
+        playedInShuffle.add(key)
+
+        if (shuffleHistoryIndex < -1 || shuffleHistoryIndex >= shuffleHistory.size) {
+            shuffleHistoryIndex = shuffleHistory.lastIndex
+        }
+        if (shuffleHistoryIndex == -1 && shuffleHistory.isNotEmpty()) {
+            shuffleHistoryIndex = shuffleHistory.lastIndex
+        }
+
+        if (shuffleHistoryIndex >= 0 && shuffleHistory[shuffleHistoryIndex] == key) return
+
+        if (shuffleHistoryIndex > 0 && shuffleHistory[shuffleHistoryIndex - 1] == key) {
+            shuffleHistoryIndex--
+            return
+        }
+
+        if (shuffleHistoryIndex >= 0 &&
+            shuffleHistoryIndex + 1 < shuffleHistory.size &&
+            shuffleHistory[shuffleHistoryIndex + 1] == key
+        ) {
+            shuffleHistoryIndex++
+            return
+        }
+
+        while (shuffleHistory.size > shuffleHistoryIndex + 1) {
+            shuffleHistory.removeAt(shuffleHistory.lastIndex)
+        }
+        shuffleHistory.add(key)
+        shuffleHistoryIndex = shuffleHistory.lastIndex
+    }
+
+    /** Called by PlayerManager only after ExoPlayer actually starts this queue item. */
+    fun onPlaybackStarted() {
+        val current = _session.value ?: return
+        current.items.getOrNull(current.currentIndex)?.let(::markPlayed)
+    }
+
+    fun toggleShuffle() {
+        val enabled = !PlayerState.uiState.value.shuffle
+        PlayerState.setShuffle(enabled)
+        resetShuffleMemory()
+        if (enabled && PlayerManager.isPlaying()) {
+            _session.value?.let { session ->
+                session.items.getOrNull(session.currentIndex)?.let(::markPlayed)
+            }
+        }
+    }
+
+    fun toggleRepeat() {
+        val nextMode = when (PlayerState.uiState.value.repeatMode) {
+            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ONE
+            Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_ALL
+            else -> Player.REPEAT_MODE_OFF
+        }
+        PlayerState.setRepeatMode(nextMode)
+        SettingsManager.saveRepeatMode(
+            when (nextMode) {
+                Player.REPEAT_MODE_ONE -> "one"
+                Player.REPEAT_MODE_ALL -> "all"
+                else -> "off"
+            }
+        )
+    }
+
+    private fun findQueueIndex(key: String): Int {
+        val items = _session.value?.items ?: return -1
+        return items.indexOfFirst { queueKey(it) == key }
+    }
+
+    private fun nextQueueIndex(session: PlaybackSession, fromError: Boolean): Int {
+        val current = session.currentIndex
+        val repeatMode = PlayerState.uiState.value.repeatMode
+        if (!PlayerState.uiState.value.shuffle) {
+            val next = current + 1
+            return if (next < session.items.size) next
+            else if (repeatMode == Player.REPEAT_MODE_ALL) 0
+            else -1
+        }
+
+        // If the user previously went Back, follow the already-heard future first.
+        val historyNext = shuffleHistoryIndex + 1
+        if (historyNext in shuffleHistory.indices) {
+            val index = findQueueIndex(shuffleHistory[historyNext])
+            if (index >= 0) return index
+        }
+
+        val remaining = session.items.indices.filter { index ->
+            (fromError || index != current) &&
+                queueKey(session.items[index]) !in playedInShuffle
+        }
+        if (remaining.isNotEmpty()) return remaining.random()
+
+        if (repeatMode != Player.REPEAT_MODE_ALL) return -1
+
+        resetShuffleMemory()
+        val nextCycle = session.items.indices.filter { it != current }
+        return nextCycle.randomOrNull() ?: current
+    }
+
+    private fun previousQueueIndex(session: PlaybackSession): Int {
+        val current = session.currentIndex
+        val repeatMode = PlayerState.uiState.value.repeatMode
+
+        if (!PlayerState.uiState.value.shuffle) {
+            val previous = current - 1
+            return if (previous >= 0) previous
+            else if (repeatMode == Player.REPEAT_MODE_ALL) session.items.lastIndex
+            else -1
+        }
+
+        val currentKey = session.items.getOrNull(current)?.let(::queueKey).orEmpty()
+        if (shuffleHistoryIndex in shuffleHistory.indices &&
+            shuffleHistory[shuffleHistoryIndex] != currentKey
+        ) {
+            return findQueueIndex(shuffleHistory[shuffleHistoryIndex])
+        }
+
+        val historyPrevious = shuffleHistoryIndex - 1
+        if (historyPrevious in shuffleHistory.indices) {
+            return findQueueIndex(shuffleHistory[historyPrevious])
+        }
+
+        val previous = current - 1
+        return if (previous >= 0) previous
+        else if (repeatMode == Player.REPEAT_MODE_ALL) session.items.lastIndex
+        else -1
+    }
+
+    fun next(fromError: Boolean = false) {
+        val session = _session.value ?: return
+        if (session.items.isEmpty()) return
+
+        // Match web PlayNext(): Repeat One restarts the current item except on source failure.
+        if (!fromError && PlayerState.uiState.value.repeatMode == Player.REPEAT_MODE_ONE) {
+            PlayerManager.restartCurrent()
+            return
+        }
+
+        val nextIndex = nextQueueIndex(session, fromError)
+        if (nextIndex < 0) return
+
+        if (nextIndex == session.currentIndex) {
+            PlayerManager.restartCurrent()
+        } else {
+            play(nextIndex)
+        }
+    }
 
     fun previous() {
         val session = _session.value ?: return
-        if (session.items.isEmpty()) { return }
-        val previousIndex =
-            if (session.currentIndex <= 0) {
-                session.items.lastIndex
-            } else {
-                session.currentIndex - 1
-            }
-        _session.value = session.copy( currentIndex = previousIndex )
-        updateCurrentItem()
+        if (session.items.isEmpty()) return
+
+        val currentItem = session.items.getOrNull(session.currentIndex) ?: return
+        val activeMedia = PlayerManager.getCurrentMedia()
+        val isPendingLoad = activeMedia?.id != currentItem.id ||
+            activeMedia.contentType != currentItem.contentType
+
+        // Match web PlayPrevious(): after 3 seconds restart this item instead of skipping.
+        if (!isPendingLoad && PlayerManager.getCurrentPosition() > 3_000L) {
+            PlayerManager.restartCurrent()
+            return
+        }
+
+        val previousIndex = previousQueueIndex(session)
+        if (previousIndex >= 0) play(previousIndex)
     }
 
     /**
@@ -194,6 +367,18 @@ object PlaybackManager {
     fun remove(index: Int) {
         val current = _session.value ?: return
         if (index !in current.items.indices) return
+
+        val removedItem = current.items[index]
+        val removedKey = queueKey(removedItem)
+        playedInShuffle.remove(removedKey)
+        for (historyIndex in shuffleHistory.lastIndex downTo 0) {
+            if (shuffleHistory[historyIndex] == removedKey) {
+                shuffleHistory.removeAt(historyIndex)
+                if (historyIndex <= shuffleHistoryIndex) shuffleHistoryIndex--
+            }
+        }
+        if (shuffleHistory.isEmpty()) shuffleHistoryIndex = -1
+        else if (shuffleHistoryIndex >= shuffleHistory.size) shuffleHistoryIndex = shuffleHistory.lastIndex
 
         val updatedItems = current.items.toMutableList().apply { removeAt(index) }
         if (updatedItems.isEmpty()) {
