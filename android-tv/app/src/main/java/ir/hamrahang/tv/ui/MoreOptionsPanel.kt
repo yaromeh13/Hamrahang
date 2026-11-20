@@ -254,10 +254,21 @@ object MoreOptionsPanel {
             setPadding(6.dp(context), 8.dp(context), 6.dp(context), 8.dp(context))
             setOnClickListener { action() }
         }
-        card.addView(ImageView(context).apply {
+        val actionIcon = ImageView(context).apply {
             setImageResource(icon)
-            layoutParams = LinearLayout.LayoutParams(36.dp(context), 36.dp(context))
-        })
+            imageTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
+            layoutParams = LinearLayout.LayoutParams(44.dp(context), 44.dp(context))
+        }
+        card.addView(actionIcon)
+        card.setOnFocusChangeListener { view, hasFocus ->
+            val scale = if (hasFocus) 1.04f else 1f
+            view.animate().scaleX(scale).scaleY(scale).setDuration(140).start()
+            actionIcon.animate()
+                .scaleX(if (hasFocus) 1.28f else 1f)
+                .scaleY(if (hasFocus) 1.28f else 1f)
+                .setDuration(170)
+                .start()
+        }
         card.addView(TextView(context).apply {
             text = label
             tag = "action_label"
@@ -267,7 +278,7 @@ object MoreOptionsPanel {
             maxLines = 1
             setPadding(0, 6.dp(context), 0, 0)
         })
-        val params = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+        val params = LinearLayout.LayoutParams(104.dp(context), 104.dp(context))
         if (row.childCount > 0) params.marginStart = 10.dp(context)
         row.addView(card, params)
         return card
