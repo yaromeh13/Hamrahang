@@ -52,7 +52,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="22dp"
+        android:layout_marginTop="8dp"
         android:orientation="vertical"
         android:gravity="center"
         android:elevation="4dp">
@@ -72,7 +72,8 @@
         <ir.hamrahang.tv.player.ReflectionTextView
             android:id="@+id/txtPlayerTitleReflection"
             android:layout_width="match_parent"
-            android:layout_height="38dp"
+            android:layout_height="42dp"
+            android:layout_marginTop="4dp"
             android:gravity="center"
             android:textColor="#FFFFFFFF"
             android:textSize="34sp"
