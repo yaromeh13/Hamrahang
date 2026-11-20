@@ -117,7 +117,19 @@ object MoreOptionsPanel {
         ))
         container.addView(header, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply { bottomMargin = 14.dp(context) })
+        ).apply { bottomMargin = 8.dp(context) })
+
+        item.playCount?.let { count ->
+            container.addView(TextView(context).apply {
+                text = "$count Plays"
+                textSize = 17f
+                setTextColor(0xFFBDBDBD.toInt())
+                gravity = Gravity.CENTER
+                setPadding(0, 0, 0, 14.dp(context))
+            }, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ))
+        }
 
         var bookmarked = false
         val bookmarkCard = addTopAction(
