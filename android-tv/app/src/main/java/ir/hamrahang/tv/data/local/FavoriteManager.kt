@@ -107,6 +107,16 @@ object FavoriteManager {
 
     }
 
+    suspend fun syncWithServer(
+        accessToken: String,
+        userId: Long = 0
+    ): Result<Int> {
+        val syncRepository = ir.hamrahang.tv.data.favorite.FavoriteSyncRepository(
+            DatabaseProvider.database().favoriteDao()
+        )
+        return syncRepository.pullAndSync(accessToken, userId)
+    }
+
     fun contentTypeOf(video: Video): ContentType = video.contentType
 
     fun contentTypeOf(media: PlayerMedia): ContentType =
