@@ -45,6 +45,44 @@
 
     </LinearLayout>
 
+    <!-- Web-matching centered player title and fading reflection -->
+    <LinearLayout
+        android:id="@+id/playerTitleContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="22dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:elevation="4dp">
+
+        <TextView
+            android:id="@+id/txtPlayerTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="#FFFFFFFF"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+        <ir.hamrahang.tv.player.ReflectionTextView
+            android:id="@+id/txtPlayerTitleReflection"
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:gravity="center"
+            android:textColor="#FFFFFFFF"
+            android:textSize="34sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:importantForAccessibility="no"/>
+    </LinearLayout>
+
     <!--====================-->
     <!-- Seek               -->
     <!--====================-->
@@ -114,6 +152,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
+            android:layoutDirection="ltr"
+            android:textDirection="ltr"
             android:layout_centerVertical="true"
             android:orientation="horizontal"
             android:gravity="center">
@@ -232,17 +272,23 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
+            android:layoutDirection="ltr"
+            android:textDirection="ltr"
             android:layout_centerVertical="true"
             android:orientation="horizontal"
             android:gravity="center">
 
-            <ImageButton
-                android:id="@+id/btnSource"
+
+
+
+
+
+
+        </Line            <ImageButton
+                android:id="@+id/btnRepeat"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:layout_marginEnd="8dp"
-                android:src="@drawable/ic_source"
-                android:contentDescription="Source"
+                android:src="@drawable/ic_repeat"
                 android:focusable="true"
                 android:clickable="true"
                 android:focusableInTouchMode="true"
@@ -260,16 +306,18 @@
                 android:background="@drawable/bg_player_round"/>
 
             <ImageButton
-                android:id="@+id/btnRepeat"
+                android:id="@+id/btnSource"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:src="@drawable/ic_repeat"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_source"
+                android:contentDescription="Source"
                 android:focusable="true"
                 android:clickable="true"
                 android:focusableInTouchMode="true"
                 android:background="@drawable/bg_player_round"/>
 
-        </LinearLayout>
+arLayout>
 
 
     </RelativeLayout>
