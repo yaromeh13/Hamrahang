@@ -14,7 +14,6 @@
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:clickable="true"
-    android:nextFocusRight="@id/btnQueueRemove"
     android:descendantFocusability="beforeDescendants"
     android:background="@drawable/bg_playlist_item">
 
@@ -63,8 +62,6 @@
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-        android:nextFocusLeft="@id/queueItemRoot"
-        android:nextFocusRight="@id/btnQueueMore"
         android:background="@drawable/bg_queue_action_focus"
         android:contentDescription="Remove from queue"/>
 
@@ -80,7 +77,6 @@
         android:focusable="true"
         android:focusableInTouchMode="true"
         android:clickable="true"
-        android:nextFocusLeft="@id/btnQueueRemove"
         android:background="@drawable/bg_queue_action_focus"
         android:contentDescription="More options"/>
 
