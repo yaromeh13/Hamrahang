@@ -36,7 +36,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="No Lyrics"
+                android:text="@string/no_lyrics"
                 android:textColor="#FFFFFFFF"
                 android:textSize="22sp"
                 android:textStyle="bold"/>
@@ -648,7 +648,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="اندازه قلم"
+                android:text="@string/settings_font_size"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:textSize="18sp"/>
@@ -665,7 +665,7 @@
                     android:textColor="#FFFFFF"
                     android:padding="8dp"
                     android:background="@drawable/bg_settings_row_focus"
-                    android:text="کوچک"/>
+                    android:text="@string/settings_small"/>
 
                 <RadioButton
                     android:layout_width="wrap_content"
@@ -673,7 +673,7 @@
                     android:textColor="#FFFFFF"
                     android:padding="8dp"
                     android:background="@drawable/bg_settings_row_focus"
-                    android:text="متوسط"
+                    android:text="@string/settings_medium"
                     android:checked="true"/>
 
                 <RadioButton
@@ -682,7 +682,7 @@
                     android:textColor="#FFFFFF"
                     android:padding="8dp"
                     android:background="@drawable/bg_settings_row_focus"
-                    android:text="بزرگ"/>
+                    android:text="@string/settings_large"/>
 
             </RadioGroup>
 
