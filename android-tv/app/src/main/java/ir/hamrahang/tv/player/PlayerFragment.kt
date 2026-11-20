@@ -1141,9 +1141,7 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
             return
         }
 
-        if (lastPlayerOwnerId == ownerId && playerOwnerImage.tag is String &&
-            (playerOwnerImage.tag as String).startsWith("https://")
-        ) {
+        if (lastPlayerOwnerId == ownerId) {
             updatePlayerOwnerVisibility()
             return
         }
