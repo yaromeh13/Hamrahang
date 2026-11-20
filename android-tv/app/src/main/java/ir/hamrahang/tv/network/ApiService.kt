@@ -8,10 +8,15 @@ import ir.hamrahang.tv.data.search.SearchResponseDto
 import ir.hamrahang.tv.data.song.SongResponseDto
 import ir.hamrahang.tv.data.album.AlbumResponseDto
 import ir.hamrahang.tv.data.favorite.FavoriteResponseDto
+import ir.hamrahang.tv.data.favorite.UacRequest
+import ir.hamrahang.tv.data.favorite.UacResponse
 import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.video.VideoResponseDto
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface ApiService {
@@ -88,4 +93,12 @@ interface ApiService {
     suspend fun getFavorites(
         @Query("_qjs") qjs: String = "ep"
     ): FavoriteResponseDto
+
+    // Same authenticated account API used by the web client.
+    @POST("/")
+    suspend fun favoriteAccountAction(
+        @Query("_qjs") qjs: String = "uac",
+        @Header("Authorization") authorization: String,
+        @Body body: UacRequest
+    ): UacResponse
 }
