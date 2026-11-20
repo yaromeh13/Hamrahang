@@ -169,6 +169,38 @@ object PlaybackManager {
         updateCurrentItem()
     }
 
+    /**
+     * Remove a queue row without disturbing the current playback unless the
+     * removed row is the one currently playing.
+     */
+    fun remove(index: Int) {
+        val current = _session.value ?: return
+        if (index !in current.items.indices) return
+
+        val updatedItems = current.items.toMutableList().apply { removeAt(index) }
+        if (updatedItems.isEmpty()) {
+            playCurrentJob?.cancel()
+            _session.value = null
+            _currentItem.value = null
+            currentContentType = null
+            PlayerManager.stop()
+            return
+        }
+
+        val wasCurrent = index == current.currentIndex
+        val nextIndex = when {
+            index < current.currentIndex -> current.currentIndex - 1
+            wasCurrent -> current.currentIndex.coerceAtMost(updatedItems.lastIndex)
+            else -> current.currentIndex
+        }
+
+        _session.value = current.copy(
+            items = updatedItems,
+            currentIndex = nextIndex
+        )
+        if (wasCurrent) updateCurrentItem()
+    }
+
     // PLAY CURRENT
     // ==================================================
 
