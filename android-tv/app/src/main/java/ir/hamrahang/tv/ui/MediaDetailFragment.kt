@@ -21,7 +21,6 @@ import ir.hamrahang.tv.data.video.VideoRepository
 import ir.hamrahang.tv.domain.hero.HeroContent
 import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.playback.PlaybackItem
-import ir.hamrahang.tv.ui.MoreOptionsPanel
 import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.playback.PlaybackSession
 import ir.hamrahang.tv.playback.PlaybackSource
