@@ -42,7 +42,7 @@ class ContentRowsAdapter(
                 )
             } else {
                 title.visibility = View.VISIBLE
-                title.text = row.title
+                title.text = localizedRowTitle(row, itemView.context)
                 val rowPadding = itemView.resources.getDimensionPixelSize(R.dimen._18dp)
                 itemView.setPadding(
                     itemView.paddingLeft,
@@ -84,7 +84,7 @@ class ContentRowsAdapter(
                         onClick = { item, index ->
                             val session = PlaybackSession(
                                 id = row.sessionId,
-                                title = row.sessionTitle,
+                                title = localizedSessionTitle(row, itemView.context),
                                 source = row.sessionSource,
                                 items = row.items.map { song ->
                                     PlaybackItem(
@@ -235,6 +235,25 @@ class ContentRowsAdapter(
             }
             recycler.requestLayout()
         }
+    }
+
+
+    private fun localizedRowTitle(row: ContentRow, context: android.content.Context): String? {
+        val resource = when (row.sessionId) {
+            "home_favorite_musicvideos" -> R.string.favorite_music_videos
+            "home_favorite_songs" -> R.string.favorite_songs
+            "home_favorite_podcasts" -> R.string.favorite_podcasts
+            "home_favorite_artists" -> R.string.favorite_artists
+            "home_favorite_videos" -> R.string.favorite_videos
+            "home_favorite_playlists" -> R.string.favorite_playlists
+            "home_favorite_albums" -> R.string.favorite_albums
+            else -> 0
+        }
+        return if (resource != 0) context.getString(resource) else row.title
+    }
+
+    private fun localizedSessionTitle(row: ContentRow, context: android.content.Context): String {
+        return localizedRowTitle(row, context) ?: row.sessionTitle
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RowVH {
