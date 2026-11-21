@@ -98,4 +98,28 @@
     <string name="favorite_videos">Favorite Videos</string>
     <string name="favorite_playlists">Favorite Playlists</string>
     <string name="favorite_albums">Favorite Albums</string>
+
+    <string name="auth_username_email">Username or email</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_login">Login</string>
+    <string name="auth_logout">Logout</string>
+    <string name="auth_scan_qr">Scan QR Code</string>
+    <string name="auth_qr_phone">Login with your phone</string>
+    <string name="auth_qr_loading">Getting a login code…</string>
+    <string name="auth_qr_failed">Could not get the code. Try again.</string>
+    <string name="auth_qr_expired">This code expired. Request a new code.</string>
+    <string name="auth_qr_retry">New code</string>
+    <string name="auth_qr_instructions">Visit hamrahang.ir/pair and enter: %1$s</string>
+    <string name="auth_missing_credentials">Enter username/email and password.</string>
+    <string name="auth_network_error">Could not connect to the server.</string>
+    <string name="auth_account_disabled">This account is disabled. Contact support.</string>
+    <string name="auth_email_not_verified">Please verify your email before signing in.</string>
+    <string name="auth_rate_limited">Too many attempts. Please try again later.</string>
+    <string name="auth_invalid_credentials">Incorrect username/email or password.</string>
+    <string name="auth_sync_prompt">Would you like to sync this device’s favorites and playback history with your account? Only new items are added; nothing is deleted.</string>
+    <string name="auth_sync_yes">Yes</string>
+    <string name="auth_sync_no">Not now</string>
+    <string name="auth_sync_success">Synchronization completed.</string>
+    <string name="auth_sync_failed">Synchronization could not be completed. Try again later.</string>
+
 </resources>
