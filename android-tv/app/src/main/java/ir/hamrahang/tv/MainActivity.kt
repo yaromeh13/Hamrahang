@@ -20,7 +20,6 @@ import ir.hamrahang.tv.ui.settings.LanguageManager
 import ir.hamrahang.tv.ui.settings.SettingsFragment
 import ir.hamrahang.tv.utils.AppState
 import ir.hamrahang.tv.data.auth.AuthSessionManager
-import ir.hamrahang.tv.favorite.FavoriteManager
 import kotlinx.coroutines.launch
 import androidx.activity.OnBackPressedCallback
 
