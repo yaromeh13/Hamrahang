@@ -156,8 +156,8 @@
                     android:clipToPadding="false"
                     android:gravity="center"
                     android:orientation="horizontal"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp">
+                    android:paddingStart="22dp"
+                    android:paddingEnd="22dp">
 
                     <Button
                         android:id="@+id/loginButton"
