@@ -1,6 +1,5 @@
 package ir.hamrahang.tv.data.favorite
 
-import ir.hamrahang.tv.data.auth.HistorySyncItem
 
 /**
  * Matches the web gja() envelope: POST /?_qjs=uac with { "q": { ... } }.
@@ -13,7 +12,7 @@ data class UacAction(
     val a: String,
     val p: String? = null,
     val q: List<String>? = null,
-    val items: Map<String, List<String>>? = null
+    val items: Any? = null
 )
 
 data class UacResponse(
