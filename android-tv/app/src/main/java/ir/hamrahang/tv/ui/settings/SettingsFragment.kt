@@ -310,7 +310,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         button.setBackgroundResource(R.drawable.bg_setting_option)
         button.backgroundTintList = null
         button.setOnFocusChangeListener { view, hasFocus ->
-            val scale = if (hasFocus) 1.06f else 1f
+            val scale = if (hasFocus) 1.04f else 1f
             view.animate()
                 .scaleX(scale)
                 .scaleY(scale)
