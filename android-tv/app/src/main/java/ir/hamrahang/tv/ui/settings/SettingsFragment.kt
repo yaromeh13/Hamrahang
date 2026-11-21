@@ -27,6 +27,7 @@ import ir.hamrahang.tv.data.local.playback.PlaybackHistoryRepository
 import ir.hamrahang.tv.data.auth.AuthRequest
 import ir.hamrahang.tv.data.auth.AuthResponse
 import ir.hamrahang.tv.data.auth.AuthSessionStore
+import ir.hamrahang.tv.data.auth.AuthSessionManager
 import ir.hamrahang.tv.data.favorite.AccountSyncRepository
 import ir.hamrahang.tv.network.ApiClient
 import kotlinx.coroutines.Job
@@ -285,7 +286,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         if (!AuthSessionStore.isLoggedIn(requireContext())) {
             startQrLogin(root)
         } else {
-            refreshExistingSession(root)
+            viewLifecycleOwner.lifecycleScope.launch {
+                AuthSessionManager.refreshSession(requireContext())
+                if (isAdded && root.parent != null) {
+                    renderAccountState(root)
+                    if (!AuthSessionStore.isLoggedIn(requireContext())) startQrLogin(root)
+                }
+            }
         }
     }
 
@@ -423,39 +430,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             if (!success) {
                 root.findViewById<View>(R.id.syncPrompt).visibility = View.VISIBLE
                 yes.requestFocus()
-            }
-        }
-    }
-
-    private fun refreshExistingSession(root: View) {
-        val refresh = AuthSessionStore.refreshToken(requireContext()) ?: run {
-            AuthSessionStore.clear(requireContext())
-            ir.hamrahang.tv.favorite.FavoriteManager.setAccessToken(null)
-            renderAccountState(root)
-            startQrLogin(root)
-            return
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val response = ApiClient.api.authAction(
-                    body = AuthRequest(
-                        a = "refresh_session",
-                        refresh_token = refresh,
-                        did = AuthSessionStore.deviceId(requireContext())
-                    )
-                )
-                if (!response.access_token.isNullOrBlank()) {
-                    AuthSessionStore.save(requireContext(), response)
-                    ir.hamrahang.tv.favorite.FavoriteManager.setAccessToken(response.access_token)
-                    renderAccountState(root)
-                    accountSyncRepository.pullServerData(response.access_token)
-                } else if (response.error == "invalid_session" || response.error == "account_disabled") {
-                    AuthSessionStore.clear(requireContext())
-                    renderAccountState(root)
-                    startQrLogin(root)
-                }
-            } catch (_: Exception) {
-                // Keep the cached session visible while offline.
             }
         }
     }
