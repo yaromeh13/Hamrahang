@@ -44,6 +44,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var languageAdapter: LanguageAdapter
     private lateinit var languageRecycler: RecyclerView
     private var qrPollJob: Job? = null
+    private var heroWidgetInitialized = false
     private val accountSyncRepository by lazy { AccountSyncRepository() }
 
     private val playbackHistoryRepository by lazy {
@@ -251,6 +252,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         contentContainer.removeAllViews()
         contentContainer.visibility = View.VISIBLE
         val root = layoutInflater.inflate(R.layout.view_profile_info, contentContainer, true)
+        heroWidgetInitialized = false
         renderAccountState(root)
 
         root.findViewById<Button>(R.id.loginButton).setOnClickListener {
@@ -297,7 +299,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         if (logged) {
             root.findViewById<TextView>(R.id.accountName).text =
                 AuthSessionStore.displayName(requireContext())
-            HeroWidget(root.findViewById(R.id.heroContainer), viewLifecycleOwner)
+            if (!heroWidgetInitialized) {
+                HeroWidget(root.findViewById(R.id.heroContainer), viewLifecycleOwner)
+                heroWidgetInitialized = true
+            }
             root.findViewById<View>(R.id.syncPrompt).visibility = View.GONE
         }
     }
@@ -413,6 +418,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             ).show()
             yes.isEnabled = true
             no.isEnabled = true
+            if (!success) {
+                root.findViewById<View>(R.id.syncPrompt).visibility = View.VISIBLE
+                yes.requestFocus()
+            }
         }
     }
 
@@ -591,6 +600,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun hideAllContent() {
         qrPollJob?.cancel()
         qrPollJob = null
+        heroWidgetInitialized = false
         optionsRecycler.visibility = View.GONE
         languageRecycler.visibility = View.GONE
         contentContainer.visibility = View.GONE
