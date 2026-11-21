@@ -98,11 +98,9 @@ class MessageWidget(root: View, owner: LifecycleOwner) {
             params.gravity = Gravity.CENTER
             params.topMargin = 0
             container.layoutParams = params
-            state.actions.firstOrNull()?.let { first ->
-                container.post {
-                    if (container.visibility == View.VISIBLE) {
-                        actions.getChildAt(0)?.requestFocus()
-                    }
+            container.post {
+                if (container.visibility == View.VISIBLE) {
+                    actions.getChildAt(0)?.requestFocus()
                 }
             }
         } else {
