@@ -10,6 +10,8 @@ import ir.hamrahang.tv.data.album.AlbumResponseDto
 import ir.hamrahang.tv.data.favorite.FavoriteResponseDto
 import ir.hamrahang.tv.data.favorite.UacRequest
 import ir.hamrahang.tv.data.favorite.UacResponse
+import ir.hamrahang.tv.data.auth.AuthRequest
+import ir.hamrahang.tv.data.auth.AuthResponse
 import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.video.VideoResponseDto
 import retrofit2.Response
@@ -95,6 +97,12 @@ interface ApiService {
     ): FavoriteResponseDto
 
     // Same authenticated account API used by the web client.
+    @POST("/")
+    suspend fun authAction(
+        @Query("_qjs") qjs: String = "ual",
+        @Body body: AuthRequest
+    ): AuthResponse
+
     @POST("/")
     suspend fun favoriteAccountAction(
         @Query("_qjs") qjs: String = "uac",
