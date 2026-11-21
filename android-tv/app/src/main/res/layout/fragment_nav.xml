@@ -267,7 +267,7 @@
             <ImageView
                 android:layout_width="@dimen/_20dp"
                 android:layout_height="@dimen/_20dp"
-                android:src="@drawable/ic_setting"/>
+                android:src="@drawable/ic_profile"/>
 
             <TextView
                 android:id="@+id/textSettings"
