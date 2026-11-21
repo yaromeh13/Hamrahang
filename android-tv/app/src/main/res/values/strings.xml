@@ -89,4 +89,12 @@
     <string name="settings_medium">Medium</string>
     <string name="settings_large">Large</string>
     <string name="no_lyrics">No lyrics</string>
+
+    <string name="favorite_music_videos">Favorite Music Videos</string>
+    <string name="favorite_songs">Favorite Songs</string>
+    <string name="favorite_podcasts">Favorite Podcasts</string>
+    <string name="favorite_artists">Favorite Artists</string>
+    <string name="favorite_videos">Favorite Videos</string>
+    <string name="favorite_playlists">Favorite Playlists</string>
+    <string name="favorite_albums">Favorite Albums</string>
 </resources>
