@@ -1,5 +1,7 @@
 package ir.hamrahang.tv.data.favorite
 
+import ir.hamrahang.tv.data.auth.HistorySyncItem
+
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.entity.FavoriteEntity
