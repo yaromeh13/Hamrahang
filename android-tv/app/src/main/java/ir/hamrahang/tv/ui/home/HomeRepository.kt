@@ -1,6 +1,9 @@
 package ir.hamrahang.tv.data.home
 
 import ir.hamrahang.tv.data.artist.ArtistRepository
+import ir.hamrahang.tv.data.album.AlbumRepository
+import ir.hamrahang.tv.data.podcast.PodcastRepository
+import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryRepository
@@ -11,6 +14,7 @@ import ir.hamrahang.tv.playback.PlaybackSource
 import ir.hamrahang.tv.ui.rows.ContentRow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 
 class HomeRepository(
 
@@ -285,6 +289,84 @@ class HomeRepository(
         }
 
     }*/
+
+
+    //==================================================
+    // FAVORITES - HOME ROWS
+    //==================================================
+
+    fun observeFavoriteMusicVideosRow(): Flow<ContentRow?> =
+        FavoriteManager.observeFavorites(ContentType.MUSICVIDEO).mapLatest { favorites ->
+            val items = musicVideoRepository.getByIds(favorites.map { it.mediaId.toString() })
+            if (items.isEmpty()) null else ContentRow.MusicVideos(
+                title = "Bookmarked Music Videos",
+                items = items,
+                sessionId = "home_favorite_musicvideos",
+                sessionTitle = "Bookmarked Music Videos",
+                sessionSource = PlaybackSource.HOME
+            )
+        }
+
+    fun observeFavoriteSongsRow(): Flow<ContentRow?> =
+        FavoriteManager.observeFavorites(ContentType.SONG).mapLatest { favorites ->
+            val items = songRepository.getByIds(favorites.map { it.mediaId.toString() })
+            if (items.isEmpty()) null else ContentRow.Songs(
+                title = "Favorite Songs",
+                items = items,
+                sessionId = "home_favorite_songs",
+                sessionTitle = "Favorite Songs",
+                sessionSource = PlaybackSource.HOME
+            )
+        }
+
+    fun observeFavoritePodcastsRow(): Flow<ContentRow?> =
+        FavoriteManager.observeFavorites(ContentType.PODCAST).mapLatest { favorites ->
+            val items = podcastRepository.getByIds(favorites.map { it.mediaId.toString() })
+            if (items.isEmpty()) null else ContentRow.Podcasts(
+                title = "Bookmarked Podcasts",
+                items = items,
+                sessionId = "home_favorite_podcasts",
+                sessionTitle = "Bookmarked Podcasts",
+                sessionSource = PlaybackSource.HOME
+            )
+        }
+
+    fun observeFavoriteArtistsRow(): Flow<ContentRow?> =
+        FavoriteManager.observeFavorites(ContentType.ARTIST).mapLatest { favorites ->
+            val items = artistRepository.getByIds(favorites.map { it.mediaId.toString() })
+            if (items.isEmpty()) null else ContentRow.Artists(
+                title = "Followed Artists",
+                items = items,
+                sessionId = "home_favorite_artists",
+                sessionTitle = "Followed Artists",
+                sessionSource = PlaybackSource.HOME
+            )
+        }
+
+    fun observeFavoriteVideosRow(): Flow<ContentRow?> =
+        FavoriteManager.observeFavorites(ContentType.VIDEO).mapLatest { favorites ->
+            val items = videoRepository.getByIds(favorites.map { it.mediaId.toString() })
+                .filterNot { it.isMusicVideo }
+            if (items.isEmpty()) null else ContentRow.Videos(
+                title = "Bookmarked Videos",
+                items = items,
+                sessionId = "home_favorite_videos",
+                sessionTitle = "Bookmarked Videos",
+                sessionSource = PlaybackSource.HOME
+            )
+        }
+
+    fun observeFavoriteAlbumsRow(): Flow<ContentRow?> =
+        FavoriteManager.observeFavorites(ContentType.ALBUM).mapLatest { favorites ->
+            val items = albumRepository.getByIds(favorites.map { it.mediaId.toString() })
+            if (items.isEmpty()) null else ContentRow.Albums(
+                title = "Bookmarked Albums",
+                items = items,
+                sessionId = "home_favorite_albums",
+                sessionTitle = "Bookmarked Albums",
+                sessionSource = PlaybackSource.HOME
+            )
+        }
 
 }
 
