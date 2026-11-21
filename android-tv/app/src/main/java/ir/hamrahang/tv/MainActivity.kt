@@ -19,6 +19,12 @@ import ir.hamrahang.tv.ui.network.NetworkOverlay
 import ir.hamrahang.tv.ui.settings.LanguageManager
 import ir.hamrahang.tv.ui.settings.SettingsFragment
 import ir.hamrahang.tv.utils.AppState
+import ir.hamrahang.tv.data.auth.AuthRequest
+import ir.hamrahang.tv.data.auth.AuthSessionStore
+import ir.hamrahang.tv.data.favorite.AccountSyncRepository
+import ir.hamrahang.tv.network.ApiClient
+import ir.hamrahang.tv.favorite.FavoriteManager
+import kotlinx.coroutines.launch
 import androidx.activity.OnBackPressedCallback
 
 
@@ -43,6 +49,33 @@ class MainActivity : BaseActivity(),
         MessageWidget(binding.root, this)
 
         UiNavigator.init(this)
+
+        // Restore the account quietly in the background, like the web CheckLoginStatus flow.
+        // Cached local content remains available if the server cannot be reached.
+        lifecycleScope.launch {
+            if (!AuthSessionStore.isLoggedIn(this@MainActivity)) return@launch
+            FavoriteManager.setAccessToken(AuthSessionStore.accessToken(this@MainActivity))
+            val refreshToken = AuthSessionStore.refreshToken(this@MainActivity) ?: return@launch
+            try {
+                val session = ApiClient.api.authAction(
+                    body = AuthRequest(
+                        a = "refresh_session",
+                        refresh_token = refreshToken,
+                        did = AuthSessionStore.deviceId(this@MainActivity)
+                    )
+                )
+                if (!session.access_token.isNullOrBlank()) {
+                    AuthSessionStore.save(this@MainActivity, session)
+                    FavoriteManager.setAccessToken(session.access_token)
+                    AccountSyncRepository().pullServerData(session.access_token)
+                } else if (session.error == "invalid_session" || session.error == "account_disabled") {
+                    AuthSessionStore.clear(this@MainActivity)
+                    FavoriteManager.setAccessToken(null)
+                }
+            } catch (_: Exception) {
+                // Offline: keep the cached profile, token and local database untouched.
+            }
+        }
 
         networkOverlay = NetworkOverlay(binding.root) {
             ReloadManager.reload()
