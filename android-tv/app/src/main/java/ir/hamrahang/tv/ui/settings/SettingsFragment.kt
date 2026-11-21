@@ -408,11 +408,20 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
         AuthSessionStore.save(requireContext(), response)
         ir.hamrahang.tv.favorite.FavoriteManager.setAccessToken(response.access_token)
+
+        // QR confirmation returns the basic user fields only. The existing refresh API
+        // also returns photo/meta, so fetch those details before rendering the account.
+        if (fromQr) {
+            AuthSessionManager.refreshSession(requireContext(), force = true)
+        }
+
         renderAccountState(root)
         val token = AuthSessionStore.accessToken(requireContext()) ?: response.access_token.orEmpty()
         if (token.isBlank()) return
-        // Pull is best-effort and add-only; a failed request never blocks local data.
-        accountSyncRepository.pullServerData(token)
+
+        // The forced refresh above already pulled server data for QR login.
+        // Password login pulls it here. Both paths remain best-effort.
+        if (!fromQr) accountSyncRepository.pullServerData(token)
         if (accountSyncRepository.hasLocalDataToSync()) {
             root.findViewById<TextView>(R.id.syncPromptText).setText(R.string.auth_sync_prompt)
             root.findViewById<View>(R.id.syncPrompt).visibility = View.VISIBLE
