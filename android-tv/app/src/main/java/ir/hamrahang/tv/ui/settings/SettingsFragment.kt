@@ -311,8 +311,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         val error = root.findViewById<TextView>(R.id.loginError)
         val button = root.findViewById<Button>(R.id.loginButton)
         button.isEnabled = false
-        qrPollJob?.cancel()
-        qrPollJob = null
         error.visibility = View.GONE
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -330,7 +328,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                     error.visibility = View.VISIBLE
                     return@launch
                 }
-                onLoginSuccess(root, response)
+                onLoginSuccess(root, response, fromQr = false)
             } catch (_: Exception) {
                 error.setText(R.string.auth_network_error)
                 error.visibility = View.VISIBLE
@@ -373,7 +371,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                         )
                     }.getOrNull() ?: return@repeat
                     if (result.status == "confirmed" && !result.access_token.isNullOrBlank()) {
-                        onLoginSuccess(root, result)
+                        onLoginSuccess(root, result, fromQr = true)
                         return@launch
                     }
                     if (result.status == "expired") {
@@ -388,7 +386,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
     }
 
-    private suspend fun onLoginSuccess(root: View, response: AuthResponse) {
+    private suspend fun onLoginSuccess(root: View, response: AuthResponse, fromQr: Boolean) {
+        if (!fromQr) {
+            qrPollJob?.cancel()
+            qrPollJob = null
+        }
         AuthSessionStore.save(requireContext(), response)
         ir.hamrahang.tv.favorite.FavoriteManager.setAccessToken(response.access_token)
         renderAccountState(root)
