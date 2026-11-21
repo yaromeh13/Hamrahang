@@ -271,6 +271,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         renderAccountState(root)
 
         setupAuthButtonFocus(root.findViewById(R.id.loginButton))
+        setupAuthButtonFocus(root.findViewById(R.id.qrRetryButton))
         setupAuthButtonFocus(root.findViewById(R.id.logoutButton))
 
         root.findViewById<Button>(R.id.loginButton).setOnClickListener {
