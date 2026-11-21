@@ -21,7 +21,9 @@ class HomeRepository(
     private val videoRepository: VideoRepository = VideoRepository(),
     private val musicVideoRepository: MusicVideoRepository = MusicVideoRepository(),
     private val songRepository: SongRepository = SongRepository(),
-    private val artistRepository: ArtistRepository= ArtistRepository()
+    private val artistRepository: ArtistRepository = ArtistRepository(),
+    private val podcastRepository: PodcastRepository = PodcastRepository(),
+    private val albumRepository: AlbumRepository = AlbumRepository()
 
 ) {
 
