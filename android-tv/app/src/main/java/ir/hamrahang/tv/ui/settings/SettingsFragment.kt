@@ -289,6 +289,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private fun renderAccountState(root: View) {
         val logged = AuthSessionStore.isLoggedIn(requireContext())
+        ir.hamrahang.tv.favorite.FavoriteManager.setAccessToken(
+            AuthSessionStore.accessToken(requireContext())
+        )
         root.findViewById<View>(R.id.layoutLogged).visibility = if (logged) View.VISIBLE else View.GONE
         root.findViewById<View>(R.id.layoutLogin).visibility = if (logged) View.GONE else View.VISIBLE
         if (logged) {
@@ -314,7 +317,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                         username = username,
                         password = password,
                         did = AuthSessionStore.deviceId(requireContext()),
-                        device_type = "android_tv"
+                        device_type = "tv_webapp"
                     )
                 )
                 if (response.access_token.isNullOrBlank()) {
@@ -586,6 +589,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun hideAllContent() {
+        qrPollJob?.cancel()
+        qrPollJob = null
         optionsRecycler.visibility = View.GONE
         languageRecycler.visibility = View.GONE
         contentContainer.visibility = View.GONE
