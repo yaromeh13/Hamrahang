@@ -119,6 +119,7 @@
     <string name="auth_sync_no">فعلاً نه</string>
     <string name="auth_sync_success">همگام‌سازی با موفقیت انجام شد.</string>
     <string name="auth_sync_failed">همگام‌سازی انجام نشد. بعداً دوباره تلاش کنید.</string>
+    <string name="auth_sync_retry">تلاش مجدد</string>
     <string name="auth_user_avatar">تصویر پروفایل کاربر</string>
     <string name="auth_username_value">نام کاربری: %1$s</string>
     <string name="auth_email_value">ایمیل: %1$s</string>
