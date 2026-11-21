@@ -121,6 +121,7 @@
     <string name="auth_sync_no">Not now</string>
     <string name="auth_sync_success">Synchronization completed.</string>
     <string name="auth_sync_failed">Synchronization could not be completed. Try again later.</string>
+    <string name="auth_sync_retry">Retry</string>
     <string name="auth_user_avatar">User profile picture</string>
     <string name="auth_username_value">Username: %1$s</string>
     <string name="auth_email_value">Email: %1$s</string>
