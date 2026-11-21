@@ -20,6 +20,8 @@ data class AuthResponse(
     val first_name: String? = null,
     val last_name: String? = null,
     val email: String? = null,
+    val photo: String? = null,
+    val meta: Map<String, String>? = null,
     val act: Int? = null,
     val qr_base64: String? = null,
     val pair_url: String? = null
