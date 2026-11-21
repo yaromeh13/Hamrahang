@@ -16,7 +16,6 @@ import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.ui.message.MessageManager
 import ir.hamrahang.tv.ui.message.MessageWidget
 import ir.hamrahang.tv.ui.network.NetworkOverlay
-import ir.hamrahang.tv.ui.profile.ProfileFragment
 import ir.hamrahang.tv.ui.settings.LanguageManager
 import ir.hamrahang.tv.ui.settings.SettingsFragment
 import ir.hamrahang.tv.utils.AppState
@@ -125,7 +124,6 @@ class MainActivity : BaseActivity(),
             R.id.menuLive -> LiveFragment()
             R.id.menuSearch -> SearchFragment()
             R.id.menuSettings -> SettingsFragment()
-            R.id.menuProfile -> ProfileFragment()
             else -> HomeFragment()
         }
 
