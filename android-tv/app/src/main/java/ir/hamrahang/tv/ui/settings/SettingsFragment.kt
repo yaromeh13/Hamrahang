@@ -10,7 +10,6 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -30,6 +29,7 @@ import ir.hamrahang.tv.data.auth.AuthSessionStore
 import ir.hamrahang.tv.data.auth.AuthSessionManager
 import ir.hamrahang.tv.data.favorite.AccountSyncRepository
 import ir.hamrahang.tv.network.ApiClient
+import ir.hamrahang.tv.ui.message.MessageManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -269,14 +269,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         root.findViewById<Button>(R.id.qrRetryButton).setOnClickListener {
             startQrLogin(root)
         }
-        root.findViewById<Button>(R.id.syncYesButton).setOnClickListener {
-            root.findViewById<View>(R.id.syncPrompt).visibility = View.GONE
-            performAccountSync(root)
-        }
-        root.findViewById<Button>(R.id.syncNoButton).setOnClickListener {
-            root.findViewById<View>(R.id.syncPrompt).visibility = View.GONE
-            root.findViewById<View>(R.id.logoutButton).requestFocus()
-        }
         root.findViewById<Button>(R.id.logoutButton).setOnClickListener {
             logout(root)
         }
@@ -318,7 +310,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 .placeholder(R.drawable.ic_profile)
                 .error(R.drawable.ic_profile)
                 .into(avatar)
-            root.findViewById<View>(R.id.syncPrompt).visibility = View.GONE
         }
     }
 
@@ -423,32 +414,39 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         // Password login pulls it here. Both paths remain best-effort.
         if (!fromQr) accountSyncRepository.pullServerData(token)
         if (accountSyncRepository.hasLocalDataToSync()) {
-            root.findViewById<TextView>(R.id.syncPromptText).setText(R.string.auth_sync_prompt)
-            root.findViewById<View>(R.id.syncPrompt).visibility = View.VISIBLE
-            root.findViewById<Button>(R.id.syncYesButton).post {
-                root.findViewById<Button>(R.id.syncYesButton).requestFocus()
-            }
+            showAccountSyncPrompt()
         }
     }
 
-    private fun performAccountSync(root: View) {
+    private fun showAccountSyncPrompt(retry: Boolean = false) {
+        val message = getString(
+            if (retry) R.string.auth_sync_failed else R.string.auth_sync_prompt
+        )
+        MessageManager.confirm(
+            text = message,
+            positiveText = getString(if (retry) R.string.auth_sync_retry else R.string.auth_sync_yes),
+            negativeText = getString(R.string.auth_sync_no),
+            onPositive = {
+                if (isAdded) performAccountSync()
+            },
+            onNegative = {
+                // The shared message panel closes itself; local data remains untouched.
+            }
+        )
+    }
+
+    private fun performAccountSync() {
         val token = AuthSessionStore.accessToken(requireContext()) ?: return
-        val yes = root.findViewById<Button>(R.id.syncYesButton)
-        val no = root.findViewById<Button>(R.id.syncNoButton)
-        yes.isEnabled = false
-        no.isEnabled = false
         viewLifecycleOwner.lifecycleScope.launch {
-            val success = runCatching { accountSyncRepository.syncLocalData(token) }.getOrDefault(false)
-            Toast.makeText(
-                requireContext(),
-                if (success) R.string.auth_sync_success else R.string.auth_sync_failed,
-                Toast.LENGTH_LONG
-            ).show()
-            yes.isEnabled = true
-            no.isEnabled = true
-            if (!success) {
-                root.findViewById<View>(R.id.syncPrompt).visibility = View.VISIBLE
-                yes.requestFocus()
+            val success = runCatching {
+                accountSyncRepository.syncLocalData(token)
+            }.getOrDefault(false)
+
+            if (!isAdded) return@launch
+            if (success) {
+                MessageManager.success(getString(R.string.auth_sync_success))
+            } else {
+                showAccountSyncPrompt(retry = true)
             }
         }
     }
