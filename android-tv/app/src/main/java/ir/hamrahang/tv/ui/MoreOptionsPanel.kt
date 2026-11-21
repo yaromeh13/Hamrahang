@@ -156,51 +156,65 @@ object MoreOptionsPanel {
         ))
 
         var bookmarked = false
+        var bookmarkStateReady = mediaId == null
         lateinit var bookmarkCard: View
         val favoriteLabel = if (item.contentType == ContentType.ARTIST) "Follow" else "Bookmark"
         val favoriteDoneLabel = if (item.contentType == ContentType.ARTIST) "Following" else "Bookmarked"
         val isArtist = item.contentType == ContentType.ARTIST
-        val favoriteIcon = if (isArtist) {
-            R.drawable.ic_artist
-        } else {
-            R.drawable.ic_bookmark_outline
+        val favoriteIcon = if (isArtist) R.drawable.ic_artist else R.drawable.ic_bookmark_outline
+
+        fun renderFavoriteState(saved: Boolean) {
+            bookmarked = saved
+            bookmarkCard.tag = if (saved) "bookmarked" else "bookmark"
+            bookmarkCard.findViewWithTag<TextView>("action_label")?.text =
+                if (saved) favoriteDoneLabel else favoriteLabel
+            if (!isArtist) {
+                bookmarkCard.findViewWithTag<ImageView>("action_icon")?.setImageResource(
+                    if (saved) R.drawable.ic_bookmark else R.drawable.ic_bookmark_outline
+                )
+            }
         }
+
         bookmarkCard = addTopAction(
             context, actionsColumn, favoriteIcon, favoriteLabel
         ) {
             if (mediaId == null) {
                 MessageManager.info("This item cannot be bookmarked")
-            } else {
+            } else if (bookmarkStateReady) {
                 fragment.viewLifecycleOwner.lifecycleScope.launch {
-                    bookmarked = FavoriteManager.toggle(mediaId, item.contentType)
-                    bookmarkCard.findViewWithTag<TextView>("action_label")?.text =
-                        if (bookmarked) favoriteDoneLabel else favoriteLabel
-                    if (!isArtist) {
-                        bookmarkCard.findViewWithTag<ImageView>("action_icon")?.setImageResource(
-                            if (bookmarked) R.drawable.ic_bookmark else R.drawable.ic_bookmark_outline
-                        )
-                    }
+                    val updated = FavoriteManager.toggle(mediaId, item.contentType)
+                    renderFavoriteState(updated)
                     MessageManager.info(
                         when {
-                            item.contentType == ContentType.ARTIST && bookmarked -> "Artist followed"
-                            item.contentType == ContentType.ARTIST -> "Artist unfollowed"
-                            bookmarked -> "Added to bookmarks"
+                            isArtist && updated -> "Artist followed"
+                            isArtist -> "Artist unfollowed"
+                            updated -> "Added to bookmarks"
                             else -> "Removed from bookmarks"
                         }
                     )
                 }
             }
         }
+
         if (mediaId != null) {
+            // Wait for the persisted state before allowing a toggle.
+            // This prevents the default outline from racing with the database result.
+            bookmarkCard.isClickable = false
             fragment.viewLifecycleOwner.lifecycleScope.launch {
-                bookmarked = FavoriteManager.isFavorite(mediaId, item.contentType)
-                bookmarkCard.tag = if (bookmarked) "bookmarked" else "bookmark"
-                val label = bookmarkCard.findViewWithTag<TextView>("action_label")
-                label?.text = if (bookmarked) favoriteDoneLabel else favoriteLabel
-                if (!isArtist) {
-                    bookmarkCard.findViewWithTag<ImageView>("action_icon")?.setImageResource(
-                        if (bookmarked) R.drawable.ic_bookmark else R.drawable.ic_bookmark_outline
+                runCatching {
+                    FavoriteManager.isFavorite(mediaId, item.contentType)
+                }.onSuccess { saved ->
+                    renderFavoriteState(saved)
+                    bookmarkStateReady = true
+                    bookmarkCard.isClickable = true
+                }.onFailure { error ->
+                    android.util.Log.e(
+                        "MoreOptionsPanel",
+                        "Unable to load saved favorite state",
+                        error
                     )
+                    bookmarkStateReady = true
+                    bookmarkCard.isClickable = true
                 }
             }
         }
