@@ -243,7 +243,7 @@ class ContentRowsAdapter(
             "home_favorite_musicvideos" -> R.string.favorite_music_videos
             "home_favorite_songs" -> R.string.favorite_songs
             "home_favorite_podcasts" -> R.string.favorite_podcasts
-            "home_favorite_artists" -> R.string.favorite_artists
+            "home_favorite_artists" -> R.string.followed_artists
             "home_favorite_videos" -> R.string.favorite_videos
             "home_favorite_playlists" -> R.string.favorite_playlists
             "home_favorite_albums" -> R.string.favorite_albums
