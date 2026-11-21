@@ -19,7 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.settings.QualityLevel
 import ir.hamrahang.tv.settings.SettingsManager
-import ir.hamrahang.tv.ui.hero.HeroWidget
+import com.bumptech.glide.Glide
 import ir.hamrahang.tv.util.UiUtils
 import ir.hamrahang.tv.utils.AppState
 import ir.hamrahang.tv.data.local.DatabaseProvider
@@ -45,7 +45,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var languageAdapter: LanguageAdapter
     private lateinit var languageRecycler: RecyclerView
     private var qrPollJob: Job? = null
-    private var heroWidgetInitialized = false
     private val accountSyncRepository by lazy { AccountSyncRepository() }
 
     private val playbackHistoryRepository by lazy {
@@ -253,7 +252,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         contentContainer.removeAllViews()
         contentContainer.visibility = View.VISIBLE
         val root = layoutInflater.inflate(R.layout.view_profile_info, contentContainer, true)
-        heroWidgetInitialized = false
         renderAccountState(root)
 
         root.findViewById<Button>(R.id.loginButton).setOnClickListener {
@@ -304,12 +302,22 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         root.findViewById<View>(R.id.layoutLogged).visibility = if (logged) View.VISIBLE else View.GONE
         root.findViewById<View>(R.id.layoutLogin).visibility = if (logged) View.GONE else View.VISIBLE
         if (logged) {
+            val context = requireContext()
             root.findViewById<TextView>(R.id.accountName).text =
-                AuthSessionStore.displayName(requireContext())
-            if (!heroWidgetInitialized) {
-                HeroWidget(root.findViewById(R.id.heroContainer), viewLifecycleOwner)
-                heroWidgetInitialized = true
-            }
+                AuthSessionStore.displayName(context)
+            root.findViewById<TextView>(R.id.accountUsername).text =
+                getString(R.string.auth_username_value, AuthSessionStore.username(context))
+            root.findViewById<TextView>(R.id.accountEmail).text =
+                getString(R.string.auth_email_value, AuthSessionStore.email(context))
+            root.findViewById<TextView>(R.id.accountId).text =
+                getString(R.string.auth_user_id_value, AuthSessionStore.userId(context))
+            val avatar = root.findViewById<ImageView>(R.id.userAvatar)
+            Glide.with(avatar)
+                .load(AuthSessionStore.avatarUrl(context))
+                .circleCrop()
+                .placeholder(R.drawable.ic_profile)
+                .error(R.drawable.ic_profile)
+                .into(avatar)
             root.findViewById<View>(R.id.syncPrompt).visibility = View.GONE
         }
     }
@@ -408,7 +416,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         if (accountSyncRepository.hasLocalDataToSync()) {
             root.findViewById<TextView>(R.id.syncPromptText).setText(R.string.auth_sync_prompt)
             root.findViewById<View>(R.id.syncPrompt).visibility = View.VISIBLE
-            root.findViewById<Button>(R.id.syncYesButton).requestFocus()
+            root.findViewById<Button>(R.id.syncYesButton).post {
+                root.findViewById<Button>(R.id.syncYesButton).requestFocus()
+            }
         }
     }
 
@@ -576,7 +586,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun hideAllContent() {
         qrPollJob?.cancel()
         qrPollJob = null
-        heroWidgetInitialized = false
         optionsRecycler.visibility = View.GONE
         languageRecycler.visibility = View.GONE
         contentContainer.visibility = View.GONE
