@@ -96,4 +96,28 @@
     <string name="favorite_videos">ویدئوهای موردعلاقه</string>
     <string name="favorite_playlists">پلی‌لیست‌های موردعلاقه</string>
     <string name="favorite_albums">آلبوم‌های موردعلاقه</string>
+
+    <string name="auth_username_email">نام کاربری یا ایمیل</string>
+    <string name="auth_password">رمز عبور</string>
+    <string name="auth_login">ورود</string>
+    <string name="auth_logout">خروج از حساب</string>
+    <string name="auth_scan_qr">اسکن کد QR</string>
+    <string name="auth_qr_phone">ورود با تلفن همراه</string>
+    <string name="auth_qr_loading">در حال دریافت کد ورود…</string>
+    <string name="auth_qr_failed">دریافت کد ناموفق بود. دوباره تلاش کنید.</string>
+    <string name="auth_qr_expired">کد منقضی شده است. کد جدید دریافت کنید.</string>
+    <string name="auth_qr_retry">کد جدید</string>
+    <string name="auth_qr_instructions">به hamrahang.ir/pair بروید و این کد را وارد کنید: %1$s</string>
+    <string name="auth_missing_credentials">نام کاربری/ایمیل و رمز عبور را وارد کنید.</string>
+    <string name="auth_network_error">ارتباط با سرور برقرار نشد.</string>
+    <string name="auth_account_disabled">این حساب غیرفعال است. با پشتیبانی تماس بگیرید.</string>
+    <string name="auth_email_not_verified">ابتدا ایمیل خود را تأیید کنید.</string>
+    <string name="auth_rate_limited">تعداد تلاش‌ها بیش از حد مجاز است. بعداً دوباره تلاش کنید.</string>
+    <string name="auth_invalid_credentials">نام کاربری/ایمیل یا رمز عبور اشتباه است.</string>
+    <string name="auth_sync_prompt">اطلاعات این دستگاه (علاقه‌مندی‌ها و تاریخچه پخش) با حساب شما همگام شود؟ فقط موارد جدید اضافه می‌شوند و چیزی حذف نخواهد شد.</string>
+    <string name="auth_sync_yes">بله</string>
+    <string name="auth_sync_no">فعلاً نه</string>
+    <string name="auth_sync_success">همگام‌سازی با موفقیت انجام شد.</string>
+    <string name="auth_sync_failed">همگام‌سازی انجام نشد. بعداً دوباره تلاش کنید.</string>
+
 </resources>
