@@ -87,4 +87,12 @@
     <string name="settings_medium">متوسط</string>
     <string name="settings_large">بزرگ</string>
     <string name="no_lyrics">متنی برای نمایش وجود ندارد</string>
+
+    <string name="favorite_music_videos">موزیک‌ویدیوهای موردعلاقه</string>
+    <string name="favorite_songs">آهنگ‌های موردعلاقه</string>
+    <string name="favorite_podcasts">پادکست‌های موردعلاقه</string>
+    <string name="favorite_artists">هنرمندان موردعلاقه</string>
+    <string name="favorite_videos">ویدئوهای موردعلاقه</string>
+    <string name="favorite_playlists">پلی‌لیست‌های موردعلاقه</string>
+    <string name="favorite_albums">آلبوم‌های موردعلاقه</string>
 </resources>
