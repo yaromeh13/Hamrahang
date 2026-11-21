@@ -318,7 +318,7 @@
                 android:background="@drawable/bg_player_round"
                 android:src="@drawable/ic_pause"
                 android:tint="@android:color/white"
-                android:nextFocusUp="@id/menuProfile"
+                android:nextFocusUp="@id/menuSettings"
                 android:padding="@dimen/_10dp"
                 android:focusable="true"
                 android:focusableInTouchMode="true"
