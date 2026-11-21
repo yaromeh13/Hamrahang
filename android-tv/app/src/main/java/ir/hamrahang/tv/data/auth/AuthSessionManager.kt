@@ -15,7 +15,7 @@ object AuthSessionManager {
     private val mutex = Mutex()
     private var lastAttemptAt = 0L
 
-    suspend fun refreshSession(context: Context): String? {
+    suspend fun refreshSession(context: Context, force: Boolean = false): String? {
         mutex.lock()
         try {
             val appContext = context.applicationContext
@@ -27,7 +27,7 @@ object AuthSessionManager {
             }
 
             val now = System.currentTimeMillis()
-            if (lastAttemptAt > 0L && now - lastAttemptAt < 30_000L) {
+            if (!force && lastAttemptAt > 0L && now - lastAttemptAt < 30_000L) {
                 FavoriteManager.setAccessToken(cachedAccessToken)
                 return cachedAccessToken
             }
