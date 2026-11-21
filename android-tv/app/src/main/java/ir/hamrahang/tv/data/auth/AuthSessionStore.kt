@@ -11,6 +11,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import ir.hamrahang.tv.util.ImageResolver
 
 object AuthSessionStore {
     private const val PREFS = "hamrahang_auth_session"
@@ -39,6 +40,11 @@ object AuthSessionStore {
         editor.putString("first_name", response.first_name.orEmpty())
         editor.putString("last_name", response.last_name.orEmpty())
         editor.putString("email", response.email.orEmpty())
+        val avatar = response.photo?.takeIf { it.isNotBlank() }
+            ?: response.meta?.get("photo")?.takeIf { it.isNotBlank() }
+            ?: response.meta?.get("tmb")?.takeIf { it.isNotBlank() }
+            ?: response.meta?.get("ico")?.takeIf { it.isNotBlank() }
+        if (avatar != null) editor.putString("avatar", avatar)
         editor.putBoolean("logged_in", true)
         editor.apply()
     }
@@ -48,6 +54,22 @@ object AuthSessionStore {
 
     fun refreshToken(context: Context): String? =
         unprotect(prefs(context).getString("refresh_token", null))
+
+    fun username(context: Context): String =
+        prefs(context).getString("user_name", "").orEmpty()
+
+    fun email(context: Context): String =
+        prefs(context).getString("email", "").orEmpty()
+
+    fun userId(context: Context): String =
+        prefs(context).getString("user_id", "").orEmpty()
+
+    fun avatarUrl(context: Context): String? {
+        val value = prefs(context).getString("avatar", null)?.trim()?.takeIf { it.isNotEmpty() }
+            ?: return null
+        return if (value.startsWith("https://") || value.startsWith("http://")) value
+        else ImageResolver.thumb(value)
+    }
 
     fun isLoggedIn(context: Context): Boolean =
         prefs(context).getBoolean("logged_in", false)
