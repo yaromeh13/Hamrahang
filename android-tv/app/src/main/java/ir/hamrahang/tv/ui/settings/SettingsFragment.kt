@@ -4,6 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.graphics.BitmapFactory
+import android.util.Base64
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -17,6 +24,13 @@ import ir.hamrahang.tv.util.UiUtils
 import ir.hamrahang.tv.utils.AppState
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryRepository
+import ir.hamrahang.tv.data.auth.AuthRequest
+import ir.hamrahang.tv.data.auth.AuthResponse
+import ir.hamrahang.tv.data.auth.AuthSessionStore
+import ir.hamrahang.tv.data.favorite.AccountSyncRepository
+import ir.hamrahang.tv.network.ApiClient
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -29,6 +43,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var contentContainer: FrameLayout
     private lateinit var languageAdapter: LanguageAdapter
     private lateinit var languageRecycler: RecyclerView
+    private var qrPollJob: Job? = null
+    private var profileRoot: View? = null
+    private val accountSyncRepository by lazy { AccountSyncRepository() }
 
     private val playbackHistoryRepository by lazy {
 
@@ -234,27 +251,222 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun showProfile() {
         contentContainer.removeAllViews()
         contentContainer.visibility = View.VISIBLE
+        val root = layoutInflater.inflate(R.layout.view_profile_info, contentContainer, true)
+        profileRoot = root
+        renderAccountState(root)
 
-        layoutInflater.inflate(
-            R.layout.view_profile_info,
-            contentContainer,
-            true
-        )
-
-        val hero =
-            HeroWidget(
-                contentContainer.findViewById(R.id.heroContainer),
-                viewLifecycleOwner
-            )
-
-        val logout =
-            contentContainer.findViewById<View>(R.id.logoutButton)
-
-        logout.setOnClickListener {
-
-            // TODO Logout
-
+        root.findViewById<Button>(R.id.loginButton).setOnClickListener {
+            val username = root.findViewById<EditText>(R.id.emailInput).text.toString().trim()
+            val password = root.findViewById<EditText>(R.id.passwordInput).text.toString()
+            val error = root.findViewById<TextView>(R.id.loginError)
+            if (username.isBlank() || password.isBlank()) {
+                error.setText(R.string.auth_missing_credentials)
+                error.visibility = View.VISIBLE
+            } else {
+                performPasswordLogin(root, username, password)
+            }
         }
+
+        root.findViewById<Button>(R.id.qrRetryButton).setOnClickListener {
+            startQrLogin(root)
+        }
+        root.findViewById<Button>(R.id.syncYesButton).setOnClickListener {
+            root.findViewById<View>(R.id.syncPrompt).visibility = View.GONE
+            performAccountSync(root)
+        }
+        root.findViewById<Button>(R.id.syncNoButton).setOnClickListener {
+            root.findViewById<View>(R.id.syncPrompt).visibility = View.GONE
+            root.findViewById<View>(R.id.layoutLogged).requestFocus()
+        }
+        root.findViewById<Button>(R.id.logoutButton).setOnClickListener {
+            logout(root)
+        }
+
+        if (!AuthSessionStore.isLoggedIn(requireContext())) {
+            startQrLogin(root)
+        } else {
+            refreshExistingSession(root)
+        }
+    }
+
+    private fun renderAccountState(root: View) {
+        val logged = AuthSessionStore.isLoggedIn(requireContext())
+        root.findViewById<View>(R.id.layoutLogged).visibility = if (logged) View.VISIBLE else View.GONE
+        root.findViewById<View>(R.id.layoutLogin).visibility = if (logged) View.GONE else View.VISIBLE
+        if (logged) {
+            root.findViewById<TextView>(R.id.accountName).text =
+                AuthSessionStore.displayName(requireContext())
+            HeroWidget(root.findViewById(R.id.heroContainer), viewLifecycleOwner)
+            root.findViewById<View>(R.id.syncPrompt).visibility = View.GONE
+        }
+    }
+
+    private fun performPasswordLogin(root: View, username: String, password: String) {
+        val error = root.findViewById<TextView>(R.id.loginError)
+        val button = root.findViewById<Button>(R.id.loginButton)
+        button.isEnabled = false
+        error.visibility = View.GONE
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val response = ApiClient.api.authAction(
+                    body = AuthRequest(
+                        a = "login_password",
+                        username = username,
+                        password = password,
+                        did = AuthSessionStore.deviceId(requireContext()),
+                        device_type = "android_tv"
+                    )
+                )
+                if (response.access_token.isNullOrBlank()) {
+                    error.text = authErrorMessage(response.error)
+                    error.visibility = View.VISIBLE
+                    return@launch
+                }
+                onLoginSuccess(root, response)
+            } catch (_: Exception) {
+                error.setText(R.string.auth_network_error)
+                error.visibility = View.VISIBLE
+            } finally {
+                button.isEnabled = true
+            }
+        }
+    }
+
+    private fun startQrLogin(root: View) {
+        qrPollJob?.cancel()
+        val status = root.findViewById<TextView>(R.id.qrStatus)
+        val qr = root.findViewById<ImageView>(R.id.qrImage)
+        status.setText(R.string.auth_qr_loading)
+        qr.setImageDrawable(null)
+        qrPollJob = viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val request = ApiClient.api.authAction(body = AuthRequest(a = "request_code"))
+                val code = request.status?.takeIf { it == "expired" } ?: request.error
+                val pairCode = request.pair_url?.substringAfterLast("/")
+                    ?: request.qr_base64?.let { null }
+                val actualCode = pairCode?.takeIf { it.matches(Regex("\\d{6}")) }
+                if (request.qr_base64.isNullOrBlank() || actualCode == null) {
+                    status.setText(R.string.auth_qr_failed)
+                    return@launch
+                }
+                val encoded = request.qr_base64.substringAfter("base64,", request.qr_base64)
+                val bitmap = BitmapFactory.decodeByteArray(
+                    Base64.decode(encoded, Base64.DEFAULT), 0,
+                    Base64.decode(encoded, Base64.DEFAULT).size
+                )
+                qr.setImageBitmap(bitmap)
+                status.text = getString(R.string.auth_qr_instructions, actualCode)
+                repeat(200) {
+                    delay(3000)
+                    val result = ApiClient.api.authAction(
+                        body = AuthRequest(
+                            a = "check_code",
+                            code = actualCode,
+                            did = AuthSessionStore.deviceId(requireContext()),
+                            device_type = "android_tv"
+                        )
+                    )
+                    if (result.status == "confirmed" && !result.access_token.isNullOrBlank()) {
+                        onLoginSuccess(root, result)
+                        return@launch
+                    }
+                    if (result.status == "expired") {
+                        status.setText(R.string.auth_qr_expired)
+                        return@launch
+                    }
+                }
+                status.setText(R.string.auth_qr_expired)
+            } catch (_: Exception) {
+                status.setText(R.string.auth_qr_failed)
+            }
+        }
+    }
+
+    private suspend fun onLoginSuccess(root: View, response: AuthResponse) {
+        qrPollJob?.cancel()
+        AuthSessionStore.save(requireContext(), response)
+        renderAccountState(root)
+        val token = AuthSessionStore.accessToken(requireContext()) ?: response.access_token.orEmpty()
+        if (token.isBlank()) return
+        // Pull is best-effort and add-only; a failed request never blocks local data.
+        accountSyncRepository.pullServerData(token)
+        if (accountSyncRepository.hasLocalDataToSync()) {
+            root.findViewById<TextView>(R.id.syncPromptText).setText(R.string.auth_sync_prompt)
+            root.findViewById<View>(R.id.syncPrompt).visibility = View.VISIBLE
+            root.findViewById<Button>(R.id.syncYesButton).requestFocus()
+        }
+    }
+
+    private fun performAccountSync(root: View) {
+        val token = AuthSessionStore.accessToken(requireContext()) ?: return
+        val yes = root.findViewById<Button>(R.id.syncYesButton)
+        val no = root.findViewById<Button>(R.id.syncNoButton)
+        yes.isEnabled = false
+        no.isEnabled = false
+        viewLifecycleOwner.lifecycleScope.launch {
+            val success = runCatching { accountSyncRepository.syncLocalData(token) }.getOrDefault(false)
+            Toast.makeText(
+                requireContext(),
+                if (success) R.string.auth_sync_success else R.string.auth_sync_failed,
+                Toast.LENGTH_LONG
+            ).show()
+            yes.isEnabled = true
+            no.isEnabled = true
+        }
+    }
+
+    private fun refreshExistingSession(root: View) {
+        val refresh = AuthSessionStore.refreshToken(requireContext()) ?: run {
+            AuthSessionStore.clear(requireContext())
+            renderAccountState(root)
+            startQrLogin(root)
+            return
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val response = ApiClient.api.authAction(
+                    body = AuthRequest(
+                        a = "refresh_session",
+                        refresh_token = refresh,
+                        did = AuthSessionStore.deviceId(requireContext())
+                    )
+                )
+                if (!response.access_token.isNullOrBlank()) {
+                    AuthSessionStore.save(requireContext(), response)
+                    renderAccountState(root)
+                    accountSyncRepository.pullServerData(response.access_token)
+                } else if (response.error == "invalid_session" || response.error == "account_disabled") {
+                    AuthSessionStore.clear(requireContext())
+                    renderAccountState(root)
+                    startQrLogin(root)
+                }
+            } catch (_: Exception) {
+                // Keep the cached session visible while offline.
+            }
+        }
+    }
+
+    private fun logout(root: View) {
+        val refresh = AuthSessionStore.refreshToken(requireContext())
+        val did = AuthSessionStore.deviceId(requireContext())
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching {
+                ApiClient.api.authAction(
+                    body = AuthRequest(a = "logout", refresh_token = refresh, did = did)
+                )
+            }
+            AuthSessionStore.clear(requireContext())
+            renderAccountState(root)
+            startQrLogin(root)
+        }
+    }
+
+    private fun authErrorMessage(error: String?): String = when (error) {
+        "account_disabled" -> getString(R.string.auth_account_disabled)
+        "email_not_verified" -> getString(R.string.auth_email_not_verified)
+        "rate_limited" -> getString(R.string.auth_rate_limited)
+        "missing_credentials" -> getString(R.string.auth_missing_credentials)
+        else -> getString(R.string.auth_invalid_credentials)
     }
 
     private fun showAudioSettings() {
@@ -366,6 +578,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         )
     }
+    override fun onDestroyView() {
+        qrPollJob?.cancel()
+        qrPollJob = null
+        profileRoot = null
+        super.onDestroyView()
+    }
+
     private fun hideAllContent() {
         optionsRecycler.visibility = View.GONE
         languageRecycler.visibility = View.GONE
