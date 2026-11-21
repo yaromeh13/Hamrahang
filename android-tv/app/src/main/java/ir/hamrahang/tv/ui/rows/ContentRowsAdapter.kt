@@ -115,7 +115,7 @@ class ContentRowsAdapter(
                         onClick = { item, index ->
                             val session = PlaybackSession(
                                 id = row.sessionId,
-                                title = row.sessionTitle,
+                                title = localizedSessionTitle(row, itemView.context),
                                 source = row.sessionSource,
                                 items = row.items.map { podcast ->
                                     PlaybackItem(
@@ -146,7 +146,7 @@ class ContentRowsAdapter(
                         onClick = { item, index ->
                             val session = PlaybackSession(
                                 id = row.sessionId,
-                                title = row.sessionTitle,
+                                title = localizedSessionTitle(row, itemView.context),
                                 source = row.sessionSource,
                                 items = row.items.map { video ->
                                     PlaybackItem(
@@ -177,7 +177,7 @@ class ContentRowsAdapter(
                         onClick = { item, index ->
                             val session = PlaybackSession(
                                 id = row.sessionId,
-                                title = row.sessionTitle,
+                                title = localizedSessionTitle(row, itemView.context),
                                 source = row.sessionSource,
                                 items = row.items.map { video ->
                                     PlaybackItem(
