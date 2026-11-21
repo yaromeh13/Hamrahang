@@ -49,11 +49,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         ),
 
         SettingCategory(
-            "Favorites",
-            R.drawable.ic_favorite
-        ),
-
-        SettingCategory(
             "Playlists",
             R.drawable.ic_playlist
         ),
@@ -203,10 +198,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         if (arguments?.getBoolean(ARG_LANGUAGE) == true) {
             categoryRecycler.post {
-                categoryRecycler.scrollToPosition(4)
+                categoryRecycler.scrollToPosition(6)
 
             }
-            loadCategory(4)
+            loadCategory(6)
         }
     }
 
@@ -383,13 +378,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
             0 -> showProfile()
             1 -> showProfile()
-            2 -> showProfile()
-            3 -> showAudioSettings()
-            4 -> showVideoSettings()
-            5 -> showGeneralSettings()
-            6 -> showThemeSettings()
-            7 -> showLanguageSettings()
-            8 -> showCleaning()
+            2 -> showAudioSettings()
+            3 -> showVideoSettings()
+            4 -> showGeneralSettings()
+            5 -> showThemeSettings()
+            6 -> showLanguageSettings()
+            7 -> showCleaning()
         }
     }
 }
