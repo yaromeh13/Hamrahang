@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.widget.Button
@@ -269,6 +270,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         contentContainer.visibility = View.VISIBLE
         val root = layoutInflater.inflate(R.layout.view_profile_info, contentContainer, true)
         renderAccountState(root)
+        setupLoginInputNavigation(root)
 
         setupAuthButtonFocus(root.findViewById(R.id.loginButton))
         setupAuthButtonFocus(root.findViewById(R.id.qrRetryButton))
@@ -302,6 +304,31 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
                     renderAccountState(root)
                     if (!AuthSessionStore.isLoggedIn(requireContext())) startQrLogin(root)
                 }
+            }
+        }
+    }
+
+    private fun setupLoginInputNavigation(root: View) {
+        val usernameInput = root.findViewById<EditText>(R.id.emailInput)
+        val passwordInput = root.findViewById<EditText>(R.id.passwordInput)
+        val loginButton = root.findViewById<Button>(R.id.loginButton)
+
+        // Hardware/IME action keys move focus forward without trapping it in an EditText.
+        usernameInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                passwordInput.requestFocus()
+                true
+            } else {
+                false
+            }
+        }
+
+        passwordInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                loginButton.requestFocus()
+                true
+            } else {
+                false
             }
         }
     }
