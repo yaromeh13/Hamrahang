@@ -159,10 +159,11 @@ object MoreOptionsPanel {
         lateinit var bookmarkCard: View
         val favoriteLabel = if (item.contentType == ContentType.ARTIST) "Follow" else "Bookmark"
         val favoriteDoneLabel = if (item.contentType == ContentType.ARTIST) "Following" else "Bookmarked"
-        val favoriteIcon = if (item.contentType == ContentType.ARTIST) {
+        val isArtist = item.contentType == ContentType.ARTIST
+        val favoriteIcon = if (isArtist) {
             R.drawable.ic_artist
         } else {
-            R.drawable.ic_bookmark
+            R.drawable.ic_bookmark_outline
         }
         bookmarkCard = addTopAction(
             context, actionsColumn, favoriteIcon, favoriteLabel
@@ -174,6 +175,11 @@ object MoreOptionsPanel {
                     bookmarked = FavoriteManager.toggle(mediaId, item.contentType)
                     bookmarkCard.findViewWithTag<TextView>("action_label")?.text =
                         if (bookmarked) favoriteDoneLabel else favoriteLabel
+                    if (!isArtist) {
+                        bookmarkCard.findViewWithTag<ImageView>("action_icon")?.setImageResource(
+                            if (bookmarked) R.drawable.ic_bookmark else R.drawable.ic_bookmark_outline
+                        )
+                    }
                     MessageManager.info(
                         when {
                             item.contentType == ContentType.ARTIST && bookmarked -> "Artist followed"
@@ -191,6 +197,11 @@ object MoreOptionsPanel {
                 bookmarkCard.tag = if (bookmarked) "bookmarked" else "bookmark"
                 val label = bookmarkCard.findViewWithTag<TextView>("action_label")
                 label?.text = if (bookmarked) favoriteDoneLabel else favoriteLabel
+                if (!isArtist) {
+                    bookmarkCard.findViewWithTag<ImageView>("action_icon")?.setImageResource(
+                        if (bookmarked) R.drawable.ic_bookmark else R.drawable.ic_bookmark_outline
+                    )
+                }
             }
         }
 
@@ -284,6 +295,7 @@ object MoreOptionsPanel {
             setOnClickListener { action() }
         }
         val actionIcon = ImageView(context).apply {
+            tag = "action_icon"
             setImageResource(icon)
             imageTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
             layoutParams = LinearLayout.LayoutParams(44.dp(context), 44.dp(context))
