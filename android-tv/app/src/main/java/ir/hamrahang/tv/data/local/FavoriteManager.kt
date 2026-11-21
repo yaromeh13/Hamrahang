@@ -1,6 +1,5 @@
 package ir.hamrahang.tv.favorite
 
-import android.content.Context
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.entity.FavoriteRepository
