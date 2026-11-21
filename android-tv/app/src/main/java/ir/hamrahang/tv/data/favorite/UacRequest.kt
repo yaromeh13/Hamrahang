@@ -1,5 +1,7 @@
 package ir.hamrahang.tv.data.favorite
 
+import ir.hamrahang.tv.data.auth.HistorySyncItem
+
 
 /**
  * Matches the web gja() envelope: POST /?_qjs=uac with { "q": { ... } }.
