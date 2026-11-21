@@ -301,10 +301,10 @@ class HomeRepository(
         FavoriteManager.observeFavorites(ContentType.MUSICVIDEO).mapLatest { favorites ->
             val items = musicVideoRepository.getByIds(favorites.map { it.mediaId.toString() })
             if (items.isEmpty()) null else ContentRow.MusicVideos(
-                title = "Bookmarked Music Videos",
+                title = "Favorite Music Videos",
                 items = items,
                 sessionId = "home_favorite_musicvideos",
-                sessionTitle = "Bookmarked Music Videos",
+                sessionTitle = "Favorite Music Videos",
                 sessionSource = PlaybackSource.HOME
             )
         }
