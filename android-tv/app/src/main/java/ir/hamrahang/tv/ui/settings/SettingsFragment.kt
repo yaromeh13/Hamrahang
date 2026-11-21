@@ -270,6 +270,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         val root = layoutInflater.inflate(R.layout.view_profile_info, contentContainer, true)
         renderAccountState(root)
 
+        setupAuthButtonFocus(root.findViewById(R.id.loginButton))
+        setupAuthButtonFocus(root.findViewById(R.id.logoutButton))
+
         root.findViewById<Button>(R.id.loginButton).setOnClickListener {
             val username = root.findViewById<EditText>(R.id.emailInput).text.toString().trim()
             val password = root.findViewById<EditText>(R.id.passwordInput).text.toString()
@@ -299,6 +302,19 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
                     if (!AuthSessionStore.isLoggedIn(requireContext())) startQrLogin(root)
                 }
             }
+        }
+    }
+
+    private fun setupAuthButtonFocus(button: Button) {
+        button.setBackgroundResource(R.drawable.bg_setting_option)
+        button.backgroundTintList = null
+        button.setOnFocusChangeListener { view, hasFocus ->
+            val scale = if (hasFocus) 1.06f else 1f
+            view.animate()
+                .scaleX(scale)
+                .scaleY(scale)
+                .setDuration(160)
+                .start()
         }
     }
 
