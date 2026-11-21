@@ -44,7 +44,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var languageAdapter: LanguageAdapter
     private lateinit var languageRecycler: RecyclerView
     private var qrPollJob: Job? = null
-    private var profileRoot: View? = null
     private val accountSyncRepository by lazy { AccountSyncRepository() }
 
     private val playbackHistoryRepository by lazy {
@@ -252,7 +251,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         contentContainer.removeAllViews()
         contentContainer.visibility = View.VISIBLE
         val root = layoutInflater.inflate(R.layout.view_profile_info, contentContainer, true)
-        profileRoot = root
         renderAccountState(root)
 
         root.findViewById<Button>(R.id.loginButton).setOnClickListener {
@@ -276,7 +274,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
         root.findViewById<Button>(R.id.syncNoButton).setOnClickListener {
             root.findViewById<View>(R.id.syncPrompt).visibility = View.GONE
-            root.findViewById<View>(R.id.layoutLogged).requestFocus()
+            root.findViewById<View>(R.id.logoutButton).requestFocus()
         }
         root.findViewById<Button>(R.id.logoutButton).setOnClickListener {
             logout(root)
@@ -305,6 +303,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         val error = root.findViewById<TextView>(R.id.loginError)
         val button = root.findViewById<Button>(R.id.loginButton)
         button.isEnabled = false
+        qrPollJob?.cancel()
+        qrPollJob = null
         error.visibility = View.GONE
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -341,31 +341,29 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         qrPollJob = viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val request = ApiClient.api.authAction(body = AuthRequest(a = "request_code"))
-                val code = request.status?.takeIf { it == "expired" } ?: request.error
                 val pairCode = request.pair_url?.substringAfterLast("/")
-                    ?: request.qr_base64?.let { null }
                 val actualCode = pairCode?.takeIf { it.matches(Regex("\\d{6}")) }
                 if (request.qr_base64.isNullOrBlank() || actualCode == null) {
                     status.setText(R.string.auth_qr_failed)
                     return@launch
                 }
                 val encoded = request.qr_base64.substringAfter("base64,", request.qr_base64)
-                val bitmap = BitmapFactory.decodeByteArray(
-                    Base64.decode(encoded, Base64.DEFAULT), 0,
-                    Base64.decode(encoded, Base64.DEFAULT).size
-                )
+                val imageBytes = Base64.decode(encoded, Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 qr.setImageBitmap(bitmap)
                 status.text = getString(R.string.auth_qr_instructions, actualCode)
                 repeat(200) {
                     delay(3000)
-                    val result = ApiClient.api.authAction(
-                        body = AuthRequest(
-                            a = "check_code",
-                            code = actualCode,
-                            did = AuthSessionStore.deviceId(requireContext()),
-                            device_type = "android_tv"
+                    val result = runCatching {
+                        ApiClient.api.authAction(
+                            body = AuthRequest(
+                                a = "check_code",
+                                code = actualCode,
+                                did = AuthSessionStore.deviceId(requireContext()),
+                                device_type = "tv_webapp"
+                            )
                         )
-                    )
+                    }.getOrNull() ?: return@repeat
                     if (result.status == "confirmed" && !result.access_token.isNullOrBlank()) {
                         onLoginSuccess(root, result)
                         return@launch
@@ -383,8 +381,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private suspend fun onLoginSuccess(root: View, response: AuthResponse) {
-        qrPollJob?.cancel()
         AuthSessionStore.save(requireContext(), response)
+        ir.hamrahang.tv.favorite.FavoriteManager.setAccessToken(response.access_token)
         renderAccountState(root)
         val token = AuthSessionStore.accessToken(requireContext()) ?: response.access_token.orEmpty()
         if (token.isBlank()) return
@@ -418,6 +416,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun refreshExistingSession(root: View) {
         val refresh = AuthSessionStore.refreshToken(requireContext()) ?: run {
             AuthSessionStore.clear(requireContext())
+            ir.hamrahang.tv.favorite.FavoriteManager.setAccessToken(null)
             renderAccountState(root)
             startQrLogin(root)
             return
@@ -433,6 +432,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 )
                 if (!response.access_token.isNullOrBlank()) {
                     AuthSessionStore.save(requireContext(), response)
+                    ir.hamrahang.tv.favorite.FavoriteManager.setAccessToken(response.access_token)
                     renderAccountState(root)
                     accountSyncRepository.pullServerData(response.access_token)
                 } else if (response.error == "invalid_session" || response.error == "account_disabled") {
@@ -456,6 +456,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 )
             }
             AuthSessionStore.clear(requireContext())
+            ir.hamrahang.tv.favorite.FavoriteManager.setAccessToken(null)
             renderAccountState(root)
             startQrLogin(root)
         }
@@ -581,7 +582,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     override fun onDestroyView() {
         qrPollJob?.cancel()
         qrPollJob = null
-        profileRoot = null
         super.onDestroyView()
     }
 
