@@ -117,6 +117,9 @@
 
                 <EditText
                     android:id="@+id/emailInput"
+                    android:nextFocusUp="@id/categoryRecycler"
+                    android:nextFocusDown="@id/passwordInput"
+                    android:imeOptions="actionNext"
                     android:layout_width="match_parent"
                     android:layout_height="58dp"
                     android:layout_marginTop="8dp"
@@ -129,6 +132,9 @@
 
                 <EditText
                     android:id="@+id/passwordInput"
+                    android:nextFocusUp="@id/emailInput"
+                    android:nextFocusDown="@id/loginButton"
+                    android:imeOptions="actionDone"
                     android:layout_width="match_parent"
                     android:layout_height="58dp"
                     android:layout_marginTop="8dp"
@@ -161,6 +167,8 @@
 
                     <Button
                         android:id="@+id/loginButton"
+                        android:nextFocusUp="@id/passwordInput"
+                        android:nextFocusRight="@id/qrRetryButton"
                         android:layout_width="0dp"
                         android:layout_height="60dp"
                         android:layout_weight="1"
@@ -174,6 +182,8 @@
 
                     <Button
                         android:id="@+id/qrRetryButton"
+                        android:nextFocusUp="@id/passwordInput"
+                        android:nextFocusLeft="@id/loginButton"
                         android:layout_width="0dp"
                         android:layout_height="60dp"
                         android:layout_marginStart="14dp"
