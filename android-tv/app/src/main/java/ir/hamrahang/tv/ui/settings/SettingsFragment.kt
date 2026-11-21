@@ -304,12 +304,19 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             root.findViewById<TextView>(R.id.accountId).text =
                 getString(R.string.auth_user_id_value, AuthSessionStore.userId(context))
             val avatar = root.findViewById<ImageView>(R.id.userAvatar)
-            Glide.with(avatar)
-                .load(AuthSessionStore.avatarUrl(context))
-                .circleCrop()
-                .placeholder(R.drawable.ic_profile)
-                .error(R.drawable.ic_profile)
-                .into(avatar)
+            val avatarUrl = AuthSessionStore.avatarUrl(context)
+            if (avatarUrl.isNullOrBlank()) {
+                avatar.setImageResource(R.drawable.ic_profile)
+                avatar.scaleType = ImageView.ScaleType.CENTER_INSIDE
+            } else {
+                avatar.scaleType = ImageView.ScaleType.CENTER_CROP
+                Glide.with(avatar)
+                    .load(avatarUrl)
+                    .circleCrop()
+                    .placeholder(R.drawable.ic_profile)
+                    .error(R.drawable.ic_profile)
+                    .into(avatar)
+            }
         }
     }
 
