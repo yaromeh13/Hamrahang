@@ -35,7 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
-class SettingsFragment : Fragment(R.layout.fragment_settings) {
+class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.contract.Focusable {
 
     private lateinit var categoryAdapter: SettingsCategoryAdapter
     private lateinit var optionAdapter: SettingsOptionAdapter
@@ -219,6 +219,22 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
             }
             loadCategory(6)
+        }
+    }
+
+    override fun requestInitialFocus() {
+        if (!::categoryRecycler.isInitialized) return
+        categoryRecycler.post {
+            if (!isAdded) return@post
+            categoryRecycler.scrollToPosition(0)
+            categoryRecycler.post {
+                val firstCategory = categoryRecycler
+                    .findViewHolderForAdapterPosition(0)
+                    ?.itemView
+                if (firstCategory?.requestFocus() != true) {
+                    categoryRecycler.requestFocus()
+                }
+            }
         }
     }
 
