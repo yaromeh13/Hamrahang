@@ -94,7 +94,10 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
                 viewLifecycleOwner.lifecycleScope.launch {
                     val saved = FavoriteManager.toggle(mediaId, contentType)
                     bookmarkButton.isSelected = saved
-                    bookmarkButton.alpha = if (saved) 1f else 0.65f
+                    bookmarkButton.alpha = 1f
+                    bookmarkButton.setImageResource(
+                        if (saved) R.drawable.ic_bookmark else R.drawable.ic_bookmark_outline
+                    )
                     MessageManager.info(if (saved) "Added to bookmarks" else "Removed from bookmarks")
                 }
             }
@@ -130,7 +133,10 @@ class MediaDetailFragment : Fragment(R.layout.fragment_media_detail) {
         viewLifecycleOwner.lifecycleScope.launch {
             val saved = FavoriteManager.isFavorite(mediaId, contentType)
             bookmarkButton.isSelected = saved
-            bookmarkButton.alpha = if (saved) 1f else 0.65f
+            bookmarkButton.alpha = 1f
+            bookmarkButton.setImageResource(
+                if (saved) R.drawable.ic_bookmark else R.drawable.ic_bookmark_outline
+            )
         }
     }
 
