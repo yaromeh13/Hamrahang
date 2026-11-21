@@ -5,7 +5,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.OvershootInterpolator
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -19,6 +18,7 @@ import kotlinx.coroutines.launch
 class MessageWidget(root: View, owner: LifecycleOwner) {
     private val container = root.findViewById<LinearLayout>(R.id.messageRoot)
     private val icon = root.findViewById<ImageView>(R.id.imgIcon)
+    private val messageContent = root.findViewById<LinearLayout>(R.id.messageContent)
     private val text = root.findViewById<TextView>(R.id.txtMessage)
     private val actions = root.findViewById<LinearLayout>(R.id.messageActions)
     private val context = root.context
@@ -46,23 +46,43 @@ class MessageWidget(root: View, owner: LifecycleOwner) {
 
         if (isConfirmation) {
             state.actions.forEachIndexed { index, action ->
-                val button = Button(context).apply {
-                    text = action.label
-                    isAllCaps = false
+                val actionCard = LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
                     isFocusable = true
                     isFocusableInTouchMode = true
-                    setTextColor(Color.WHITE)
-                    textSize = 17f
-                    gravity = Gravity.CENTER
+                    isClickable = true
                     background = ContextCompat.getDrawable(context, R.drawable.bg_setting_option)
-                    setCompoundDrawablesWithIntrinsicBounds(action.iconRes, 0, 0, 0)
-                    compoundDrawablePadding = dp(10)
-                    setPadding(dp(18), 0, dp(18), 0)
+                    setPadding(dp(8), dp(8), dp(8), dp(8))
                     setOnClickListener { MessageManager.performAction(action) }
                 }
-                val params = LinearLayout.LayoutParams(0, dp(62), 1f)
+                val actionIcon = ImageView(context).apply {
+                    setImageResource(action.iconRes)
+                    imageTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
+                    layoutParams = LinearLayout.LayoutParams(dp(38), dp(38))
+                }
+                actionCard.addView(actionIcon)
+                actionCard.addView(TextView(context).apply {
+                    text = action.label
+                    textSize = 16f
+                    setTextColor(Color.WHITE)
+                    gravity = Gravity.CENTER
+                    maxLines = 1
+                    setPadding(0, dp(6), 0, 0)
+                })
+                actionCard.setOnFocusChangeListener { _, hasFocus ->
+                    actionIcon.animate()
+                        .scaleX(if (hasFocus) 1.22f else 1f)
+                        .scaleY(if (hasFocus) 1.22f else 1f)
+                        .setDuration(170)
+                        .start()
+                }
+                val params = LinearLayout.LayoutParams(0, dp(96), 1f)
                 if (index > 0) params.marginStart = dp(14)
-                actions.addView(button, params)
+                actions.addView(actionCard, params)
+            }
+            messageContent.layoutParams = (messageContent.layoutParams as LinearLayout.LayoutParams).apply {
+                width = ViewGroup.LayoutParams.MATCH_PARENT
             }
             container.orientation = LinearLayout.VERTICAL
             container.background = ContextCompat.getDrawable(context, R.drawable.bg_setting_player)
@@ -86,6 +106,9 @@ class MessageWidget(root: View, owner: LifecycleOwner) {
                 }
             }
         } else {
+            messageContent.layoutParams = (messageContent.layoutParams as LinearLayout.LayoutParams).apply {
+                width = ViewGroup.LayoutParams.WRAP_CONTENT
+            }
             container.orientation = LinearLayout.HORIZONTAL
             container.background = ContextCompat.getDrawable(context, R.drawable.bg_message)
             container.setPadding(dp(18), 0, dp(22), 0)
