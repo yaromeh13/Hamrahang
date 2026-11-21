@@ -386,7 +386,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
 
     private fun startQrLogin(root: View) {
         qrPollJob?.cancel()
-        val status = root.findViewById<TextView>(R.id.qrStatus)
+        val status = root.findViewById<TextView>(R.id.qrInfoPanel)
         val qr = root.findViewById<ImageView>(R.id.qrImage)
         status.setText(R.string.auth_qr_loading)
         qr.setImageDrawable(null)
