@@ -83,7 +83,6 @@ class NavFragment : Fragment(R.layout.fragment_nav) {
             R.id.menuSearch,
             R.id.menuKids,
             R.id.menuCategories,
-            R.id.menuProfile,
             R.id.menuSettings
         ).map { view.findViewById<View>(it) }
 
@@ -172,7 +171,6 @@ class NavFragment : Fragment(R.layout.fragment_nav) {
             R.id.menuSettings to R.id.indicatorSetting,
             R.id.menuKids to R.id.indicatorKids,
             R.id.menuCategories to R.id.indicatorCategories,
-            R.id.menuProfile to R.id.indicatorProfile
         )
 
         map.values.forEach { root.findViewById<View>(it).alpha = 0f }
