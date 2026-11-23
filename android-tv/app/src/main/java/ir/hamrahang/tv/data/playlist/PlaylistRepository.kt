@@ -83,7 +83,7 @@ class PlaylistRepository(context: Context) {
             )
         )
         if (inserted == -1L) return false
-        dao.updateItemCount(playlist.localId, dao.countItems(playlist.localId), System.currentTimeMillis())
+        dao.updateItemCount(playlist.localId, playlist.itemCount + 1, System.currentTimeMillis())
 
         val remoteId = playlist.remoteId?.toLongOrNull() ?: return true
         val accessToken = token() ?: return true
@@ -101,9 +101,12 @@ class PlaylistRepository(context: Context) {
             )
             if (response.ok == true) {
                 dao.markItemSynced(playlist.localId, type, publicId.toString())
+                if (response.exists == true) {
+                    dao.updateItemCount(playlist.localId, playlist.itemCount, System.currentTimeMillis())
+                }
             } else if (response.error == "item_limit") {
                 dao.deleteItem(playlist.localId, type, publicId.toString())
-                dao.updateItemCount(playlist.localId, dao.countItems(playlist.localId), System.currentTimeMillis())
+                dao.updateItemCount(playlist.localId, playlist.itemCount, System.currentTimeMillis())
                 throw IllegalStateException("item_limit")
             }
         } catch (error: IllegalStateException) {
@@ -129,23 +132,31 @@ class PlaylistRepository(context: Context) {
             response.playlists.forEach { dto ->
                 val remoteId = dto.id?.toString() ?: return@forEach
                 val existing = dao.getByRemoteId(remoteId, owner)
-                dao.upsert(
-                    (existing ?: PlaylistEntity(
-                        localId = UUID.randomUUID().toString(),
-                        remoteId = remoteId,
-                        ownerUserId = owner,
-                        name = dto.name.orEmpty(),
-                        pendingSync = false
-                    )).copy(
-                        remoteId = remoteId,
-                        name = dto.name?.takeIf { it.isNotBlank() } ?: existing?.name.orEmpty(),
-                        thumbnail = dto.meta?.tmb ?: existing?.thumbnail,
-                        itemCount = dto.meta?.nci ?: existing?.itemCount ?: 0,
-                        isPublic = dto.isPublic ?: existing?.isPublic ?: false,
-                        pendingSync = false,
-                        updatedAt = System.currentTimeMillis()
-                    )
+                val local = existing ?: PlaylistEntity(
+                    localId = UUID.randomUUID().toString(),
+                    remoteId = remoteId,
+                    ownerUserId = owner,
+                    name = dto.name.orEmpty(),
+                    pendingSync = false
                 )
+                val updated = local.copy(
+                    remoteId = remoteId,
+                    name = dto.name?.takeIf { it.isNotBlank() } ?: local.name,
+                    thumbnail = dto.meta?.tmb ?: local.thumbnail,
+                    itemCount = dto.meta?.nci ?: local.itemCount,
+                    isPublic = dto.isPublic ?: local.isPublic,
+                    pendingSync = false,
+                    updatedAt = System.currentTimeMillis()
+                )
+                dao.upsert(updated)
+                val unsyncedCount = dao.getUnsyncedItems(updated.localId).size
+                if (unsyncedCount > 0) {
+                    dao.updateItemCount(
+                        updated.localId,
+                        updated.itemCount + unsyncedCount,
+                        System.currentTimeMillis()
+                    )
+                }
             }
 
             syncPendingPlaylists(authorization, owner)
@@ -181,6 +192,12 @@ class PlaylistRepository(context: Context) {
             applyServerPlaylist(local, dto)
             if (created.capped == true) {
                 dao.markItemsSyncedBefore(localId, dto.meta?.nci ?: 0)
+                val remainingLocalItems = dao.getUnsyncedItems(localId).size
+                dao.updateItemCount(
+                    localId,
+                    (dto.meta?.nci ?: 0) + remainingLocalItems,
+                    System.currentTimeMillis()
+                )
             } else {
                 dao.markAllItemsSynced(localId)
             }
@@ -205,12 +222,19 @@ class PlaylistRepository(context: Context) {
                 )
                 if (response.ok == true) {
                     dao.markItemSynced(playlist.localId, row.itemType, row.itemId)
+                    if (response.exists == true) {
+                        val currentCount = dao.getPlaylist(playlist.localId)?.itemCount ?: 0
+                        dao.updateItemCount(
+                            playlist.localId,
+                            (currentCount - 1).coerceAtLeast(0),
+                            System.currentTimeMillis()
+                        )
+                    }
                 } else if (response.error == "item_limit") {
                     // Keep the local item rather than silently discarding offline data.
                     return@itemLoop
                 }
             }
-            dao.updateItemCount(playlist.localId, dao.countItems(playlist.localId), System.currentTimeMillis())
         }
     }
 
