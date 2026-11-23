@@ -28,6 +28,11 @@ class HomeFragment :
     private lateinit var recycler: VerticalGridView
     private var initialRowsFocusRequested = false
 
+    override fun onResume() {
+        super.onResume()
+        if (::adapter.isInitialized) viewModel.refreshPlaylists()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // HERO
