@@ -1,17 +1,21 @@
 package ir.hamrahang.tv.ui.home
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import ir.hamrahang.tv.data.home.HomeRepository
+import ir.hamrahang.tv.data.playlist.PlaylistRepository
 import ir.hamrahang.tv.ui.rows.ContentRow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo = HomeRepository()
+    private val playlistRepository = PlaylistRepository(application)
 
     private val _rows = MutableStateFlow<List<ContentRow>>(emptyList())
 
@@ -20,6 +24,9 @@ class HomeViewModel : ViewModel() {
 
     init {
         loadRows()
+        viewModelScope.launch {
+            runCatching { playlistRepository.refreshAndSync() }
+        }
     }
 
     private fun loadRows() {
@@ -60,6 +67,19 @@ class HomeViewModel : ViewModel() {
                 listOfNotNull(videos, albums)
             }
 
+            val playlistRows = playlistRepository.observePlaylists().map { playlists ->
+                if (playlists.isEmpty()) emptyList()
+                else listOf(
+                    ContentRow.Playlists(
+                        title = "Playlists",
+                        items = playlists,
+                        sessionId = "home_playlists",
+                        sessionTitle = "Playlists",
+                        sessionSource = ir.hamrahang.tv.playback.PlaybackSource.HOME
+                    )
+                )
+            }
+
             val favoriteRows = combine(
                 favoriteMusicAndSongs,
                 favoritePodcastsAndArtists,
@@ -68,8 +88,8 @@ class HomeViewModel : ViewModel() {
                 first + second + third
             }
 
-            combine(historyRows, favoriteRows) { history, favorites ->
-                mainRows + history + favorites
+            combine(historyRows, playlistRows, favoriteRows) { history, playlists, favorites ->
+                mainRows + history + playlists + favorites
             }.collect { rows ->
                 _rows.value = rows
             }
