@@ -48,8 +48,17 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
+            android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:screenOrientation="landscape" />
+
+        <!-- Tiles on the Google TV home row open this, then forward into the app. -->
+        <activity
+            android:name=".channel.HomeChannelActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
     </application>
 

@@ -1,5 +1,7 @@
 <resources>
+    <string name="app_name">همراهنگ</string>
     <string name="app_title">همراهنگ</string>
+    <string name="home_channel_open">باز کردن همراهنگ</string>
 
     <string name="menu_home">خانه</string>
     <string name="menu_live">پخش زنده</string>

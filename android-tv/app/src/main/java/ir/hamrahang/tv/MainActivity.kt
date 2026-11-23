@@ -1,6 +1,7 @@
 package ir.hamrahang.tv
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -19,6 +20,9 @@ import ir.hamrahang.tv.ui.network.NetworkOverlay
 import ir.hamrahang.tv.ui.settings.LanguageManager
 import ir.hamrahang.tv.ui.settings.SettingsFragment
 import ir.hamrahang.tv.utils.AppState
+import ir.hamrahang.tv.channel.HomeChannel
+import ir.hamrahang.tv.channel.HomeChannelPublisher
+import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.auth.AuthSessionManager
 import ir.hamrahang.tv.data.playlist.PlaylistRepository
 import kotlinx.coroutines.launch
@@ -67,6 +71,7 @@ class MainActivity : BaseActivity(),
                     NetworkEvents.Event.InternetAvailable -> {
                         networkOverlay.hide()
                         MessageManager.info("Internet Connected")
+                        HomeChannelPublisher.publish(this@MainActivity)
                         // Restore account credentials and sync local playlists without
                         // recreating the current screen or disturbing active playback.
                         if (recoverySyncJob?.isActive != true) {
@@ -103,6 +108,7 @@ class MainActivity : BaseActivity(),
             .replace(R.id.nav_fragment, NavFragment())
             .replace(R.id.contentContainer, firstFragment)
             .commit()
+        openFromChannel(intent)
 
         // BACK HANDLING
         onBackPressedDispatcher.addCallback(
@@ -174,6 +180,24 @@ class MainActivity : BaseActivity(),
 
         navView?.post {
             navView.findViewById<View>(R.id.menuHome)?.requestFocus()
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        openFromChannel(intent)
+    }
+
+    private fun openFromChannel(source: Intent?) {
+        val typeKey = source?.getStringExtra(HomeChannel.EXTRA_TYPE) ?: return
+        val id = source.getStringExtra(HomeChannel.EXTRA_ID) ?: return
+        source.removeExtra(HomeChannel.EXTRA_TYPE)
+        source.removeExtra(HomeChannel.EXTRA_ID)
+        val type = ContentType.values().firstOrNull { it.apiKey == typeKey } ?: return
+        supportFragmentManager.executePendingTransactions()
+        binding.root.post {
+            UiNavigator.openMediaDetail(type, id)
         }
     }
 
