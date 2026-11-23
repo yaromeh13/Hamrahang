@@ -78,8 +78,8 @@ class MainActivity : BaseActivity(),
                                     PlaylistRepository(this@MainActivity).refreshAndSync()
                                 }.getOrDefault(false)
                                 if (synced) {
-                                    (supportFragmentManager.findFragmentById(R.id.contentContainer) as? SettingsFragment)
-                                        ?.refreshPlaylistsIfVisible()
+                                    (supportFragmentManager.findFragmentById(R.id.contentContainer) as? HomeFragment)
+                                        ?.refreshPlaylists()
                                 }
                             }
                         }
