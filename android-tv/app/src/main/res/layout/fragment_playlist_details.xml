@@ -14,28 +14,43 @@
         android:layout_height="260dp"
         android:layout_gravity="top" />
 
-    <TextView
-        android:id="@+id/playlistEmpty"
+    <include
+        android:id="@+id/playlistActions"
+        layout="@layout/layout_detail_actions"
         android:layout_width="match_parent"
-        android:layout_height="180dp"
-        android:gravity="center_vertical"
-        android:paddingStart="@dimen/content_edge_spacing"
-        android:text="This playlist is empty"
-        android:textColor="#CCCCCC"
-        android:textSize="@dimen/_12ssp"
-        android:visibility="gone" />
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp" />
 
-    <androidx.leanback.widget.HorizontalGridView
-        android:id="@+id/playlistItems"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="230dp"
-        android:layout_marginStart="@dimen/content_edge_spacing"
-        android:clipChildren="false"
-        android:clipToPadding="false"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        app:focusOutFront="true"
-        app:focusOutEnd="true"
-        app:numberOfRows="1" />
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
+        <androidx.leanback.widget.HorizontalGridView
+            android:id="@+id/playlistItems"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="@dimen/content_edge_spacing"
+            android:layout_marginTop="14dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            app:focusOutFront="true"
+            app:focusOutEnd="true"
+            app:numberOfRows="1" />
+
+        <TextView
+            android:id="@+id/playlistEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingStart="@dimen/content_edge_spacing"
+            android:text="This playlist is empty"
+            android:textColor="#CCCCCC"
+            android:textSize="@dimen/_12ssp"
+            android:visibility="gone" />
+    </FrameLayout>
 </LinearLayout>
