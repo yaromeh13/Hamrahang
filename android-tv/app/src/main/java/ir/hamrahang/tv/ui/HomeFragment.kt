@@ -30,6 +30,11 @@ class HomeFragment :
 
     override fun onResume() {
         super.onResume()
+        refreshPlaylists()
+    }
+
+    /** Refresh the Home playlist rows after account/network recovery. */
+    fun refreshPlaylists() {
         if (::adapter.isInitialized) viewModel.refreshPlaylists()
     }
 
