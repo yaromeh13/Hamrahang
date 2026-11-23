@@ -538,7 +538,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         viewLifecycleOwner.lifecycleScope.launch {
             val token = AuthSessionStore.accessToken(requireContext())
             val success = if (token.isNullOrBlank()) false else runCatching {
-                accountSyncRepository.pullServerData(token)
                 accountSyncRepository.syncLocalData(token)
             }.getOrDefault(false)
             if (!isAdded) return@launch
@@ -655,11 +654,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
                 SettingOption(
                     "clean_favorites",
                     "Delete Favorites"
-                ),
-
-                SettingOption(
-                    "clean_playlists",
-                    "Delete Playlists"
                 )
 
             )
