@@ -216,7 +216,8 @@ class PlaylistDetailsFragment : Fragment(R.layout.fragment_playlist_details) {
                 artists = emptyList(),
                 contentType = ContentType.PLAYLIST
             ),
-            moreButton
+            moreButton,
+            playlistLocalId = value.localId
         )
     }
 
