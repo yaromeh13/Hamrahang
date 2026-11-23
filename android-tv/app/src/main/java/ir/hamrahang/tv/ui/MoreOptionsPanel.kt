@@ -107,7 +107,8 @@ object MoreOptionsPanel {
             gravity = Gravity.CENTER
         }
         val cancel = panelButton(context, "Cancel") { dialog.dismiss() }
-        val save = panelButton(context, "Save") {
+        lateinit var save: TextView
+        save = panelButton(context, "Save") {
             val name = nameInput.text.toString().trim()
             if (name.isBlank()) {
                 MessageManager.warning("Enter a playlist name")
