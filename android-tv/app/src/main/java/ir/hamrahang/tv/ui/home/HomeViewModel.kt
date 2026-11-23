@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import ir.hamrahang.tv.data.home.HomeRepository
 import ir.hamrahang.tv.data.local.entity.PlaylistEntity
+import ir.hamrahang.tv.data.local.ContentType
+import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.data.playlist.PlaylistRepository
 import ir.hamrahang.tv.ui.rows.ContentRow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,6 +94,27 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
 
+            val favoritePlaylists = FavoriteManager
+                .observeFavorites(ContentType.PLAYLIST)
+                .mapLatest { favorites ->
+                    playlistRepository.getFavoritePlaylists(
+                        favorites.map { it.mediaId.toString() }
+                    )
+                }
+
+            val favoritePlaylistRow = favoritePlaylists.map { playlists ->
+                if (playlists.isEmpty()) emptyList()
+                else listOf(
+                    ContentRow.Playlists(
+                        title = "Bookmarked playlists",
+                        items = playlists,
+                        sessionId = "home_favorite_playlists",
+                        sessionTitle = "Bookmarked playlists",
+                        sessionSource = ir.hamrahang.tv.playback.PlaybackSource.HOME
+                    )
+                )
+            }
+
             val favoriteRows = combine(
                 favoriteMusicAndSongs,
                 favoritePodcastsAndArtists,
@@ -100,10 +123,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 first + second + third
             }
 
-            combine(historyRows, playlistRows, favoriteRows) { history, playlists, favorites ->
-                // Recently played rows must remain ahead of Playlists; Playlists
-                // belongs immediately before the Favorites section.
-                mainRows + history + playlists + favorites
+            combine(historyRows, playlistRows, favoriteRows, favoritePlaylistRow) {
+                    history, playlists, favorites, bookmarkedPlaylists ->
+                mainRows + history + playlists + favorites + bookmarkedPlaylists
             }.collect { rows ->
                 _rows.value = rows
             }
