@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import ir.hamrahang.tv.data.home.HomeRepository
+import ir.hamrahang.tv.data.local.entity.PlaylistEntity
 import ir.hamrahang.tv.data.playlist.PlaylistRepository
 import ir.hamrahang.tv.ui.rows.ContentRow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,14 +19,31 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val playlistRepository = PlaylistRepository(application)
 
     private val _rows = MutableStateFlow<List<ContentRow>>(emptyList())
+    private val _playlists = MutableStateFlow<List<PlaylistEntity>>(emptyList())
 
     val rows: StateFlow<List<ContentRow>>
         get() = _rows
 
     init {
         loadRows()
+        refreshPlaylists()
+    }
+
+    /**
+     * Reload local playlists first, so Home can render cached data even when
+     * the server is unavailable or the account session was restored late.
+     */
+    fun refreshPlaylists() {
         viewModelScope.launch {
+            _playlists.value = runCatching {
+                playlistRepository.getPlaylists()
+            }.getOrDefault(emptyList())
+
             runCatching { playlistRepository.refreshAndSync() }
+
+            _playlists.value = runCatching {
+                playlistRepository.getPlaylists()
+            }.getOrDefault(emptyList())
         }
     }
 
@@ -67,7 +85,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 listOfNotNull(videos, albums)
             }
 
-            val playlistRows = playlistRepository.observePlaylists().map { playlists ->
+            val playlistRows = _playlists.map { playlists ->
                 if (playlists.isEmpty()) emptyList()
                 else listOf(
                     ContentRow.Playlists(
