@@ -24,6 +24,7 @@ import ir.hamrahang.tv.util.UiUtils
 import ir.hamrahang.tv.utils.AppState
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryRepository
+import ir.hamrahang.tv.data.local.SearchHistoryStore
 import ir.hamrahang.tv.data.auth.AuthRequest
 import ir.hamrahang.tv.data.auth.AuthResponse
 import ir.hamrahang.tv.data.auth.AuthSessionStore
@@ -123,19 +124,17 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
                     "video_high" -> SettingsManager.saveVideoQuality(QualityLevel.HIGH)
                     "video_medium" -> SettingsManager.saveVideoQuality(QualityLevel.MEDIUM)
                     "video_low" -> SettingsManager.saveVideoQuality(QualityLevel.LOW)
-                    // Cleaning
-                    "clean_recent" -> {
-                        viewLifecycleOwner.lifecycleScope.launch {playbackHistoryRepository.clear()}
+                    // Local-only cleanup: never call account APIs from these actions.
+                    "clean_recent" -> runLocalCleanup(R.string.clean_recent_success) {
+                        playbackHistoryRepository.clear()
                     }
 
-                    "clean_search" -> {
-                        // TODO
-                        // حذف Search History
+                    "clean_search" -> runLocalCleanup(R.string.clean_search_success) {
+                        SearchHistoryStore.clear(requireContext())
                     }
 
-                    "clean_favorites" -> {
-                        // TODO
-                        // حذف Favorites
+                    "clean_favorites" -> runLocalCleanup(R.string.clean_favorites_success) {
+                        DatabaseProvider.database().favoriteDao().clearAll()
                     }
 
                 }
@@ -549,6 +548,17 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         "rate_limited" -> getString(R.string.auth_rate_limited)
         "missing_credentials" -> getString(R.string.auth_missing_credentials)
         else -> getString(R.string.auth_invalid_credentials)
+    }
+
+    private fun runLocalCleanup(successMessage: Int, action: suspend () -> Unit) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                action()
+                if (isAdded) MessageManager.success(getString(successMessage))
+            } catch (_: Exception) {
+                if (isAdded) MessageManager.error(getString(R.string.cleanup_failed))
+            }
+        }
     }
 
     private fun showAudioSettings() {
