@@ -27,6 +27,8 @@ object HeroManager {
 
             is HeroContent.VideoHero -> HeroEvent.VideoFocused(content.video)
 
+            is HeroContent.PlaylistHero -> HeroEvent.PlaylistFocused(content.playlist)
+
         }
 
         engine.dispatch(event)
