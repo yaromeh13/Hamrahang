@@ -179,7 +179,11 @@ class PlaylistRepository(context: Context) {
             val dto = created.playlist?.playlist ?: return@forEach
             val local = dao.getPlaylist(localId) ?: return@forEach
             applyServerPlaylist(local, dto)
-            dao.markAllItemsSynced(localId)
+            if (created.capped == true) {
+                dao.markItemsSyncedBefore(localId, dto.meta?.nci ?: 0)
+            } else {
+                dao.markAllItemsSynced(localId)
+            }
         }
     }
 
