@@ -143,4 +143,9 @@
     <string name="clean_search_success">Search history cleared.</string>
     <string name="clean_favorites_success">Local favorites cleared. Sync your profile to restore account favorites.</string>
     <string name="cleanup_failed">Unable to complete cleanup.</string>
+    <string name="general_exit_app">Exit App</string>
+    <string name="general_keep_playing">Keep Playing</string>
+    <string name="clean_recent">Clear Recently Played</string>
+    <string name="clean_search">Clear Search History</string>
+    <string name="clean_favorites">Clear Favorites</string>
 </resources>
