@@ -35,7 +35,8 @@ object MoreOptionsPanel {
     fun show(
         fragment: Fragment,
         item: PlaybackItem,
-        returnFocus: View? = null
+        returnFocus: View? = null,
+        playlistLocalId: String? = null
     ) {
         val context = fragment.requireContext()
         val dialog = Dialog(context)
@@ -53,7 +54,7 @@ object MoreOptionsPanel {
             overScrollMode = View.OVER_SCROLL_NEVER
             addView(content)
         }
-        populate(fragment, content, item) { dialog.dismiss() }
+        populate(fragment, content, item, playlistLocalId) { dialog.dismiss() }
         dialog.setContentView(scroll)
         dialog.window?.let { window ->
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -324,6 +325,7 @@ object MoreOptionsPanel {
         fragment: Fragment,
         container: LinearLayout,
         item: PlaybackItem,
+        playlistLocalId: String? = null,
         close: () -> Unit = {}
     ) {
         container.removeAllViews()
@@ -471,14 +473,16 @@ object MoreOptionsPanel {
             }
         }
 
-        addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Queue") {
-            val added = ir.hamrahang.tv.playback.PlaybackManager.addToQueue(item)
-            when {
-                added -> MessageManager.info("Adding items to the queue")
-                ir.hamrahang.tv.playback.PlaybackManager.session.value?.items?.any {
-                    it.id == item.id && it.contentType == item.contentType
-                } == true -> MessageManager.info("Already in the current queue")
-                else -> MessageManager.info("Unable to add this item to the queue")
+        if (item.contentType != ContentType.PLAYLIST) {
+            addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Queue") {
+                val added = ir.hamrahang.tv.playback.PlaybackManager.addToQueue(item)
+                when {
+                    added -> MessageManager.info("Adding items to the queue")
+                    ir.hamrahang.tv.playback.PlaybackManager.session.value?.items?.any {
+                        it.id == item.id && it.contentType == item.contentType
+                    } == true -> MessageManager.info("Already in the current queue")
+                    else -> MessageManager.info("Unable to add this item to the queue")
+                }
             }
         }
         if (item.contentType in setOf(
@@ -492,8 +496,19 @@ object MoreOptionsPanel {
                 showAddToPlaylist(fragment, item)
             }
         }
-        addTopAction(context, actionsColumn, R.drawable.ic_error, "Report") {
-            MessageManager.info("Reporting via TV is not yet available.")
+        addTopAction(
+            context,
+            actionsColumn,
+            R.drawable.ic_error,
+            if (item.contentType == ContentType.PLAYLIST) "Report playlist" else "Report"
+        ) {
+            MessageManager.info(
+                if (item.contentType == ContentType.PLAYLIST) {
+                    "Reporting playlists via TV is not yet available."
+                } else {
+                    "Reporting via TV is not yet available."
+                }
+            )
         }
 
         val destinationLabel = when (item.contentType) {
@@ -511,16 +526,24 @@ object MoreOptionsPanel {
             destinationLabel
         ) {
             close()
-            if (item.contentType == ContentType.ARTIST) {
-                val artist = ir.hamrahang.tv.domain.artist.Artist(
-                    id = item.id,
-                    name = item.title
-                )
-                if (artist == null) MessageManager.info("No artist available")
-                else UiNavigator.runAfterPlayerDismiss { UiNavigator.openArtist(artist) }
-            } else {
-                UiNavigator.runAfterPlayerDismiss {
-                    UiNavigator.openMediaDetail(item.contentType, item.id)
+            when (item.contentType) {
+                ContentType.PLAYLIST -> {
+                    val localId = playlistLocalId ?: item.id
+                    UiNavigator.runAfterPlayerDismiss {
+                        UiNavigator.openPlaylist(localId)
+                    }
+                }
+                ContentType.ARTIST -> {
+                    val artist = ir.hamrahang.tv.domain.artist.Artist(
+                        id = item.id,
+                        name = item.title
+                    )
+                    UiNavigator.runAfterPlayerDismiss { UiNavigator.openArtist(artist) }
+                }
+                else -> {
+                    UiNavigator.runAfterPlayerDismiss {
+                        UiNavigator.openMediaDetail(item.contentType, item.id)
+                    }
                 }
             }
         }
