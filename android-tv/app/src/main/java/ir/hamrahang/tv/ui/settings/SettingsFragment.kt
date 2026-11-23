@@ -329,6 +329,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         root.addView(horizontal, LinearLayout.LayoutParams(-1, 190.dp()))
         contentContainer.addView(root)
         renderPlaylists()
+        if (AuthSessionStore.isLoggedIn(context)) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                if (playlistRepository.refreshAndSync()) renderPlaylists()
+            }
+        }
     }
 
     private fun renderPlaylists() {
