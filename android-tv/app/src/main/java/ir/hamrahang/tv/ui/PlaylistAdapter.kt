@@ -10,8 +10,8 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.local.entity.PlaylistEntity
-import ir.hamrahang.tv.data.playlist.PlaylistMedia
 import ir.hamrahang.tv.util.ImageResolver
+import ir.hamrahang.tv.util.displayTitle
 
 class PlaylistAdapter(
     private var items: List<PlaylistEntity>,
