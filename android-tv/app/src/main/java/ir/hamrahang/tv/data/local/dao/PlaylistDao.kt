@@ -25,6 +25,9 @@ interface PlaylistDao {
     @Query("SELECT * FROM playlists WHERE remoteId = :remoteId AND ownerUserId = :ownerUserId LIMIT 1")
     suspend fun getByRemoteId(remoteId: String, ownerUserId: String): PlaylistEntity?
 
+    @Query("SELECT * FROM playlists WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun getAnyByRemoteId(remoteId: String): PlaylistEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(playlist: PlaylistEntity)
 
