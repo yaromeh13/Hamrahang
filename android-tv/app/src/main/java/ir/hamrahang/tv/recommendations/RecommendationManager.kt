@@ -56,7 +56,6 @@ object RecommendationManager {
                 repository.getAll()
             } else {
                 runCatching { repository.getTopSongs() }
-                    .onSuccess { Log.i(TAG, "top songs API returned=${it.size}") }
                     .onFailure { Log.w(TAG, "Top songs request failed; using cached songs", it) }
                     .getOrElse {
                         repository.getAll().also { cached ->
