@@ -22,6 +22,7 @@ import ir.hamrahang.tv.utils.AppState
 import ir.hamrahang.tv.data.auth.AuthSessionManager
 import ir.hamrahang.tv.data.playlist.PlaylistRepository
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import androidx.activity.OnBackPressedCallback
 
 
@@ -31,6 +32,7 @@ class MainActivity : BaseActivity(),
     private lateinit var networkOverlay: NetworkOverlay
     private var lastBackPressTime: Long = 0L
     private var isPlayerFullscreen = false
+    private var recoverySyncJob: Job? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,13 +69,15 @@ class MainActivity : BaseActivity(),
                         MessageManager.info("Internet Connected")
                         // Restore account credentials and sync local playlists without
                         // recreating the current screen or disturbing active playback.
-                        lifecycleScope.launch {
-                            runCatching {
-                                AuthSessionManager.refreshSession(this@MainActivity)
-                                val synced = PlaylistRepository(this@MainActivity).refreshAndSync()
-                                if (synced) {
-                                    (supportFragmentManager.findFragmentById(R.id.contentContainer) as? SettingsFragment)
-                                        ?.refreshPlaylistsIfVisible()
+                        if (recoverySyncJob?.isActive != true) {
+                            recoverySyncJob = lifecycleScope.launch {
+                                runCatching {
+                                    AuthSessionManager.refreshSession(this@MainActivity)
+                                    val synced = PlaylistRepository(this@MainActivity).refreshAndSync()
+                                    if (synced) {
+                                        (supportFragmentManager.findFragmentById(R.id.contentContainer) as? SettingsFragment)
+                                            ?.refreshPlaylistsIfVisible()
+                                    }
                                 }
                             }
                         }
