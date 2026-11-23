@@ -89,7 +89,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             combine(historyRows, playlistRows, favoriteRows) { history, playlists, favorites ->
-                mainRows + history + playlists + favorites
+                mainRows.take(2) + playlists + mainRows.drop(2) + history + favorites
             }.collect { rows ->
                 _rows.value = rows
             }
