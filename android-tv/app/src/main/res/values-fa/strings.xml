@@ -105,6 +105,9 @@
     <string name="auth_logout">خروج از حساب</string>
     <string name="auth_sync_profile">همگام‌سازی پروفایل</string>
     <string name="auth_syncing">در حال همگام‌سازی پروفایل…</string>
+    <string name="cancel">لغو</string>
+    <string name="save">ذخیره</string>
+    <string name="auth_syncing">در حال همگام‌سازی پروفایل…</string>
     <string name="playlist_rename">تغییر نام</string>
     <string name="playlist_name_hint">نام پلی‌لیست</string>
     <string name="playlist_name_required">نام پلی‌لیست را وارد کنید</string>
