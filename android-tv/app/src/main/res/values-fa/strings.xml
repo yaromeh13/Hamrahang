@@ -104,7 +104,6 @@
     <string name="auth_login">ورود</string>
     <string name="auth_logout">خروج از حساب</string>
     <string name="auth_sync_profile">همگام‌سازی پروفایل</string>
-    <string name="auth_syncing">در حال همگام‌سازی پروفایل…</string>
     <string name="cancel">لغو</string>
     <string name="save">ذخیره</string>
     <string name="auth_syncing">در حال همگام‌سازی پروفایل…</string>
