@@ -241,13 +241,47 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_33_34 = object : Migration(33, 34) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("""
+                CREATE TABLE IF NOT EXISTS playlists (
+                    localId TEXT NOT NULL,
+                    remoteId TEXT,
+                    ownerUserId TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    thumbnail TEXT,
+                    itemCount INTEGER NOT NULL,
+                    isPublic INTEGER NOT NULL,
+                    pendingSync INTEGER NOT NULL,
+                    updatedAt INTEGER NOT NULL,
+                    PRIMARY KEY(localId)
+                )
+            """.trimIndent())
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_playlists_remoteId ON playlists(remoteId)")
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_playlists_ownerUserId ON playlists(ownerUserId)")
+            database.execSQL("""
+                CREATE TABLE IF NOT EXISTS playlist_items (
+                    localPlaylistId TEXT NOT NULL,
+                    itemType TEXT NOT NULL,
+                    itemId TEXT NOT NULL,
+                    position INTEGER NOT NULL,
+                    addedAt INTEGER NOT NULL,
+                    synced INTEGER NOT NULL,
+                    PRIMARY KEY(localPlaylistId, itemType, itemId),
+                    FOREIGN KEY(localPlaylistId) REFERENCES playlists(localId) ON UPDATE NO ACTION ON DELETE CASCADE
+                )
+            """.trimIndent())
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_playlist_items_localPlaylistId ON playlist_items(localPlaylistId)")
+        }
+    }
+
     fun init(context: Context) {
         db = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "hamrahang.db"
         )
-            .addMigrations(MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33)
+            .addMigrations(MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34)
             .fallbackToDestructiveMigration()
             .build()
     }
