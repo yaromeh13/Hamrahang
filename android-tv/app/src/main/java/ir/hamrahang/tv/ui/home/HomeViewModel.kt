@@ -35,12 +35,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun refreshPlaylists() {
         viewModelScope.launch {
-            _playlists.value = runCatching {
-                playlistRepository.getPlaylists()
-            }.getOrDefault(emptyList())
-
-            runCatching { playlistRepository.refreshAndSync() }
-
+            // Settings/login synchronization owns network refresh. Home reads the
+            // account-scoped Room cache only, avoiding duplicate API requests.
             _playlists.value = runCatching {
                 playlistRepository.getPlaylists()
             }.getOrDefault(emptyList())
