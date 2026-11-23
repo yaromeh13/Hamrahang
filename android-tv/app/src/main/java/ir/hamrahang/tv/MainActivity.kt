@@ -73,11 +73,13 @@ class MainActivity : BaseActivity(),
                             recoverySyncJob = lifecycleScope.launch {
                                 runCatching {
                                     AuthSessionManager.refreshSession(this@MainActivity)
-                                    val synced = PlaylistRepository(this@MainActivity).refreshAndSync()
-                                    if (synced) {
-                                        (supportFragmentManager.findFragmentById(R.id.contentContainer) as? SettingsFragment)
-                                            ?.refreshPlaylistsIfVisible()
-                                    }
+                                }
+                                val synced = runCatching {
+                                    PlaylistRepository(this@MainActivity).refreshAndSync()
+                                }.getOrDefault(false)
+                                if (synced) {
+                                    (supportFragmentManager.findFragmentById(R.id.contentContainer) as? SettingsFragment)
+                                        ?.refreshPlaylistsIfVisible()
                                 }
                             }
                         }
