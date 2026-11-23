@@ -7,6 +7,8 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.EditText
+import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -17,6 +19,8 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.local.ContentType
+import ir.hamrahang.tv.data.playlist.PlaylistRepository
+import ir.hamrahang.tv.data.local.entity.PlaylistEntity
 import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.playback.PlaybackItem
 import ir.hamrahang.tv.ui.message.MessageManager
@@ -66,6 +70,263 @@ object MoreOptionsPanel {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         content.post { firstFocusable(content)?.requestFocus() }
+    }
+
+    fun showCreatePlaylist(
+        fragment: Fragment,
+        onCreated: (PlaylistEntity) -> Unit
+    ) {
+        val context = fragment.requireContext()
+        val repository = PlaylistRepository(context)
+        val dialog = Dialog(context)
+        val panel = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            background = context.getDrawable(R.drawable.bg_setting_player)
+            setPadding(28.dp(context), 24.dp(context), 28.dp(context), 22.dp(context))
+        }
+        panel.addView(TextView(context).apply {
+            text = "Create New Playlist"
+            textSize = 23f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+        })
+        val nameInput = EditText(context).apply {
+            hint = "Playlist name"
+            setSingleLine(true)
+            textSize = 19f
+            setTextColor(Color.WHITE)
+            setHintTextColor(0xFFAAAAAA.toInt())
+            background = context.getDrawable(R.drawable.bg_search_input)
+            setPadding(16.dp(context), 8.dp(context), 16.dp(context), 8.dp(context))
+        }
+        panel.addView(nameInput, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 58.dp(context)
+        ).apply { topMargin = 22.dp(context) })
+        val actions = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        val cancel = panelButton(context, "Cancel") { dialog.dismiss() }
+        val save = panelButton(context, "Save") {
+            val name = nameInput.text.toString().trim()
+            if (name.isBlank()) {
+                MessageManager.warning("Enter a playlist name")
+            } else {
+                save.isEnabled = false
+                fragment.viewLifecycleOwner.lifecycleScope.launch {
+                    runCatching { repository.createPlaylist(name) }
+                        .onSuccess {
+                            dialog.dismiss()
+                            MessageManager.success("Playlist created")
+                            onCreated(it)
+                        }
+                        .onFailure {
+                            save.isEnabled = true
+                            MessageManager.error(
+                                if (it.message == "playlist_limit") "Playlist limit reached"
+                                else if (it.message == "login_required") "Sign in to create playlists"
+                                else "Unable to create playlist"
+                            )
+                        }
+                }
+            }
+        }
+        actions.addView(cancel, LinearLayout.LayoutParams(0, 58.dp(context), 1f))
+        actions.addView(save, LinearLayout.LayoutParams(0, 58.dp(context), 1f).apply {
+            marginStart = 14.dp(context)
+        })
+        panel.addView(actions, LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply { topMargin = 20.dp(context) })
+        dialog.setContentView(panel)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.show()
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (context.resources.displayMetrics.widthPixels * 0.72f).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        nameInput.requestFocus()
+    }
+
+    fun showAddToPlaylist(
+        fragment: Fragment,
+        item: PlaybackItem,
+        returnFocus: View? = null
+    ) {
+        val context = fragment.requireContext()
+        val repository = PlaylistRepository(context)
+        val dialog = Dialog(context)
+        val panel = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            background = context.getDrawable(R.drawable.bg_setting_player)
+            setPadding(24.dp(context), 20.dp(context), 24.dp(context), 20.dp(context))
+        }
+        var selected: PlaylistEntity? = null
+        lateinit var renderPicker: (List<PlaylistEntity>) -> Unit
+
+        fun showCreateMode() {
+            panel.removeAllViews()
+            panel.addView(TextView(context).apply {
+                text = "Create New Playlist"
+                textSize = 22f
+                setTextColor(Color.WHITE)
+                gravity = Gravity.CENTER
+            })
+            val input = EditText(context).apply {
+                hint = "Playlist name"
+                setSingleLine(true)
+                textSize = 19f
+                setTextColor(Color.WHITE)
+                setHintTextColor(0xFFAAAAAA.toInt())
+                background = context.getDrawable(R.drawable.bg_search_input)
+                setPadding(16.dp(context), 8.dp(context), 16.dp(context), 8.dp(context))
+            }
+            panel.addView(input, LinearLayout.LayoutParams(-1, 58.dp(context)).apply {
+                topMargin = 20.dp(context)
+            })
+            val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
+            row.addView(panelButton(context, "Cancel") { dialog.dismiss() },
+                LinearLayout.LayoutParams(0, 56.dp(context), 1f))
+            row.addView(panelButton(context, "Save") {
+                val name = input.text.toString().trim()
+                if (name.isBlank()) {
+                    MessageManager.warning("Enter a playlist name")
+                } else {
+                    fragment.viewLifecycleOwner.lifecycleScope.launch {
+                        runCatching { repository.createPlaylist(name) }
+                            .onSuccess { created ->
+                                selected = created
+                                MessageManager.success("Playlist created")
+                                renderPicker(repository.getPlaylists())
+                            }
+                            .onFailure {
+                                MessageManager.error(
+                                    if (it.message == "playlist_limit") "Playlist limit reached"
+                                    else if (it.message == "login_required") "Sign in to create playlists"
+                                    else "Unable to create playlist"
+                                )
+                            }
+                    }
+                }
+            }, LinearLayout.LayoutParams(0, 56.dp(context), 1f).apply {
+                marginStart = 12.dp(context)
+            })
+            panel.addView(row, LinearLayout.LayoutParams(-1, 56.dp(context)).apply {
+                topMargin = 18.dp(context)
+            })
+            input.requestFocus()
+        }
+
+        renderPicker = { playlists ->
+            panel.removeAllViews()
+            panel.addView(TextView(context).apply {
+                text = "Add to Playlist"
+                textSize = 23f
+                setTextColor(Color.WHITE)
+                gravity = Gravity.CENTER
+            })
+            val horizontal = HorizontalScrollView(context).apply {
+                isHorizontalScrollBarEnabled = false
+                clipChildren = false
+                clipToPadding = false
+            }
+            val list = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
+            horizontal.addView(list)
+            playlists.forEach { playlist ->
+                val card = TextView(context).apply {
+                    text = playlist.name + "\n" + playlist.itemCount + " items"
+                    textSize = 17f
+                    setTextColor(Color.WHITE)
+                    gravity = Gravity.CENTER
+                    background = context.getDrawable(R.drawable.bg_setting_option)
+                    isFocusable = true
+                    isFocusableInTouchMode = true
+                    setPadding(18.dp(context), 12.dp(context), 18.dp(context), 12.dp(context))
+                    setOnClickListener {
+                        selected = playlist
+                        for (i in 0 until list.childCount) {
+                            list.getChildAt(i).alpha = if (list.getChildAt(i) === this) 1f else 0.58f
+                        }
+                    }
+                }
+                if (playlist.localId == selected?.localId) card.alpha = 1f else card.alpha = 0.72f
+                list.addView(card, LinearLayout.LayoutParams(190.dp(context), 126.dp(context)).apply {
+                    marginEnd = 12.dp(context)
+                })
+            }
+            panel.addView(horizontal, LinearLayout.LayoutParams(-1, 140.dp(context)).apply {
+                topMargin = 20.dp(context)
+            })
+            val actions = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
+            actions.addView(panelButton(context, "Add") {
+                val target = selected
+                if (target == null) {
+                    MessageManager.warning("Select a playlist")
+                } else {
+                    fragment.viewLifecycleOwner.lifecycleScope.launch {
+                        runCatching { repository.addItem(target, item) }
+                            .onSuccess { added ->
+                                dialog.dismiss()
+                                MessageManager.success(if (added) "Added to playlist" else "Already in playlist")
+                            }
+                            .onFailure {
+                                MessageManager.error(
+                                    when (it.message) {
+                                        "item_limit" -> "Playlist item limit reached"
+                                        "unsupported_item_type" -> "This item type cannot be added"
+                                        else -> "Unable to add item"
+                                    }
+                                )
+                            }
+                    }
+                }
+            }, LinearLayout.LayoutParams(0, 58.dp(context), 1f))
+            actions.addView(panelButton(context, "Cancel") { dialog.dismiss() },
+                LinearLayout.LayoutParams(0, 58.dp(context), 1f).apply { marginStart = 12.dp(context) })
+            actions.addView(panelButton(context, "Create New") { showCreateMode() },
+                LinearLayout.LayoutParams(0, 58.dp(context), 1f).apply { marginStart = 12.dp(context) })
+            panel.addView(actions, LinearLayout.LayoutParams(-1, 58.dp(context)).apply {
+                topMargin = 18.dp(context)
+            })
+            if (playlists.isNotEmpty()) {
+                val focusIndex = playlists.indexOfFirst { it.localId == selected?.localId }.let {
+                    if (it >= 0) it else 0
+                }
+                list.getChildAt(focusIndex)?.requestFocus()
+            } else {
+                actions.getChildAt(2)?.requestFocus()
+            }
+        }
+
+        dialog.setContentView(panel)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.show()
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (context.resources.displayMetrics.widthPixels * 0.82f).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        dialog.setOnDismissListener { returnFocus?.requestFocus() }
+        fragment.viewLifecycleOwner.lifecycleScope.launch {
+            renderPicker(repository.getPlaylists())
+        }
+    }
+
+    private fun panelButton(
+        context: android.content.Context,
+        label: String,
+        action: () -> Unit
+    ): TextView = TextView(context).apply {
+        text = label
+        textSize = 18f
+        setTextColor(Color.WHITE)
+        gravity = Gravity.CENTER
+        isFocusable = true
+        isFocusableInTouchMode = true
+        isClickable = true
+        background = context.getDrawable(R.drawable.bg_setting_option)
+        setOnClickListener { action() }
     }
 
     fun populate(
@@ -230,7 +491,7 @@ object MoreOptionsPanel {
             }
         }
         addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Playlist") {
-            MessageManager.info("Playlists are not available on TV yet")
+            showAddToPlaylist(fragment, item)
         }
         addTopAction(context, actionsColumn, R.drawable.ic_error, "Report") {
             MessageManager.info("Reporting via TV is not yet available.")
