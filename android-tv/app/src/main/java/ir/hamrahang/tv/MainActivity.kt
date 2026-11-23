@@ -70,7 +70,11 @@ class MainActivity : BaseActivity(),
                         lifecycleScope.launch {
                             runCatching {
                                 AuthSessionManager.refreshSession(this@MainActivity)
-                                PlaylistRepository(this@MainActivity).refreshAndSync()
+                                val synced = PlaylistRepository(this@MainActivity).refreshAndSync()
+                                if (synced) {
+                                    (supportFragmentManager.findFragmentById(R.id.contentContainer) as? SettingsFragment)
+                                        ?.refreshPlaylistsIfVisible()
+                                }
                             }
                         }
                     }
