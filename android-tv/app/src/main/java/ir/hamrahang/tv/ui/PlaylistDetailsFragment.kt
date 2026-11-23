@@ -217,7 +217,17 @@ class PlaylistDetailsFragment : Fragment(R.layout.fragment_playlist_details) {
                 contentType = ContentType.PLAYLIST
             ),
             moreButton,
-            playlistLocalId = value.localId
+            playlistLocalId = value.localId,
+            canRenamePlaylist = ir.hamrahang.tv.data.auth.AuthSessionStore.isLoggedIn(requireContext()) &&
+                value.ownerUserId == ir.hamrahang.tv.data.auth.AuthSessionStore.userId(requireContext()),
+            onPlaylistRenamed = { updatedName ->
+                val updated = value.copy(name = updatedName, updatedAt = System.currentTimeMillis())
+                playlist = updated
+                HeroManager.show(HeroContent.PlaylistHero(updated))
+                val playLabel = getString(R.string.play) + " " + updatedName + " - " + mediaItems.size
+                playButton.text = playLabel
+                playButton.contentDescription = playLabel
+            }
         )
     }
 
