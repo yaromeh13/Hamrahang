@@ -8,7 +8,6 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
 import androidx.tvprovider.media.tv.PreviewChannel
 import androidx.tvprovider.media.tv.PreviewChannelHelper
 import androidx.tvprovider.media.tv.PreviewProgram
@@ -103,7 +102,7 @@ object RecommendationManager {
                 .setDescription("Music on Hamrahang")
                 .setWeight(MAX_PROGRAMS - index)
                 .setInternalProviderId("song:${song.id}")
-                .setIntent(detailIntent(context, song.id))
+                .setIntentUri(Uri.parse(detailIntent(context, song.id).toUri(Intent.URI_INTENT_SCHEME)))
 
             if (!artwork.isNullOrBlank()) {
                 programBuilder.setPosterArtUri(Uri.parse(artwork))
@@ -153,8 +152,7 @@ object RecommendationManager {
                 .setCategory(Notification.CATEGORY_RECOMMENDATION)
                 .setContentIntent(contentIntent)
                 .setAutoCancel(true)
-                .addExtras(extras)
-                .build()
+                                .build()
 
             manager.notify(notificationId, notification)
             newIds += notificationId.toString()
