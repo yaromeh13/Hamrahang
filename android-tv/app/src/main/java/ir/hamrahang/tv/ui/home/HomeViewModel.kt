@@ -9,6 +9,7 @@ import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.favorite.FavoriteManager
 import ir.hamrahang.tv.data.playlist.PlaylistRepository
 import ir.hamrahang.tv.ui.rows.ContentRow
+import ir.hamrahang.tv.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -86,10 +87,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 if (playlists.isEmpty()) emptyList()
                 else listOf(
                     ContentRow.Playlists(
-                        title = "Playlists",
+                        title = getApplication<Application>().getString(R.string.your_playlists),
                         items = playlists,
                         sessionId = "home_playlists",
-                        sessionTitle = "Playlists",
+                        sessionTitle = getApplication<Application>().getString(R.string.your_playlists),
                         sessionSource = ir.hamrahang.tv.playback.PlaybackSource.HOME
                     )
                 )
@@ -107,10 +108,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 if (playlists.isEmpty()) emptyList()
                 else listOf(
                     ContentRow.Playlists(
-                        title = "Bookmarked playlists",
+                        title = getApplication<Application>().getString(R.string.bookmarked_playlists),
                         items = playlists,
                         sessionId = "home_favorite_playlists",
-                        sessionTitle = "Bookmarked playlists",
+                        sessionTitle = getApplication<Application>().getString(R.string.bookmarked_playlists),
                         sessionSource = ir.hamrahang.tv.playback.PlaybackSource.HOME
                     )
                 )
