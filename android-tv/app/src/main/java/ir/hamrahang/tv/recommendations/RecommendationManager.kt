@@ -53,8 +53,7 @@ object RecommendationManager {
             val recent = repository.getByIds(history.map { it.mediaId.toString() })
 
             val popular = if (AppState.offlineMode) {
-                repository.getAll().also {
-                }
+                repository.getAll()
             } else {
                 runCatching { repository.getTopSongs() }
                     .onSuccess { Log.i(TAG, "top songs API returned=${it.size}") }
@@ -102,14 +101,10 @@ object RecommendationManager {
                 return
             }
             prefs.edit().putLong(KEY_CHANNEL_ID, channelId).apply()
-        } else {
-        }
 
         if (!prefs.getBoolean(KEY_BROWSABLE_REQUESTED, false)) {
             TvContractCompat.requestChannelBrowsable(context, channelId)
             prefs.edit().putBoolean(KEY_BROWSABLE_REQUESTED, true).apply()
-        } else {
-        }
 
         val oldProgramIds = prefs.getStringSet(KEY_PROGRAM_IDS, emptySet())
             .orEmpty()
