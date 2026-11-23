@@ -118,7 +118,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         super.onViewCreated(view, savedInstanceState)
         categoryRecycler = view.findViewById(R.id.categoryRecycler)
         optionsRecycler = view.findViewById(R.id.optionsRecycler)
-        contentContainer = view.findViewById(R.id.contentContainer)
+        contentContainer = view.findViewById(R.id.settingsContentContainer)
         categoryRecycler.layoutManager =
             LinearLayoutManager(
                 requireContext(),
