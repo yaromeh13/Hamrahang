@@ -20,6 +20,7 @@ import ir.hamrahang.tv.ui.settings.LanguageManager
 import ir.hamrahang.tv.ui.settings.SettingsFragment
 import ir.hamrahang.tv.utils.AppState
 import ir.hamrahang.tv.data.auth.AuthSessionManager
+import ir.hamrahang.tv.data.playlist.PlaylistRepository
 import kotlinx.coroutines.launch
 import androidx.activity.OnBackPressedCallback
 
@@ -64,7 +65,14 @@ class MainActivity : BaseActivity(),
                     NetworkEvents.Event.InternetAvailable -> {
                         networkOverlay.hide()
                         MessageManager.info("Internet Connected")
-                        ReloadManager.reload()
+                        // Restore account credentials and sync local playlists without
+                        // recreating the current screen or disturbing active playback.
+                        lifecycleScope.launch {
+                            runCatching {
+                                AuthSessionManager.refreshSession(this@MainActivity)
+                                PlaylistRepository(this@MainActivity).refreshAndSync()
+                            }
+                        }
                     }
                     NetworkEvents.Event.InternetLost -> {
                         MessageManager.warning("Internet Disconnected")
