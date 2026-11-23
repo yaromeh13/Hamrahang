@@ -54,7 +54,7 @@ object AuthSessionManager {
                     AuthSessionStore.save(appContext, response)
                     FavoriteManager.setAccessToken(response.access_token)
                     try {
-                        AccountSyncRepository().pullServerData(response.access_token)
+                        AccountSyncRepository(appContext).pullServerData(response.access_token)
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (_: Exception) {
