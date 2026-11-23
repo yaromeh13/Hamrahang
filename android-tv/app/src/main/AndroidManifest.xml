@@ -44,6 +44,14 @@
 
         </activity>
 
+        <!-- Entry point for Android TV home-screen recommendation cards. -->
+        <activity
+            android:name=".RecommendationEntryActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <!-- Main Screen -->
         <activity
             android:name=".MainActivity"
