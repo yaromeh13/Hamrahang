@@ -367,6 +367,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
                     isFocusableInTouchMode = true
                     setPadding(18.dp(), 12.dp(), 18.dp(), 12.dp())
                 }
+                card.setOnClickListener {
+                    ir.hamrahang.tv.ui.UiNavigator.openPlaylist(playlist.localId)
+                }
                 row.addView(card, LinearLayout.LayoutParams(210.dp(), 150.dp()).apply {
                     marginEnd = 14.dp()
                 })
