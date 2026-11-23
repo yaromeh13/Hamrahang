@@ -89,15 +89,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             combine(historyRows, playlistRows, favoriteRows) { history, playlists, favorites ->
-                val musicVideosIndex = mainRows.indexOfLast { it is ContentRow.MusicVideos }
-                val orderedMainRows = if (musicVideosIndex >= 0) {
-                    mainRows.take(musicVideosIndex + 1) +
-                        playlists +
-                        mainRows.drop(musicVideosIndex + 1)
-                } else {
-                    mainRows + playlists
-                }
-                orderedMainRows + history + favorites
+                // Recently played rows must remain ahead of Playlists; Playlists
+                // belongs immediately before the Favorites section.
+                mainRows + history + playlists + favorites
             }.collect { rows ->
                 _rows.value = rows
             }
