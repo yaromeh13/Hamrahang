@@ -19,11 +19,13 @@ import androidx.media3.common.C
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
 import ir.hamrahang.tv.ui.message.MessageManager
+import ir.hamrahang.tv.recommendations.RecommendationManager
 import kotlinx.coroutines.SupervisorJob
 
 object PlayerManager {
 
     private var player: ExoPlayer? = null
+    private var appContext: Context? = null
     private var currentMedia: PlayerMedia? = null
     private var currentUrlIndex = 0
     private var mediaPrepared = false
@@ -79,6 +81,7 @@ object PlayerManager {
 
     fun getPlayer(context: Context): ExoPlayer {
 
+        appContext = context.applicationContext
         if (player != null) return player!!
 
         val trackSelector = DefaultTrackSelector(context.applicationContext)
@@ -145,7 +148,14 @@ object PlayerManager {
                 PlayerState.setPlaybackState(
                     if (isPlaying) PlaybackState.PLAYING else PlaybackState.PAUSED
                 )
-                if (isPlaying) PlaybackManager.onPlaybackStarted()
+                if (isPlaying) {
+                    PlaybackManager.onPlaybackStarted()
+                    // Refresh launcher cards after playback history has been persisted.
+                    scope.launch {
+                        delay(1_500L)
+                        appContext?.let { RecommendationManager.refresh(it) }
+                    }
+                }
 
                 if (isPlaying) {
 
