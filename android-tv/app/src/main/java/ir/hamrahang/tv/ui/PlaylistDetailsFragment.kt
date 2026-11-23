@@ -60,10 +60,20 @@ class PlaylistDetailsFragment : Fragment(R.layout.fragment_playlist_details) {
 
         itemsView.setNumRows(1)
         itemsView.setHorizontalSpacing(0)
-        itemsView.setWindowAlignment(BaseGridView.WINDOW_ALIGN_NO_EDGE)
+
+        // Match the edge alignment used by the other content rows.
+        val edgePadding = resources.getDimensionPixelSize(R.dimen.content_edge_spacing)
+        itemsView.setPaddingRelative(
+            itemsView.paddingStart,
+            itemsView.paddingTop,
+            edgePadding,
+            itemsView.paddingBottom
+        )
+        itemsView.setWindowAlignment(BaseGridView.WINDOW_ALIGN_BOTH_EDGE)
+        itemsView.setWindowAlignmentOffset(0)
         itemsView.setWindowAlignmentOffsetPercent(50f)
+        itemsView.setItemAlignmentOffset(0)
         itemsView.setItemAlignmentOffsetPercent(50f)
-        itemsView.setItemAlignmentOffsetWithPadding(true)
 
         adapter = PlaylistMediaAdapter(
             emptyList(),
