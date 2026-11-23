@@ -60,6 +60,14 @@ object UiNavigator {
             .commit()
     }
 
+    fun openPlaylist(localId: String) {
+        val act = activity ?: return
+        act.supportFragmentManager.beginTransaction()
+            .replace(R.id.contentContainer, PlaylistDetailsFragment.newInstance(localId))
+            .addToBackStack("playlist_detail")
+            .commit()
+    }
+
     // ---------------- Generic media details ----------------
 
     fun openMediaDetail(
