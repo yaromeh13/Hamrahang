@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 import ir.hamrahang.tv.data.local.entity.PlaylistEntity
 import ir.hamrahang.tv.data.local.entity.PlaylistItemEntity
 
@@ -11,6 +12,9 @@ import ir.hamrahang.tv.data.local.entity.PlaylistItemEntity
 interface PlaylistDao {
     @Query("SELECT * FROM playlists WHERE ownerUserId = :ownerUserId ORDER BY updatedAt DESC, name COLLATE NOCASE ASC")
     suspend fun getPlaylists(ownerUserId: String): List<PlaylistEntity>
+
+    @Query("SELECT * FROM playlists ORDER BY updatedAt DESC, name COLLATE NOCASE ASC")
+    fun observeAllPlaylists(): Flow<List<PlaylistEntity>>
 
     @Query("SELECT * FROM playlists WHERE ownerUserId = :ownerUserId AND pendingSync = 1 AND remoteId IS NULL ORDER BY updatedAt ASC")
     suspend fun getPendingPlaylists(ownerUserId: String): List<PlaylistEntity>
@@ -29,6 +33,9 @@ interface PlaylistDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertItem(item: PlaylistItemEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertItems(items: List<PlaylistItemEntity>)
 
     @Query("SELECT * FROM playlist_items WHERE localPlaylistId = :localId ORDER BY position ASC")
     suspend fun getItems(localId: String): List<PlaylistItemEntity>
