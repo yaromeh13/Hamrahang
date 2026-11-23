@@ -60,11 +60,6 @@ class PlaylistDetailsFragment : Fragment(R.layout.fragment_playlist_details) {
             if (!isAdded) return@launch
             adapter.submit(media)
             if (media.isEmpty()) {
-                val empty = TextView(requireContext()).apply {
-                    text = "This playlist is empty"
-                    setTextColor(0xFFFFFFFF.toInt())
-                    textSize = 18f
-                }
                 // Keep the native content row empty; the playlist title remains in the hero.
                 itemsView.visibility = View.GONE
                 return@launch
