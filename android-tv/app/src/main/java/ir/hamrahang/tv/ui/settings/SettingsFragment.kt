@@ -277,7 +277,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         val context = requireContext()
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(12, 8, 12, 8)
+            setPadding(12.dp(), 8.dp(), 12.dp(), 8.dp())
             clipChildren = false
             clipToPadding = false
         }
