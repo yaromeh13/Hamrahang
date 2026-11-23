@@ -280,10 +280,10 @@ object MoreOptionsPanel {
             topMargin = 20.dp(context)
         })
         val actions = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
-        actions.addView(panelButton(context, "Cancel") { dialog.dismiss() },
+        actions.addView(panelButton(context, context.getString(R.string.cancel)) { dialog.dismiss() },
             LinearLayout.LayoutParams(0, 58.dp(context), 1f))
         lateinit var save: TextView
-        save = panelButton(context, "Save") {
+        save = panelButton(context, context.getString(R.string.save)) {
             val name = input.text.toString().trim()
             if (name.isBlank()) {
                 MessageManager.warning(context.getString(R.string.playlist_name_required))
