@@ -8,7 +8,14 @@ import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.dao.PlaylistDao
 import ir.hamrahang.tv.data.local.entity.PlaylistEntity
 import ir.hamrahang.tv.data.local.entity.PlaylistItemEntity
+import ir.hamrahang.tv.data.song.SongRepository
+import ir.hamrahang.tv.data.podcast.PodcastRepository
+import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
+import ir.hamrahang.tv.data.video.VideoRepository
 import ir.hamrahang.tv.network.ApiClient
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import ir.hamrahang.tv.playback.PlaybackItem
 import java.util.UUID
 import kotlinx.coroutines.sync.Mutex
@@ -25,6 +32,36 @@ class PlaylistRepository(context: Context) {
         val owner = ownerId()
         if (owner.isBlank()) return emptyList()
         return dao.getPlaylists(owner)
+    }
+
+    fun observePlaylists(): Flow<List<PlaylistEntity>> =
+        dao.observeAllPlaylists().map { playlists ->
+            val owner = ownerId()
+            if (owner.isBlank()) emptyList()
+            else playlists.filter { it.ownerUserId == owner }
+        }
+
+    suspend fun getPlaylist(localId: String): PlaylistEntity? =
+        dao.getPlaylist(localId)
+
+    suspend fun getPlaylistContent(localId: String): List<PlaylistMedia> {
+        val rows = dao.getItems(localId)
+        val result = ArrayList<PlaylistMedia>(rows.size)
+        rows.forEach { row ->
+            try {
+                when (row.itemType) {
+                    "song" -> result.add(PlaylistMedia.SongItem(SongRepository().getSong(row.itemId)))
+                    "podcast" -> result.add(PlaylistMedia.PodcastItem(PodcastRepository().getPodcast(row.itemId)))
+                    "musicvideo" -> result.add(PlaylistMedia.MusicVideoItem(MusicVideoRepository().getMusicVideo(row.itemId)))
+                    "video" -> result.add(PlaylistMedia.VideoItem(VideoRepository().getVideo(row.itemId)))
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                // One unavailable item must not block the rest of the cached playlist.
+            }
+        }
+        return result
     }
 
     suspend fun createPlaylist(input: String): PlaylistEntity {
@@ -152,6 +189,7 @@ class PlaylistRepository(context: Context) {
                     updatedAt = System.currentTimeMillis()
                 )
                 dao.upsert(updated)
+                syncRemoteItems(updated, dto)
                 val unsyncedCount = dao.getUnsyncedItems(updated.localId).size
                 if (unsyncedCount > 0) {
                     dao.updateItemCount(
@@ -239,6 +277,39 @@ class PlaylistRepository(context: Context) {
                 }
             }
         }
+    }
+
+    private suspend fun syncRemoteItems(
+        playlist: PlaylistEntity,
+        dto: PlaylistDto
+    ) {
+        val remoteItems = buildList {
+            dto.songs.orEmpty().forEachIndexed { index, item ->
+                val id = item.id?.toString() ?: return@forEachIndexed
+                add(
+                    PlaylistItemEntity(
+                        localPlaylistId = playlist.localId,
+                        itemType = if (item.meta?.type == "podcast") "podcast" else "song",
+                        itemId = id,
+                        position = item.position ?: index,
+                        synced = true
+                    )
+                )
+            }
+            dto.videos.orEmpty().forEachIndexed { index, item ->
+                val id = item.id?.toString() ?: return@forEachIndexed
+                add(
+                    PlaylistItemEntity(
+                        localPlaylistId = playlist.localId,
+                        itemType = if (item.meta?.type == "musicvideo") "musicvideo" else "video",
+                        itemId = id,
+                        position = item.position ?: (dto.songs.orEmpty().size + index),
+                        synced = true
+                    )
+                )
+            }
+        }
+        if (remoteItems.isNotEmpty()) dao.upsertItems(remoteItems)
     }
 
     private suspend fun applyServerPlaylist(

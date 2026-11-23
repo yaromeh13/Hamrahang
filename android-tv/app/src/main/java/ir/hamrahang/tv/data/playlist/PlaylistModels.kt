@@ -25,10 +25,15 @@ data class PlaylistDto(
     val videos: List<PlaylistContentDto>? = null
 )
 
+data class PlaylistContentMetaDto(
+    val type: String? = null
+)
+
 data class PlaylistContentDto(
     val id: Long? = null,
     val name: String? = null,
-    val position: Int? = null
+    val position: Int? = null,
+    val meta: PlaylistContentMetaDto? = null
 )
 
 data class PlaylistEnvelope(
