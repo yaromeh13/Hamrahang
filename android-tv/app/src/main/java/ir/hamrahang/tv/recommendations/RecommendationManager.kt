@@ -136,15 +136,6 @@ object RecommendationManager {
                 detailIntent(context, song.id),
                 PendingIntent.FLAG_UPDATE_CURRENT or pendingIntentImmutableFlag()
             )
-            val extras = Bundle().apply {
-                putString("android.app.extra.CONTENT_ID", song.id)
-                putString("android.app.extra.CONTENT_TITLE", title)
-                putString("android.app.extra.CONTENT_TEXT", "Music on Hamrahang")
-                putString("android.app.extra.CONTENT_TYPE", "audio")
-                song.thumb?.takeIf { it.isNotBlank() }?.let {
-                    putString("android.app.extra.CONTENT_ARTWORK_URI", it)
-                }
-            }
             val notification = Notification.Builder(context)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(title)
