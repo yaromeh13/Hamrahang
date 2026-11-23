@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import ir.hamrahang.tv.MainActivity
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.search.SearchSection
+import ir.hamrahang.tv.data.local.SearchHistoryStore
 
 import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.playback.PlaybackSource
@@ -127,7 +128,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         rows.setItemAlignmentOffsetWithPadding(true)
         // search
         searchInput.setOnEditorActionListener { v, _, _ ->
-            viewModel.search(v.text.toString())
+            val query = v.text.toString()
+            SearchHistoryStore.add(requireContext(), query)
+            viewModel.search(query)
             true
         }
 
