@@ -20,7 +20,15 @@ data class PlaylistDto(
     val url: String? = null,
     val owner: PlaylistOwnerDto? = null,
     @SerializedName("public") val isPublic: Boolean? = null,
-    val meta: PlaylistMetaDto? = null
+    val meta: PlaylistMetaDto? = null,
+    val songs: List<PlaylistContentDto>? = null,
+    val videos: List<PlaylistContentDto>? = null
+)
+
+data class PlaylistContentDto(
+    val id: Long? = null,
+    val name: String? = null,
+    val position: Int? = null
 )
 
 data class PlaylistEnvelope(
@@ -42,4 +50,13 @@ data class PlaylistSyncInput(
     val local_id: String,
     val name: String,
     val items: List<PlaylistSyncItem>
+)
+
+data class PlaylistApiResponse(
+    val ok: Boolean? = null,
+    val error: String? = null,
+    val playlists: List<PlaylistDto>? = null,
+    val playlist: PlaylistEnvelope? = null,
+    val created: List<PlaylistCreatedDto>? = null,
+    val skipped: List<Map<String, Any?>>? = null
 )
