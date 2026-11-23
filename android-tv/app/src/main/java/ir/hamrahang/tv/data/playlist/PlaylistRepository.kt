@@ -218,6 +218,45 @@ class PlaylistRepository(context: Context) {
         return true
     }
 
+    /** Pull the account's playlists into Room without pushing pending local playlists. */
+    suspend fun refreshFromServer(): Boolean = syncMutex.withLock {
+        val owner = ownerId()
+        val accessToken = token()
+        if (owner.isBlank() || accessToken == null) return@withLock false
+        try {
+            val response = ApiClient.api.favoriteAccountAction(
+                authorization = "Bearer $accessToken",
+                body = UacRequest(UacAction(a = "get_playlists"))
+            )
+            if (response.error != null || response.playlists == null) return@withLock false
+            response.playlists.forEach { dto ->
+                val remoteId = dto.id?.toString() ?: return@forEach
+                val existing = dao.getByRemoteId(remoteId, owner)
+                val local = existing ?: PlaylistEntity(
+                    localId = UUID.randomUUID().toString(),
+                    remoteId = remoteId,
+                    ownerUserId = owner,
+                    name = dto.name.orEmpty(),
+                    pendingSync = false
+                )
+                val updated = local.copy(
+                    remoteId = remoteId,
+                    name = dto.name?.takeIf { it.isNotBlank() } ?: local.name,
+                    thumbnail = dto.meta?.tmb ?: local.thumbnail,
+                    itemCount = dto.meta?.nci ?: local.itemCount,
+                    isPublic = dto.isPublic ?: local.isPublic,
+                    pendingSync = false,
+                    updatedAt = System.currentTimeMillis()
+                )
+                dao.upsert(updated)
+                syncRemoteItems(updated, dto)
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     suspend fun refreshAndSync(): Boolean = syncMutex.withLock {
         val owner = ownerId()
         val accessToken = token()
