@@ -14,6 +14,7 @@ import ir.hamrahang.tv.data.auth.AuthRequest
 import ir.hamrahang.tv.data.auth.AuthResponse
 import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.video.VideoResponseDto
+import ir.hamrahang.tv.data.playlist.PlaylistEnvelope
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -70,6 +71,12 @@ interface ApiService {
         @retrofit2.http.Path("id") id: String,
         @Query("_qjs") qjs: String = "ep"
     ): VideoResponseDto
+
+    @GET("playlist/{id}")
+    suspend fun getPlaylist(
+        @retrofit2.http.Path("id") id: String,
+        @Query("_qjs") qjs: String = "ep"
+    ): PlaylistEnvelope
 
     @GET("song/{id}")
     suspend fun getSong(
