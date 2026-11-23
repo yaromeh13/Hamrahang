@@ -23,6 +23,11 @@ import com.bumptech.glide.Glide
 import ir.hamrahang.tv.util.UiUtils
 import ir.hamrahang.tv.utils.AppState
 import ir.hamrahang.tv.data.local.DatabaseProvider
+import ir.hamrahang.tv.data.playlist.PlaylistRepository
+import ir.hamrahang.tv.ui.MoreOptionsPanel
+import android.widget.HorizontalScrollView
+import android.widget.LinearLayout
+import android.graphics.Color
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryRepository
 import ir.hamrahang.tv.data.auth.AuthRequest
 import ir.hamrahang.tv.data.auth.AuthResponse
@@ -47,6 +52,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
     private lateinit var languageRecycler: RecyclerView
     private var qrPollJob: Job? = null
     private val accountSyncRepository by lazy { AccountSyncRepository() }
+    private val playlistRepository by lazy { PlaylistRepository(requireContext()) }
 
     private val playbackHistoryRepository by lazy {
 
@@ -265,6 +271,106 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
             }
         }
     }
+    private fun showPlaylists() {
+        contentContainer.removeAllViews()
+        contentContainer.visibility = View.VISIBLE
+        val context = requireContext()
+        val root = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(12, 8, 12, 8)
+            clipChildren = false
+            clipToPadding = false
+        }
+        val actions = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+        }
+        fun actionButton(label: String, onClick: () -> Unit): Button =
+            Button(context).apply {
+                text = label
+                isAllCaps = false
+                setTextColor(Color.WHITE)
+                background = context.getDrawable(R.drawable.bg_setting_option)
+                isFocusable = true
+                isFocusableInTouchMode = true
+                setOnClickListener { onClick() }
+            }
+        actions.addView(actionButton("Create New Playlist") {
+            MoreOptionsPanel.showCreatePlaylist(this) { renderPlaylists() }
+        }, LinearLayout.LayoutParams(0, 58.dp(), 1f))
+        actions.addView(actionButton("Refresh Playlists") {
+            viewLifecycleOwner.lifecycleScope.launch {
+                val ok = playlistRepository.refreshAndSync()
+                renderPlaylists()
+                if (ok) MessageManager.success("Playlists refreshed")
+                else MessageManager.warning("Unable to refresh playlists. Local playlists remain available.")
+            }
+        }, LinearLayout.LayoutParams(0, 58.dp(), 1f).apply { marginStart = 14.dp() })
+        root.addView(actions)
+        root.addView(TextView(context).apply {
+            text = "Your Playlists"
+            textSize = 22f
+            setTextColor(Color.WHITE)
+            setPadding(4.dp(), 22.dp(), 4.dp(), 12.dp())
+        })
+        val horizontal = HorizontalScrollView(context).apply {
+            isFillViewport = false
+            isHorizontalScrollBarEnabled = false
+            clipChildren = false
+            clipToPadding = false
+        }
+        val playlistRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            clipChildren = false
+            clipToPadding = false
+        }
+        horizontal.addView(playlistRow)
+        root.addView(horizontal, LinearLayout.LayoutParams(-1, 190.dp()))
+        contentContainer.addView(root)
+        renderPlaylists()
+    }
+
+    private fun renderPlaylists() {
+        if (!isAdded || !::contentContainer.isInitialized || contentContainer.childCount == 0) return
+        val root = contentContainer.getChildAt(0) as? LinearLayout ?: return
+        val horizontal = root.getChildAt(2) as? HorizontalScrollView ?: return
+        val row = horizontal.getChildAt(0) as? LinearLayout ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val playlists = runCatching { playlistRepository.getPlaylists() }.getOrDefault(emptyList())
+            if (!isAdded || !horizontal.isAttachedToWindow) return@launch
+            row.removeAllViews()
+            if (playlists.isEmpty()) {
+                row.addView(TextView(requireContext()).apply {
+                    text = if (AuthSessionStore.isLoggedIn(requireContext()))
+                        "No playlists yet. Create your first playlist."
+                    else "Sign in to manage your playlists."
+                    setTextColor(0xFFBBBBBB.toInt())
+                    textSize = 18f
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                }, LinearLayout.LayoutParams(-2, -1))
+                return@launch
+            }
+            playlists.forEach { playlist ->
+                val card = TextView(requireContext()).apply {
+                    text = playlist.name + "\n" + playlist.itemCount + " items"
+                    textSize = 18f
+                    setTextColor(Color.WHITE)
+                    gravity = android.view.Gravity.CENTER
+                    background = requireContext().getDrawable(R.drawable.bg_setting_option)
+                    isFocusable = true
+                    isFocusableInTouchMode = true
+                    setPadding(18.dp(), 12.dp(), 18.dp(), 12.dp())
+                }
+                row.addView(card, LinearLayout.LayoutParams(210.dp(), 150.dp()).apply {
+                    marginEnd = 14.dp()
+                })
+            }
+            row.getChildAt(0)?.requestFocus()
+        }
+    }
+
+    private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
+
     private fun showProfile() {
         contentContainer.removeAllViews()
         contentContainer.visibility = View.VISIBLE
@@ -670,7 +776,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         when (index) {
 
             0 -> showProfile()
-            1 -> showProfile()
+            1 -> showPlaylists()
             2 -> showAudioSettings()
             3 -> showVideoSettings()
             4 -> showGeneralSettings()
