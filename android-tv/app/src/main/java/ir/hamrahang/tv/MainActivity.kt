@@ -1,12 +1,16 @@
 package ir.hamrahang.tv
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import ir.hamrahang.tv.contract.Focusable
 import ir.hamrahang.tv.player.BackgroundManager
+import ir.hamrahang.tv.data.local.ContentType
+import ir.hamrahang.tv.recommendations.RecommendationManager
+import kotlinx.coroutines.Dispatchers
 import ir.hamrahang.tv.ui.*
 import ir.hamrahang.tv.databinding.ActivityMainBinding
 import ir.hamrahang.tv.network.NetworkEvents
@@ -104,6 +108,12 @@ class MainActivity : BaseActivity(),
             .replace(R.id.contentContainer, firstFragment)
             .commit()
 
+        // Publish launcher recommendations from Room/API cache without blocking startup.
+        lifecycleScope.launch(Dispatchers.IO) {
+            RecommendationManager.refresh(applicationContext)
+        }
+        handleRecommendationIntent(intent)
+
         // BACK HANDLING
         onBackPressedDispatcher.addCallback(
             this,
@@ -139,6 +149,25 @@ class MainActivity : BaseActivity(),
             }
         )
 
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleRecommendationIntent(intent)
+    }
+
+    private fun handleRecommendationIntent(source: Intent?) {
+        val typeName = source?.getStringExtra(RecommendationEntryActivity.EXTRA_TYPE) ?: return
+        val mediaId = source.getStringExtra(RecommendationEntryActivity.EXTRA_ID) ?: return
+        val contentType = runCatching { ContentType.valueOf(typeName) }.getOrNull() ?: return
+        if (mediaId.isBlank()) return
+
+        binding.root.post {
+            UiNavigator.runAfterPlayerDismiss {
+                UiNavigator.openMediaDetail(contentType, mediaId)
+            }
+        }
     }
 
     override fun onMenuSelected(menuId: Int) {
