@@ -42,6 +42,9 @@ interface PlaylistDao {
     @Query("UPDATE playlist_items SET synced = 1 WHERE localPlaylistId = :localId")
     suspend fun markAllItemsSynced(localId: String)
 
+    @Query("UPDATE playlist_items SET synced = 1 WHERE localPlaylistId = :localId AND position < :count")
+    suspend fun markItemsSyncedBefore(localId: String, count: Int)
+
     @Query("DELETE FROM playlist_items WHERE localPlaylistId = :localId AND itemType = :itemType AND itemId = :itemId")
     suspend fun deleteItem(localId: String, itemType: String, itemId: String)
 
