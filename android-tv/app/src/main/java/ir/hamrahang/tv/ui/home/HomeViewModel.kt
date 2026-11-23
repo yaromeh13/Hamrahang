@@ -89,7 +89,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             combine(historyRows, playlistRows, favoriteRows) { history, playlists, favorites ->
-                mainRows.take(2) + playlists + mainRows.drop(2) + history + favorites
+                val musicVideosIndex = mainRows.indexOfLast { it is ContentRow.MusicVideos }
+                val orderedMainRows = if (musicVideosIndex >= 0) {
+                    mainRows.take(musicVideosIndex + 1) +
+                        playlists +
+                        mainRows.drop(musicVideosIndex + 1)
+                } else {
+                    mainRows + playlists
+                }
+                orderedMainRows + history + favorites
             }.collect { rows ->
                 _rows.value = rows
             }
