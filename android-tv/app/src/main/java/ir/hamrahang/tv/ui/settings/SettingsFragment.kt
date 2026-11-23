@@ -118,7 +118,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         super.onViewCreated(view, savedInstanceState)
         categoryRecycler = view.findViewById(R.id.categoryRecycler)
         optionsRecycler = view.findViewById(R.id.optionsRecycler)
-        contentContainer = view.findViewById(R.id.contentContainer)
+        contentContainer = view.findViewById(R.id.settingsContentContainer)
         categoryRecycler.layoutManager =
             LinearLayoutManager(
                 requireContext(),
@@ -366,6 +366,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
                     isFocusable = true
                     isFocusableInTouchMode = true
                     setPadding(18.dp(), 12.dp(), 18.dp(), 12.dp())
+                }
+                card.setOnClickListener {
+                    ir.hamrahang.tv.ui.UiNavigator.openPlaylist(playlist.localId)
                 }
                 row.addView(card, LinearLayout.LayoutParams(210.dp(), 150.dp()).apply {
                     marginEnd = 14.dp()

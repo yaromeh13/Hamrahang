@@ -212,6 +212,20 @@ class ContentRowsAdapter(
                     ArtistAdapter.ITEM_LAYOUT_RES
                 }
 
+                is ContentRow.Playlists -> {
+                    recycler.adapter = PlaylistAdapter(
+                        items = row.items,
+                        onFocus = { item ->
+                            onBackgroundChange(item.thumbnail)
+                            onHeroFocus(HeroContent.PlaylistHero(item))
+                        },
+                        onClick = { item ->
+                            UiNavigator.openPlaylist(item.localId)
+                        }
+                    )
+                    PlaylistAdapter.ITEM_LAYOUT_RES
+                }
+
                 is ContentRow.Albums -> {
                     recycler.adapter = AlbumAdapter(
                         items = row.items,

@@ -38,6 +38,11 @@ class HeroEngine {
                 style = HeroStyle.PODCAST,
                 podcast = event.podcast
             )
+
+            is HeroEvent.PlaylistFocused -> HeroState(
+                style = HeroStyle.PLAYLIST,
+                playlist = event.playlist
+            )
         }
 
         val key = when (newState.style) {
@@ -56,6 +61,9 @@ class HeroEngine {
 
             HeroStyle.VIDEO ->
                 "musicvideo:${newState.musicVideo?.id}:${newState.musicVideo?.meta.hashCode()}"
+
+            HeroStyle.PLAYLIST ->
+                "playlist:${newState.playlist?.localId}:${newState.playlist?.name}:${newState.playlist?.itemCount}:${newState.playlist?.thumbnail}"
         }
 
         if (key == lastKey) return

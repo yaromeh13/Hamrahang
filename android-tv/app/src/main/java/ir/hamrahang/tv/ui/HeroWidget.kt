@@ -113,6 +113,22 @@ class HeroWidget(
                         )
                     }
 
+                    HeroStyle.PLAYLIST -> {
+                        val playlist = state.playlist ?: return@collect
+                        showItem()
+                        bindItemTitle(playlist.name, "${playlist.itemCount} items")
+                        ImageResolver.request(
+                            itemCover,
+                            playlist.thumbnail,
+                            R.drawable.ic_playlist
+                        ).transform(
+                            CenterCrop(),
+                            RoundedCorners(24)
+                        ).into(itemCover)
+                        itemMetaContainer.visibility = View.GONE
+                        layoutItemArtists.visibility = View.GONE
+                    }
+
                     HeroStyle.PODCAST -> {
                         val podcast = state.podcast ?: return@collect
                         showItem()
@@ -236,6 +252,8 @@ class HeroWidget(
 
     private fun showItem() {
         hideAll()
+        itemMetaContainer.visibility = View.VISIBLE
+        layoutItemArtists.visibility = View.VISIBLE
         itemHero.visibility = View.VISIBLE
     }
 
