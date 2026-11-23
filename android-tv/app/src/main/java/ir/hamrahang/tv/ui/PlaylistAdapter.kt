@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -21,7 +22,8 @@ class PlaylistAdapter(
 ) : RecyclerView.Adapter<PlaylistAdapter.VH>() {
 
     companion object {
-        const val ITEM_LAYOUT_RES = R.layout.item_content
+        @LayoutRes
+        val ITEM_LAYOUT_RES = R.layout.item_content
     }
 
     class VH(view: View) : RecyclerView.ViewHolder(view) {
