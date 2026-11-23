@@ -68,6 +68,44 @@ class PlaylistRepository(context: Context) {
         }
     }
 
+    suspend fun hasPendingSyncData(): Boolean {
+        val owner = ownerId()
+        if (owner.isBlank()) return false
+        val playlists = dao.getPlaylists(owner)
+        if (dao.getPendingPlaylists(owner).isNotEmpty()) return true
+        return playlists.any { dao.getUnsyncedItems(it.localId).isNotEmpty() }
+    }
+
+    suspend fun renamePlaylist(localId: String, input: String): PlaylistEntity {
+        val name = input.trim()
+        require(name.isNotEmpty()) { "missing_name" }
+        require(AuthSessionStore.isLoggedIn(appContext)) { "login_required" }
+        val owner = ownerId()
+        require(owner.isNotBlank()) { "login_required" }
+        val current = dao.getPlaylist(localId) ?: throw IllegalStateException("not_found")
+        require(current.ownerUserId == owner) { "forbidden" }
+
+        val remoteId = current.remoteId?.toLongOrNull()
+        if (remoteId != null) {
+            val accessToken = token() ?: throw IllegalStateException("login_required")
+            val response = ApiClient.api.favoriteAccountAction(
+                authorization = "Bearer $accessToken",
+                body = UacRequest(
+                    UacAction(
+                        a = "update_playlist",
+                        playlist_id = remoteId,
+                        name = name
+                    )
+                )
+            )
+            check(response.ok == true) { response.error ?: "update_failed" }
+        }
+
+        val updated = current.copy(name = name, updatedAt = System.currentTimeMillis())
+        dao.upsert(updated)
+        return updated
+    }
+
     suspend fun getPlaylistContent(localId: String): List<PlaylistMedia> {
         val rows = dao.getItems(localId)
         val result = ArrayList<PlaylistMedia>(rows.size)
