@@ -110,6 +110,13 @@ class PlaylistDetailsFragment : Fragment(R.layout.fragment_playlist_details) {
             if (!isAdded) return@launch
             mediaItems = media
             adapter.submit(media)
+
+            // Show the playlist name and its loaded item count on this screen only.
+            val playLabel = getString(R.string.play) +
+                " " + loadedPlaylist.name + " - " + media.size
+            playButton.text = playLabel
+            playButton.contentDescription = playLabel
+
             if (media.isEmpty()) {
                 itemsView.visibility = View.GONE
                 emptyState.visibility = View.VISIBLE
