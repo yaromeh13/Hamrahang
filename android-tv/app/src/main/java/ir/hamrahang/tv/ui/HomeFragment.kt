@@ -26,6 +26,7 @@ class HomeFragment :
     private val viewModel: HomeViewModel by viewModels()
     private lateinit var adapter: ContentRowsAdapter
     private lateinit var recycler: VerticalGridView
+    private var initialRowsFocusRequested = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -67,7 +68,10 @@ class HomeFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.rows.collect { rows ->
                 adapter.submit(rows)
-                requestHomeFocus()
+                if (!initialRowsFocusRequested && rows.isNotEmpty()) {
+                    initialRowsFocusRequested = true
+                    requestHomeFocus()
+                }
             }
         }
     }
