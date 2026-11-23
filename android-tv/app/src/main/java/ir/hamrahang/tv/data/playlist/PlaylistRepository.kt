@@ -44,6 +44,30 @@ class PlaylistRepository(context: Context) {
     suspend fun getPlaylist(localId: String): PlaylistEntity? =
         dao.getPlaylist(localId)
 
+    /** Resolve bookmarked public playlists; use Room cache when offline. */
+    suspend fun getFavoritePlaylists(remoteIds: List<String>): List<PlaylistEntity> {
+        return remoteIds.distinct().mapNotNull { remoteId ->
+            val cached = dao.getAnyByRemoteId(remoteId)
+            if (cached != null) cached else runCatching {
+                val dto = ApiClient.api.getPlaylist(remoteId).playlist
+                    ?: return@runCatching null
+                val playlist = PlaylistEntity(
+                    localId = "remote_$remoteId",
+                    remoteId = remoteId,
+                    ownerUserId = dto.owner?.id?.toString().orEmpty(),
+                    name = dto.name?.takeIf { it.isNotBlank() } ?: "Playlist",
+                    thumbnail = dto.meta?.tmb,
+                    itemCount = dto.meta?.nci ?: 0,
+                    isPublic = dto.isPublic ?: true,
+                    pendingSync = false
+                )
+                dao.upsert(playlist)
+                syncRemoteItems(playlist, dto)
+                playlist
+            }.getOrNull()
+        }
+    }
+
     suspend fun getPlaylistContent(localId: String): List<PlaylistMedia> {
         val rows = dao.getItems(localId)
         val result = ArrayList<PlaylistMedia>(rows.size)
