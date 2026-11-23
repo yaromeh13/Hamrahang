@@ -77,68 +77,21 @@ object MoreOptionsPanel {
         onCreated: (PlaylistEntity) -> Unit
     ) {
         val context = fragment.requireContext()
-        val repository = PlaylistRepository(context)
         val dialog = Dialog(context)
         val panel = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             background = context.getDrawable(R.drawable.bg_setting_player)
             setPadding(28.dp(context), 24.dp(context), 28.dp(context), 22.dp(context))
         }
-        panel.addView(TextView(context).apply {
-            text = "Create New Playlist"
-            textSize = 23f
-            setTextColor(Color.WHITE)
-            gravity = Gravity.CENTER
-        })
-        val nameInput = EditText(context).apply {
-            hint = "Playlist name"
-            setSingleLine(true)
-            textSize = 19f
-            setTextColor(Color.WHITE)
-            setHintTextColor(0xFFAAAAAA.toInt())
-            background = context.getDrawable(R.drawable.bg_search_input)
-            setPadding(16.dp(context), 8.dp(context), 16.dp(context), 8.dp(context))
-        }
-        panel.addView(nameInput, LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 58.dp(context)
-        ).apply { topMargin = 22.dp(context) })
-        val actions = LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-        }
-        val cancel = panelButton(context, "Cancel") { dialog.dismiss() }
-        lateinit var save: TextView
-        save = panelButton(context, "Save") {
-            val name = nameInput.text.toString().trim()
-            if (name.isBlank()) {
-                MessageManager.warning("Enter a playlist name")
-            } else {
-                save.isEnabled = false
-                fragment.viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching { repository.createPlaylist(name) }
-                        .onSuccess {
-                            dialog.dismiss()
-                            MessageManager.success("Playlist created")
-                            onCreated(it)
-                        }
-                        .onFailure {
-                            save.isEnabled = true
-                            MessageManager.error(
-                                if (it.message == "playlist_limit") "Playlist limit reached"
-                                else if (it.message == "login_required") "Sign in to create playlists"
-                                else "Unable to create playlist"
-                            )
-                        }
-                }
+        populateCreatePlaylistPanel(
+            fragment = fragment,
+            panel = panel,
+            onCancel = { dialog.dismiss() },
+            onCreated = {
+                dialog.dismiss()
+                onCreated(it)
             }
-        }
-        actions.addView(cancel, LinearLayout.LayoutParams(0, 58.dp(context), 1f))
-        actions.addView(save, LinearLayout.LayoutParams(0, 58.dp(context), 1f).apply {
-            marginStart = 14.dp(context)
-        })
-        panel.addView(actions, LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-        ).apply { topMargin = 20.dp(context) })
+        )
         dialog.setContentView(panel)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.show()
@@ -147,7 +100,7 @@ object MoreOptionsPanel {
             (context.resources.displayMetrics.widthPixels * 0.72f).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
-        nameInput.requestFocus()
+        panel.findViewWithTag<EditText>("playlist_name")?.requestFocus()
     }
 
     fun showAddToPlaylist(
@@ -167,56 +120,17 @@ object MoreOptionsPanel {
         lateinit var renderPicker: (List<PlaylistEntity>) -> Unit
 
         fun showCreateMode() {
-            panel.removeAllViews()
-            panel.addView(TextView(context).apply {
-                text = "Create New Playlist"
-                textSize = 22f
-                setTextColor(Color.WHITE)
-                gravity = Gravity.CENTER
-            })
-            val input = EditText(context).apply {
-                hint = "Playlist name"
-                setSingleLine(true)
-                textSize = 19f
-                setTextColor(Color.WHITE)
-                setHintTextColor(0xFFAAAAAA.toInt())
-                background = context.getDrawable(R.drawable.bg_search_input)
-                setPadding(16.dp(context), 8.dp(context), 16.dp(context), 8.dp(context))
-            }
-            panel.addView(input, LinearLayout.LayoutParams(-1, 58.dp(context)).apply {
-                topMargin = 20.dp(context)
-            })
-            val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
-            row.addView(panelButton(context, "Cancel") { dialog.dismiss() },
-                LinearLayout.LayoutParams(0, 56.dp(context), 1f))
-            row.addView(panelButton(context, "Save") {
-                val name = input.text.toString().trim()
-                if (name.isBlank()) {
-                    MessageManager.warning("Enter a playlist name")
-                } else {
+            populateCreatePlaylistPanel(
+                fragment = fragment,
+                panel = panel,
+                onCancel = { dialog.dismiss() },
+                onCreated = { created ->
+                    selected = created
                     fragment.viewLifecycleOwner.lifecycleScope.launch {
-                        runCatching { repository.createPlaylist(name) }
-                            .onSuccess { created ->
-                                selected = created
-                                MessageManager.success("Playlist created")
-                                renderPicker(repository.getPlaylists())
-                            }
-                            .onFailure {
-                                MessageManager.error(
-                                    if (it.message == "playlist_limit") "Playlist limit reached"
-                                    else if (it.message == "login_required") "Sign in to create playlists"
-                                    else "Unable to create playlist"
-                                )
-                            }
+                        renderPicker(repository.getPlaylists())
                     }
                 }
-            }, LinearLayout.LayoutParams(0, 56.dp(context), 1f).apply {
-                marginStart = 12.dp(context)
-            })
-            panel.addView(row, LinearLayout.LayoutParams(-1, 56.dp(context)).apply {
-                topMargin = 18.dp(context)
-            })
-            input.requestFocus()
+            )
         }
 
         renderPicker = { playlists ->
@@ -312,6 +226,75 @@ object MoreOptionsPanel {
         fragment.viewLifecycleOwner.lifecycleScope.launch {
             renderPicker(repository.getPlaylists())
         }
+    }
+
+    private fun populateCreatePlaylistPanel(
+        fragment: Fragment,
+        panel: LinearLayout,
+        onCancel: () -> Unit,
+        onCreated: (PlaylistEntity) -> Unit
+    ) {
+        val context = fragment.requireContext()
+        val repository = PlaylistRepository(context)
+        panel.removeAllViews()
+        panel.orientation = LinearLayout.VERTICAL
+        panel.addView(TextView(context).apply {
+            text = "Create New Playlist"
+            textSize = 23f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+        })
+        val input = EditText(context).apply {
+            tag = "playlist_name"
+            hint = "Playlist name"
+            setSingleLine(true)
+            textSize = 19f
+            setTextColor(Color.WHITE)
+            setHintTextColor(0xFFAAAAAA.toInt())
+            background = context.getDrawable(R.drawable.bg_search_input)
+            setPadding(16.dp(context), 8.dp(context), 16.dp(context), 8.dp(context))
+        }
+        panel.addView(input, LinearLayout.LayoutParams(-1, 58.dp(context)).apply {
+            topMargin = 20.dp(context)
+        })
+        val actions = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        actions.addView(panelButton(context, "Cancel", onCancel),
+            LinearLayout.LayoutParams(0, 58.dp(context), 1f))
+        lateinit var save: TextView
+        save = panelButton(context, "Save") {
+            val name = input.text.toString().trim()
+            if (name.isBlank()) {
+                MessageManager.warning("Enter a playlist name")
+            } else {
+                save.isEnabled = false
+                fragment.viewLifecycleOwner.lifecycleScope.launch {
+                    runCatching { repository.createPlaylist(name) }
+                        .onSuccess {
+                            MessageManager.success("Playlist created")
+                            onCreated(it)
+                        }
+                        .onFailure {
+                            save.isEnabled = true
+                            MessageManager.error(
+                                when (it.message) {
+                                    "playlist_limit" -> "Playlist limit reached"
+                                    "login_required" -> "Sign in to create playlists"
+                                    else -> "Unable to create playlist"
+                                }
+                            )
+                        }
+                }
+            }
+        }
+        actions.addView(save, LinearLayout.LayoutParams(0, 58.dp(context), 1f).apply {
+            marginStart = 12.dp(context)
+        })
+        panel.addView(actions, LinearLayout.LayoutParams(-1, 58.dp(context)).apply {
+            topMargin = 18.dp(context)
+        })
+        input.requestFocus()
     }
 
     private fun panelButton(
