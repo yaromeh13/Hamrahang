@@ -106,7 +106,6 @@
     <string name="auth_login">Login</string>
     <string name="auth_logout">Logout</string>
     <string name="auth_sync_profile">Sync your profile</string>
-    <string name="auth_syncing">Syncing profile…</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="auth_syncing">Syncing profile…</string>
