@@ -481,8 +481,16 @@ object MoreOptionsPanel {
                 else -> MessageManager.info("Unable to add this item to the queue")
             }
         }
-        addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Playlist") {
-            showAddToPlaylist(fragment, item)
+        if (item.contentType in setOf(
+                ContentType.SONG,
+                ContentType.PODCAST,
+                ContentType.MUSICVIDEO,
+                ContentType.VIDEO
+            )
+        ) {
+            addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Playlist") {
+                showAddToPlaylist(fragment, item)
+            }
         }
         addTopAction(context, actionsColumn, R.drawable.ic_error, "Report") {
             MessageManager.info("Reporting via TV is not yet available.")
