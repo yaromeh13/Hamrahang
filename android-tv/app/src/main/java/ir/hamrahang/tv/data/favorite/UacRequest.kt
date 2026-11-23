@@ -33,6 +33,7 @@ data class UacResponse(
     val type: String? = null,
     val id: String? = null,
     val favorited: Boolean? = null,
+    val exists: Boolean? = null,
     val playlist: PlaylistEnvelope? = null,
     val playlists: List<PlaylistDto>? = null,
     val created: List<PlaylistCreatedDto>? = null,
