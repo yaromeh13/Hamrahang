@@ -93,11 +93,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
             R.drawable.ic_language
         ),
 
-        // Cleaning
-        SettingCategory(
-            "Cleaning",
-            R.drawable.ic_cleaning
-        )
     )
 
     override fun onViewCreated(
@@ -618,6 +613,18 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
                 SettingOption(
                     "general_keep",
                     "Keep Playing"
+                ),
+                SettingOption(
+                    "clean_recent",
+                    "Clear Recently Played"
+                ),
+                SettingOption(
+                    "clean_search",
+                    "Clear Search History"
+                ),
+                SettingOption(
+                    "clean_favorites",
+                    "Delete Favorites"
                 )
             )
         )
@@ -634,31 +641,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
     }
     private fun showLanguageSettings() {
         languageRecycler.visibility = View.VISIBLE
-    }
-    private fun showCleaning() {
-        optionsRecycler.visibility = View.VISIBLE
-        optionAdapter.submit(
-
-            listOf(
-
-                SettingOption(
-                    "clean_recent",
-                    "Clear Recently Played"
-                ),
-
-                SettingOption(
-                    "clean_search",
-                    "Clear Search History"
-                ),
-
-                SettingOption(
-                    "clean_favorites",
-                    "Delete Favorites"
-                )
-
-            )
-
-        )
     }
     override fun onDestroyView() {
         qrPollJob?.cancel()
@@ -685,7 +667,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
             3 -> showGeneralSettings()
             4 -> showThemeSettings()
             5 -> showLanguageSettings()
-            6 -> showCleaning()
         }
     }
 }
