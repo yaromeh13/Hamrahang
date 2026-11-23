@@ -107,6 +107,9 @@
     <string name="auth_logout">Logout</string>
     <string name="auth_sync_profile">Sync your profile</string>
     <string name="auth_syncing">Syncing profile…</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="auth_syncing">Syncing profile…</string>
     <string name="playlist_rename">Rename</string>
     <string name="playlist_name_hint">Playlist name</string>
     <string name="playlist_name_required">Enter a playlist name</string>
