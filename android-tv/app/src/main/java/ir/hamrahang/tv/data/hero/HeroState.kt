@@ -5,13 +5,15 @@ import ir.hamrahang.tv.domain.artist.Artist
 import ir.hamrahang.tv.domain.musicvideo.MusicVideo
 import ir.hamrahang.tv.domain.podcast.Podcast
 import ir.hamrahang.tv.domain.song.Song
+import ir.hamrahang.tv.data.local.entity.PlaylistEntity
 
 enum class HeroStyle {
     VIDEO,
     SONG,
     PODCAST,
     ARTIST,
-    ALBUM
+    ALBUM,
+    PLAYLIST
 }
 
 data class HeroState(
@@ -21,4 +23,5 @@ data class HeroState(
     val album: Album? = null,
     val artist: Artist? = null,
     val musicVideo: MusicVideo? = null,
+    val playlist: PlaylistEntity? = null
 )
