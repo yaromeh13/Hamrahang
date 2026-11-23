@@ -39,6 +39,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun refreshPlaylists() {
         viewModelScope.launch {
+            runCatching { playlistRepository.refreshFromServer() }
             _playlists.value = runCatching {
                 playlistRepository.getPlaylists()
             }.getOrDefault(emptyList())
