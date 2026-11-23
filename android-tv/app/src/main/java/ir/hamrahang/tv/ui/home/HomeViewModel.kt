@@ -39,6 +39,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun refreshPlaylists() {
         viewModelScope.launch {
+            // Render the Room cache immediately; network refresh must not delay Home.
+            _playlists.value = runCatching {
+                playlistRepository.getPlaylists()
+            }.getOrDefault(emptyList())
+
             runCatching { playlistRepository.refreshFromServer() }
             _playlists.value = runCatching {
                 playlistRepository.getPlaylists()
