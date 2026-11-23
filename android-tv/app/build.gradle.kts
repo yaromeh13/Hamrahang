@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.sdp)
     implementation(libs.ssp)
     implementation(libs.leanback)
+    implementation(libs.androidx.tvprovider)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
