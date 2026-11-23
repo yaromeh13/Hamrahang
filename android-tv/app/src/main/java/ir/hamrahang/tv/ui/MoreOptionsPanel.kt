@@ -19,6 +19,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.local.ContentType
+import ir.hamrahang.tv.data.auth.AuthSessionStore
 import ir.hamrahang.tv.data.playlist.PlaylistRepository
 import ir.hamrahang.tv.data.local.entity.PlaylistEntity
 import ir.hamrahang.tv.favorite.FavoriteManager
@@ -36,7 +37,9 @@ object MoreOptionsPanel {
         fragment: Fragment,
         item: PlaybackItem,
         returnFocus: View? = null,
-        playlistLocalId: String? = null
+        playlistLocalId: String? = null,
+        canRenamePlaylist: Boolean = false,
+        onPlaylistRenamed: ((String) -> Unit)? = null
     ) {
         val context = fragment.requireContext()
         val dialog = Dialog(context)
@@ -54,7 +57,9 @@ object MoreOptionsPanel {
             overScrollMode = View.OVER_SCROLL_NEVER
             addView(content)
         }
-        populate(fragment, content, item, playlistLocalId) { dialog.dismiss() }
+        populate(
+            fragment, content, item, playlistLocalId, canRenamePlaylist, onPlaylistRenamed
+        ) { dialog.dismiss() }
         dialog.setContentView(scroll)
         dialog.window?.let { window ->
             window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -78,6 +83,10 @@ object MoreOptionsPanel {
         onCreated: (PlaylistEntity) -> Unit
     ) {
         val context = fragment.requireContext()
+        if (!AuthSessionStore.isLoggedIn(context)) {
+            MessageManager.info(context.getString(R.string.playlist_login_required))
+            return
+        }
         val dialog = Dialog(context)
         val panel = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -236,6 +245,88 @@ object MoreOptionsPanel {
         }
     }
 
+    private fun showRenamePlaylistDialog(
+        fragment: Fragment,
+        playlistLocalId: String,
+        initialName: String,
+        onRenamed: (String) -> Unit
+    ) {
+        val context = fragment.requireContext()
+        val repository = PlaylistRepository(context)
+        val dialog = Dialog(context)
+        val panel = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            background = context.getDrawable(R.drawable.bg_setting_player)
+            setPadding(28.dp(context), 24.dp(context), 28.dp(context), 22.dp(context))
+        }
+        panel.addView(TextView(context).apply {
+            text = context.getString(R.string.playlist_rename)
+            textSize = 23f
+            setTextColor(Color.WHITE)
+            gravity = Gravity.CENTER
+        })
+        val input = EditText(context).apply {
+            tag = "playlist_name"
+            setText(initialName)
+            hint = context.getString(R.string.playlist_name_hint)
+            setSingleLine(true)
+            textSize = 19f
+            setTextColor(Color.WHITE)
+            setHintTextColor(0xFFAAAAAA.toInt())
+            background = context.getDrawable(R.drawable.bg_search_input)
+            setPadding(16.dp(context), 8.dp(context), 16.dp(context), 8.dp(context))
+        }
+        panel.addView(input, LinearLayout.LayoutParams(-1, 58.dp(context)).apply {
+            topMargin = 20.dp(context)
+        })
+        val actions = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
+        actions.addView(panelButton(context, context.getString(R.string.cancel)) { dialog.dismiss() },
+            LinearLayout.LayoutParams(0, 58.dp(context), 1f))
+        lateinit var save: TextView
+        save = panelButton(context, context.getString(R.string.save)) {
+            val name = input.text.toString().trim()
+            if (name.isBlank()) {
+                MessageManager.warning(context.getString(R.string.playlist_name_required))
+            } else {
+                save.isEnabled = false
+                fragment.viewLifecycleOwner.lifecycleScope.launch {
+                    runCatching { repository.renamePlaylist(playlistLocalId, name) }
+                        .onSuccess {
+                            dialog.dismiss()
+                            MessageManager.success(context.getString(R.string.playlist_renamed))
+                            onRenamed(it.name)
+                        }
+                        .onFailure {
+                            save.isEnabled = true
+                            MessageManager.error(
+                                if (it.message == "login_required") {
+                                    context.getString(R.string.playlist_login_required)
+                                } else {
+                                    context.getString(R.string.playlist_rename_failed)
+                                }
+                            )
+                        }
+                }
+            }
+        }
+        actions.addView(save, LinearLayout.LayoutParams(0, 58.dp(context), 1f).apply {
+            marginStart = 12.dp(context)
+        })
+        panel.addView(actions, LinearLayout.LayoutParams(-1, 58.dp(context)).apply {
+            topMargin = 18.dp(context)
+        })
+        dialog.setContentView(panel)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.show()
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            (context.resources.displayMetrics.widthPixels * 0.72f).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        input.requestFocus()
+        input.setSelection(input.text.length)
+    }
+
     private fun populateCreatePlaylistPanel(
         fragment: Fragment,
         panel: LinearLayout,
@@ -326,6 +417,8 @@ object MoreOptionsPanel {
         container: LinearLayout,
         item: PlaybackItem,
         playlistLocalId: String? = null,
+        canRenamePlaylist: Boolean = false,
+        onPlaylistRenamed: ((String) -> Unit)? = null,
         close: () -> Unit = {}
     ) {
         container.removeAllViews()
@@ -490,12 +583,25 @@ object MoreOptionsPanel {
                 ContentType.PODCAST,
                 ContentType.MUSICVIDEO,
                 ContentType.VIDEO
-            )
+            ) && AuthSessionStore.isLoggedIn(context)
         ) {
             addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Playlist") {
                 showAddToPlaylist(fragment, item)
             }
         }
+        if (item.contentType == ContentType.PLAYLIST && canRenamePlaylist && playlistLocalId != null) {
+            addTopAction(
+                context, actionsColumn, R.drawable.ic_edit, context.getString(R.string.playlist_rename)
+            ) {
+                showRenamePlaylistDialog(
+                    fragment = fragment,
+                    playlistLocalId = playlistLocalId,
+                    initialName = item.title,
+                    onRenamed = { updatedName -> onPlaylistRenamed?.invoke(updatedName) }
+                )
+            }
+        }
+
         addTopAction(
             context,
             actionsColumn,
