@@ -2,7 +2,6 @@ package ir.hamrahang.tv.ui
 
 import android.os.Bundle
 import android.view.View
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.leanback.widget.BaseGridView
@@ -22,6 +21,7 @@ class PlaylistDetailsFragment : Fragment(R.layout.fragment_playlist_details) {
     private var playlistId: String? = null
     private lateinit var heroWidget: HeroWidget
     private lateinit var itemsView: HorizontalGridView
+    private lateinit var emptyState: View
     private lateinit var adapter: PlaylistMediaAdapter
     private val repository by lazy { PlaylistRepository(requireContext()) }
 
@@ -34,6 +34,7 @@ class PlaylistDetailsFragment : Fragment(R.layout.fragment_playlist_details) {
         super.onViewCreated(view, savedInstanceState)
         heroWidget = HeroWidget(view.findViewById(R.id.heroContainer), viewLifecycleOwner)
         itemsView = view.findViewById(R.id.playlistItems)
+        emptyState = view.findViewById(R.id.playlistEmpty)
         itemsView.setNumRows(1)
         itemsView.setHorizontalSpacing(0)
         itemsView.setWindowAlignment(BaseGridView.WINDOW_ALIGN_NO_EDGE)
@@ -60,10 +61,11 @@ class PlaylistDetailsFragment : Fragment(R.layout.fragment_playlist_details) {
             if (!isAdded) return@launch
             adapter.submit(media)
             if (media.isEmpty()) {
-                // Keep the native content row empty; the playlist title remains in the hero.
                 itemsView.visibility = View.GONE
+                emptyState.visibility = View.VISIBLE
                 return@launch
             }
+            emptyState.visibility = View.GONE
             itemsView.visibility = View.VISIBLE
             itemsView.post {
                 itemsView.setSelectedPosition(0)
