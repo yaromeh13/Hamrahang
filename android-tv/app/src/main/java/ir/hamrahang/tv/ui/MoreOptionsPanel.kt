@@ -123,7 +123,11 @@ object MoreOptionsPanel {
             populateCreatePlaylistPanel(
                 fragment = fragment,
                 panel = panel,
-                onCancel = { dialog.dismiss() },
+                onCancel = {
+                    fragment.viewLifecycleOwner.lifecycleScope.launch {
+                        renderPicker(repository.getPlaylists())
+                    }
+                },
                 onCreated = { created ->
                     selected = created
                     fragment.viewLifecycleOwner.lifecycleScope.launch {
@@ -134,6 +138,9 @@ object MoreOptionsPanel {
         }
 
         renderPicker = { playlists ->
+            if (selected == null || playlists.none { it.localId == selected?.localId }) {
+                selected = playlists.firstOrNull()
+            }
             panel.removeAllViews()
             panel.addView(TextView(context).apply {
                 text = "Add to Playlist"
