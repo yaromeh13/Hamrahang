@@ -19,28 +19,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val playlistRepository = PlaylistRepository(application)
 
     private val _rows = MutableStateFlow<List<ContentRow>>(emptyList())
-    private val _playlists = MutableStateFlow<List<PlaylistEntity>>(emptyList())
 
     val rows: StateFlow<List<ContentRow>>
         get() = _rows
 
     init {
         loadRows()
-        refreshPlaylists()
-    }
-
-    /**
-     * Reload local playlists first, so Home can render cached data even when
-     * the server is unavailable or the account session was restored late.
-     */
-    fun refreshPlaylists() {
-        viewModelScope.launch {
-            // Settings/login synchronization owns network refresh. Home reads the
-            // account-scoped Room cache only, avoiding duplicate API requests.
-            _playlists.value = runCatching {
-                playlistRepository.getPlaylists()
-            }.getOrDefault(emptyList())
-        }
     }
 
     private fun loadRows() {
@@ -81,7 +65,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 listOfNotNull(videos, albums)
             }
 
-            val playlistRows = _playlists.map { playlists ->
+            // Observe Room directly. This keeps Home in sync when playlists
+            // arrive after login or Settings finishes its account synchronization.
+            val playlistRows = playlistRepository.observePlaylists().map { playlists ->
                 if (playlists.isEmpty()) emptyList()
                 else listOf(
                     ContentRow.Playlists(
