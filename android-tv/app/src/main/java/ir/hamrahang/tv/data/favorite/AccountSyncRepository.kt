@@ -1,5 +1,6 @@
 package ir.hamrahang.tv.data.favorite
 
+import android.content.Context
 import ir.hamrahang.tv.data.auth.HistorySyncItem
 
 import ir.hamrahang.tv.data.local.ContentType
@@ -7,12 +8,14 @@ import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.entity.FavoriteEntity
 import ir.hamrahang.tv.data.local.playback.PlaybackHistoryEntity
 import ir.hamrahang.tv.network.ApiClient
+import ir.hamrahang.tv.data.playlist.PlaylistRepository
 
 /**
  * Mirrors index.html: pull server data first, then offer an add-only local-to-account sync.
  */
-class AccountSyncRepository {
+class AccountSyncRepository(context: Context) {
     private val database get() = DatabaseProvider.database()
+    private val playlistRepository = PlaylistRepository(context.applicationContext)
 
     suspend fun pullServerData(accessToken: String) {
         val authorization = "Bearer $accessToken"
@@ -36,9 +39,10 @@ class AccountSyncRepository {
 
     suspend fun hasLocalDataToSync(): Boolean {
         if (database.favoriteDao().getAllFavorites(0).isNotEmpty()) return true
-        return playableTypes().any { type ->
+        val hasHistory = playableTypes().any { type ->
             database.playbackHistoryDao().getLastPlayed(type.value, 0, 50).isNotEmpty()
         }
+        return hasHistory || playlistRepository.hasPendingSyncData()
     }
 
     suspend fun syncLocalData(accessToken: String): Boolean {
@@ -46,6 +50,12 @@ class AccountSyncRepository {
             .pullAndSync(accessToken, 0)
 
         val historyResult = runCatching {
+            val pulledHistory = ApiClient.api.favoriteAccountAction(
+                authorization = "Bearer $accessToken",
+                body = UacRequest(UacAction(a = "get_history"))
+            )
+            if (pulledHistory.error == null) mergeHistory(pulledHistory.history.orEmpty())
+
             val items = playableTypes().flatMap { type ->
                 database.playbackHistoryDao().getLastPlayed(type.value, 0, 50).mapNotNull { row ->
                     if (row.mediaId <= 0L) null
@@ -66,7 +76,11 @@ class AccountSyncRepository {
             }
         }
 
-        return favoritesResult.isSuccess && historyResult.isSuccess
+        val playlistsResult = runCatching {
+            check(playlistRepository.refreshAndSync()) { "Playlist sync failed" }
+        }
+
+        return favoritesResult.isSuccess && historyResult.isSuccess && playlistsResult.isSuccess
     }
 
     private suspend fun mergeFavorites(favorites: Map<String, List<String>>) {
