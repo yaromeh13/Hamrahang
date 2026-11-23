@@ -137,4 +137,8 @@
     <string name="auth_email_value">ایمیل: %1$s</string>
     <string name="auth_user_id_value">شناسه کاربر: %1$s</string>
 
+    <string name="clean_recent_success">تاریخچه پخش‌های اخیر پاک شد.</string>
+    <string name="clean_search_success">تاریخچه جست‌وجو پاک شد.</string>
+    <string name="clean_favorites_success">علاقه‌مندی‌های محلی پاک شد. برای بازیابی موارد حساب، پروفایل را همگام‌سازی کنید.</string>
+    <string name="cleanup_failed">پاک‌سازی انجام نشد.</string>
 </resources>
