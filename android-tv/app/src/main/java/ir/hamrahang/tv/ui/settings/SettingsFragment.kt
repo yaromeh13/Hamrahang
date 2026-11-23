@@ -611,30 +611,30 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
 
         )
     }
-    private fun showGeneralSettings(){
+    private fun showGeneralSettings() {
         optionsRecycler.visibility = View.VISIBLE
         optionAdapter.submit(
             listOf(
                 SettingOption(
                     "general_exit",
-                    "Exit App",
+                    getString(R.string.general_exit_app),
                     true
                 ),
                 SettingOption(
                     "general_keep",
-                    "Keep Playing"
+                    getString(R.string.general_keep_playing)
                 ),
                 SettingOption(
                     "clean_recent",
-                    "Clear Recently Played"
+                    getString(R.string.clean_recent)
                 ),
                 SettingOption(
                     "clean_search",
-                    "Clear Search History"
+                    getString(R.string.clean_search)
                 ),
                 SettingOption(
                     "clean_favorites",
-                    "Delete Favorites"
+                    getString(R.string.clean_favorites)
                 )
             )
         )
