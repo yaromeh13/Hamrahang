@@ -209,19 +209,19 @@ class PlaylistDetailsFragment : Fragment(R.layout.fragment_playlist_details) {
         val queue = mediaItems.mapNotNull { media ->
             when (media) {
                 is PlaylistMedia.SongItem -> PlaybackItem(
-                    media.value.id, media.value.displayTitle(), media.value.thumb,
+                    media.value.id, media.value.title, media.value.thumb,
                     media.value.artists, ContentType.SONG, media.value.meta?.ncp
                 )
                 is PlaylistMedia.PodcastItem -> PlaybackItem(
-                    media.value.id, media.value.displayTitle(), media.value.thumb,
+                    media.value.id, media.value.title, media.value.thumb,
                     media.value.artists, ContentType.PODCAST, media.value.meta?.ncp
                 )
                 is PlaylistMedia.VideoItem -> PlaybackItem(
-                    media.value.id, media.value.displayTitle(), media.value.thumb,
+                    media.value.id, media.value.title, media.value.thumb,
                     media.value.artists, ContentType.VIDEO, media.value.meta?.ncp
                 )
                 is PlaylistMedia.MusicVideoItem -> PlaybackItem(
-                    media.value.id, media.value.displayTitle(), media.value.thumb,
+                    media.value.id, media.value.title, media.value.thumb,
                     media.value.artists, ContentType.MUSICVIDEO, media.value.meta?.ncp
                 )
             }
