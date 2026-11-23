@@ -11,6 +11,8 @@ import ir.hamrahang.tv.data.local.entity.PlaylistItemEntity
 import ir.hamrahang.tv.network.ApiClient
 import ir.hamrahang.tv.playback.PlaybackItem
 import java.util.UUID
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class PlaylistRepository(context: Context) {
     private val appContext = context.applicationContext
@@ -117,17 +119,18 @@ class PlaylistRepository(context: Context) {
         return true
     }
 
-    suspend fun refreshAndSync(): Boolean {
+    suspend fun refreshAndSync(): Boolean = syncMutex.withLock {
         val owner = ownerId()
-        val accessToken = token() ?: return false
+        val accessToken = token()
+        if (owner.isBlank() || accessToken == null) return@withLock false
         val authorization = "Bearer $accessToken"
 
-        return try {
+        try {
             val response = ApiClient.api.favoriteAccountAction(
                 authorization = authorization,
                 body = UacRequest(UacAction(a = "get_playlists"))
             )
-            if (response.error != null || response.playlists == null) return false
+            if (response.error != null || response.playlists == null) return@withLock false
 
             response.playlists.forEach { dto ->
                 val remoteId = dto.id?.toString() ?: return@forEach
@@ -257,6 +260,7 @@ class PlaylistRepository(context: Context) {
     }
 
     companion object {
+        private val syncMutex = Mutex()
         private val PLAYABLE_TYPES = setOf("song", "podcast", "musicvideo", "video")
     }
 }
