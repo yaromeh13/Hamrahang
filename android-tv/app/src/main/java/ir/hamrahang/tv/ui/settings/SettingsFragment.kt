@@ -51,6 +51,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
     private lateinit var languageAdapter: LanguageAdapter
     private lateinit var languageRecycler: RecyclerView
     private var qrPollJob: Job? = null
+    private var selectedCategoryIndex: Int = 0
     private val accountSyncRepository by lazy { AccountSyncRepository() }
     private val playlistRepository by lazy { PlaylistRepository(requireContext()) }
 
@@ -771,7 +772,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
         contentContainer.visibility = View.GONE
         contentContainer.removeAllViews()
     }
+    fun refreshPlaylistsIfVisible() {
+        if (selectedCategoryIndex == 1) renderPlaylists()
+    }
+
     private fun loadCategory(index: Int) {
+        selectedCategoryIndex = index
         hideAllContent()
         when (index) {
 
