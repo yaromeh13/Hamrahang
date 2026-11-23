@@ -39,7 +39,6 @@ object RecommendationManager {
     private const val MAX_PROGRAMS = 12
 
     suspend fun refresh(context: Context) = withContext(Dispatchers.IO) {
-        Log.i(TAG, "refresh started; sdk=${Build.VERSION.SDK_INT}, offline=${AppState.offlineMode}")
         runCatching {
             val appContext = context.applicationContext
             val history = DatabaseProvider.database()
@@ -49,15 +48,12 @@ object RecommendationManager {
                     userId = 0L,
                     limit = 12
                 )
-            Log.i(TAG, "playback history rows=${history.size}")
 
             val repository = SongRepository()
             val recent = repository.getByIds(history.map { it.mediaId.toString() })
-            Log.i(TAG, "recent songs loaded=${recent.size}")
 
             val popular = if (AppState.offlineMode) {
                 repository.getAll().also {
-                    Log.i(TAG, "offline mode: cached songs loaded=${it.size}")
                 }
             } else {
                 runCatching { repository.getTopSongs() }
@@ -65,7 +61,6 @@ object RecommendationManager {
                     .onFailure { Log.w(TAG, "Top songs request failed; using cached songs", it) }
                     .getOrElse {
                         repository.getAll().also { cached ->
-                            Log.i(TAG, "fallback cached songs loaded=${cached.size}")
                         }
                     }
             }
@@ -73,16 +68,12 @@ object RecommendationManager {
                 .distinctBy { it.id }
                 .filter { it.id.isNotBlank() }
                 .take(MAX_PROGRAMS)
-            Log.i(TAG, "final recommendation candidates=${songs.size}")
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Log.i(TAG, "publishing Preview Channel")
                 publishPreviewChannel(appContext, songs)
             } else {
-                Log.i(TAG, "publishing legacy recommendations")
                 publishLegacyRecommendations(appContext, songs)
             }
-            Log.i(TAG, "refresh finished")
         }.onFailure {
             Log.e(TAG, "Failed to refresh Android TV recommendations", it)
         }
@@ -94,7 +85,6 @@ object RecommendationManager {
 
         var channelId = prefs.getLong(KEY_CHANNEL_ID, -1L)
         val storedChannelExists = channelId > 0L && helper.getPreviewChannel(channelId) != null
-        Log.i(TAG, "channel lookup: storedId=$channelId, exists=$storedChannelExists")
         if (!storedChannelExists) {
             val builder = PreviewChannel.Builder()
                 .setDisplayName("Hamrahang")
@@ -107,29 +97,23 @@ object RecommendationManager {
             }
 
             channelId = helper.publishDefaultChannel(builder.build())
-            Log.i(TAG, "publishDefaultChannel returned channelId=$channelId")
             if (channelId <= 0L) {
                 Log.e(TAG, "Preview Channel creation failed; invalid channelId=$channelId")
                 return
             }
             prefs.edit().putLong(KEY_CHANNEL_ID, channelId).apply()
         } else {
-            Log.i(TAG, "reusing Preview Channel channelId=$channelId")
         }
 
         if (!prefs.getBoolean(KEY_BROWSABLE_REQUESTED, false)) {
-            Log.i(TAG, "requesting channel browsable; channelId=$channelId")
             TvContractCompat.requestChannelBrowsable(context, channelId)
             prefs.edit().putBoolean(KEY_BROWSABLE_REQUESTED, true).apply()
-            Log.i(TAG, "requestChannelBrowsable call completed")
         } else {
-            Log.i(TAG, "browsable request already marked as sent")
         }
 
         val oldProgramIds = prefs.getStringSet(KEY_PROGRAM_IDS, emptySet())
             .orEmpty()
             .mapNotNull { it.toLongOrNull() }
-        Log.i(TAG, "deleting previously published programs=${oldProgramIds.size}")
         oldProgramIds.forEach { id -> runCatching { helper.deletePreviewProgram(id) } }
 
         val newProgramIds = mutableSetOf<String>()
@@ -153,7 +137,6 @@ object RecommendationManager {
                 val id = helper.publishPreviewProgram(programBuilder.build())
                 if (id > 0L) {
                     newProgramIds += id.toString()
-                    Log.d(TAG, "preview program published; rowId=$id")
                 } else {
                     Log.w(TAG, "preview program returned invalid rowId=$id")
                 }
@@ -162,7 +145,6 @@ object RecommendationManager {
             }
         }
         prefs.edit().putStringSet(KEY_PROGRAM_IDS, newProgramIds).apply()
-        Log.i(TAG, "Preview Channel publish complete; channelId=$channelId, programs=${newProgramIds.size}")
     }
 
     @Suppress("DEPRECATION")
