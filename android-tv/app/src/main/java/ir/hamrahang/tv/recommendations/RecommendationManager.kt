@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import android.os.Build
 import androidx.tvprovider.media.tv.PreviewChannel
 import androidx.tvprovider.media.tv.PreviewChannelHelper
@@ -30,6 +31,7 @@ import kotlinx.coroutines.withContext
 object RecommendationManager {
     private const val PREFS = "tv_recommendations"
     private const val KEY_CHANNEL_ID = "channel_id"
+    private const val KEY_BROWSABLE_REQUESTED = "browsable_requested"
     private const val KEY_PROGRAM_IDS = "program_ids"
     private const val KEY_NOTIFICATION_IDS = "notification_ids"
     private const val CHANNEL_PROVIDER_ID = "hamrahang_preview_v1"
@@ -50,7 +52,9 @@ object RecommendationManager {
             val popular = if (AppState.offlineMode) {
                 repository.getAll()
             } else {
-                repository.getTopSongs()
+                runCatching { repository.getTopSongs() }
+                    .onFailure { Log.w("TvRecommendations", "Top songs request failed; using cached songs", it) }
+                    .getOrElse { repository.getAll() }
             }
             val songs = (recent + popular)
                 .distinctBy { it.id }
@@ -62,6 +66,8 @@ object RecommendationManager {
             } else {
                 publishLegacyRecommendations(appContext, songs)
             }
+        }.onFailure {
+            Log.e("TvRecommendations", "Failed to refresh Android TV recommendations", it)
         }
     }
 
@@ -84,6 +90,11 @@ object RecommendationManager {
             channelId = helper.publishDefaultChannel(builder.build())
             if (channelId <= 0L) return
             prefs.edit().putLong(KEY_CHANNEL_ID, channelId).apply()
+        }
+
+        if (!prefs.getBoolean(KEY_BROWSABLE_REQUESTED, false)) {
+            TvContractCompat.requestChannelBrowsable(context, channelId)
+            prefs.edit().putBoolean(KEY_BROWSABLE_REQUESTED, true).apply()
         }
 
         prefs.getStringSet(KEY_PROGRAM_IDS, emptySet())
@@ -111,6 +122,8 @@ object RecommendationManager {
             runCatching {
                 val id = helper.publishPreviewProgram(programBuilder.build())
                 if (id > 0L) newProgramIds += id.toString()
+            }.onFailure {
+                Log.e("TvRecommendations", "Failed to publish song card: " + song.id, it)
             }
         }
         prefs.edit().putStringSet(KEY_PROGRAM_IDS, newProgramIds).apply()
