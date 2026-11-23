@@ -95,12 +95,22 @@
     <string name="followed_artists">هنرمندان دنبال‌شده</string>
     <string name="favorite_videos">ویدئوهای موردعلاقه</string>
     <string name="favorite_playlists">پلی‌لیست‌های موردعلاقه</string>
+    <string name="your_playlists">پلی‌لیست‌های شما</string>
+    <string name="bookmarked_playlists">پلی‌لیست‌های نشان‌شده</string>
     <string name="favorite_albums">آلبوم‌های موردعلاقه</string>
 
     <string name="auth_username_email">نام کاربری یا ایمیل</string>
     <string name="auth_password">رمز عبور</string>
     <string name="auth_login">ورود</string>
     <string name="auth_logout">خروج از حساب</string>
+    <string name="auth_sync_profile">همگام‌سازی پروفایل</string>
+    <string name="auth_syncing">در حال همگام‌سازی پروفایل…</string>
+    <string name="playlist_rename">تغییر نام</string>
+    <string name="playlist_name_hint">نام پلی‌لیست</string>
+    <string name="playlist_name_required">نام پلی‌لیست را وارد کنید</string>
+    <string name="playlist_renamed">نام پلی‌لیست تغییر کرد</string>
+    <string name="playlist_rename_failed">تغییر نام پلی‌لیست انجام نشد</string>
+    <string name="playlist_login_required">برای مدیریت پلی‌لیست وارد حساب شوید</string>
     <string name="auth_scan_qr">اسکن کد QR</string>
     <string name="auth_qr_phone">ورود با تلفن همراه</string>
     <string name="auth_qr_loading">در حال دریافت کد ورود…</string>
