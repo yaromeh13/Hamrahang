@@ -139,4 +139,8 @@
     <string name="auth_email_value">Email: %1$s</string>
     <string name="auth_user_id_value">User ID: %1$s</string>
 
+    <string name="clean_recent_success">Recently played history cleared.</string>
+    <string name="clean_search_success">Search history cleared.</string>
+    <string name="clean_favorites_success">Local favorites cleared. Sync your profile to restore account favorites.</string>
+    <string name="cleanup_failed">Unable to complete cleanup.</string>
 </resources>
