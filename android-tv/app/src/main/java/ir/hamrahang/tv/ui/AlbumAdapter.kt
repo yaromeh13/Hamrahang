@@ -27,6 +27,7 @@ class AlbumAdapter(
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.itemTitle)
         val cover: ImageView = view.findViewById(R.id.itemCover)
+        val coverFrame: View = view.findViewById(R.id.coverFrame)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -44,7 +45,7 @@ class AlbumAdapter(
             .into(holder.cover)
 
         holder.itemView.setOnFocusChangeListener { _, hasFocus ->
-            holder.cover.isSelected = hasFocus
+            holder.coverFrame.isSelected = hasFocus
             if (hasFocus) onFocus(item)
         }
 
