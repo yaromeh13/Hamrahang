@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:gravity="center"
-            android:text="ارتباط با سرور برقرار نشد"
+            android:text="@string/splash_error_connection"
             android:textColor="#FFFFFF"
             android:textSize="@dimen/_18sp"/>
 
@@ -43,7 +43,7 @@
             android:layout_marginTop="4dp"
             android:background="@drawable/bg_detail_play"
             android:backgroundTint="@null"
-            android:text="تلاش مجدد"
+            android:text="@string/splash_retry"
             android:textColor="@android:color/white"
             android:textAllCaps="false"
             android:insetTop="0dp"
@@ -59,7 +59,7 @@
             android:layout_marginTop="12dp"
             android:background="@drawable/bg_detail_play"
             android:backgroundTint="@null"
-            android:text="ورود آفلاین"
+            android:text="@string/splash_offline"
             android:textColor="@android:color/white"
             android:textAllCaps="false"
             android:insetTop="0dp"
