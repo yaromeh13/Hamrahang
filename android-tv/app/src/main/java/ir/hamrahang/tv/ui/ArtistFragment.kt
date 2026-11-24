@@ -174,9 +174,7 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
                 rows = rowsData,
 
                 onHeroFocus = { /* Keep the artist identity hero fixed while browsing its rows. */ },
-                onBackgroundChange = {
-                    BackgroundManager.set(it)
-                },
+                onBackgroundChange = { /* Artist detail keeps its own Hero background fixed. */ },
                 onItemClick = { event ->
 
                     UiActionDispatcher.dispatch(
