@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -24,12 +25,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _rows = MutableStateFlow<List<ContentRow>>(emptyList())
     private val _playlists = MutableStateFlow<List<PlaylistEntity>>(emptyList())
+    private var rowsJob: Job? = null
 
     val rows: StateFlow<List<ContentRow>>
         get() = _rows
 
     init {
-        loadRows()
+        refreshContent()
         refreshPlaylists()
     }
 
@@ -51,8 +53,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun loadRows() {
-        viewModelScope.launch {
+    /** Rebuild visible Home rows after the API becomes reachable. */
+    fun refreshContent() {
+        rowsJob?.cancel()
+        rowsJob = viewModelScope.launch {
             val mainRows = buildList {
                 repo.buildVideoRow()?.let(::add)
                 repo.buildMusicVideoRow()?.let(::add)
