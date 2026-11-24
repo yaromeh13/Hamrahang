@@ -10404,12 +10404,15 @@ $stmt->execute();*/
             $meta['des'] = is_string($live_data->des) ? $live_data->des : (string)$live_data->des;
         }
 
-        foreach (['tmb', 'tmv', 'cvr'] as $role) {
-            if (!empty($live_data->$role)) {
-                $thumb = ThumbImage($live_data->$role);
-                if ($thumb) $meta[$role] = $thumb;
-            }
+        // Thumbnail — follow SONG_CARD: resolve live_data.tmb through ThumbImage().
+        $thumb = '';
+        if (!empty($live_data->tmb)) {
+            $thumb = ThumbImage($live_data->tmb);
         }
+        if ($thumb) {
+            $meta['tmb'] = $thumb;
+        }
+
 
         $meta['type'] = 'live';
         if ($meta) $live['meta'] = $meta;
