@@ -14,6 +14,9 @@ interface LiveDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<LiveEntity>)
 
+    @Query("DELETE FROM live WHERE id NOT IN (:ids)")
+    suspend fun deleteExcept(ids: List<String>)
+
     @Query("DELETE FROM live")
     suspend fun clear()
 }
