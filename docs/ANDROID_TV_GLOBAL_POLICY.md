@@ -350,6 +350,47 @@ Do not use `tmb`, `cvr`, owner artwork, or generic type icons as Hero background
 
 The verified Android image base URL is `https://cdn.hamrahang.ir/thumb/`, matching `THUMB_BASE` in `ImageResolver.kt`. This is an image CDN, not an API endpoint; API requests remain restricted to `https://hamrahang.ir`.
 
+## 2.8 Android TV card thumbnail area and missing-image fallback
+
+This section defines the visual treatment for content cards when the entity has no thumbnail key or the requested image fails to load. It changes only card presentation; it does not change API metadata priority, image URL construction, or Hero background behavior.
+
+### Required visual behavior
+
+- The image area of every applicable Home content card has a visible base surface even when no thumbnail exists.
+- The base surface uses **`#222222`**, matching the default (unselected) background color of the Settings category cards in `bg_setting_category.xml`.
+- The content-type fallback icon is centered and displayed at its intrinsic drawable size (the current icon vectors are 36dp), rather than being enlarged to fill the entire thumbnail area.
+- A successfully loaded thumbnail continues to fill/crop the card image area using the existing explicit Glide transformations (for example `CenterCrop` or `circleCrop`). The smaller centered treatment is for the placeholder/error drawable, not for real artwork.
+- The selected/focused card retains its existing red focus border. The background remains `#222222` in both selected and default states.
+- The card title/subtitle layout, card dimensions, focus navigation, click behavior, and image metadata fallback priority must not change.
+
+### Current resource implementation
+
+| Resource | Responsibility / current rule |
+|---|---|
+| `android-tv/app/src/main/res/drawable/card_bg.xml` | Shared rectangular thumbnail background. Default and selected states both use `#222222`; selected state adds the existing 3dp red border. |
+| `android-tv/app/src/main/res/drawable/art_focus_border.xml` | Circular artist image container background. Uses `#222222` and retains the red selected border. |
+| `android-tv/app/src/main/res/layout/item_content.xml` | Shared square card layout used by Song, Podcast, Album, Playlist and related adapters. Its `itemCover` uses `centerInside` so the fallback drawable is not stretched. |
+| `android-tv/app/src/main/res/layout/item_musicvideo.xml` | Shared landscape thumbnail layout used by Video and MusicVideo adapters. Its `cover` uses `centerInside` for fallback drawables. |
+| `android-tv/app/src/main/res/layout/item_artist.xml` | Artist card image container; the fallback drawable is centered within the existing circular presentation. |
+
+### Important Glide distinction
+
+The card layouts use `android:scaleType="centerInside"` to keep the fallback/error drawable compact. Adapters that load real artwork already specify explicit Glide transformations such as `CenterCrop()` or `circleCrop()`; those transformations remain responsible for filling/cropping successfully loaded artwork. Do not remove or replace those adapter transformations as part of this visual policy.
+
+The fallback icon resource remains type-specific and is selected by the adapter through `ImageResolver.request(..., fallbackDrawable)`. This UI background rule must not introduce a new generic image key or borrow artwork from another content type.
+
+### Acceptance criteria
+
+1. A Song, Podcast, Album, Playlist, Video or MusicVideo with no thumbnail shows its own type icon centered over a visible `#222222` thumbnail surface.
+2. The icon does not expand to cover the entire 170dp square or 220×120dp landscape image region.
+3. A valid loaded thumbnail still fills/crops its image region as before.
+4. A failed image request produces the same centered fallback icon and background as a missing thumbnail.
+5. Artist cards retain their circular image shape, with a `#222222` base and the existing red selected border.
+6. Focus, D-pad navigation, card sizing, titles, subtitles and click handling remain unchanged.
+7. The Hero wide background remains independent and continues to use its own `art → tmv` policy.
+8. Confirm all criteria in an Android build and on a TV/device; source changes alone are not a device-test result.
+
+
 ## 2.7 API JSON image metadata and six media roles
 
 ### Where image keys appear in API JSON
