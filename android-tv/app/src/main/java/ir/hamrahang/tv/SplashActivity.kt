@@ -49,7 +49,7 @@ class SplashActivity : BaseActivity() {
 
                     is SplashState.Loading -> Unit
 
-                    is SplashState.Success -> goToMain()
+                    is SplashState.Success -> {\n                        AppState.offlineMode = false\n                        goToMain()\n                    }
 
                     is SplashState.Error -> showRetry()
 
