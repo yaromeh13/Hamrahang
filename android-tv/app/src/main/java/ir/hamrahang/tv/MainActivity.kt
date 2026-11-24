@@ -12,6 +12,7 @@ import ir.hamrahang.tv.ui.*
 import ir.hamrahang.tv.databinding.ActivityMainBinding
 import ir.hamrahang.tv.network.ApiClient
 import ir.hamrahang.tv.network.NetworkEvents
+import ir.hamrahang.tv.network.NetworkMonitor
 import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.ui.message.MessageManager
 import ir.hamrahang.tv.ui.message.MessageWidget
@@ -92,6 +93,12 @@ class MainActivity : BaseActivity(),
                     }
                 }
             }
+        }
+
+        // NetworkMonitor may have detected an already-connected network in
+        // Application.onCreate before this Activity subscribed to its events.
+        if (!apiReachable && NetworkMonitor.isConnected.value) {
+            checkApiAndRecover()
         }
 
         val firstFragment =
@@ -177,6 +184,7 @@ class MainActivity : BaseActivity(),
 
     private suspend fun performBackgroundRecovery() {
         apiReachable = true
+        AppState.offlineMode = false
 
         // Refresh the account session first; a failed refresh keeps the cached
         // token and does not clear local favorites/history.
