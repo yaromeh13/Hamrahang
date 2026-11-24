@@ -1,5 +1,6 @@
 package ir.hamrahang.tv
 
+import android.animation.Animator
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -8,9 +9,8 @@ import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.lottie.LottieAnimationView
 import ir.hamrahang.tv.network.ApiClient
-import kotlinx.coroutines.launch
-import android.animation.Animator
 import ir.hamrahang.tv.utils.AppState
+import kotlinx.coroutines.launch
 
 class SplashActivity : BaseActivity() {
 
@@ -44,17 +44,16 @@ class SplashActivity : BaseActivity() {
     private fun observeState() {
         lifecycleScope.launch {
             viewModel.state.collect { state ->
-
                 when (state) {
-
                     is SplashState.Loading -> Unit
 
-                    is SplashState.Success -> {\n                        AppState.offlineMode = false\n                        goToMain()\n                    }
+                    is SplashState.Success -> {
+                        AppState.offlineMode = false
+                        goToMain()
+                    }
 
                     is SplashState.Error -> showRetry()
-
                     is SplashState.Maintenance -> showMaintenance()
-
                     is SplashState.UpdateRequired -> showUpdate()
                 }
             }
@@ -82,14 +81,10 @@ class SplashActivity : BaseActivity() {
             viewModel.retry()
         }
 
-        offline.requestFocus()
-
+        // Retry is the initial D-pad focus; Offline remains the second choice.
         offline.setOnClickListener {
-
             AppState.offlineMode = true
-
             goToMain()
-
         }
     }
 
