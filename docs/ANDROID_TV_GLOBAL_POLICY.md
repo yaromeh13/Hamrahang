@@ -18,7 +18,7 @@ It is intentionally broader than image selection. New, verified product scenario
 ## Contents
 
 1. [Network, Offline Mode & Recovery Policy](#1-network-offline-mode--recovery-policy)
-2. [Image & Media Policy](#2-image--thumbnail-policy)
+2. [Image & Media Policy](#2-image--media-policy)
 3. [Code Reference Index](#3-code-reference-index)
 4. [Future Policy Sections](#4-future-policy-sections)
 
@@ -241,18 +241,23 @@ For these types, no image is borrowed from an associated artist. The type's own 
 
 MusicVideo and Video remain distinct when resolving artwork. Video uses `cvr` before `tmb`; MusicVideo uses `tmv` before `tmb`.
 
-## 2.3 Source owner artwork
+## 2.3 Owner and User artwork
 
-For the owner/provider attached to a playback source:
+Owner/provider and User profile images are separate artwork categories. Both use the user/profile SVG fallback when their own image is unavailable.
 
-1. `owner.meta.ico`
-2. `owner.meta.tmb`
-3. The source's own icon, only if the source payload provides one.
-4. No image if none of the above exists.
+| Entity | Priority 1 | Priority 2 | Priority 3 | SVG fallback |
+|---|---|---|---|---|
+| Owner / Provider | `owner.meta.ico` | `owner.meta.tmb` | Source icon, only when the source payload provides one | User icon (`svg_usr`) |
+| User | `user.meta.tmb` | — | — | User icon (`svg_usr`) |
 
-The owner `ico` key follows the web convention: if it has no dot, its last three characters encode the extension (for example, `u11210725ipng` becomes `u11210725i.png`). A `tmb` key always receives `.jpg`.
+### Owner image-key rules
 
-The owner profile artwork and source/provider icon are different concepts. Do not store a source icon as the owner's profile icon. Current Android `MediaSource` does not declare a source-icon field, so that fallback is not assumed until the API payload/model confirms one.
+- The owner `ico` key follows the web convention: if it has no dot, its last three characters encode the extension (for example, `u11210725ipng` becomes `u11210725i.png`).
+- An owner `tmb` key always receives `.jpg`.
+- The source/provider icon is distinct from the owner's profile artwork. Do not store a source icon as the owner's profile icon.
+- Current Android `MediaSource` does not declare a source-icon field, so this optional fallback is only usable when the API payload/model actually provides one.
+- If no applicable image/source icon exists, show `svg_usr` rather than leaving the owner/user artwork area without a fallback.
+
 
 ## 2.4 Hero wide background
 
