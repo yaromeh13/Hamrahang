@@ -38,6 +38,8 @@
 
 
     <string name="play">پخش</string>
+    <string name="follow">دنبال کردن</string>
+    <string name="following">دنبال می‌کنید</string>
     <!-- Player settings and lyrics panel -->
     <string name="lyrics_language_title">زبان</string>
     <string name="lyrics_language_auto">خودکار</string>
