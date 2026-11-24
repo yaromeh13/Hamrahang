@@ -99,6 +99,7 @@ class HomeFragment :
         }
 
         heroWidget.showFollowButton()
+        heroViewFollowLeftToArtistCover()
         heroWidget.setFollowClick {
             val mediaId = artist.id.toLongOrNull()
             if (mediaId == null) {
@@ -124,6 +125,10 @@ class HomeFragment :
             }
         }
         heroWidget.setFollowButtonKeyListener(recycler)
+    }
+
+    private fun heroViewFollowLeftToArtistCover() {
+        view?.findViewById<View>(R.id.btnFollowArtist)?.nextFocusLeftId = R.id.artistCover
     }
 
     private fun requestHomeFocus() {
