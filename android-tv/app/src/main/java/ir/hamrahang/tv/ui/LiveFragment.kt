@@ -2,6 +2,7 @@ package ir.hamrahang.tv.ui
 
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import androidx.fragment.app.Fragment
 import ir.hamrahang.tv.contract.Focusable
 import androidx.lifecycle.lifecycleScope
