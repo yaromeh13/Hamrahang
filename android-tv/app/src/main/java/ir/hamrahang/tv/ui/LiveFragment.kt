@@ -3,6 +3,7 @@ package ir.hamrahang.tv.ui
 import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
+import ir.hamrahang.tv.contract.Focusable
 import androidx.lifecycle.lifecycleScope
 import androidx.leanback.widget.BaseGridView
 import androidx.leanback.widget.VerticalGridView
@@ -17,7 +18,7 @@ import ir.hamrahang.tv.player.PlayerMedia
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
-class LiveFragment : Fragment(R.layout.fragment_live) {
+class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
 
     private val repository = LiveRepository()
     private var adapter: LiveRowsAdapter? = null
@@ -47,6 +48,23 @@ class LiveFragment : Fragment(R.layout.fragment_live) {
     fun refreshAfterNetworkRecovery() {
         if (!isAdded || view == null) return
         loadRows()
+    }
+
+    override fun requestInitialFocus() {
+        recycler?.post {
+            recycler?.setSelectedPosition(0)
+            recycler?.requestFocus()
+            recycler?.findViewHolderForAdapterPosition(0)
+                ?.itemView
+                ?.findViewById<androidx.leanback.widget.HorizontalGridView>(R.id.liveCardsRecycler)
+                ?.post {
+                    val row = recycler?.findViewHolderForAdapterPosition(0)
+                        ?.itemView
+                        ?.findViewById<androidx.leanback.widget.HorizontalGridView>(R.id.liveCardsRecycler)
+                    row?.setSelectedPosition(0)
+                    row?.requestFocus()
+                }
+        }
     }
 
     private fun loadRows() {
