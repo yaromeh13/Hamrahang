@@ -510,6 +510,16 @@ The existing web thumbnail helper currently uses `tmv → tmb` for generic video
 
 ---
 
+## 2.10 Shared Hero artwork layer
+
+- All Hero types share one wide artwork view: `heroArt`, declared once in `layout_hero.xml` behind the Hero content layouts.
+- Any Hero backed by media metadata should use the shared artwork resolver (`ImageResolver.hero(meta)`), which prefers `meta.art` and then `meta.tmv`. The content-specific cover/thumbnail remains a separate view and keeps its existing sizing and crop behavior.
+- MusicVideo retains its existing thumbnail fallback when neither wide artwork key is available. Other media Hero types show the shared wide layer only when a wide artwork URL resolves; do not promote a square cover to wide artwork automatically.
+- Artist uses the same shared artwork layer and resolver. Its circular `artistCover` remains the portrait from `meta.tmb`.
+- The shared artwork view uses the common 70%-width, full-height, center-crop layout and `fadeStart = 0.4f`. Its placement is defined in XML, not changed by per-Hero Kotlin layout code.
+- The shared layer is anchored with `endToEnd` and inherits the locale layout direction, so it automatically mirrors between LTR and RTL. Do not add runtime positioning functions for individual Hero types.
+- When a Hero has no wide artwork, hide and clear the shared image so the previous Hero's artwork cannot remain visible. Playlist currently exposes only its local thumbnail field and has no `meta.art`/`meta.tmv` metadata; keep that thumbnail in its existing cover position unless the data model is extended with wide artwork.
+
 # 3. Code Reference Index
 
 Paths below are repository-relative and were checked against the current `main` branch while this document was updated. Kotlin package declarations do not always mirror directory names exactly; use the exact paths shown here.
@@ -519,7 +529,7 @@ Paths below are repository-relative and were checked against the current `main` 
 
 - The Artist detail screen keeps the selected artist as its Hero identity while the user moves through its content rows. Row focus must not replace the Artist Hero with a Song, Album, Video, or MusicVideo Hero.
 - The artist portrait remains the circular thumbnail from `meta.tmb`, displayed in the existing `artistCover` position.
-- When `meta.art` exists, the Artist Hero also displays it in a wide `FadeImageView` occupying the same 70%-width, full-height region and using the same horizontal/vertical fade behavior as the Video Hero. This is separate from the portrait thumbnail.
+- The wide artwork is rendered by the single shared `heroArt` layer in `layout_hero.xml`, not by an Artist-specific image view. When `meta.art` exists, the Artist Hero uses the same artwork placement, 70%-width sizing, locale-aware alignment, and fade behavior as every other Hero type. This is separate from the portrait thumbnail.
 - The Artist detail page background uses `meta.art` first. If `meta.art` is absent or blank, it falls back to the artist's `meta.tmb`. Both are resolved through the existing thumbnail CDN URL helper.
 - The Artist detail background is set when the artist is loaded and remains fixed while browsing its rows. The detail page's row-focus background callback must not replace it with a focused card's background.
 - Home may continue to update the Hero/background when an Artist card receives focus; the fixed-background rule above applies to the dedicated Artist detail page.
