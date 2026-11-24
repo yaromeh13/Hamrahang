@@ -153,4 +153,13 @@
     <string name="clean_recent">پاک‌کردن تاریخچه پخش اخیر</string>
     <string name="clean_search">پاک‌کردن تاریخچه جست‌وجو</string>
     <string name="clean_favorites">پاک‌کردن علاقه‌مندی‌ها</string>
+
+    <!-- Splash screen -->
+    <string name="splash_error_connection">ارتباط با سرور برقرار نشد</string>
+    <string name="splash_retry">تلاش مجدد</string>
+    <string name="splash_offline">ورود آفلاین</string>
+    <string name="splash_maintenance">سیستم در حال تعمیر است</string>
+    <string name="splash_update_available">نسخه جدید موجود است</string>
+    <string name="splash_update">به‌روزرسانی</string>
+
 </resources>
