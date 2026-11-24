@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.leanback.widget.VerticalGridView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/liveRowsRecycler"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#101010">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="LIVE"
-        android:textColor="#FFFFFF"
-        android:textSize="30sp"
-        android:layout_gravity="center"/>
-</FrameLayout>
+    android:background="@android:color/transparent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:paddingBottom="@dimen/_24dp"
+    app:numberOfColumns="1" />
