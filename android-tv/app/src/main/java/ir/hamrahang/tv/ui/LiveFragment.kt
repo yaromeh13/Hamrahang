@@ -14,6 +14,9 @@ import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.player.MediaType
 import ir.hamrahang.tv.player.PlayerFragment
 import ir.hamrahang.tv.player.PlayerManager
+import ir.hamrahang.tv.player.PlayerState
+import ir.hamrahang.tv.player.BackgroundManager
+import ir.hamrahang.tv.ui.playback.PlaybackManager
 import ir.hamrahang.tv.player.PlayerMedia
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -140,16 +143,33 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
 
         if (playableSources.isEmpty()) return
 
+        val artwork = item.thumb.takeIf { it.isNotBlank() }
         val media = PlayerMedia(
             id = "live_${item.id}",
             title = item.title,
             artist = item.owner?.name ?: "Live",
-            artwork = item.thumb.takeIf { it.isNotBlank() },
+            artwork = artwork,
             sources = playableSources,
             type = MediaType.AUDIO,
             contentType = ContentType.SONG
         )
 
+        // Live is standalone media, not a song queue item. Clear any previous
+        // queue and publish the complete source list for PlayerFragment panels.
+        PlaybackManager.clearSession()
+        PlayerState.updatePlaybackInfo {
+            copy(
+                visible = true,
+                mediaId = media.id,
+                mediaType = MediaType.AUDIO,
+                artwork = artwork,
+                title = item.title,
+                metadata = item.meta,
+                sources = playableSources,
+                selectedSource = playableSources.firstOrNull()
+            )
+        }
+        BackgroundManager.set(artwork)
         PlayerManager.play(requireContext(), media)
         (activity as? ir.hamrahang.tv.MainActivity)
             ?.openFullscreenPlayer(PlayerFragment())
