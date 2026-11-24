@@ -29,6 +29,14 @@ object ImageResolver {
 
     fun artist(meta: ArtistMeta?): String = thumb(meta?.tmb)
 
+    /** Artist Hero foreground artwork: meta.art only; the portrait thumbnail remains separate. */
+    fun artistArt(meta: ArtistMeta?): String? =
+        clean(meta?.art)?.let(::thumb)
+
+    /** Artist detail background: wide art first, portrait thumbnail as fallback. */
+    fun artistBackground(meta: ArtistMeta?): String? =
+        artistArt(meta) ?: clean(meta?.tmb)?.let(::thumb)
+
     fun album(meta: MediaMeta?): String = thumb(meta?.tmb)
 
     fun playlist(meta: MediaMeta?): String = thumb(meta?.tmb)
