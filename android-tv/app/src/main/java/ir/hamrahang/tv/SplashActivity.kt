@@ -72,7 +72,7 @@ class SplashActivity : BaseActivity() {
         val text = findViewById<TextView>(R.id.errorText)
 
         container.visibility = View.VISIBLE
-        text.text = "ارتباط با سرور برقرار نشد"
+        text.text = getString(R.string.splash_error_connection)
 
         btn.requestFocus()
 
@@ -93,7 +93,7 @@ class SplashActivity : BaseActivity() {
         val text = findViewById<TextView>(R.id.errorText)
 
         container.visibility = View.VISIBLE
-        text.text = "سیستم در حال تعمیر است"
+        text.text = getString(R.string.splash_maintenance)
     }
 
     private fun showUpdate() {
@@ -102,8 +102,8 @@ class SplashActivity : BaseActivity() {
         val text = findViewById<TextView>(R.id.errorText)
 
         container.visibility = View.VISIBLE
-        text.text = "نسخه جدید موجود است"
-        btn.text = "به‌روزرسانی"
+        text.text = getString(R.string.splash_update_available)
+        btn.setText(R.string.splash_update)
 
         btn.requestFocus()
 
