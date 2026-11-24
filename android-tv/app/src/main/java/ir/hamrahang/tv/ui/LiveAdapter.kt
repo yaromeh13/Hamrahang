@@ -1,0 +1,59 @@
+package ir.hamrahang.tv.ui
+
+import android.view.KeyEvent
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import ir.hamrahang.tv.R
+import ir.hamrahang.tv.data.live.LiveItem
+import ir.hamrahang.tv.util.ImageResolver
+
+class LiveAdapter(
+    private var items: List<LiveItem>,
+    private val onClick: (LiveItem) -> Unit
+) : RecyclerView.Adapter<LiveAdapter.VH>() {
+
+    inner class VH(view: View) : RecyclerView.ViewHolder(view) {
+        val title: TextView = view.findViewById(R.id.itemTitle)
+        val subtitle: TextView = view.findViewById(R.id.itemSubtitle)
+        val cover: ImageView = view.findViewById(R.id.itemCover)
+        val coverFrame: View = view.findViewById(R.id.coverFrame)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_content, parent, false)
+        return VH(view)
+    }
+
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        val item = items[position]
+        holder.title.text = item.title
+        holder.subtitle.text = ""
+
+        ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_live)
+            .transform(CenterCrop(), RoundedCorners(7))
+            .into(holder.cover)
+
+        holder.itemView.setOnFocusChangeListener { _, hasFocus ->
+            holder.coverFrame.isSelected = hasFocus
+        }
+        holder.itemView.setOnKeyListener { _, keyCode, event ->
+            if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER
+        }
+        holder.itemView.setOnClickListener { onClick(item) }
+    }
+
+    override fun getItemCount(): Int = items.size
+
+    fun submit(newItems: List<LiveItem>) {
+        items = newItems
+        notifyDataSetChanged()
+    }
+}
