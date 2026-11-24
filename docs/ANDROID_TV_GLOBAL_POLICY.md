@@ -517,12 +517,17 @@ Paths below are repository-relative and were checked against the current `main` 
 
 ## 2.9 Artist Hero behavior
 
-- The Artist detail screen keeps the selected artist as its Hero identity while the user moves through the artist's content rows. Row focus must not replace the Artist Hero with a Song, Album, Video, or MusicVideo Hero.
+- The Artist detail screen keeps the selected artist as its Hero identity while the user moves through its content rows. Row focus must not replace the Artist Hero with a Song, Album, Video, or MusicVideo Hero.
+- The artist portrait remains the circular thumbnail from `meta.tmb`, displayed in the existing `artistCover` position.
+- When `meta.art` exists, the Artist Hero also displays it in a wide `FadeImageView` occupying the same 70%-width, full-height region and using the same horizontal/vertical fade behavior as the Video Hero. This is separate from the portrait thumbnail.
+- The Artist detail page background uses `meta.art` first. If `meta.art` is absent or blank, it falls back to the artist's `meta.tmb`. Both are resolved through the existing thumbnail CDN URL helper.
+- The Artist detail background is set when the artist is loaded and remains fixed while browsing its rows. The detail page's row-focus background callback must not replace it with a focused card's background.
+- Home may continue to update the Hero/background when an Artist card receives focus; the fixed-background rule above applies to the dedicated Artist detail page.
 - The Artist Hero actions are placed together in one horizontal row below the artist details. Play remains the existing icon action; Follow is a text-only, focusable MaterialButton beside it.
 - Follow uses localized resources: `follow` and `following`. Its selected state is read from and toggled through the existing `FavoriteManager` with `ContentType.ARTIST`; do not introduce a new API endpoint for this control.
 - On Home, an Artist Hero exposes Follow only. Other Hero types hide that action. On the Artist detail page, Play and Follow are both shown.
 - Both actions support D-pad focus. Moving down from either action enters the first artist content row; horizontal navigation moves between Play and Follow on the Artist detail page.
-- The Artist detail Hero remains stable while its Videos, Music Videos, Top Songs, and Albums rows are browsed. The rows remain interactive and continue to dispatch their normal item-click actions.
+- The Artist detail Hero and background remain stable while its Videos, Music Videos, Top Songs, and Albums rows are browsed. The rows remain interactive and continue to dispatch their normal item-click actions.
 
 ## 3.1 Startup and API
 
