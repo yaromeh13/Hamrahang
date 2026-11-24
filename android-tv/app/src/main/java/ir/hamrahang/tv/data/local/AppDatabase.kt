@@ -18,6 +18,8 @@ import ir.hamrahang.tv.data.local.entity.OwnerEntity
 import ir.hamrahang.tv.data.local.entity.FavoriteEntity
 import ir.hamrahang.tv.data.local.entity.PlaylistEntity
 import ir.hamrahang.tv.data.local.entity.PlaylistItemEntity
+import ir.hamrahang.tv.data.local.entity.LiveEntity
+import ir.hamrahang.tv.data.local.dao.LiveDao
 import androidx.room.TypeConverters
 import ir.hamrahang.tv.data.local.dao.FavoriteDao
 import ir.hamrahang.tv.data.local.dao.UserDao
@@ -39,9 +41,10 @@ import ir.hamrahang.tv.data.local.entity.PodcastEntity
         UserEntity::class,
         OwnerEntity::class,
         PlaylistEntity::class,
-        PlaylistItemEntity::class
+        PlaylistItemEntity::class,
+        LiveEntity::class
     ],
-    version = 35,
+    version = 36,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -57,4 +60,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun ownerDao(): OwnerDao
     abstract fun playlistDao(): PlaylistDao
+    abstract fun liveDao(): LiveDao
 }
