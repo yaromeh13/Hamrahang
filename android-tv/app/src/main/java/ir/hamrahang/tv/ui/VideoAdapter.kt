@@ -28,6 +28,7 @@ class VideoAdapter(
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.songTitle)
         val cover: ImageView = view.findViewById(R.id.cover)
+        val coverFrame: View = view.findViewById(R.id.coverFrame)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -49,7 +50,7 @@ class VideoAdapter(
         holder.cover.clipToOutline = true
         holder.itemView.setOnFocusChangeListener { _, hasFocus ->
 
-            holder.cover.isSelected = hasFocus
+            holder.coverFrame.isSelected = hasFocus
 
             if (hasFocus) {
                 Log.d("FOCUS_TEST", item.displayTitle())
