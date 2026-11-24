@@ -285,6 +285,102 @@ Do not use `tmb`, `cvr`, owner artwork, or generic type icons as Hero background
 
 The verified Android image base URL is `https://cdn.hamrahang.ir/thumb/`, matching `THUMB_BASE` in `ImageResolver.kt`. This is an image CDN, not an API endpoint; API requests remain restricted to `https://hamrahang.ir`.
 
+## 2.7 API JSON image metadata and six media roles
+
+### Where image keys appear in API JSON
+
+Image keys are exposed in the `meta` object of the relevant JSON entity. For a playback source's owner/provider, the image metadata is nested one level deeper under `source.owner.meta`. The exact keys depend on the entity and the media role; the API does not promise that every entity contains all six keys.
+
+Examples of the JSON shape:
+
+```json
+{
+  "id": 123,
+  "name": "Example content",
+  "meta": {
+    "tmb": "s123t",
+    "tmv": "s123v",
+    "cvr": "s123c",
+    "art": "s123a",
+    "gal": ["s123g0", "s123g1"]
+  },
+  "sources": [
+    {
+      "url": "https://example.invalid/stream",
+      "owner": {
+        "id": 456,
+        "name": "Example provider",
+        "meta": {
+          "tmb": "u456t",
+          "ico": "u456i"
+        }
+      }
+    }
+  ]
+}
+```
+
+This is a structural example, not a literal API response. Keys are optional and are returned only when the corresponding data exists. The example stream URL is illustrative only; Android API requests must still use `https://hamrahang.ir`.
+
+### The six API media roles
+
+The API helper `MediaRoleToAct()` in `h_api.php` defines exactly six stored media roles:
+
+| Role | Meaning / use | JSON location when exposed |
+|---|---|---|
+| `tmb` | Standard thumbnail | `entity.meta.tmb`; owner/user profile card may expose `meta.tmb` |
+| `tmv` | Music-video artwork | `entity.meta.tmv` |
+| `cvr` | Cover artwork | `entity.meta.cvr` |
+| `art` | Artwork / wide art | `entity.meta.art` where the entity exposes it |
+| `gal` | Gallery images; this is a collection, not one thumbnail | `entity.meta.gal[]` |
+| `ico` | Owner/provider icon | `source.owner.meta.ico` (or the corresponding owner card's `meta.ico`) |
+
+The six roles above are confirmed by the API's role-to-action map. They are six **media roles**, not six guaranteed fields on every JSON object. In particular:
+
+- `gal` is an array/collection when multiple gallery images are returned.
+- `ico` belongs to the owner/provider profile metadata; it is not a generic content thumbnail.
+- `art` has legacy behavior in some content records. For example, the song card builder can expose `meta.art` as a numeric value, so clients must not assume every `art` value is an image key without checking the entity contract.
+- Owner cards expose `meta.tmb`, `meta.ico`, and may expose `meta.photo`. The `photo` value is an external URL and is not a seventh stored media role.
+- `photo` and `off` map to action `0` in `MediaRoleToAct()`; they are not part of the six stored media roles.
+
+### Supported image file formats
+
+The API ingestion helper `IngestThumbFromSource()` accepts these image formats: **JPG/JPEG, PNG, SVG, WEBP, and GIF**. Therefore, there are five supported file formats, while there are six semantic media roles in the API. Do not confuse the number of roles with the number of file formats.
+
+### Media-role flow
+
+```text
+API entity JSON
+      |
+      +-- entity.meta
+      |      |
+      |      +-- tmb  : standard thumbnail
+      |      +-- tmv  : music-video artwork
+      |      +-- cvr  : cover artwork
+      |      +-- art  : artwork (check entity/legacy value type)
+      |      +-- gal[]: gallery image collection
+      |
+      +-- source.owner.meta
+             |
+             +-- tmb : owner profile thumbnail
+             +-- ico : owner/provider icon
+
+Media upload / ingestion
+      |
+      +-- six stored roles: tmb, tmv, cvr, art, gal, ico
+      |
+      +-- image file format: JPG / PNG / SVG / WEBP / GIF
+      |
+      +-- photo: external URL only (not a stored role)
+      +-- off  : disabled (not an image role)
+```
+
+### Verified source references
+
+- `h_api.php`: `MediaRoleToAct()`, `MediaPlanBKey()`, `IngestThumbFromSource()`, `OwnerCard()`, and the `SONG_CARD()`, `ARTIST_CARD()`, `ALBUM_CARD()`, and `VIDEO_CARD()` builders.
+- `index.html`: web image-key resolution and owner image fallback behavior.
+- `android-tv/app/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt`: Android image URL construction and artwork resolution.
+
 ## 2.6 Web reference
 
 The reference `index.html` contains these SVG variables:
