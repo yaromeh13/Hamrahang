@@ -11,7 +11,7 @@ android {
     defaultConfig {
         applicationId = "ir.hamrahang.tv"
         minSdk = 21
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }
@@ -69,7 +69,6 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
-
     implementation(libs.glide)
     implementation(libs.glide.transform)
 
