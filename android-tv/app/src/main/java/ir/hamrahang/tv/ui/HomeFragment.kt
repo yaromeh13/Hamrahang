@@ -37,7 +37,14 @@ class HomeFragment :
         refreshPlaylists()
     }
 
-    /** Refresh the Home playlist rows after account/network recovery. */
+    /** Refresh cached and remote Home rows without recreating the screen. */
+    fun refreshAfterNetworkRecovery() {
+        if (!::adapter.isInitialized) return
+        viewModel.refreshContent()
+        viewModel.refreshPlaylists()
+    }
+
+    /** Refresh the Home playlist rows after account changes. */
     fun refreshPlaylists() {
         if (::adapter.isInitialized) viewModel.refreshPlaylists()
     }
