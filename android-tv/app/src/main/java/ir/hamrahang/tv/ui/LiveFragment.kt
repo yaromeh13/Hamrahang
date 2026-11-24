@@ -2,13 +2,11 @@ package ir.hamrahang.tv.ui
 
 import android.net.Uri
 import android.os.Bundle
-import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.leanback.widget.BaseGridView
 import androidx.leanback.widget.VerticalGridView
 import ir.hamrahang.tv.R
-import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.live.LiveItem
 import ir.hamrahang.tv.data.live.LiveRepository
 import ir.hamrahang.tv.data.local.ContentType
