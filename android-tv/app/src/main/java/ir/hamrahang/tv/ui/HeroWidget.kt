@@ -56,6 +56,7 @@ class HeroWidget(
     private val artistSubName: TextView = root.findViewById(R.id.artistSubName)
     private val artistBio: TextView = root.findViewById(R.id.artistBio)
     private val artistCover: ImageView = root.findViewById(R.id.artistCover)
+    private val artistArt: FadeImageView = root.findViewById(R.id.ArtistArt)
 
     private lateinit var artistDetailsBinder: HeroArtistDetailsBinder
     private val btnPlayArtist: ImageView = root.findViewById(R.id.btnPlayArtist)
@@ -209,6 +210,17 @@ class HeroWidget(
                         }
 
                         artistBio.text = artist.meta?.des.orEmpty()
+
+                        val artistArtUrl = ImageResolver.artistArt(artist.meta)
+                        artistArt.visibility = if (artistArtUrl.isNullOrBlank()) View.GONE else View.VISIBLE
+                        if (!artistArtUrl.isNullOrBlank()) {
+                            ImageResolver.request(
+                                artistArt,
+                                artistArtUrl,
+                                R.drawable.ic_artist
+                            ).into(artistArt)
+                            artistArt.fadeStart = 0.4f
+                        }
 
                         ImageResolver.request(
                             artistCover,
