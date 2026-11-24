@@ -39,6 +39,8 @@
     <string name="quality_low">Lowest</string>
 
     <string name="play">Play</string>
+    <string name="follow">Follow</string>
+    <string name="following">Following</string>
     <!-- Player settings and lyrics panel -->
     <string name="lyrics_language_title">Language</string>
     <string name="lyrics_language_auto">Automatic</string>
