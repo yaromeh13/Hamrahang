@@ -6,7 +6,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.material.button.MaterialButton
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
@@ -34,7 +33,7 @@ class HeroWidget(
     // VIDEO
     private val videoTitle: TextView = root.findViewById(R.id.VideoTitle)
     private val videoSubTitle: TextView = root.findViewById(R.id.VideoSubTitle)
-    private val videoArt: FadeImageView = root.findViewById(R.id.VideoArt)
+    private val heroArt: FadeImageView = root.findViewById(R.id.heroArt)
     private val layoutVideoArtists: LinearLayout =
         root.findViewById(R.id.layoutVideoArtists)
     private val videoMetaContainer: LinearLayout =
@@ -56,7 +55,6 @@ class HeroWidget(
     private val artistSubName: TextView = root.findViewById(R.id.artistSubName)
     private val artistBio: TextView = root.findViewById(R.id.artistBio)
     private val artistCover: ImageView = root.findViewById(R.id.artistCover)
-    private val artistArt: FadeImageView = root.findViewById(R.id.ArtistArt)
 
     private lateinit var artistDetailsBinder: HeroArtistDetailsBinder
     private val btnPlayArtist: ImageView = root.findViewById(R.id.btnPlayArtist)
@@ -82,13 +80,7 @@ class HeroWidget(
                         videoTitle.text = musicVideo.displayTitle()
                         videoSubTitle.text = musicVideo.title.orEmpty()
 
-                        ImageResolver.request(
-                            videoArt,
-                            musicVideo.thumb,
-                            R.drawable.ic_video
-                        ).into(videoArt)
-
-                        videoArt.fadeStart = 0.4f
+                        bindHeroArt(ImageResolver.hero(musicVideo.meta) ?: musicVideo.thumb, R.drawable.ic_video)
                         heroMetaBinder.bind(videoMetaContainer, musicVideo.meta)
                         HeroArtistsBinder.bind(
                             layoutVideoArtists,
@@ -101,6 +93,7 @@ class HeroWidget(
                         showItem()
 
                         bindItemTitle(song.displayTitle(), song.name)
+                        bindHeroArt(ImageResolver.hero(song.meta), R.drawable.ic_song)
                         ImageResolver.request(
                             itemCover,
                             song.thumb,
@@ -138,6 +131,7 @@ class HeroWidget(
                         showItem()
 
                         bindItemTitle(podcast.displayTitle(), podcast.name)
+                        bindHeroArt(ImageResolver.hero(podcast.meta), R.drawable.ic_song)
                         ImageResolver.request(
                             itemCover,
                             podcast.thumb,
@@ -159,6 +153,7 @@ class HeroWidget(
                         showItem()
 
                         bindItemTitle(album.displayTitle(), album.name)
+                        bindHeroArt(ImageResolver.hero(album.meta), R.drawable.ic_album_disk)
                         ImageResolver.request(
                             itemCover,
                             album.thumb,
@@ -211,16 +206,7 @@ class HeroWidget(
 
                         artistBio.text = artist.meta?.des.orEmpty()
 
-                        val artistArtUrl = ImageResolver.artistArt(artist.meta)
-                        artistArt.visibility = if (artistArtUrl.isNullOrBlank()) View.GONE else View.VISIBLE
-                        if (!artistArtUrl.isNullOrBlank()) {
-                            ImageResolver.request(
-                                artistArt,
-                                artistArtUrl,
-                                R.drawable.ic_artist
-                            ).into(artistArt)
-                            artistArt.fadeStart = 0.4f
-                        }
+                        bindHeroArt(ImageResolver.artistArt(artist.meta), R.drawable.ic_artist)
 
                         ImageResolver.request(
                             artistCover,
@@ -253,6 +239,18 @@ class HeroWidget(
         }
     }
 
+    private fun bindHeroArt(url: String?, fallbackDrawable: Int) {
+        if (url.isNullOrBlank()) {
+            heroArt.visibility = View.GONE
+            heroArt.setImageDrawable(null)
+            return
+        }
+
+        heroArt.visibility = View.VISIBLE
+        heroArt.fadeStart = 0.4f
+        ImageResolver.request(heroArt, url, fallbackDrawable).into(heroArt)
+    }
+
     private fun hideAll() {
         videoHero.visibility = View.GONE
         itemHero.visibility = View.GONE
@@ -260,13 +258,14 @@ class HeroWidget(
     }
 
     private fun showVideo() {
-        updateVideoLayout()
         hideAll()
+        heroArt.visibility = View.GONE
         videoHero.visibility = View.VISIBLE
     }
 
     private fun showItem() {
         hideAll()
+        heroArt.visibility = View.GONE
         itemMetaContainer.visibility = View.VISIBLE
         layoutItemArtists.visibility = View.VISIBLE
         itemHero.visibility = View.VISIBLE
@@ -274,6 +273,7 @@ class HeroWidget(
 
     private fun showArtist() {
         hideAll()
+        heroArt.visibility = View.GONE
         artistHero.visibility = View.VISIBLE
     }
 
@@ -342,10 +342,4 @@ class HeroWidget(
         }
     }
 
-    private fun updateVideoLayout() {
-        val lp = videoArt.layoutParams as ConstraintLayout.LayoutParams
-        lp.startToStart = ConstraintLayout.LayoutParams.UNSET
-        lp.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
-        videoArt.layoutParams = lp
-    }
 }
