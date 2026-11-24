@@ -514,6 +514,16 @@ The existing web thumbnail helper currently uses `tmv → tmb` for generic video
 
 Paths below are repository-relative and were checked against the current `main` branch while this document was updated. Kotlin package declarations do not always mirror directory names exactly; use the exact paths shown here.
 
+
+## 2.9 Artist Hero behavior
+
+- The Artist detail screen keeps the selected artist as its Hero identity while the user moves through the artist's content rows. Row focus must not replace the Artist Hero with a Song, Album, Video, or MusicVideo Hero.
+- The Artist Hero actions are placed together in one horizontal row below the artist details. Play remains the existing icon action; Follow is a text-only, focusable MaterialButton beside it.
+- Follow uses localized resources: `follow` and `following`. Its selected state is read from and toggled through the existing `FavoriteManager` with `ContentType.ARTIST`; do not introduce a new API endpoint for this control.
+- On Home, an Artist Hero exposes Follow only. Other Hero types hide that action. On the Artist detail page, Play and Follow are both shown.
+- Both actions support D-pad focus. Moving down from either action enters the first artist content row; horizontal navigation moves between Play and Follow on the Artist detail page.
+- The Artist detail Hero remains stable while its Videos, Music Videos, Top Songs, and Albums rows are browsed. The rows remain interactive and continue to dispatch their normal item-click actions.
+
 ## 3.1 Startup and API
 
 | File | Responsibility |
