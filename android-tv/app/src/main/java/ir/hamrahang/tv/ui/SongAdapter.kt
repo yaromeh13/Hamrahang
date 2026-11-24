@@ -34,6 +34,7 @@ class SongAdapter(
         val title: TextView = view.findViewById(R.id.itemTitle)
         val artist: TextView = view.findViewById(R.id.itemSubtitle)
         val cover: ImageView = view.findViewById(R.id.itemCover)
+        val coverFrame: View = view.findViewById(R.id.coverFrame)
     }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val view = LayoutInflater.from(parent.context)
@@ -53,7 +54,7 @@ class SongAdapter(
             .into(holder.cover)
 
         holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-            holder.cover.isSelected = hasFocus
+            holder.coverFrame.isSelected = hasFocus
             if (hasFocus) {
                 android.util.Log.d("FOCUS_TEST", item.displayTitle())
                 onFocus(item)
