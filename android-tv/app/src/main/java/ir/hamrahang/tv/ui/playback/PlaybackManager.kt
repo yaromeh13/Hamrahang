@@ -114,6 +114,19 @@ object PlaybackManager {
 
     // SESSION
     // ==================================================
+    /**
+     * Detach any previous queue before starting standalone media such as Live.
+     * This prevents PlayerManager error/end callbacks from advancing an old song queue.
+     */
+    fun clearSession() {
+        playCurrentJob?.cancel()
+        autoPlayJob?.cancel()
+        _session.value = null
+        _currentItem.value = null
+        currentContentType = null
+        resetShuffleMemory()
+    }
+
     fun start(newSession: PlaybackSession) {
         if (newSession.items.isEmpty()) {
             Log.e( "PLAYBACK", "Cannot start empty session" )
