@@ -30,6 +30,7 @@ class PlaylistAdapter(
         val title: TextView = view.findViewById(R.id.itemTitle)
         val subtitle: TextView = view.findViewById(R.id.itemSubtitle)
         val cover: ImageView = view.findViewById(R.id.itemCover)
+        val coverFrame: View = view.findViewById(R.id.coverFrame)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
@@ -45,7 +46,7 @@ class PlaylistAdapter(
             .into(holder.cover)
 
         holder.itemView.setOnFocusChangeListener { _, focused ->
-            holder.cover.isSelected = focused
+            holder.coverFrame.isSelected = focused
             if (focused) onFocus(playlist)
         }
         holder.itemView.setOnClickListener { onClick(playlist) }
@@ -69,6 +70,7 @@ class PlaylistMediaAdapter(
         val title: TextView = view.findViewById(R.id.itemTitle)
         val subtitle: TextView = view.findViewById(R.id.itemSubtitle)
         val cover: ImageView = view.findViewById(R.id.itemCover)
+        val coverFrame: View = view.findViewById(R.id.coverFrame)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
@@ -116,7 +118,7 @@ class PlaylistMediaAdapter(
             .into(holder.cover)
 
         holder.itemView.setOnFocusChangeListener { _, focused ->
-            holder.cover.isSelected = focused
+            holder.coverFrame.isSelected = focused
             if (focused) onFocus(media)
         }
         holder.itemView.setOnClickListener { onClick(media) }
