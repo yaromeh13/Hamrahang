@@ -60,44 +60,56 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#BBBBBB"/>
-        <ImageButton
-            android:id="@+id/btnPlayArtist"
-            android:layout_width="@dimen/_36sdp"
-            android:layout_height="@dimen/_36sdp"
-            android:layout_marginTop="@dimen/_16dp"
+        <LinearLayout
+            android:id="@+id/layoutArtistActions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-            android:background="@drawable/bg_artist_play"
+            <ImageButton
+                android:id="@+id/btnPlayArtist"
+                android:layout_width="@dimen/_36sdp"
+                android:layout_height="@dimen/_36sdp"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/bg_artist_play"
+                android:src="@drawable/ic_play_arrow"
+                android:tint="@android:color/black"
+                android:padding="@dimen/_8dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:clickable="true"
+                android:nextFocusLeft="@id/artistCover"
+                android:nextFocusRight="@id/btnFollowArtist"
+                android:nextFocusUp="@id/artistBio"
+                android:nextFocusDown="@id/btnPlayArtist"
+                android:visibility="gone"/>
 
-            android:src="@drawable/ic_play_arrow"
-            android:tint="@android:color/black"
-
-            android:padding="@dimen/_8dp"
-
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:clickable="true"
-
-            android:nextFocusLeft="@id/artistCover"
-            android:nextFocusRight="@id/btnPlayArtist"
-            android:nextFocusUp="@id/artistBio"
-            android:nextFocusDown="@id/btnPlayArtist"
-
-            android:visibility="gone"/>
-        <ImageButton
-            android:id="@+id/btnFollowArtist"
-            android:layout_width="@dimen/_36sdp"
-            android:layout_height="@dimen/_36sdp"
-            android:layout_marginTop="@dimen/_10dp"
-            android:background="@drawable/bg_detail_action"
-            android:src="@drawable/ic_artist"
-            android:tint="@android:color/white"
-            android:contentDescription="Follow"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:clickable="true"
-            android:nextFocusLeft="@id/btnPlayArtist"
-            android:nextFocusUp="@id/artistBio"
-            android:nextFocusDown="@id/btnPlayArtist" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFollowArtist"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:minHeight="40dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="@drawable/bg_detail_action"
+                android:backgroundTint="@null"
+                android:text="@string/follow"
+                android:textColor="@android:color/white"
+                android:textAllCaps="false"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:clickable="true"
+                android:nextFocusLeft="@id/btnPlayArtist"
+                android:nextFocusUp="@id/artistBio"
+                android:nextFocusDown="@id/btnFollowArtist"/>
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>
