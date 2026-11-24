@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.google.android.material.button.MaterialButton
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -58,8 +59,10 @@ class HeroWidget(
 
     private lateinit var artistDetailsBinder: HeroArtistDetailsBinder
     private val btnPlayArtist: ImageView = root.findViewById(R.id.btnPlayArtist)
+    private val btnFollowArtist: MaterialButton = root.findViewById(R.id.btnFollowArtist)
 
     init {
+        btnFollowArtist.visibility = View.GONE
         artistDetailsBinder = HeroArtistDetailsBinder(
             root.findViewById(R.id.layoutArtistCounts),
             root.findViewById(R.id.layoutArtistInfo),
@@ -268,6 +271,36 @@ class HeroWidget(
 
     fun hidePlayButton() {
         btnPlayArtist.visibility = View.GONE
+    }
+
+    fun showFollowButton() {
+        btnFollowArtist.visibility = View.VISIBLE
+    }
+
+    fun hideFollowButton() {
+        btnFollowArtist.visibility = View.GONE
+    }
+
+    fun setFollowClick(action: () -> Unit) {
+        btnFollowArtist.setOnClickListener { action() }
+    }
+
+    fun setArtistFollowed(followed: Boolean) {
+        btnFollowArtist.isSelected = followed
+        btnFollowArtist.setText(if (followed) R.string.following else R.string.follow)
+    }
+
+    fun setFollowButtonKeyListener(rows: RecyclerView) {
+        btnFollowArtist.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN &&
+                keyCode == KeyEvent.KEYCODE_DPAD_DOWN
+            ) {
+                rows.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                true
+            } else {
+                false
+            }
+        }
     }
 
     fun setPlayClick(action: () -> Unit) {
