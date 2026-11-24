@@ -197,13 +197,13 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
     private fun toggleArtistFollow() {
         val id = artistId?.toLongOrNull()
         if (id == null) {
-            MessageManager.info("This artist cannot be followed")
+            MessageManager.info(getString(R.string.artist_follow_unavailable))
             return
         }
         viewLifecycleOwner.lifecycleScope.launch {
             val followed = FavoriteManager.toggle(id, ContentType.ARTIST)
             updateFollowButton(followed)
-            MessageManager.info(if (followed) "Artist followed" else "Artist unfollowed")
+            MessageManager.info(getString(if (followed) R.string.artist_followed else R.string.artist_unfollowed))
         }
     }
 
