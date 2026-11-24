@@ -96,7 +96,7 @@
                 android:insetBottom="0dp"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:background="@drawable/bg_detail_action"
+                android:background="@drawable/bg_detail_play"
                 android:backgroundTint="@null"
                 android:text="@string/follow"
                 android:textColor="@android:color/white"
@@ -106,7 +106,7 @@
                 android:focusable="true"
                 android:focusableInTouchMode="true"
                 android:clickable="true"
-                android:nextFocusLeft="@id/btnPlayArtist"
+                android:nextFocusLeft="@id/artistCover"
                 android:nextFocusUp="@id/artistBio"
                 android:nextFocusDown="@id/btnFollowArtist"/>
         </LinearLayout>
