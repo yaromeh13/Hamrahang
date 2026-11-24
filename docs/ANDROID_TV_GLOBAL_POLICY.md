@@ -352,43 +352,52 @@ The verified Android image base URL is `https://cdn.hamrahang.ir/thumb/`, matchi
 
 ## 2.8 Android TV card thumbnail area and missing-image fallback
 
-This section defines the visual treatment for content cards when the entity has no thumbnail key or the requested image fails to load. It changes only card presentation; it does not change API metadata priority, image URL construction, or Hero background behavior.
+This section defines the visual treatment for content cards when the entity has no thumbnail key or the requested image fails to load. The thumbnail surface and focus border are separate visual layers. The dark surface must occupy only the actual image viewport; it must not appear as an extra frame around a successfully loaded image.
 
 ### Required visual behavior
 
-- The image area of every applicable Home content card has a visible base surface even when no thumbnail exists.
-- The base surface uses **`#222222`**, matching the default (unselected) background color of the Settings category cards in `bg_setting_category.xml`.
-- The content-type fallback icon is centered and displayed at its intrinsic drawable size (the current icon vectors are 36dp), rather than being enlarged to fill the entire thumbnail area.
-- A successfully loaded thumbnail continues to fill/crop the card image area using the existing explicit Glide transformations (for example `CenterCrop` or `circleCrop`). The smaller centered treatment is for the placeholder/error drawable, not for real artwork.
-- The selected/focused card retains its existing red focus border. The background remains `#222222` in both selected and default states.
-- The card title/subtitle layout, card dimensions, focus navigation, click behavior, and image metadata fallback priority must not change.
+- The image viewport has a **`#222222`** base surface, matching the default unselected Settings category-card color in `bg_setting_category.xml`.
+- The base surface is drawn directly behind the image/placeholder, at the same bounds as the image viewport. A real opaque thumbnail covers it completely; only a missing/error/transparent image reveals it.
+- The red focus border is a separate outer frame. The space between the red border and the image viewport remains transparent, not dark gray.
+- The square and landscape card layouts currently inset the image viewport by 6dp inside the outer focus frame. This preserves the visual breathing room between the artwork and red focus border without creating a gray band.
+- Artist cards use the same layering principle with a circular dark surface inset 4dp inside the transparent outer focus frame.
+- The type-specific fallback icon is centered within the image viewport and must not be enlarged to fill it.
+- Successfully loaded thumbnails continue to use their existing Glide transformations (for example `CenterCrop()`, `RoundedCorners(7)`, or `circleCrop()`). Do not remove those transformations.
+- Card dimensions, titles/subtitles, D-pad navigation, focus callbacks, click behavior, image metadata priority and Hero behavior must remain unchanged.
 
-### Current resource implementation
+### Current resource and layout implementation
 
 | Resource | Responsibility / current rule |
 |---|---|
-| `android-tv/app/src/main/res/drawable/card_bg.xml` | Shared rectangular thumbnail background. Default and selected states both use `#222222`; selected state adds the existing 3dp red border. |
-| `android-tv/app/src/main/res/drawable/art_focus_border.xml` | Circular artist image container background. Uses `#222222` and retains the red selected border. |
-| `android-tv/app/src/main/res/layout/item_content.xml` | Shared square card layout used by Song, Podcast, Album, Playlist and related adapters. Its `itemCover` uses `centerInside` so the fallback drawable is not stretched. |
-| `android-tv/app/src/main/res/layout/item_musicvideo.xml` | Shared landscape thumbnail layout used by Video and MusicVideo adapters. Its `cover` uses `centerInside` for fallback drawables. |
-| `android-tv/app/src/main/res/layout/item_artist.xml` | Artist card image container; the fallback drawable is centered within the existing circular presentation. |
+| `android-tv/app/src/main/res/drawable/card_bg.xml` | Transparent outer focus frame for rectangular cards. Only the selected state draws the 3dp red border; it does not paint a dark fill. |
+| `android-tv/app/src/main/res/drawable/card_thumbnail_surface.xml` | Rounded `#222222` surface behind the square/landscape image viewport. |
+| `android-tv/app/src/main/res/drawable/art_focus_border.xml` | Transparent outer circular artist focus frame; selected state draws the 3dp red border. |
+| `android-tv/app/src/main/res/drawable/artist_thumbnail_surface.xml` | Circular `#222222` surface behind the artist image viewport. |
+| `android-tv/app/src/main/res/layout/item_content.xml` | Shared square card layout. `coverFrame` owns the outer focus border; `itemCover` is inset 6dp and owns the dark image surface. |
+| `android-tv/app/src/main/res/layout/item_musicvideo.xml` | Shared landscape Video/MusicVideo layout. `coverFrame` owns the outer focus border; `cover` is inset 6dp and owns the dark image surface. |
+| `android-tv/app/src/main/res/layout/item_artist.xml` | Artist image layout. `artistContainer` owns the outer circular focus border; `artistImage` is inset 4dp and owns the circular dark surface. |
 
-### Important Glide distinction
+### Adapter focus ownership
 
-The card layouts use `android:scaleType="centerInside"` to keep the fallback/error drawable compact. Adapters that load real artwork already specify explicit Glide transformations such as `CenterCrop()` or `circleCrop()`; those transformations remain responsible for filling/cropping successfully loaded artwork. Do not remove or replace those adapter transformations as part of this visual policy.
+The focus state must be applied to the outer frame, not the image view:
 
-The fallback icon resource remains type-specific and is selected by the adapter through `ImageResolver.request(..., fallbackDrawable)`. This UI background rule must not introduce a new generic image key or borrow artwork from another content type.
+- Song, Podcast, Album, Playlist and PlaylistMedia adapters set `coverFrame.isSelected`.
+- Video and MusicVideo adapters set `coverFrame.isSelected`.
+- ArtistAdapter sets `artistContainer.isSelected`.
+
+This keeps the red border outside the artwork and leaves the inset gap transparent. Do not move the selected state back onto the ImageView.
 
 ### Acceptance criteria
 
-1. A Song, Podcast, Album, Playlist, Video or MusicVideo with no thumbnail shows its own type icon centered over a visible `#222222` thumbnail surface.
-2. The icon does not expand to cover the entire 170dp square or 220×120dp landscape image region.
-3. A valid loaded thumbnail still fills/crops its image region as before.
-4. A failed image request produces the same centered fallback icon and background as a missing thumbnail.
-5. Artist cards retain their circular image shape, with a `#222222` base and the existing red selected border.
-6. Focus, D-pad navigation, card sizing, titles, subtitles and click handling remain unchanged.
-7. The Hero wide background remains independent and continues to use its own `art → tmv` policy.
-8. Confirm all criteria in an Android build and on a TV/device; source changes alone are not a device-test result.
+1. A missing/broken Song, Podcast, Album or Playlist thumbnail shows its type-specific icon over the dark surface, within the image viewport.
+2. A missing/broken Video or MusicVideo thumbnail shows the video icon over the dark surface, within the landscape image viewport.
+3. With a valid opaque image, no dark gray strip or frame is visible around the artwork; only the intentional transparent gap and red focus border remain.
+4. When focused, the red border is drawn by the outer frame and does not overlay or shrink the image itself.
+5. When not focused, the outer frame is transparent and does not add a visible gray outline.
+6. Artist cards retain their circular crop, dark fallback surface and separate red focus border.
+7. Existing Glide transformations, card dimensions, focus navigation, titles, subtitles and click behavior remain unchanged.
+8. The Hero wide background remains independent and continues to use its own `art → tmv` policy.
+9. Confirm all criteria in an Android build and on a TV/device; source changes alone are not a device-test result.
 
 
 ## 2.7 API JSON image metadata and six media roles
@@ -544,11 +553,13 @@ Paths below are repository-relative and were checked against the current `main` 
 
 | File | Responsibility |
 |---|---|
-| `android-tv/app/src/main/res/drawable/card_bg.xml` | Shared dark thumbnail surface (`#222222`) and red selected border for content cards. |
-| `android-tv/app/src/main/res/drawable/art_focus_border.xml` | Dark circular artist-card surface and selected border. |
+| `android-tv/app/src/main/res/drawable/card_bg.xml` | Transparent outer rectangular focus frame; red border only when selected. |
+| `android-tv/app/src/main/res/drawable/art_focus_border.xml` | Transparent outer circular artist focus frame; red border only when selected. |
 | `android-tv/app/src/main/res/layout/item_content.xml` | Shared square content card image area and centered fallback display. |
 | `android-tv/app/src/main/res/layout/item_musicvideo.xml` | Shared landscape Video/MusicVideo image area and centered fallback display. |
 | `android-tv/app/src/main/res/layout/item_artist.xml` | Circular artist image card layout. |
+| `android-tv/app/src/main/res/drawable/card_thumbnail_surface.xml` | Dark rounded background directly behind square/landscape thumbnail content. |
+| `android-tv/app/src/main/res/drawable/artist_thumbnail_surface.xml` | Dark circular background directly behind artist artwork/fallback. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt` | Artwork-key priority, thumbnail URL construction, Hero/owner resolution, shared Glide request helper. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | ExoPlayer ownership, current media/source, playback position and player controls. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerState.kt` | Shared player UI/playback state (verify exact path before editing if the source is moved). |
