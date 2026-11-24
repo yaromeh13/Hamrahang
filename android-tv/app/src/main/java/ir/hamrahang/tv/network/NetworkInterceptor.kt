@@ -12,10 +12,11 @@ class NetworkInterceptor : Interceptor {
 
         return try {
             val response = chain.proceed(request)
-            if (isHamrahangApi) {
-                // Any HTTP response proves the host is reachable; HTTP status is
-                // interpreted by the repository that owns the request.
+            if (isHamrahangApi && response.code < 500) {
+                // A non-server-error response proves the API endpoint is responding.
                 NetworkEvents.reportApiAvailable()
+            } else if (isHamrahangApi) {
+                NetworkEvents.reportApiUnavailable()
             }
             response
         } catch (error: IOException) {
