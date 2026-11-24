@@ -168,7 +168,11 @@ object PlayerManager {
 
                 Log.e(
                     "PLAYER_ERROR",
-                    error.message ?: "Unknown"
+                    "Playback failed: " +
+                        "code=${error.errorCode}, " +
+                        "name=${error.errorCodeName}, " +
+                        "message=${error.message}",
+                    error
                 )
 
                 playNextUrl()
