@@ -275,14 +275,34 @@ object DatabaseProvider {
         }
     }
 
+    /**
+     * Version 35 only registers the playlists and playlist_items entities in
+     * Room. Both tables were already created by MIGRATION_33_34, so their
+     * existing rows and indexes must be retained without rebuilding them.
+     */
+    private val MIGRATION_34_35 = object : Migration(34, 35) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Intentionally no SQL changes: schema is already present from 33 -> 34.
+        }
+    }
+
     fun init(context: Context) {
         db = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "hamrahang.db"
         )
-            .addMigrations(MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33, MIGRATION_33_34)
-            .fallbackToDestructiveMigration()
+            .addMigrations(
+                MIGRATION_28_29,
+                MIGRATION_29_30,
+                MIGRATION_30_31,
+                MIGRATION_31_32,
+                MIGRATION_32_33,
+                MIGRATION_33_34,
+                MIGRATION_34_35
+            )
+            // Never erase a user's offline library to recover from an unknown schema.
+            // Missing migration paths now fail visibly instead of silently deleting data.
             .build()
     }
 
