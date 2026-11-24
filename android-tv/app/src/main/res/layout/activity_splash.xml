@@ -16,8 +16,12 @@
     <LinearLayout
         android:id="@+id/retryContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="36dp"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
         android:visibility="gone">
 
@@ -25,25 +29,41 @@
             android:id="@+id/errorText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
             android:text="ارتباط با سرور برقرار نشد"
             android:textColor="#FFFFFF"
             android:textSize="@dimen/_18sp"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/retryBtn"
+            android:layout_width="180dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_detail_play"
+            android:backgroundTint="@null"
             android:text="تلاش مجدد"
-            android:layout_marginTop="20dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textAllCaps="false"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:backgroundTint="@null"
             android:focusable="true"
             android:focusableInTouchMode="true"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/offlineBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_width="180dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_detail_play"
+            android:backgroundTint="@null"
             android:text="ورود آفلاین"
+            android:textColor="@android:color/white"
+            android:textAllCaps="false"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:backgroundTint="@null"
             android:focusable="true"
             android:focusableInTouchMode="true"/>
 
