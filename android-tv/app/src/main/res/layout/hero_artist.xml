@@ -104,6 +104,7 @@
                         android:paddingEnd="16dp"
                         android:background="@drawable/bg_detail_play"
                         android:backgroundTint="@null"
+                        app:backgroundTint="@null"
                         android:text="@string/follow"
                         android:textColor="@android:color/white"
                         android:textAllCaps="false"
