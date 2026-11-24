@@ -13,7 +13,7 @@
         android:id="@+id/cover"
         android:layout_width="220dp"
         android:layout_height="120dp"
-        android:scaleType="centerCrop"
+        android:scaleType="centerInside"
         android:background="@drawable/card_bg"
         android:clipToOutline="true"
         android:padding="6dp"/>
