@@ -10374,6 +10374,186 @@ $stmt->execute();*/
         exit();
     }
     
+    // =========================================================================
+    // Live — one playable card with its stream represented as a source.
+    // Owner is nested inside sources, matching song/video source objects.
+    // =========================================================================
+    function LIVE_CARD($row_live) {
+        global $IDHM;
+
+        $live = [];
+        $live['id']   = (int)$row_live['id_live'] + (int)$IDHM;
+        $live['name'] = $row_live['live_name'];
+        $live['url']  = str_replace(' ', '_', strtolower($row_live['live_name']));
+
+        $live_data = json_decode($row_live['live_data'] ?? '');
+        if (!is_object($live_data)) {
+            $live_data = new stdClass();
+        }
+
+        if (!empty($live_data->names) && (is_object($live_data->names) || is_array($live_data->names))) {
+            $live['names'] = $live_data->names;
+        }
+
+        $meta = [];
+        $meta['act'] = isset($row_live['live_act']) ? (int)$row_live['live_act'] : 1;
+        if (!empty($row_live['live_rd']))  $meta['rls'] = $row_live['live_rd'];
+        if (!empty($row_live['live_ply'])) $meta['ncp'] = (int)$row_live['live_ply'];
+
+        if (!empty($live_data->des)) {
+            $meta['des'] = is_string($live_data->des) ? $live_data->des : (string)$live_data->des;
+        }
+
+        foreach (['tmb', 'tmv', 'cvr'] as $role) {
+            if (!empty($live_data->$role)) {
+                $thumb = ThumbImage($live_data->$role);
+                if ($thumb) $meta[$role] = $thumb;
+            }
+        }
+
+        $meta['type'] = 'live';
+        if ($meta) $live['meta'] = $meta;
+
+        // A Live row owns one stream source; keep URL and Owner inside sources.
+        $live['sources'] = [];
+        if (!empty($live_data->src)) {
+            $src = [
+                'url'  => (string)$live_data->src,
+                'type' => 'original'
+            ];
+
+            if (!empty($live_data->bit)) {
+                $src['bit'] = (int)$live_data->bit;
+            }
+
+            $owner = OwnerCard(isset($row_live['id_owner']) ? (int)$row_live['id_owner'] : 0);
+            if ($owner) {
+                $src['owner'] = $owner;
+            }
+
+            if (!empty($live_data->file_id))  $src['file_id']  = (string)$live_data->file_id;
+            if (!empty($live_data->file_unq)) $src['file_unq'] = (string)$live_data->file_unq;
+
+            $live['sources'][] = $src;
+        }
+
+        return $live;
+    }
+
+    function LIVE($ID) {
+        global $conn;
+
+        $ID = (int)$ID;
+        if ($ID <= 0) return null;
+
+        $sql = "SELECT * FROM live WHERE id_live = $ID AND live_act != 0 LIMIT 1";
+        $result = $conn->query($sql);
+        if (!$result || !$result->num_rows) return null;
+
+        $row_live = $result->fetch_assoc();
+
+        // Count a play only when the full Live item is requested.
+        $conn->query("UPDATE live SET live_ply = live_ply + 1 WHERE id_live = " . (int)$row_live['id_live']);
+        $row_live['live_ply'] = (int)$row_live['live_ply'] + 1;
+
+        return ['live' => LIVE_CARD($row_live)];
+    }
+
+    if ($Page == "live" && $QJS == 'ep') {
+
+        // Resolve multiple public Live IDs into lightweight playable cards.
+        if ($Q1 === 'resolve') {
+            $INPUT = file_get_contents('php://input');
+            $JSD   = json_decode($INPUT);
+
+            $publicIds = [];
+            if (isset($JSD->ids) && is_array($JSD->ids)) {
+                $publicIds = $JSD->ids;
+            } elseif (is_array($JSD)) {
+                $publicIds = $JSD;
+            }
+
+            $realIds = [];
+            foreach ($publicIds as $pid) {
+                $rid = (int)$pid - (int)$IDHM;
+                if ($rid > 0) $realIds[] = $rid;
+            }
+            $realIds = array_values(array_unique($realIds));
+            if (count($realIds) > 100) {
+                $realIds = array_slice($realIds, 0, 100);
+            }
+
+            $lives_obj = [];
+            if (count($realIds) > 0) {
+                $in = implode(',', array_map('intval', $realIds));
+                $result = $conn->query("
+                    SELECT *
+                    FROM live
+                    WHERE id_live IN ($in)
+                      AND live_act != 0
+                ");
+
+                $byId = [];
+                if ($result && $result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        $byId[(int)$row['id_live']] = LIVE_CARD($row);
+                    }
+                }
+
+                // Preserve the order requested by the client.
+                foreach ($realIds as $rid) {
+                    if (isset($byId[$rid])) {
+                        $lives_obj[] = $byId[$rid];
+                    }
+                }
+            }
+
+            echo json_encode($lives_obj);
+            exit();
+        }
+
+        // Full Live card by public ID.
+        if (is_numeric($Q1)) {
+            $ID = (int)$Q1 - (int)$IDHM;
+            $live_obj = LIVE($ID);
+            if (!$live_obj) {
+                echo json_encode(['error' => 'not_found']);
+                exit();
+            }
+            echo json_encode($live_obj);
+            exit();
+        }
+
+        // Public Live listing.
+        switch ($Q1) {
+            case 'latest':
+                $QACT = 'live.live_act != 0';
+                break;
+            default:
+                echo json_encode(['error' => 'invalid_action']);
+                exit();
+        }
+
+        $new_lives_obj = [];
+        $sql_live = "
+            SELECT *
+            FROM live
+            WHERE $QACT
+            ORDER BY live.live_rd DESC, live.id_live DESC
+            LIMIT 40
+        ";
+        $result_live = $conn->query($sql_live);
+
+        if ($result_live && $result_live->num_rows > 0) {
+            while ($row_live = $result_live->fetch_assoc()) {
+                $new_lives_obj[] = LIVE_CARD($row_live);
+            }
+        }
+
+        echo json_encode($new_lives_obj);
+        exit();
+    }
+
     function PLAYLIST_CARD($row) {
         global $IDHM;
     
