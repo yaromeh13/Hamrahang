@@ -75,7 +75,7 @@ class MainActivity : BaseActivity(),
                         if (!apiReachable && recoverySyncJob?.isActive != true) {
                             recoverySyncJob = lifecycleScope.launch {
                                 val apiIsReady = runCatching {
-                                    val response = ApiClient.api.ping()
+                                    val response = ApiClient.pingApi.ping()
                                     response.isSuccessful &&
                                         response.body()?.status == "ok"
                                 }.getOrDefault(false)
