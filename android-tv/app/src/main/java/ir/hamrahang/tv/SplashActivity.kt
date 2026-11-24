@@ -15,7 +15,7 @@ import ir.hamrahang.tv.utils.AppState
 class SplashActivity : BaseActivity() {
 
     private val viewModel by lazy {
-        SplashViewModel(AppRepository(ApiClient.api))
+        SplashViewModel(AppRepository(ApiClient.pingApi))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
