@@ -544,6 +544,11 @@ Paths below are repository-relative and were checked against the current `main` 
 
 | File | Responsibility |
 |---|---|
+| `android-tv/app/src/main/res/drawable/card_bg.xml` | Shared dark thumbnail surface (`#222222`) and red selected border for content cards. |
+| `android-tv/app/src/main/res/drawable/art_focus_border.xml` | Dark circular artist-card surface and selected border. |
+| `android-tv/app/src/main/res/layout/item_content.xml` | Shared square content card image area and centered fallback display. |
+| `android-tv/app/src/main/res/layout/item_musicvideo.xml` | Shared landscape Video/MusicVideo image area and centered fallback display. |
+| `android-tv/app/src/main/res/layout/item_artist.xml` | Circular artist image card layout. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt` | Artwork-key priority, thumbnail URL construction, Hero/owner resolution, shared Glide request helper. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | ExoPlayer ownership, current media/source, playback position and player controls. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerState.kt` | Shared player UI/playback state (verify exact path before editing if the source is moved). |
