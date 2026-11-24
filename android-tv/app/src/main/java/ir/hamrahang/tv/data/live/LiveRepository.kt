@@ -38,6 +38,7 @@ class LiveRepository {
 
         if (entities.isNotEmpty()) {
             liveDao.upsertAll(entities)
+            liveDao.deleteExcept(entities.map { it.id })
         } else {
             // An empty server response is authoritative; keep no stale live cards.
             liveDao.clear()
