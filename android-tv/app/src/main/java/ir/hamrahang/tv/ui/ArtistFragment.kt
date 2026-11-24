@@ -4,8 +4,8 @@ package ir.hamrahang.tv.ui
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
-import android.widget.ImageButton
 import androidx.fragment.app.Fragment
+import com.google.android.material.button.MaterialButton
 import androidx.lifecycle.lifecycleScope
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.artist.ArtistRepository
@@ -32,7 +32,7 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
     private lateinit var heroContainer: View
     private lateinit var rows: VerticalGridView
     private var artistId: String? = null
-    private lateinit var followButton: ImageButton
+    private lateinit var followButton: MaterialButton
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -181,11 +181,7 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
 
                 rows = rowsData,
 
-                onHeroFocus = { hero ->
-
-                    HeroManager.show(hero)
-
-                },
+                onHeroFocus = { /* Keep the artist identity hero fixed while browsing its rows. */ },
                 onBackgroundChange = {
                     BackgroundManager.set(it)
                 },
@@ -229,8 +225,10 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
 
     private fun updateFollowButton(followed: Boolean) {
         followButton.isSelected = followed
-        followButton.alpha = if (followed) 1f else 0.65f
-        followButton.contentDescription = if (followed) "Following" else "Follow"
+        followButton.text = getString(
+            if (followed) R.string.following else R.string.follow
+        )
+        followButton.contentDescription = followButton.text
     }
 
     override fun onDestroyView() {
