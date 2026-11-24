@@ -12,7 +12,6 @@ import ir.hamrahang.tv.ui.*
 import ir.hamrahang.tv.databinding.ActivityMainBinding
 import ir.hamrahang.tv.network.ApiClient
 import ir.hamrahang.tv.network.NetworkEvents
-import ir.hamrahang.tv.network.NetworkMonitor
 import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.ui.message.MessageManager
 import ir.hamrahang.tv.ui.message.MessageWidget
@@ -54,9 +53,12 @@ class MainActivity : BaseActivity(),
 
         UiNavigator.init(this)
 
-        // Restore the account quietly in the background; local data stays usable offline.
-        lifecycleScope.launch {
-            AuthSessionManager.refreshSession(this@MainActivity)
+        // Do not start an authentication request when the user entered Offline Mode.
+        // Session recovery is attempted after the API is reachable again.
+        if (!AppState.offlineMode) {
+            lifecycleScope.launch {
+                AuthSessionManager.refreshSession(this@MainActivity)
+            }
         }
 
         lifecycleScope.launchWhenStarted {
