@@ -40,6 +40,9 @@
     <string name="play">پخش</string>
     <string name="follow">دنبال کردن</string>
     <string name="following">دنبال می‌کنید</string>
+    <string name="artist_followed">هنرمند دنبال شد</string>
+    <string name="artist_unfollowed">دنبال‌کردن هنرمند لغو شد</string>
+    <string name="artist_follow_unavailable">امکان دنبال‌کردن این هنرمند وجود ندارد</string>
     <!-- Player settings and lyrics panel -->
     <string name="lyrics_language_title">زبان</string>
     <string name="lyrics_language_auto">خودکار</string>
