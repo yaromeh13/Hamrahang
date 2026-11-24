@@ -14,6 +14,7 @@ import ir.hamrahang.tv.data.auth.AuthRequest
 import ir.hamrahang.tv.data.auth.AuthResponse
 import ir.hamrahang.tv.data.video.VideoDto
 import ir.hamrahang.tv.data.video.VideoResponseDto
+import ir.hamrahang.tv.data.live.LiveDto
 import ir.hamrahang.tv.data.playlist.PlaylistEnvelope
 import retrofit2.Response
 import retrofit2.http.Body
@@ -26,6 +27,11 @@ interface ApiService {
 
     @GET("app/ping")
     suspend fun ping(): Response<PingResponse>
+
+    @GET("live/latest")
+    suspend fun getLatestLives(
+        @Query("_qjs") qjs: String = "ep"
+    ): List<LiveDto>
 
     @GET("video/latest")
     suspend fun getLatestVideos(
