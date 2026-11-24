@@ -22,7 +22,8 @@ import ir.hamrahang.tv.channel.HomeChannel
 import ir.hamrahang.tv.channel.HomeChannelPublisher
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.data.auth.AuthSessionManager
-import ir.hamrahang.tv.data.playlist.PlaylistRepository
+import ir.hamrahang.tv.data.auth.AuthSessionStore
+import ir.hamrahang.tv.data.favorite.AccountSyncRepository
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import androidx.activity.OnBackPressedCallback
@@ -64,50 +65,30 @@ class MainActivity : BaseActivity(),
         lifecycleScope.launchWhenStarted {
             NetworkEvents.events.collect { event ->
                 when (event) {
-                    // A single request timeout does not prove that the whole API is offline.
-                    // In particular, never interrupt the current screen with a retry overlay.
                     NetworkEvents.Event.Timeout -> Unit
 
                     NetworkEvents.Event.InternetAvailable -> {
                         MessageManager.info("Internet Connected")
                         HomeChannelPublisher.publish(this@MainActivity)
-
-                        // NetworkMonitor only reports device connectivity. Confirm the
-                        // actual Hamrahang API before starting background synchronization.
-                        if (!apiReachable && recoverySyncJob?.isActive != true) {
-                            recoverySyncJob = lifecycleScope.launch {
-                                val apiIsReady = runCatching {
-                                    val response = ApiClient.pingApi.ping()
-                                    response.isSuccessful &&
-                                        response.body()?.status == "ok"
-                                }.getOrDefault(false)
-
-                                if (!apiIsReady) {
-                                    Log.w("NETWORK_RECOVERY", "Hamrahang API is still unavailable")
-                                    return@launch
-                                }
-
-                                apiReachable = true
-
-                                runCatching {
-                                    AuthSessionManager.refreshSession(this@MainActivity)
-                                }
-
-                                val synced = runCatching {
-                                    PlaylistRepository(this@MainActivity).refreshAndSync()
-                                }.getOrDefault(false)
-
-                                if (synced) {
-                                    (supportFragmentManager.findFragmentById(R.id.contentContainer) as? HomeFragment)
-                                        ?.refreshPlaylists()
-                                }
-                            }
-                        }
+                        if (!apiReachable) checkApiAndRecover()
                     }
 
                     NetworkEvents.Event.InternetLost -> {
                         apiReachable = false
                         MessageManager.warning("Internet Disconnected")
+                    }
+
+                    NetworkEvents.Event.ApiAvailable -> {
+                        apiReachable = true
+                        // A normal successful API request can be the first sign that
+                        // the server recovered while device connectivity never changed.
+                        if (AppState.offlineMode || recoverySyncJob?.isActive != true) {
+                            recoverFromApi()
+                        }
+                    }
+
+                    NetworkEvents.Event.ApiUnavailable -> {
+                        apiReachable = false
                     }
                 }
             }
@@ -162,6 +143,60 @@ class MainActivity : BaseActivity(),
             }
         )
 
+    }
+
+    /**
+     * Device connectivity is only a trigger. The Hamrahang API is verified
+     * with one real ping before any account/cache synchronization starts.
+     */
+    private fun checkApiAndRecover() {
+        if (recoverySyncJob?.isActive == true) return
+        recoverySyncJob = lifecycleScope.launch {
+            val reachable = runCatching {
+                val response = ApiClient.pingApi.ping()
+                response.isSuccessful && response.body()?.status == "ok"
+            }.getOrDefault(false)
+
+            if (reachable) {
+                apiReachable = true
+                performBackgroundRecovery()
+            } else {
+                apiReachable = false
+                Log.w("NETWORK_RECOVERY", "Hamrahang API is still unavailable")
+            }
+        }
+    }
+
+    /** Called after a successful real API response, even without a network transition. */
+    private fun recoverFromApi() {
+        if (recoverySyncJob?.isActive == true) return
+        recoverySyncJob = lifecycleScope.launch {
+            performBackgroundRecovery()
+        }
+    }
+
+    private suspend fun performBackgroundRecovery() {
+        apiReachable = true
+
+        // Refresh the account session first; a failed refresh keeps the cached
+        // token and does not clear local favorites/history.
+        runCatching {
+            AuthSessionManager.refreshSession(this@MainActivity, force = true)
+        }
+
+        val token = AuthSessionStore.accessToken(this@MainActivity)
+        if (!token.isNullOrBlank() && AuthSessionStore.isLoggedIn(this@MainActivity)) {
+            runCatching {
+                AccountSyncRepository(this@MainActivity).syncLocalData(token)
+            }.onFailure {
+                Log.w("NETWORK_RECOVERY", "Account background sync failed", it)
+            }
+        }
+
+        // Update only the current Home data model. Never replace the current
+        // Fragment, reload the Activity, or touch the shared Player instance.
+        (supportFragmentManager.findFragmentById(R.id.contentContainer) as? HomeFragment)
+            ?.refreshAfterNetworkRecovery()
     }
 
     override fun onMenuSelected(menuId: Int) {
