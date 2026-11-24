@@ -4,7 +4,7 @@ import android.animation.Animator
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
+import com.google.android.material.button.MaterialButton
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.lottie.LottieAnimationView
@@ -67,8 +67,8 @@ class SplashActivity : BaseActivity() {
 
     private fun showRetry() {
         val container = findViewById<View>(R.id.retryContainer)
-        val btn = findViewById<Button>(R.id.retryBtn)
-        val offline = findViewById<Button>(R.id.offlineBtn)
+        val btn = findViewById<MaterialButton>(R.id.retryBtn)
+        val offline = findViewById<MaterialButton>(R.id.offlineBtn)
         val text = findViewById<TextView>(R.id.errorText)
 
         container.visibility = View.VISIBLE
@@ -98,7 +98,7 @@ class SplashActivity : BaseActivity() {
 
     private fun showUpdate() {
         val container = findViewById<View>(R.id.retryContainer)
-        val btn = findViewById<Button>(R.id.retryBtn)
+        val btn = findViewById<MaterialButton>(R.id.retryBtn)
         val text = findViewById<TextView>(R.id.errorText)
 
         container.visibility = View.VISIBLE
