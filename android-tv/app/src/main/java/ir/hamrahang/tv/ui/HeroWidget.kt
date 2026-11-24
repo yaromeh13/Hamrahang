@@ -80,7 +80,10 @@ class HeroWidget(
                         videoTitle.text = musicVideo.displayTitle()
                         videoSubTitle.text = musicVideo.title.orEmpty()
 
-                        bindHeroArt(ImageResolver.hero(musicVideo.meta) ?: musicVideo.thumb, R.drawable.ic_video)
+                        bindHeroArt(
+                            ImageResolver.hero(musicVideo.meta) ?: musicVideo.thumb,
+                            R.drawable.ic_video
+                        )
                         heroMetaBinder.bind(videoMetaContainer, musicVideo.meta)
                         HeroArtistsBinder.bind(
                             layoutVideoArtists,
@@ -206,7 +209,7 @@ class HeroWidget(
 
                         artistBio.text = artist.meta?.des.orEmpty()
 
-                        bindHeroArt(ImageResolver.artistArt(artist.meta), R.drawable.ic_artist)
+                        bindHeroArt(ImageResolver.hero(artist.meta), R.drawable.ic_artist)
 
                         ImageResolver.request(
                             artistCover,
