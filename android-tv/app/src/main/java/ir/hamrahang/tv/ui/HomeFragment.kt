@@ -10,6 +10,10 @@ import androidx.leanback.widget.HorizontalGridView
 import androidx.leanback.widget.VerticalGridView
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.contract.Focusable
+import ir.hamrahang.tv.data.local.ContentType
+import ir.hamrahang.tv.domain.hero.HeroContent
+import ir.hamrahang.tv.favorite.FavoriteManager
+import ir.hamrahang.tv.ui.message.MessageManager
 import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.player.BackgroundManager
 import ir.hamrahang.tv.ui.hero.HeroWidget
@@ -61,6 +65,7 @@ class HomeFragment :
             emptyList(),
             onHeroFocus = { heroContent ->
                 HeroManager.show(heroContent)
+                bindHomeHeroActions(heroContent)
             },
             onBackgroundChange = {
                 BackgroundManager.set(it)
@@ -84,6 +89,41 @@ class HomeFragment :
                 }
             }
         }
+    }
+
+    private fun bindHomeHeroActions(heroContent: HeroContent) {
+        val artist = (heroContent as? HeroContent.ArtistHero)?.artist
+        if (artist == null) {
+            heroWidget.hideFollowButton()
+            return
+        }
+
+        heroWidget.showFollowButton()
+        heroWidget.setFollowClick {
+            val mediaId = artist.id.toLongOrNull()
+            if (mediaId == null) {
+                MessageManager.info(getString(R.string.artist_follow_unavailable))
+            } else {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val followed = FavoriteManager.toggle(mediaId, ContentType.ARTIST)
+                    if (HeroManager.engine.state.value?.artist?.id == artist.id) {
+                        heroWidget.setArtistFollowed(followed)
+                    }
+                    MessageManager.info(
+                        getString(if (followed) R.string.artist_followed else R.string.artist_unfollowed)
+                    )
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            val followed = artist.id.toLongOrNull()?.let {
+                FavoriteManager.isFavorite(it, ContentType.ARTIST)
+            } ?: false
+            if (HeroManager.engine.state.value?.artist?.id == artist.id) {
+                heroWidget.setArtistFollowed(followed)
+            }
+        }
+        heroWidget.setFollowButtonKeyListener(recycler)
     }
 
     private fun requestHomeFocus() {
