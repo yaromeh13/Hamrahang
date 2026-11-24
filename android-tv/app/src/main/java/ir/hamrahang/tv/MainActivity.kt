@@ -205,6 +205,8 @@ class MainActivity : BaseActivity(),
         // Fragment, reload the Activity, or touch the shared Player instance.
         (supportFragmentManager.findFragmentById(R.id.contentContainer) as? HomeFragment)
             ?.refreshAfterNetworkRecovery()
+        (supportFragmentManager.findFragmentById(R.id.contentContainer) as? LiveFragment)
+            ?.refreshAfterNetworkRecovery()
     }
 
     override fun onMenuSelected(menuId: Int) {
