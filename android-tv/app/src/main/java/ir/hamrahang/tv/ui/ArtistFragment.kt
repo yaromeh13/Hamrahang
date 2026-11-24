@@ -48,7 +48,6 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
         super.onViewCreated(view, savedInstanceState)
         val heroView = view.findViewById<View>(R.id.heroContainer)
         followButton = heroView.findViewById(R.id.btnFollowArtist)
-        followButton.setOnClickListener { toggleArtistFollow() }
 
         heroWidget =
             HeroWidget(
@@ -56,6 +55,8 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
                 viewLifecycleOwner
             )
         heroWidget.showPlayButton()
+        heroWidget.showFollowButton()
+        heroWidget.setFollowClick { toggleArtistFollow() }
         heroWidget.setPlayClick {
             // Play All Artist
         }
@@ -195,9 +196,8 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
                 }
             )
             rows.post {
-
                 heroWidget.setPlayButtonKeyListener(rows)
-
+                heroWidget.setFollowButtonKeyListener(rows)
             }
         }
 
@@ -224,15 +224,15 @@ class ArtistFragment : Fragment(R.layout.fragment_artist) {
     }
 
     private fun updateFollowButton(followed: Boolean) {
-        followButton.isSelected = followed
-        followButton.text = getString(
+        heroWidget.setArtistFollowed(followed)
+        followButton.contentDescription = getString(
             if (followed) R.string.following else R.string.follow
         )
-        followButton.contentDescription = followButton.text
     }
 
     override fun onDestroyView() {
         heroWidget.hidePlayButton()
+        heroWidget.hideFollowButton()
         super.onDestroyView()
     }
 
