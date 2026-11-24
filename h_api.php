@@ -10417,27 +10417,43 @@ $stmt->execute();*/
         $meta['type'] = 'live';
         if ($meta) $live['meta'] = $meta;
 
-        // A Live row owns one stream source; keep URL and Owner inside sources.
+        // Each item in live_data.src is an independent stream source.
+        // Keep URL, quality metadata, and Owner inside each sources[] entry.
         $live['sources'] = [];
-        if (!empty($live_data->src)) {
-            $src = [
-                'url'  => (string)$live_data->src,
-                'type' => 'original'
-            ];
+        $owner = OwnerCard(isset($row_live['id_owner']) ? (int)$row_live['id_owner'] : 0);
 
-            if (!empty($live_data->bit)) {
-                $src['bit'] = (int)$live_data->bit;
+        if (!empty($live_data->src) && is_array($live_data->src)) {
+            foreach ($live_data->src as $source_data) {
+                if (is_object($source_data)) {
+                    $source_data = (array)$source_data;
+                }
+
+                if (!is_array($source_data) || empty($source_data['url'])) {
+                    continue;
+                }
+
+                $src = [
+                    'url'  => (string)$source_data['url'],
+                    'type' => 'original'
+                ];
+
+                if (isset($source_data['bit']) && $source_data['bit'] !== '') {
+                    $src['bit'] = (int)$source_data['bit'];
+                }
+
+                if ($owner) {
+                    $src['owner'] = $owner;
+                }
+
+                if (!empty($source_data['file_id'])) {
+                    $src['file_id'] = (string)$source_data['file_id'];
+                }
+                if (!empty($source_data['file_unq'])) {
+                    $src['file_unq'] = (string)$source_data['file_unq'];
+                }
+
+                $live['sources'][] = $src;
             }
-
-            $owner = OwnerCard(isset($row_live['id_owner']) ? (int)$row_live['id_owner'] : 0);
-            if ($owner) {
-                $src['owner'] = $owner;
-            }
-
-            if (!empty($live_data->file_id))  $src['file_id']  = (string)$live_data->file_id;
-            if (!empty($live_data->file_unq)) $src['file_unq'] = (string)$live_data->file_unq;
-
-            $live['sources'][] = $src;
         }
 
         return $live;
