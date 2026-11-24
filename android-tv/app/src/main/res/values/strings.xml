@@ -41,6 +41,9 @@
     <string name="play">Play</string>
     <string name="follow">Follow</string>
     <string name="following">Following</string>
+    <string name="artist_followed">Artist followed</string>
+    <string name="artist_unfollowed">Artist unfollowed</string>
+    <string name="artist_follow_unavailable">This artist cannot be followed</string>
     <!-- Player settings and lyrics panel -->
     <string name="lyrics_language_title">Language</string>
     <string name="lyrics_language_auto">Automatic</string>
