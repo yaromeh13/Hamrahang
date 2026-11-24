@@ -10,13 +10,12 @@ import ir.hamrahang.tv.contract.Focusable
 import ir.hamrahang.tv.player.BackgroundManager
 import ir.hamrahang.tv.ui.*
 import ir.hamrahang.tv.databinding.ActivityMainBinding
+import ir.hamrahang.tv.network.ApiClient
 import ir.hamrahang.tv.network.NetworkEvents
 import ir.hamrahang.tv.network.NetworkMonitor
-import ir.hamrahang.tv.network.ReloadManager
 import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.ui.message.MessageManager
 import ir.hamrahang.tv.ui.message.MessageWidget
-import ir.hamrahang.tv.ui.network.NetworkOverlay
 import ir.hamrahang.tv.ui.settings.LanguageManager
 import ir.hamrahang.tv.ui.settings.SettingsFragment
 import ir.hamrahang.tv.utils.AppState
@@ -29,20 +28,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import androidx.activity.OnBackPressedCallback
 
-
 class MainActivity : BaseActivity(),
     NavFragment.NavCallback {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var networkOverlay: NetworkOverlay
     private var lastBackPressTime: Long = 0L
     private var isPlayerFullscreen = false
     private var recoverySyncJob: Job? = null
+    private var apiReachable = false
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
 
         if (AppState.offlineMode) {
             Log.d("OFFLINE", "Offline Mode")
+        } else {
+            // SplashActivity already completed a successful API ping.
+            apiReachable = true
         }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -58,30 +59,42 @@ class MainActivity : BaseActivity(),
             AuthSessionManager.refreshSession(this@MainActivity)
         }
 
-        networkOverlay = NetworkOverlay(binding.root) {
-            ReloadManager.reload()
-        }
-
         lifecycleScope.launchWhenStarted {
             NetworkEvents.events.collect { event ->
                 when (event) {
-                    NetworkEvents.Event.Timeout -> {
-                        networkOverlay.show()
-                    }
+                    // A single request timeout does not prove that the whole API is offline.
+                    // In particular, never interrupt the current screen with a retry overlay.
+                    NetworkEvents.Event.Timeout -> Unit
+
                     NetworkEvents.Event.InternetAvailable -> {
-                        networkOverlay.hide()
                         MessageManager.info("Internet Connected")
                         HomeChannelPublisher.publish(this@MainActivity)
-                        // Restore account credentials and sync local playlists without
-                        // recreating the current screen or disturbing active playback.
-                        if (recoverySyncJob?.isActive != true) {
+
+                        // NetworkMonitor only reports device connectivity. Confirm the
+                        // actual Hamrahang API before starting background synchronization.
+                        if (!apiReachable && recoverySyncJob?.isActive != true) {
                             recoverySyncJob = lifecycleScope.launch {
+                                val apiIsReady = runCatching {
+                                    val response = ApiClient.api.ping()
+                                    response.isSuccessful &&
+                                        response.body()?.status == "ok"
+                                }.getOrDefault(false)
+
+                                if (!apiIsReady) {
+                                    Log.w("NETWORK_RECOVERY", "Hamrahang API is still unavailable")
+                                    return@launch
+                                }
+
+                                apiReachable = true
+
                                 runCatching {
                                     AuthSessionManager.refreshSession(this@MainActivity)
                                 }
+
                                 val synced = runCatching {
                                     PlaylistRepository(this@MainActivity).refreshAndSync()
                                 }.getOrDefault(false)
+
                                 if (synced) {
                                     (supportFragmentManager.findFragmentById(R.id.contentContainer) as? HomeFragment)
                                         ?.refreshPlaylists()
@@ -89,7 +102,9 @@ class MainActivity : BaseActivity(),
                             }
                         }
                     }
+
                     NetworkEvents.Event.InternetLost -> {
+                        apiReachable = false
                         MessageManager.warning("Internet Disconnected")
                     }
                 }
