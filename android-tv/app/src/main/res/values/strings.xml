@@ -154,4 +154,13 @@
     <string name="clean_recent">Clear Recently Played</string>
     <string name="clean_search">Clear Search History</string>
     <string name="clean_favorites">Clear Favorites</string>
+
+    <!-- Splash screen -->
+    <string name="splash_error_connection">Unable to connect to the server</string>
+    <string name="splash_retry">Retry</string>
+    <string name="splash_offline">Continue offline</string>
+    <string name="splash_maintenance">The system is under maintenance</string>
+    <string name="splash_update_available">A new version is available</string>
+    <string name="splash_update">Update</string>
+
 </resources>
