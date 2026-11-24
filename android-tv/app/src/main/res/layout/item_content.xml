@@ -9,14 +9,22 @@
     android:focusableInTouchMode="true"
     android:background="@android:color/transparent">
 
-    <ImageView
-        android:id="@+id/itemCover"
+    <FrameLayout
+        android:id="@+id/coverFrame"
         android:layout_width="170dp"
         android:layout_height="170dp"
-        android:scaleType="centerInside"
-        android:background="@drawable/card_bg"
-        android:clipToOutline="true"
-        android:padding="@dimen/_6dp"/>
+        android:background="@drawable/card_bg">
+
+        <ImageView
+            android:id="@+id/itemCover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="6dp"
+            android:scaleType="centerInside"
+            android:background="@drawable/card_thumbnail_surface"
+            android:clipToOutline="true"/>
+
+    </FrameLayout>
 
     <TextView
         android:id="@+id/itemTitle"
