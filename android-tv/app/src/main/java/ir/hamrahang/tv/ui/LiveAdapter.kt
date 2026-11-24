@@ -1,6 +1,5 @@
 package ir.hamrahang.tv.ui
 
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,10 +41,6 @@ class LiveAdapter(
 
         holder.itemView.setOnFocusChangeListener { _, hasFocus ->
             holder.coverFrame.isSelected = hasFocus
-        }
-        holder.itemView.setOnKeyListener { _, keyCode, event ->
-            if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
-            keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER
         }
         holder.itemView.setOnClickListener { onClick(item) }
     }
