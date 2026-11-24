@@ -29,6 +29,7 @@ class PodcastAdapter(
         val title: TextView = view.findViewById(R.id.itemTitle)
         val artist: TextView = view.findViewById(R.id.itemSubtitle)
         val cover: ImageView = view.findViewById(R.id.itemCover)
+        val coverFrame: View = view.findViewById(R.id.coverFrame)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
@@ -49,7 +50,7 @@ class PodcastAdapter(
             .into(holder.cover)
 
         holder.itemView.setOnFocusChangeListener { _, hasFocus ->
-            holder.cover.isSelected = hasFocus
+            holder.coverFrame.isSelected = hasFocus
             if (hasFocus) {
                 Log.d("FOCUS_TEST", item.title ?: "")
                 onFocus(item)
