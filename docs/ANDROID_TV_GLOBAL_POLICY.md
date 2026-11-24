@@ -189,30 +189,95 @@ Main App
                                                                   +-- preserve player
 ```
 
-## 1.8 Current implementation audit — verified against source
+## 1.8 Current implementation audit — verified against the current main branch
 
-This subsection describes the current source snapshot inspected while this document was updated. It is an audit, not a declaration that every desired behavior is already implemented.
+This subsection records the implementation that exists in the source snapshot inspected for this update. It distinguishes implemented behavior from the remaining requirements. A source change is not considered build- or device-tested unless that test is explicitly recorded.
 
-| Area | Current source behavior | Difference / follow-up |
+| Area | Current implementation and exact path | Status against the required scenario |
 |---|---|---|
-| Startup Ping | Splash calls `AppRepository.ping()` after the animation; the API route is `app/ping`. | A strict overall 15-second call deadline is not enforced by the current `SplashViewModel`. OkHttp has connect/read/write timeouts of 15 seconds, which are not the same as a total call timeout. |
-| Startup Retry / Offline | Splash exposes manual Retry and Offline choices after an error. | The basic choice exists. Verify timeout behavior and that automatic retry is not introduced. |
-| NetworkMonitor | Android connectivity callbacks observe networks with `NET_CAPABILITY_INTERNET` and emit available/lost events. | This only indicates device network capability; it does not validate the Hamrahang API. |
-| Runtime timeout overlay | MainActivity currently shows `NetworkOverlay` on `NetworkEvents.Event.Timeout`. | This conflicts with the required runtime behavior; timeout events must not open the startup Retry UI while the app is running. |
-| Runtime reconnect | MainActivity hides the overlay, shows a message, publishes Home Channel data, refreshes the session, and syncs playlists. | API reachability is not separately validated before treating connectivity as recovered. Recovery is incomplete and Home/playlist-centric. |
-| Current screen refresh | Playlist refresh is applied only when the current fragment is HomeFragment. | Other visible screens do not have a general stale/missing-data refresh path. |
-| Background data sync | Playlist synchronization exists in the reconnection path. | A coordinated recovery pass for all relevant content types is not present in the inspected MainActivity flow. |
-| Image cache | ImageResolver builds URLs and uses asynchronous Glide requests with placeholder/error drawables. | No independent reconnect-driven queue for completing missing image/thumbnail cache entries was found in the inspected ImageResolver. |
-| Player | PlayerManager owns a reusable ExoPlayer instance and tracks current media/state. | The reconnection path does not coordinate a same-item/same-position stream recovery. Do not couple general data/image sync to PlayerManager.prepare/stop. |
-| Network permission | AndroidManifest currently declares INTERNET. | NetworkMonitor uses ConnectivityManager APIs, but ACCESS_NETWORK_STATE was not present in the inspected manifest. Verify and address before relying on callbacks. |
-| Database migration | AppDatabase declares Room version 35. DatabaseProvider registers migrations through 33→34 and uses `fallbackToDestructiveMigration()`. | The inspected provider has no 34→35 migration registration. A destructive fallback can erase local cache on an unsupported upgrade path; resolve this before treating local data preservation as guaranteed. |
+| Startup Ping endpoint | `android-tv/app/src/main/java/ir/hamrahang/tv/network/ApiService.kt` declares `GET app/ping`. `ApiClient.kt` uses the base URL `https://hamrahang.ir/`. | Matches the approved API host and endpoint. |
+| Startup Ping deadline | `android-tv/app/src/main/java/ir/hamrahang/tv/network/ApiClient.kt` creates `pingClient` with `callTimeout(15, SECONDS)` and `retryOnConnectionFailure(false)`. `SplashActivity.kt` injects `ApiClient.pingApi` into `AppRepository`; `SplashViewModel.kt` calls `repo.ping()`. | The total call deadline is now configured to 15 seconds, rather than relying only on connect/read/write timeouts. Manual Retry creates a new attempt. Build/runtime verification is still pending. |
+| Startup decision | `SplashActivity.kt` observes `SplashViewModel.state`. `SplashViewModel.kt` moves to Error on unsuccessful HTTP response or exception; Retry calls `viewModel.retry()`; Offline sets `AppState.offlineMode = true` and opens MainActivity. | Manual Retry and Offline choices exist. No automatic retry loop is present in this state flow. |
+| Successful startup | In `SplashActivity.kt`, Success clears `AppState.offlineMode` and opens MainActivity. | Prevents a previous Offline selection from leaking into a later successful startup. |
+| Device network observation | `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkMonitor.kt` registers Android connectivity callbacks and checks `NET_CAPABILITY_INTERNET`. `App.kt` initializes NetworkMonitor. | This observes device network capability only; it does not establish API health. |
+| Network permission | `android-tv/app/src/main/AndroidManifest.xml` declares both `INTERNET` and `ACCESS_NETWORK_STATE`. | The required connectivity-state permission is now declared. |
+| Runtime request timeout | `NetworkInterceptor.kt` emits `NetworkEvents.Event.Timeout` for a `SocketTimeoutException`. `MainActivity.kt` currently handles this event as `Unit`. | A single request timeout no longer opens a blocking overlay or reloads the screen through this MainActivity event handler. The interceptor still emits the event; other collectors/call sites must be checked before removing the event type. |
+| Runtime network loss | `MainActivity.kt` handles `InternetLost` by setting `apiReachable = false` and showing a non-blocking message through `MessageManager.warning`. | The current screen is not replaced by this handler. Local data/playback continuity still requires end-to-end testing. |
+| Device network recovery | `MainActivity.kt` handles `InternetAvailable` by showing a connected message and calling `HomeChannelPublisher.publish()`. If `apiReachable` is false and no recovery job is active, it launches a health check using `ApiClient.pingApi.ping()`. | Device connectivity and API health are now treated as separate checks. The connected message means device network available, not that the API is healthy. |
+| API health result | In `MainActivity.kt`, recovery proceeds only when the Ping response is successful and its body has `status == "ok"`. A failed check logs a warning and returns without showing the startup Retry UI. | No blocking UI or reload is performed on failed runtime health validation. A later device-network-available event can start another check; there is no periodic Ping loop. |
+| Recovery work currently performed | After a successful reconnect Ping, `MainActivity.kt` calls `AuthSessionManager.refreshSession()` and `PlaylistRepository.refreshAndSync()`. | Session and Playlist are the only explicit recovery tasks in this flow. This is not yet a complete background sync for every content repository. |
+| Current-screen update | After Playlist sync succeeds, `MainActivity.kt` calls `HomeFragment.refreshPlaylists()` only if the fragment in `R.id.contentContainer` is a `HomeFragment`. | This is a Home/Playlist-specific refresh, not a general refresh contract for whichever screen is visible. Other screens are not yet refreshed by this recovery path. |
+| Image/media cache completion | `android-tv/app/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt` resolves artwork and uses asynchronous Glide loading. | No independent reconnect-triggered queue or retry pass for missing image/media cache entries has been implemented in the inspected flow. |
+| Player continuity | `PlayerManager.kt` owns the reusable ExoPlayer; `PlayerState.kt` stores shared player UI state. The current reconnect handler does not call PlayerManager to stop or prepare media. | General recovery does not explicitly manipulate the player, but preservation of active playback during real network loss/recovery has not yet been verified on a device. Stream-source recovery is not implemented by this reconnect flow. |
+| Database/cache preservation | `AppDatabase.kt` declares Room version 35. `DatabaseProvider.kt` registers migrations through 33→34 and uses `fallbackToDestructiveMigration()`; the inspected provider did not show a 34→35 migration. | Do not claim that local data is guaranteed across every database upgrade. Verify the current schema/migration history and add the correct migration before relying on destructive fallback behavior. |
 
-### Implementation notes
+### Important runtime limitations and edge cases
 
-- `ApiClient` currently enables `retryOnConnectionFailure(true)`. Any future retry policy must be reviewed against the requirement that startup retry is manual and runtime recovery is non-blocking and controlled.
-- `NetworkInterceptor` currently emits a timeout event for a SocketTimeoutException. A timeout of one request is not sufficient evidence that device connectivity or the whole API is unavailable.
-- `ReloadManager` exposes register/unregister/reload callbacks. Its registration/use sites must be traced before changing it; do not assume that invoking reload is necessary for recovery.
-- The web reference's API fallback behavior must not be copied if it targets a different API host. Android API traffic remains restricted to `https://hamrahang.ir`.
+- `NetworkEvents` uses a `MutableSharedFlow` with `replay = 0`. `NetworkMonitor.init()` runs from `App.onCreate()`, while `MainActivity` starts collecting later. A connectivity event emitted before the collector subscribes can be missed. The initial network state is available through `NetworkMonitor.isConnected`, but the current MainActivity recovery code does not use that StateFlow to trigger an initial API health check when the app was entered Offline and the device is already connected.
+- `NetworkMonitor` checks `NET_CAPABILITY_INTERNET`, not API reachability and not necessarily validated public internet access. The explicit Ping remains the API-health check.
+- `apiReachable` is initialized to true when MainActivity is entered after a successful startup Ping, and false when entered through Offline. It is reset to false on `InternetLost`. If the API becomes unavailable while the device network remains continuously available, a request timeout is ignored by MainActivity and no automatic health check is triggered until another device-network-available event occurs. This is a remaining recovery gap; do not add periodic Ping without approval.
+- The reconnect Ping uses `pingApi`, which has a 15-second total call timeout and disables OkHttp connection retry. The ordinary `api` client still has `retryOnConnectionFailure(true)`; that setting is separate from the startup/reconnect Ping client.
+- `HomeChannelPublisher.publish()` is invoked on the device-network-available event before the API Ping. This is a separate Home Channel operation and must not be interpreted as proof that API recovery succeeded.
+- `NetworkOverlay.kt` and `ReloadManager.kt` remain in the repository. The current MainActivity event handler no longer invokes the timeout overlay/reload path, but these files must not be deleted until all registration and call sites are checked.
+- The source changes recorded here have not yet been confirmed by a successful Android Gradle build or physical Android TV test.
+
+## 1.9 Current code paths — startup and reconnect
+
+### Startup path
+
+```text
+App.onCreate()
+  └─ NetworkMonitor.init()
+       └─ observes Android device connectivity
+
+SplashActivity
+  └─ plays splash animation
+       └─ SplashViewModel.checkServer()
+            └─ AppRepository.ping()
+                 └─ ApiClient.pingApi
+                      └─ GET https://hamrahang.ir/app/ping
+                           ├─ HTTP/response status valid + body.status == "ok"
+                           │    └─ SplashState.Success
+                           │         └─ AppState.offlineMode = false
+                           │              └─ MainActivity
+                           └─ failure / timeout / invalid response
+                                └─ SplashState.Error
+                                     ├─ Retry → SplashViewModel.retry() → new manual Ping
+                                     └─ Offline → AppState.offlineMode = true → MainActivity
+```
+
+### Runtime reconnect path currently implemented
+
+```text
+NetworkMonitor callback
+  └─ NetworkEvents.InternetAvailable
+       └─ MainActivity collector
+            ├─ show non-blocking "Internet Connected" message
+            ├─ HomeChannelPublisher.publish()
+            └─ if apiReachable == false and no recovery job is active:
+                 └─ ApiClient.pingApi.ping()
+                      ├─ failed / body.status != "ok"
+                      │    └─ log and return; no Retry screen, no reload
+                      └─ successful
+                           ├─ apiReachable = true
+                           ├─ AuthSessionManager.refreshSession()
+                           └─ PlaylistRepository.refreshAndSync()
+                                └─ if sync succeeded and current fragment is HomeFragment:
+                                     └─ HomeFragment.refreshPlaylists()
+```
+
+### Still-required recovery work
+
+The current path above does **not** yet implement:
+
+1. A reliable initial recovery check when the app entered Offline but the device already had network connectivity before MainActivity began collecting events.
+2. A controlled API re-check after API-only outages where Android device connectivity never changes (without introducing an unapproved periodic Ping).
+3. General background synchronization for all relevant content repositories.
+4. In-place stale/missing-data refresh for every supported current screen, preserving focus and scroll.
+5. An independent image/media cache completion queue after reconnect.
+6. Device-tested guarantees for uninterrupted playback and preservation of current item/position/queue.
+7. A verified Room migration path that protects existing local cache.
+
 
 ---
 
@@ -407,7 +472,7 @@ Paths below are repository-relative and were checked against the current `main` 
 | `android-tv/app/src/main/java/ir/hamrahang/tv/SplashViewModel.kt` | Startup Ping state machine and manual retry. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/AppRepository.kt` | Startup repository wrapper for Ping. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/network/ApiService.kt` | Retrofit API routes, including `GET app/ping`. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/ApiClient.kt` | Retrofit base URL, OkHttp timeouts, retry configuration and interceptors. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/network/ApiClient.kt` | Main API client plus a dedicated Ping client with a 15-second total call timeout and no connection retry. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/network/PingResponse.kt` | Startup Ping response model. |
 | `android-tv/app/src/main/AndroidManifest.xml` | Declared Android permissions and activities; check network permissions here. |
 
@@ -419,9 +484,9 @@ Paths below are repository-relative and were checked against the current `main` 
 | `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkMonitor.kt` | Observes Android device network callbacks. Must remain a connectivity observer, not an API-health checker. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkEvents.kt` | Shared network event stream (timeout, available, lost). |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkInterceptor.kt` | Converts request socket timeouts into network events. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkOverlay.kt` | Current network overlay view wrapper; its Kotlin package is `ir.hamrahang.tv.ui.network`. Runtime use must be removed/limited according to Section 1. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/ReloadManager.kt` | Callback holder for reload actions; inspect registration sites before changing behavior. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/MainActivity.kt` | Collects runtime network events and currently coordinates session/playlist recovery and Home-specific refresh. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkOverlay.kt` | Existing network overlay wrapper; its Kotlin package is `ir.hamrahang.tv.ui.network`. MainActivity's current Timeout handler does not invoke it; inspect all other call sites before removal. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/network/ReloadManager.kt` | Callback holder for reload actions; it is not invoked by the current MainActivity Timeout handler. Inspect all registration/call sites before removal. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/MainActivity.kt` | Ignores individual timeout events for UI purposes; handles device network loss/availability, validates API health on reconnect, then refreshes session and Playlist; applies Playlist changes only to HomeFragment. |
 
 ## 3.3 Data, local cache and synchronization
 
