@@ -16,7 +16,7 @@ import ir.hamrahang.tv.player.PlayerFragment
 import ir.hamrahang.tv.player.PlayerManager
 import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.player.BackgroundManager
-import ir.hamrahang.tv.ui.playback.PlaybackManager
+import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.player.PlayerMedia
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
