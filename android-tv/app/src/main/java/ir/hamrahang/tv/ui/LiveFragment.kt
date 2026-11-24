@@ -13,7 +13,6 @@ import ir.hamrahang.tv.data.live.LiveItem
 import ir.hamrahang.tv.data.live.LiveRepository
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.player.MediaType
-import ir.hamrahang.tv.player.PlayerFragment
 import ir.hamrahang.tv.player.PlayerManager
 import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.player.BackgroundManager
@@ -37,6 +36,9 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
             setNumColumns(1)
             setItemAlignmentOffset(0)
             setItemAlignmentOffsetPercent(0f)
+            setItemAlignmentOffsetWithPadding(true)
+            setWindowAlignmentOffset(0)
+            setWindowAlignmentOffsetPercent(0f)
             setWindowAlignment(BaseGridView.WINDOW_ALIGN_NO_EDGE)
             windowAlignment = VerticalGridView.WINDOW_ALIGN_NO_EDGE
             clipToPadding = false
@@ -172,8 +174,8 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         }
         BackgroundManager.set(artwork)
         PlayerManager.play(requireContext(), media)
-        (activity as? ir.hamrahang.tv.MainActivity)
-            ?.openFullscreenPlayer(PlayerFragment())
+        // Open the in-app PlaybackFragment, not the fullscreen PlayerFragment.
+        UiNavigator.openPlayback()
     }
 
     override fun onDestroyView() {
