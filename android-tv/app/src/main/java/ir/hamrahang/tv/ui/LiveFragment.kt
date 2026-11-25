@@ -18,6 +18,9 @@ import ir.hamrahang.tv.player.PlayerManager
 import ir.hamrahang.tv.player.PlayerState
 import ir.hamrahang.tv.player.BackgroundManager
 import ir.hamrahang.tv.playback.PlaybackManager
+import ir.hamrahang.tv.playback.PlaybackItem
+import ir.hamrahang.tv.playback.PlaybackSession
+import ir.hamrahang.tv.playback.PlaybackSource
 import ir.hamrahang.tv.player.PlayerMedia
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -143,53 +146,48 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         }
     }
 
-    private fun playLive(item: LiveItem) {
-        val playableSources = item.sources.mapNotNull { source ->
-            val rawUrl = source.url.trim()
-            if (rawUrl.isEmpty()) return@mapNotNull null
+    private fun playLive(selected: LiveItem, ownerItems: List<LiveItem>) {
+        val queueItems = ownerItems.mapNotNull { live ->
+            val sources = live.sources.filter { it.url.isNotBlank() }
+            if (sources.isEmpty()) return@mapNotNull null
 
-            // A fresh dt value is added at selection time, preserving any
-            // existing query parameters on the stream URL.
-            val urlWithTimestamp = Uri.parse(rawUrl)
-                .buildUpon()
-                .appendQueryParameter("dt", System.currentTimeMillis().toString())
-                .build()
-                .toString()
-
-            source.copy(url = urlWithTimestamp)
-        }
-
-        if (playableSources.isEmpty()) return
-
-        val artwork = item.thumb.takeIf { it.isNotBlank() }
-        val media = PlayerMedia(
-            id = "live_${item.id}",
-            title = item.title,
-            artist = item.owner?.name ?: "Live",
-            artwork = artwork,
-            sources = playableSources,
-            type = MediaType.AUDIO,
-            contentType = ContentType.SONG
-        )
-
-        // Live is standalone media, not a song queue item. Clear any previous
-        // queue and publish the complete source list for PlayerFragment panels.
-        PlaybackManager.clearSession()
-        PlayerState.updatePlaybackInfo {
-            copy(
-                visible = true,
-                mediaId = media.id,
-                mediaType = MediaType.AUDIO,
+            val artwork = live.thumb.takeIf { it.isNotBlank() }
+            val media = PlayerMedia(
+                id = "live_${live.id}",
+                title = live.title,
+                artist = live.owner?.name ?: "Live",
                 artwork = artwork,
-                title = item.title,
-                metadata = item.meta,
-                sources = playableSources,
-                selectedSource = playableSources.firstOrNull()
+                sources = sources,
+                type = MediaType.AUDIO,
+                contentType = ContentType.SONG
+            )
+            PlaybackItem(
+                id = media.id ?: return@mapNotNull null,
+                title = live.title,
+                artwork = artwork,
+                artists = emptyList(),
+                contentType = ContentType.SONG,
+                liveMedia = media
             )
         }
-        BackgroundManager.set(artwork)
-        PlayerManager.play(requireContext(), media)
-        // Open the in-app PlaybackFragment, not the fullscreen PlayerFragment.
+        if (queueItems.isEmpty()) return
+
+        val selectedId = "live_${selected.id}"
+        val selectedIndex = queueItems.indexOfFirst { it.id == selectedId }
+            .takeIf { it >= 0 } ?: 0
+        val ownerName = selected.owner?.name?.takeIf { it.isNotBlank() } ?: "Live"
+
+        // The queue contains only stations from the selected Owner row.
+        PlaybackManager.start(
+            PlaybackSession(
+                id = "live_owner_${selected.owner?.id ?: ownerName}",
+                title = ownerName,
+                source = PlaybackSource.LIVE,
+                items = queueItems,
+                currentIndex = selectedIndex,
+                mediaType = MediaType.AUDIO
+            )
+        )
         UiNavigator.openPlayback()
     }
 
