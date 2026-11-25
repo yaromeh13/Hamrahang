@@ -71,6 +71,11 @@ object ImageResolver {
         val tmb = clean(owner?.meta?.tmb)
         if (tmb != null) return thumb(tmb)
 
+        val photo = clean(owner?.meta?.photo)
+        if (photo != null) {
+            return if (photo.startsWith("https://") || photo.startsWith("http://")) photo else thumb(photo)
+        }
+
         val source = clean(sourceIcon) ?: return null
         return if (source.startsWith("https://") || source.startsWith("http://")) {
             source
