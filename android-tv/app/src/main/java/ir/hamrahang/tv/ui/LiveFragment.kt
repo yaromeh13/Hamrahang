@@ -39,6 +39,7 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
     private var searchClear: TextView? = null
     private var searchSubmit: TextView? = null
     private var loadJob: Job? = null
+    private var searchJob: Job? = null
     private var initialFocusPending = false
     private var searchApplied = false
     private var baseRows: List<LiveItem> = emptyList()
@@ -105,12 +106,14 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
                     submit.nextFocusRightId = input.id
                 }
 
-                // Clearing the query (by the X button or Backspace) restores
-                // the original Live rows without another network request.
-                if (!hasText && searchApplied) {
-                    loadJob?.cancel()
-                    searchApplied = false
-                    render(baseRows)
+                // Clearing the query (by the X button or Backspace) cancels
+                // only the submitted search, never the page's initial refresh.
+                if (!hasText) {
+                    searchJob?.cancel()
+                    if (searchApplied) {
+                        searchApplied = false
+                        render(baseRows)
+                    }
                 }
             }
 
@@ -118,7 +121,7 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         })
 
         clear.setOnClickListener {
-            loadJob?.cancel()
+            searchJob?.cancel()
             input.setText("")
             input.requestFocus()
             hideSearchKeyboard(input)
@@ -187,6 +190,7 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         val input = searchInput ?: return
         val query = input.text?.toString()?.trim().orEmpty()
         if (query.isEmpty()) {
+            searchJob?.cancel()
             searchApplied = false
             render(baseRows)
             input.requestFocus()
@@ -194,8 +198,8 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         }
 
         hideSearchKeyboard(input)
-        loadJob?.cancel()
-        loadJob = viewLifecycleOwner.lifecycleScope.launch {
+        searchJob?.cancel()
+        searchJob = viewLifecycleOwner.lifecycleScope.launch {
             searchSubmit?.isEnabled = false
             try {
                 val results = repository.search(query)
@@ -395,6 +399,7 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
 
     override fun onDestroyView() {
         loadJob?.cancel()
+        searchJob?.cancel()
         searchApplied = false
         searchInput?.setText("")
         searchInput = null
