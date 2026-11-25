@@ -426,6 +426,7 @@
             'album'       => 4,
             'artist'      => 5,
             'playlist'    => 6,
+            'live'        => 7,
         ];
         $type = strtolower(trim((string)$type));
         return isset($map[$type]) ? $map[$type] : null;
@@ -440,6 +441,7 @@
             4 => 'album',
             5 => 'artist',
             6 => 'playlist',
+            7 => 'live',
         ];
         $int = (int)$int;
         return isset($map[$int]) ? $map[$int] : null;
@@ -6550,6 +6552,291 @@ $stmt->execute();*/
                     exit();
                 }
             }
+
+            // ---- live ----
+            if ($table === 'live') {
+                $conn->begin_transaction();
+                try {
+                $realId = PublicIdToReal($pubId, $IDHM);
+                if ($realId <= 0) {
+                    $conn->rollback();
+                    echo json_encode(['error' => 'invalid_id']);
+                    exit();
+                }
+                $stmt = $conn->prepare(
+                    'SELECT id_live, live_name, live_data, live_rd, live_act, id_owner
+                     FROM live WHERE id_live = ? LIMIT 1'
+                );
+                if (!$stmt) {
+                    $conn->rollback();
+                    echo json_encode(['error' => 'db_error', 'detail' => $conn->error]);
+                    exit();
+                }
+                $stmt->bind_param('i', $realId);
+                $stmt->execute();
+                $row = $stmt->get_result()->fetch_assoc();
+                $stmt->close();
+                if (!$row) {
+                    $conn->rollback();
+                    echo json_encode(['error' => 'not_found']);
+                    exit();
+                }
+
+                $live_name = trim($name);
+                $live_rd = $row['live_rd'];
+                if (property_exists($JSD, 'rd')) {
+                    if ($JSD->rd === null || $JSD->rd === '') {
+                        $live_rd = null;
+                    } else {
+                        $live_rd = null;
+                        $rd = trim((string)$JSD->rd);
+                        if (preg_match('/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/', $rd, $rm)) {
+                            $y = $rm[1];
+                            $m = isset($rm[2]) ? $rm[2] : '01';
+                            $d = isset($rm[3]) ? $rm[3] : '01';
+                            if ((int)$m >= 1 && (int)$m <= 12 && (int)$d >= 1 && (int)$d <= 31) {
+                                $live_rd = $y . '-' . $m . '-' . $d;
+                            }
+                        }
+                    }
+                }
+                $live_act = isset($JSD->act) ? (int)$JSD->act : (int)$row['live_act'];
+                if ($live_act < 0 || $live_act > 3) $live_act = 1;
+
+                $data = [];
+                if (!empty($row['live_data'])) {
+                    $decoded = json_decode($row['live_data'], true);
+                    if (is_array($decoded)) $data = $decoded;
+                }
+                unset($data['gnr'], $data['lan']);
+
+                if (property_exists($JSD, 'names')) {
+                    if (is_object($JSD->names) || is_array($JSD->names)) {
+                        $names = [];
+                        foreach ((array)$JSD->names as $code => $val) {
+                            $code = strtolower(trim((string)$code));
+                            $val  = trim((string)$val);
+                            if ($code !== '' && $val !== '') $names[$code] = $val;
+                        }
+                        if (!empty($names)) $data['names'] = $names;
+                        else unset($data['names']);
+                    } else {
+                        unset($data['names']);
+                    }
+                }
+                if (property_exists($JSD, 'des')) {
+                    $des = trim((string)$JSD->des);
+                    if ($des !== '') $data['des'] = $des;
+                    else unset($data['des']);
+                }
+
+                $mediaOut = [];
+                if (property_exists($JSD, 'media') && is_array($JSD->media)) {
+                    unset($data['tmb'], $data['tmv'], $data['cvr'], $data['art'], $data['gal']);
+                    $uniqueRoles = [];
+                    $galRows = [];
+                    foreach ($JSD->media as $m) {
+                        if (!is_object($m)) continue;
+                        $role = isset($m->role) ? strtolower(trim((string)$m->role)) : 'tmb';
+                        $src  = isset($m->url)  ? trim((string)$m->url)  : '';
+                        if ($role === 'off' || $src === '') continue;
+                        if ($role === 'gal') { $galRows[] = $m; continue; }
+                        if (!in_array($role, ['tmb', 'tmv', 'cvr', 'art'], true)) $role = 'tmb';
+                        $uniqueRoles[$role] = $m;
+                    }
+                    $galIndex = 0;
+                    foreach (['tmb', 'tmv', 'cvr', 'art'] as $role) {
+                        if (!isset($uniqueRoles[$role])) continue;
+                        $src = trim((string)$uniqueRoles[$role]->url);
+                        $actM = MediaRoleToAct($role);
+                        if ($actM < 1) continue;
+                        $id_img = MediaPlanBKey('live', $pubId, $role, 0);
+                        $saved  = IngestThumbFromSource($conn, $src, $id_img, $actM);
+                        if ($saved === '') {
+                            $mediaOut[] = ['role' => $role, 'error' => 'ingest_failed'];
+                            continue;
+                        }
+                        $data[$role] = $saved;
+                        $mediaOut[]  = ['role' => $role, 'id_img' => $saved];
+                    }
+                    if (!empty($galRows)) {
+                        $data['gal'] = [];
+                        foreach ($galRows as $m) {
+                            $src = trim((string)$m->url);
+                            $id_img = MediaPlanBKey('live', $pubId, 'gal', $galIndex++);
+                            $saved = IngestThumbFromSource($conn, $src, $id_img, MediaRoleToAct('gal'));
+                            if ($saved === '') {
+                                $mediaOut[] = ['role' => 'gal', 'error' => 'ingest_failed'];
+                                continue;
+                            }
+                            $data['gal'][] = $saved;
+                            $mediaOut[] = ['role' => 'gal', 'id_img' => $saved];
+                        }
+                        if (empty($data['gal'])) unset($data['gal']);
+                    }
+                }
+
+                $id_owner = array_key_exists('id_owner', $row) ? $row['id_owner'] : null;
+                if ($id_owner !== null) $id_owner = (int)$id_owner;
+                $sourcesOut = [];
+                if (property_exists($JSD, 'sources') && is_array($JSD->sources)) {
+                    $srcArr = [];
+                    $ownerReal = 0;
+                    foreach ($JSD->sources as $S) {
+                        if (!is_object($S)) continue;
+                        $url = trim((string)(isset($S->url) ? $S->url : ''));
+                        if ($url === '') continue;
+                        $bit = isset($S->bit) ? (int)$S->bit : 0;
+                        $entry = ['url' => $url];
+                        if ($bit > 0) $entry['bit'] = $bit;
+                        $ty = isset($S->type) ? strtolower(trim((string)$S->type)) : '';
+                        if ($ty !== '' && $ty !== 'original') $entry['type'] = $ty;
+                        $srcArr[] = $entry;
+                        $sourcesOut[] = $entry;
+                        if (isset($S->user) && (int)$S->user > 0) {
+                            $pubU = (int)$S->user;
+                            $pu = PublicIdToReal($pubU, $IDHM);
+                            if ($pu <= 0) $pu = $pubU;
+                            if ($pu > 0 && $ownerReal <= 0) $ownerReal = $pu;
+                        }
+                    }
+                    if (!empty($srcArr)) $data['src'] = $srcArr;
+                    else unset($data['src']);
+                    $id_owner = $ownerReal > 0 ? $ownerReal : null;
+                }
+
+                $live_data_json = json_encode(
+                    !empty($data) ? $data : new stdClass(),
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                );
+                if ($live_data_json === false) {
+                    $conn->rollback();
+                    echo json_encode(['error' => 'update_failed', 'detail' => 'live_data json_encode failed']);
+                    exit();
+                }
+
+                if ($live_rd === null) {
+                    $upd = $conn->prepare(
+                        'UPDATE live SET live_name = ?, live_data = ?, live_rd = NULL, live_act = ?, id_owner = ?
+                         WHERE id_live = ? LIMIT 1'
+                    );
+                    if (!$upd) {
+                        $conn->rollback();
+                        echo json_encode(['error' => 'db_error', 'detail' => $conn->error]);
+                        exit();
+                    }
+                    $upd->bind_param('ssiii', $live_name, $live_data_json, $live_act, $id_owner, $realId);
+                } else {
+                    $upd = $conn->prepare(
+                        'UPDATE live SET live_name = ?, live_data = ?, live_rd = ?, live_act = ?, id_owner = ?
+                         WHERE id_live = ? LIMIT 1'
+                    );
+                    if (!$upd) {
+                        $conn->rollback();
+                        echo json_encode(['error' => 'db_error', 'detail' => $conn->error]);
+                        exit();
+                    }
+                    $upd->bind_param('sssiii', $live_name, $live_data_json, $live_rd, $live_act, $id_owner, $realId);
+                }
+                if (!$upd->execute()) {
+                    $err = $upd->error;
+                    $upd->close();
+                    $conn->rollback();
+                    echo json_encode(['error' => 'update_failed', 'detail' => $err]);
+                    exit();
+                }
+                $upd->close();
+
+                $typeInt = ContentTypeToInt('live');
+                $changes = [
+                    'name'    => $live_name,
+                    'media'   => $mediaOut,
+                    'sources' => $sourcesOut,
+                    'owner'   => ($id_owner && (int)$id_owner > 0) ? ((int)$id_owner + (int)$IDHM) : 0,
+                ];
+
+                if (property_exists($JSD, 'gnr') && $typeInt !== null) {
+                    $genreIds = [];
+                    if (is_array($JSD->gnr)) {
+                        foreach ($JSD->gnr as $g) {
+                            if (is_object($g) && isset($g->id)) $genreIds[] = (int)$g->id;
+                            elseif (is_numeric($g)) $genreIds[] = (int)$g;
+                        }
+                    }
+                    $genreIds = array_values(array_unique(array_filter($genreIds)));
+                    $delG = $conn->prepare('DELETE FROM item2genre WHERE item_id = ? AND item_type = ?');
+                    if ($delG) {
+                        $delG->bind_param('ii', $realId, $typeInt);
+                        $delG->execute();
+                        $delG->close();
+                    }
+                    if (!empty($genreIds)) {
+                        $insG = $conn->prepare(
+                            'INSERT INTO item2genre (item_type, item_id, id_genre) VALUES (?, ?, ?)'
+                        );
+                        if ($insG) {
+                            foreach ($genreIds as $gid) {
+                                $insG->bind_param('iii', $typeInt, $realId, $gid);
+                                $insG->execute();
+                            }
+                            $insG->close();
+                        }
+                    }
+                    $changes['genres'] = $genreIds;
+                }
+
+                if ((property_exists($JSD, 'lan') || property_exists($JSD, 'languages')) && $typeInt !== null) {
+                    $langCodes = [];
+                    if (property_exists($JSD, 'languages') && is_array($JSD->languages)) {
+                        foreach ($JSD->languages as $c) {
+                            $c = strtolower(trim((string)$c));
+                            if (preg_match('/^[a-z]{2,8}$/', $c)) $langCodes[] = $c;
+                        }
+                    }
+                    if (property_exists($JSD, 'lan')) {
+                        $lan = strtolower(trim((string)$JSD->lan));
+                        if ($lan !== '' && preg_match('/^[a-z]{2,8}$/', $lan)) $langCodes[] = $lan;
+                    }
+                    $langCodes = array_values(array_unique($langCodes));
+                    $delL = $conn->prepare('DELETE FROM item2lang WHERE item_id = ? AND item_type = ?');
+                    if ($delL) {
+                        $delL->bind_param('ii', $realId, $typeInt);
+                        $delL->execute();
+                        $delL->close();
+                    }
+                    if (!empty($langCodes)) {
+                        $insL = $conn->prepare(
+                            'INSERT INTO item2lang (item_type, item_id, lang_code) VALUES (?, ?, ?)'
+                        );
+                        if ($insL) {
+                            foreach ($langCodes as $code) {
+                                $insL->bind_param('iis', $typeInt, $realId, $code);
+                                $insL->execute();
+                            }
+                            $insL->close();
+                        }
+                    }
+                    $changes['languages'] = $langCodes;
+                }
+
+                $conn->commit();
+                echo json_encode([
+                    'ok'      => true,
+                    'updated' => true,
+                    'table'   => 'live',
+                    'type'    => 'live',
+                    'id'      => $pubId,
+                    'real_id' => $realId,
+                    'changes' => $changes,
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                exit();
+                } catch (Throwable $e) {
+                    $conn->rollback();
+                    echo json_encode(['error' => 'update_failed', 'detail' => $e->getMessage()]);
+                    exit();
+                }
+            }
+
         }
         
         if ($ACT === 'create_item') {
@@ -8237,6 +8524,218 @@ $stmt->execute();*/
 
             }
 
+
+            // ---- live ----
+            if ($table === 'live') {
+                $conn->begin_transaction();
+                try {
+                $live_name = trim($name);
+                $live_rd = null;
+                if (isset($JSD->rd) && $JSD->rd !== null && $JSD->rd !== '') {
+                    $rd = trim((string)$JSD->rd);
+                    if (preg_match('/^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/', $rd, $rm)) {
+                        $y = $rm[1];
+                        $m = isset($rm[2]) ? $rm[2] : '01';
+                        $d = isset($rm[3]) ? $rm[3] : '01';
+                        if ((int)$m >= 1 && (int)$m <= 12 && (int)$d >= 1 && (int)$d <= 31) {
+                            $live_rd = $y . '-' . $m . '-' . $d;
+                        }
+                    }
+                }
+                $live_act = isset($JSD->act) ? (int)$JSD->act : 1;
+                if ($live_act < 0 || $live_act > 3) $live_act = 1;
+
+                $data = [];
+                if (isset($JSD->names) && (is_object($JSD->names) || is_array($JSD->names))) {
+                    $names = [];
+                    foreach ((array)$JSD->names as $code => $val) {
+                        $code = strtolower(trim((string)$code));
+                        $val  = trim((string)$val);
+                        if ($code !== '' && $val !== '') $names[$code] = $val;
+                    }
+                    if (!empty($names)) $data['names'] = $names;
+                }
+                if (isset($JSD->des)) {
+                    $des = trim((string)$JSD->des);
+                    if ($des !== '') $data['des'] = $des;
+                }
+
+                $srcArr = [];
+                $ownerReal = 0;
+                if (isset($JSD->sources) && is_array($JSD->sources)) {
+                    foreach ($JSD->sources as $S) {
+                        if (!is_object($S)) continue;
+                        $url = trim((string)(isset($S->url) ? $S->url : ''));
+                        if ($url === '') continue;
+                        $bit = isset($S->bit) ? (int)$S->bit : 0;
+                        $entry = ['url' => $url];
+                        if ($bit > 0) $entry['bit'] = $bit;
+                        $ty = isset($S->type) ? strtolower(trim((string)$S->type)) : '';
+                        if ($ty !== '' && $ty !== 'original') $entry['type'] = $ty;
+                        $srcArr[] = $entry;
+                        if (isset($S->user) && (int)$S->user > 0) {
+                            $pubU = (int)$S->user;
+                            $pu = PublicIdToReal($pubU, $IDHM);
+                            if ($pu <= 0) $pu = $pubU;
+                            if ($pu > 0 && $ownerReal <= 0) $ownerReal = $pu;
+                        }
+                    }
+                }
+                if (!empty($srcArr)) $data['src'] = $srcArr;
+                $id_owner = $ownerReal > 0 ? $ownerReal : null;
+
+                $live_data_json = json_encode(
+                    !empty($data) ? $data : new stdClass(),
+                    JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                );
+
+                if ($live_rd === null) {
+                    $ins = $conn->prepare(
+                        'INSERT INTO live (live_name, live_data, live_rd, live_ply, live_act, id_owner)
+                         VALUES (?, ?, NULL, 0, ?, ?)'
+                    );
+                    if (!$ins) {
+                        $conn->rollback();
+                        echo json_encode(['error' => 'db_error', 'detail' => $conn->error]);
+                        exit();
+                    }
+                    $ins->bind_param('ssii', $live_name, $live_data_json, $live_act, $id_owner);
+                } else {
+                    $ins = $conn->prepare(
+                        'INSERT INTO live (live_name, live_data, live_rd, live_ply, live_act, id_owner)
+                         VALUES (?, ?, ?, 0, ?, ?)'
+                    );
+                    if (!$ins) {
+                        $conn->rollback();
+                        echo json_encode(['error' => 'db_error', 'detail' => $conn->error]);
+                        exit();
+                    }
+                    $ins->bind_param('sssii', $live_name, $live_data_json, $live_rd, $live_act, $id_owner);
+                }
+                if (!$ins->execute()) {
+                    $err = $ins->error;
+                    $ins->close();
+                    $conn->rollback();
+                    echo json_encode(['error' => 'create_failed', 'detail' => $err]);
+                    exit();
+                }
+                $realId = (int)$conn->insert_id;
+                $ins->close();
+                if ($realId <= 0) {
+                    $conn->rollback();
+                    echo json_encode(['error' => 'create_failed', 'detail' => 'no insert_id']);
+                    exit();
+                }
+                $pubId = $realId + (int)$IDHM;
+
+                // Media after we know public id (Plan-B keys use public id)
+                $mediaOut = [];
+                if (isset($JSD->media) && is_array($JSD->media)) {
+                    unset($data['tmb'], $data['tmv'], $data['cvr'], $data['art'], $data['gal']);
+                    $uniqueRoles = [];
+                    $galRows = [];
+                    foreach ($JSD->media as $m) {
+                        if (!is_object($m)) continue;
+                        $role = isset($m->role) ? strtolower(trim((string)$m->role)) : 'tmb';
+                        $src  = isset($m->url)  ? trim((string)$m->url)  : '';
+                        if ($role === 'off' || $src === '') continue;
+                        if ($role === 'gal') { $galRows[] = $m; continue; }
+                        if (!in_array($role, ['tmb', 'tmv', 'cvr', 'art'], true)) $role = 'tmb';
+                        $uniqueRoles[$role] = $m;
+                    }
+                    $galIndex = 0;
+                    foreach (['tmb', 'tmv', 'cvr', 'art'] as $role) {
+                        if (!isset($uniqueRoles[$role])) continue;
+                        $src = trim((string)$uniqueRoles[$role]->url);
+                        $actM = MediaRoleToAct($role);
+                        if ($actM < 1) continue;
+                        $id_img = MediaPlanBKey('live', $pubId, $role, 0);
+                        $saved  = IngestThumbFromSource($conn, $src, $id_img, $actM);
+                        if ($saved === '') {
+                            $mediaOut[] = ['role' => $role, 'error' => 'ingest_failed'];
+                            continue;
+                        }
+                        $data[$role] = $saved;
+                        $mediaOut[]  = ['role' => $role, 'id_img' => $saved];
+                    }
+                    if (!empty($galRows)) {
+                        $data['gal'] = [];
+                        foreach ($galRows as $m) {
+                            $src = trim((string)$m->url);
+                            $id_img = MediaPlanBKey('live', $pubId, 'gal', $galIndex++);
+                            $saved = IngestThumbFromSource($conn, $src, $id_img, MediaRoleToAct('gal'));
+                            if ($saved === '') continue;
+                            $data['gal'][] = $saved;
+                            $mediaOut[] = ['role' => 'gal', 'id_img' => $saved];
+                        }
+                        if (empty($data['gal'])) unset($data['gal']);
+                    }
+                    if (!empty($mediaOut)) {
+                        $live_data_json = json_encode(
+                            !empty($data) ? $data : new stdClass(),
+                            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                        );
+                        $u = $conn->prepare('UPDATE live SET live_data = ? WHERE id_live = ? LIMIT 1');
+                        if ($u) {
+                            $u->bind_param('si', $live_data_json, $realId);
+                            $u->execute();
+                            $u->close();
+                        }
+                    }
+                }
+
+                $typeInt = ContentTypeToInt('live');
+                if ($typeInt !== null) {
+                    if (isset($JSD->gnr) && is_array($JSD->gnr)) {
+                        $insG = $conn->prepare(
+                            'INSERT INTO item2genre (item_type, item_id, id_genre) VALUES (?, ?, ?)'
+                        );
+                        if ($insG) {
+                            foreach ($JSD->gnr as $g) {
+                                $gid = is_object($g) && isset($g->id) ? (int)$g->id : (int)$g;
+                                if ($gid > 0) {
+                                    $insG->bind_param('iii', $typeInt, $realId, $gid);
+                                    $insG->execute();
+                                }
+                            }
+                            $insG->close();
+                        }
+                    }
+                    $lan = isset($JSD->lan) ? strtolower(trim((string)$JSD->lan)) : '';
+                    if ($lan !== '' && preg_match('/^[a-z]{2,8}$/', $lan)) {
+                        $insL = $conn->prepare(
+                            'INSERT INTO item2lang (item_type, item_id, lang_code) VALUES (?, ?, ?)'
+                        );
+                        if ($insL) {
+                            $insL->bind_param('iis', $typeInt, $realId, $lan);
+                            $insL->execute();
+                            $insL->close();
+                        }
+                    }
+                }
+
+                $conn->commit();
+                echo json_encode([
+                    'ok'      => true,
+                    'created' => true,
+                    'table'   => 'live',
+                    'type'    => 'live',
+                    'id'      => $pubId,
+                    'real_id' => $realId,
+                    'changes' => [
+                        'name'  => $live_name,
+                        'media' => $mediaOut,
+                        'owner' => $ownerReal > 0 ? ($ownerReal + (int)$IDHM) : 0,
+                    ],
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                exit();
+                } catch (Throwable $e) {
+                    $conn->rollback();
+                    echo json_encode(['error' => 'create_failed', 'detail' => $e->getMessage()]);
+                    exit();
+                }
+            }
+
             echo json_encode(['error' => 'create_not_implemented', 'table' => $table]);
             exit();
         }
@@ -8463,6 +8962,7 @@ $stmt->execute();*/
             'artist' => 'a', 'album' => 'b',
             'video' => 'v', 'musicvideo' => 'v',
             'playlist' => 'p',
+            'live' => 'l',
             'user' => 'u', 'owner' => 'u',
         ];
         $table = strtolower((string)$table);
@@ -10434,6 +10934,19 @@ $stmt->execute();*/
 
         $meta['type'] = 'live';
         if ($meta) $live['meta'] = $meta;
+
+        // Genres / languages via item2* (item_type = live = 7)
+        $typeLive = ContentTypeToInt('live');
+        if ($typeLive !== null) {
+            $genres = LoadItemGenres($typeLive, (int)$row_live['id_live']);
+            if ($genres) {
+                $live['genres'] = $genres;
+            }
+            $langs = LoadItemLanguages($typeLive, (int)$row_live['id_live']);
+            if ($langs) {
+                $live['languages'] = $langs;
+            }
+        }
 
         // Owner is on the live row (id_owner), not a per-source link table.
         $owner = OwnerCard(isset($row_live['id_owner']) ? (int)$row_live['id_owner'] : 0);

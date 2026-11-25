@@ -4598,11 +4598,8 @@ function renderEditor() {
     '</div>';
   }
 
-  if (!isLive) {
-    steps += genreRowHtml(d);
-  }
-
   steps +=
+    genreRowHtml(d) +
     '<div class="estep-row">' +
       '<label for="fAct">Status (act)</label>' +
       '<div><select class="select" id="fAct">' + actOptions(d.act) + '</select>' +
@@ -5122,10 +5119,6 @@ async function submitItem(event) {
   }
 
   const d = collectDraft();
-  if (d.table === 'live') {
-    setItemStatus('Live form is ready for review — create/update API is not wired yet. Do not expect DB writes.', 'warn');
-    return;
-  }
   if (!d.name) {
     setItemStatus('The global name is required.', 'error');
     validateGlobalName();
