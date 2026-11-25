@@ -11,11 +11,12 @@ data class LiveItem(
     override val name: String?,
     override val names: Map<String, String>?,
     val meta: MediaMeta?,
-    val sources: List<MediaSource>
+    val sources: List<MediaSource>,
+    val url: String? = null,
+    val genres: List<LiveGenre> = emptyList(),
+    val languages: List<String> = emptyList(),
+    val owner: SourceOwner? = null
 ) : LocalizedTitle {
     val thumb: String
         get() = ImageResolver.thumb(meta?.tmb)
-
-    val owner: SourceOwner?
-        get() = sources.firstNotNullOfOrNull { it.owner }
 }
