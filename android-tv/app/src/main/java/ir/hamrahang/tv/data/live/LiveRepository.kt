@@ -30,7 +30,8 @@ class LiveRepository {
         // and do not already have a complete local copy.
         val localById = liveDao.getByIds(cards.mapNotNull { it.id }).associateBy { it.id }
         val needsResolve = cards.filter { dto ->
-            !dto.isFullCard && localById[dto.id]?.isFull != true
+            val id = dto.id
+            !dto.isFullCard && (id == null || localById[id]?.isFull != true)
         }.mapNotNull { it.id?.toLongOrNull() }.distinct()
 
         val resolvedById = if (needsResolve.isNotEmpty()) {
