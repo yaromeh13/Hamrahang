@@ -180,6 +180,18 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         }
         clear.nextFocusDownId = recycler?.id ?: View.NO_ID
         submit.nextFocusDownId = recycler?.id ?: View.NO_ID
+
+        val downToResults = View.OnKeyListener { source, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN &&
+                event.action == KeyEvent.ACTION_DOWN
+            ) {
+                initialFocusPending = true
+                source.post { focusFirstLiveCard() }
+            }
+            false
+        }
+        clear.setOnKeyListener(downToResults)
+        submit.setOnKeyListener(downToResults)
     }
 
     private fun hideSearchKeyboard(target: View) {
