@@ -10417,11 +10417,14 @@ $stmt->execute();*/
         $meta['type'] = 'live';
         if ($meta) $live['meta'] = $meta;
 
-        // Each item in live_data.src is an independent stream source.
-        // Keep URL, quality metadata, and Owner inside each sources[] entry.
-        $live['sources'] = [];
+        // Owner is on the live row (id_owner), not a per-source link table.
         $owner = OwnerCard(isset($row_live['id_owner']) ? (int)$row_live['id_owner'] : 0);
+        if ($owner) {
+            $live['owner'] = $owner;
+        }
 
+        // Streams live inside live_data.src (JSON array).
+        $live['sources'] = [];
         if (!empty($live_data->src) && is_array($live_data->src)) {
             foreach ($live_data->src as $source_data) {
                 if (is_object($source_data)) {
@@ -10434,7 +10437,7 @@ $stmt->execute();*/
 
                 $src = [
                     'url'  => (string)$source_data['url'],
-                    'type' => 'original'
+                    'type' => !empty($source_data['type']) ? (string)$source_data['type'] : 'original',
                 ];
 
                 if (isset($source_data['bit']) && $source_data['bit'] !== '') {
@@ -10443,6 +10446,9 @@ $stmt->execute();*/
 
                 if ($owner) {
                     $src['owner'] = $owner;
+                    if (!empty($owner['id'])) {
+                        $src['user'] = (int)$owner['id'];
+                    }
                 }
 
                 if (!empty($source_data['file_id'])) {
@@ -10459,21 +10465,30 @@ $stmt->execute();*/
         return $live;
     }
 
-    function LIVE($ID) {
+    function LIVE($ID, $countPlay = true) {
         global $conn;
 
         $ID = (int)$ID;
         if ($ID <= 0) return null;
 
-        $sql = "SELECT * FROM live WHERE id_live = $ID AND live_act != 0 LIMIT 1";
+        $sql = "SELECT * FROM live WHERE id_live = $ID LIMIT 1";
         $result = $conn->query($sql);
         if (!$result || !$result->num_rows) return null;
 
         $row_live = $result->fetch_assoc();
 
-        // Count a play only when the full Live item is requested.
-        $conn->query("UPDATE live SET live_ply = live_ply + 1 WHERE id_live = " . (int)$row_live['id_live']);
-        $row_live['live_ply'] = (int)$row_live['live_ply'] + 1;
+        $isAdminPanel = (
+            isset($_SERVER['HTTP_X_HAMRAHANG_CLIENT'])
+            && $_SERVER['HTTP_X_HAMRAHANG_CLIENT'] === 'cdn_admin'
+        );
+        if (!$isAdminPanel && (int)($row_live['live_act'] ?? 0) === 0) {
+            return null;
+        }
+
+        if ($countPlay && !$isAdminPanel) {
+            $conn->query("UPDATE live SET live_ply = live_ply + 1 WHERE id_live = " . (int)$row_live['id_live']);
+            $row_live['live_ply'] = (int)$row_live['live_ply'] + 1;
+        }
 
         return ['live' => LIVE_CARD($row_live)];
     }
@@ -10830,6 +10845,7 @@ $stmt->execute();*/
                 "albums" => [],
                 "songs" => [],
                 "videos" => [],
+                "lives" => [],
                 "playlists" => []
             ]
         ];
@@ -10967,6 +10983,32 @@ $stmt->execute();*/
         if ($res) {
             while ($row = $res->fetch_assoc()) {
                 $search_obj["search"]["videos"][] = VIDEO_CARD($row);
+            }
+        }
+
+
+        // ---- lives ----
+        $liveActSql = $allowInactive ? '1=1' : 'live_act != 0';
+        $sql = "
+            SELECT * FROM live
+            WHERE (
+                live_name LIKE '$likeFull'
+                OR live_data LIKE '$likeFull'
+            )
+              AND $liveActSql
+            ORDER BY
+                CASE
+                    WHEN LOWER(live_name) = LOWER('$like') THEN 1
+                    WHEN LOWER(live_name) LIKE LOWER('$likeStart') THEN 2
+                    ELSE 3
+                END,
+                live_rd DESC
+            LIMIT 21
+        ";
+        $res = $conn->query($sql);
+        if ($res) {
+            while ($row = $res->fetch_assoc()) {
+                $search_obj["search"]["lives"][] = LIVE_CARD($row);
             }
         }
 

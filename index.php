@@ -352,7 +352,7 @@ if ($mode === 'query') {
             $params[$key] = (string) $_GET[$key];
         }
     }
-    if (isset($params['p']) && !in_array($params['p'], array('search', 'song', 'album', 'artist', 'video', 'playlist', 'app'), true)) {
+    if (isset($params['p']) && !in_array($params['p'], array('search', 'song', 'album', 'artist', 'video', 'live', 'playlist', 'app'), true)) {
         send_json(array('error' => 'bad_page'), 400);
     }
 
@@ -699,6 +699,7 @@ h2{font-size:16px;margin:0 0 10px}
 .badge-musicvideo{background:#f43f5e2b;color:#fd93a7}
 .badge-video{background:#f43f5e2b;color:#fd93a7}
 .badge-playlist{background:#06b6d429;color:#77dff1}
+.badge-live{background:#ef444429;color:#fca5a5}
 .badge-user{background:#64748b33;color:#cbd5e1}
 .badge-owner{background:#a78bfa33;color:#c4b5fd}
 @media (max-width:640px){
@@ -1269,6 +1270,7 @@ h2{font-size:16px;margin:0 0 10px}
                   <option value="artist">Artist</option>
                   <option value="musicvideo">Music video</option>
                   <option value="video">Video</option>
+                  <option value="live">Live</option>
                   <option value="playlist">Playlist</option>
                 </select>
               </div>
@@ -1318,6 +1320,7 @@ h2{font-size:16px;margin:0 0 10px}
                   <button class="btn btn-ghost btn-sm" type="button" data-create-type="album">+ Album</button>
                   <button class="btn btn-ghost btn-sm" type="button" data-create-type="musicvideo">+ Music video</button>
                   <button class="btn btn-ghost btn-sm" type="button" data-create-type="video">+ Video</button>
+                  <button class="btn btn-ghost btn-sm" type="button" data-create-type="live">+ Live</button>
                   <button class="btn btn-ghost btn-sm" type="button" data-create-type="owner" data-act9-only hidden>+ Owner</button>
                   <button class="btn btn-ghost btn-sm" type="button" data-create-type="playlist" data-act9-only hidden>+ Playlist</button>
                 </div>
@@ -1394,17 +1397,17 @@ const state = {
   profile   : null      // localStorage ha_profile (same key as main app)
 };
 
-const ALL_TABLES = ['song', 'album', 'artist', 'video', 'playlist'];
+const ALL_TABLES = ['song', 'album', 'artist', 'video', 'live', 'playlist'];
 
 /* select value -> ha.php page (p=...) */
 const TYPE_TABLE = {
   song:'song', podcast:'song', album:'album', artist:'artist',
-  musicvideo:'video', video:'video', playlist:'playlist'
+  musicvideo:'video', video:'video', live:'live', playlist:'playlist'
 };
 
 const TYPE_LABEL = {
   song:'Song', podcast:'Podcast', album:'Album', artist:'Artist',
-  musicvideo:'Music video', video:'Video', playlist:'Playlist'
+  musicvideo:'Music video', video:'Video', live:'Live', playlist:'Playlist'
 };
 
 const ERRORS = {
@@ -1727,6 +1730,7 @@ async function searchByText(query, type) {
     toRows('album',    box.albums),
     toRows('song',     box.songs),
     toRows('video',    box.videos),
+    toRows('live',     box.lives),
     toRows('playlist', box.playlists)
   );
   return filterByType(rows, type);
@@ -1976,6 +1980,14 @@ function buildDraft(table, full) {
     ytm     : meta.ytm ? String(meta.ytm) : '',
     ins     : meta.ins ? String(meta.ins) : '',
     tlg     : meta.tlg ? String(meta.tlg) : '',
+    ownerId : (full.owner && full.owner.id != null)
+      ? Number(full.owner.id) || 0
+      : (Array.isArray(full.sources) && full.sources[0] && full.sources[0].owner
+          ? (Number(full.sources[0].owner.id) || 0) : 0),
+    ownerName: (full.owner && full.owner.name)
+      ? String(full.owner.name)
+      : (Array.isArray(full.sources) && full.sources[0] && full.sources[0].owner
+          ? String(full.sources[0].owner.name || '') : ''),
     raw     : full
   };
 }
@@ -2278,8 +2290,11 @@ function sourcesFromCard(full) {
       else act = 1;
     }
     if (act < 0 || act > 3) act = 1;
-    const user = (s.user != null) ? Number(s.user)
+    let user = (s.user != null) ? Number(s.user)
       : (s.id_user != null) ? Number(s.id_user) : 0;
+    if (!user && s.owner && typeof s.owner === 'object' && s.owner.id != null) {
+      user = Number(s.owner.id) || 0;
+    }
     const bit = (s.bit != null) ? Number(s.bit)
       : (s.song_bit != null) ? Number(s.song_bit)
       : (s.vdo_bit != null) ? Number(s.vdo_bit) : 0;
@@ -2597,10 +2612,9 @@ function idRowHtml(d) {
 
 /** Empty draft for Create (id = 0). Same shape as buildDraft output. */
 function emptyDraft(table, type) {
-  const t = type || table;
   return {
     table   : table,
-    type    : t,
+    type    : type || table,
     id      : 0,
     name    : '',
     names   : {},
@@ -2611,9 +2625,9 @@ function emptyDraft(table, type) {
     rls     : '',
     act     : 1,
     tmb     : '',
-    media   : [{ role: 'tmb', url: '' }],
+    media   : [],
     lyrics  : [],
-    lyricEdit: null,
+    lyricEdit : null,
     artists : [],
     albums  : [],
     videos  : [],
@@ -2626,6 +2640,8 @@ function emptyDraft(table, type) {
     ytm     : '',
     ins     : '',
     tlg     : '',
+    ownerId : 0,
+    ownerName: '',
     raw     : null
   };
 }
@@ -4503,6 +4519,7 @@ function renderEditor() {
   const isSong   = (table === 'song');
   const isVideo  = (table === 'video');
   const isArtist = (table === 'artist');
+  const isLive   = (table === 'live');
 
   let steps = '';
 
@@ -4513,7 +4530,9 @@ function renderEditor() {
       ? 'The global name becomes <code>video_name</code>; extra rows go into <code>data.names</code>.'
       : isArtist
         ? 'The global name becomes <code>artist_name</code> exactly as typed (case preserved, e.g. 2AFM). Extra rows go into <code>data.names</code>.'
-        : 'The global name becomes <code>song_name</code> exactly as typed (case preserved). Extra rows go into <code>data.names</code>.';
+        : isLive
+          ? 'The global name becomes <code>live_name</code>; extra rows go into <code>data.names</code>. No artists — owner is on the live row.'
+          : 'The global name becomes <code>song_name</code> exactly as typed (case preserved). Extra rows go into <code>data.names</code>.';
 
   steps += '<section class="estep">' +
     '<h2><span class="num">1</span> Identity</h2>' +
@@ -4579,8 +4598,11 @@ function renderEditor() {
     '</div>';
   }
 
+  if (!isLive) {
+    steps += genreRowHtml(d);
+  }
+
   steps +=
-    genreRowHtml(d) +
     '<div class="estep-row">' +
       '<label for="fAct">Status (act)</label>' +
       '<div><select class="select" id="fAct">' + actOptions(d.act) + '</select>' +
@@ -4594,7 +4616,36 @@ function renderEditor() {
     thumbEditHtml(d) +
   '</section>';
 
-  if (isArtist) {
+  if (isLive) {
+    steps += '<section class="estep">' +
+      '<h2><span class="num">3</span> Owner</h2>' +
+      '<div class="estep-row">' +
+        '<label for="fLiveOwnerSearch">Stream owner</label>' +
+        '<div>' +
+          '<div class="rel-attach-row">' +
+            '<input class="input" id="fLiveOwnerId" type="text" inputmode="numeric" ' +
+              'placeholder="Public owner id" value="' + esc(d.ownerId > 0 ? d.ownerId : '') + '" ' +
+              'spellcheck="false" style="max-width:160px">' +
+            '<input class="input" id="fLiveOwnerSearch" type="search" ' +
+              'placeholder="Search owner name or id …" spellcheck="false" ' +
+              'value="' + esc(d.ownerName || '') + '">' +
+          '</div>' +
+          '<div class="pick-list" id="liveOwnerPicks"></div>' +
+          '<div class="hint" style="margin-top:6px">' +
+            'Stored as <code>live.id_owner</code>. Mirrored onto each source in the card JSON for clients. ' +
+            'Act 7+ owners only in pick list.</div>' +
+        '</div>' +
+      '</div>' +
+    '</section>';
+
+    steps += '<section class="estep">' +
+      '<h2><span class="num">4</span> Sources</h2>' +
+      '<div class="hint" style="margin:0 0 10px">' +
+        'Unlike song/video link tables, live streams are stored in <code>live_data.src</code> as JSON. ' +
+        'Owner is not per-source — it comes from the Owner field above.</div>' +
+      sourcesSectionHtml(d) +
+    '</section>';
+  } else if (isArtist) {
     steps += '<section class="estep">' +
       '<h2><span class="num">3</span> Social</h2>' +
       '<div class="estep-row">' +
@@ -4913,6 +4964,14 @@ function collectDraft() {
 
   const des = $('#fDes');   if (des) d.des = des.value.trim();
   const lan = $('#fLan');   if (lan) d.lan = lan.value;
+  const liveOwnId = $('#fLiveOwnerId');
+  if (liveOwnId && d.table === 'live') {
+    d.ownerId = Number(liveOwnId.value) || 0;
+  }
+  const liveOwnName = $('#fLiveOwnerSearch');
+  if (liveOwnName && d.table === 'live' && !d.ownerName) {
+    d.ownerName = liveOwnName.value.trim();
+  }
   const durEl = $('#fDur');
   if (durEl) {
     const v = Number(durEl.value);
@@ -5085,6 +5144,10 @@ async function submitItem(event) {
   }
 
   const d = collectDraft();
+  if (d.table === 'live') {
+    setItemStatus('Live form is ready for review — create/update API is not wired yet. Do not expect DB writes.', 'warn');
+    return;
+  }
   if (!d.name) {
     setItemStatus('The global name is required.', 'error');
     validateGlobalName();
@@ -5986,6 +6049,7 @@ function bindEditor() {
   bindSourcesEditor();
   bindTrackSearch();
   bindSongLinkSearch();
+  bindLiveOwnerSearch();
 }
 
 let songLinkSearchTimer = null;
@@ -6146,6 +6210,66 @@ function normalizeAudioUrl(url) {
     return parsed.toString();
   } catch (e) {
     return u.replace(/ /g, '%20');
+  }
+}
+
+
+let liveOwnerSearchTimer = null;
+function bindLiveOwnerSearch() {
+  if (!state.item || state.item.table !== 'live') return;
+  const idInp = $('#fLiveOwnerId');
+  const search = $('#fLiveOwnerSearch');
+  const picks = $('#liveOwnerPicks');
+  if (!search || search.dataset.bound === '1') return;
+  search.dataset.bound = '1';
+
+  const applyOwner = (id, name) => {
+    if (!state.item) return;
+    state.item.ownerId = Number(id) || 0;
+    state.item.ownerName = name || '';
+    if (idInp) idInp.value = state.item.ownerId > 0 ? String(state.item.ownerId) : '';
+    search.value = state.item.ownerName || '';
+    if (picks) picks.innerHTML = '';
+    (state.item.sources || []).forEach(s => {
+      if (s) s.user = state.item.ownerId;
+    });
+  };
+
+  if (idInp) {
+    idInp.addEventListener('change', () => {
+      const id = Number(idInp.value) || 0;
+      state.item.ownerId = id;
+      if (!id) state.item.ownerName = '';
+    });
+  }
+
+  search.addEventListener('input', () => {
+    clearTimeout(liveOwnerSearchTimer);
+    const q = search.value.trim();
+    if (!picks) return;
+    if (q.length < 1) { picks.innerHTML = ''; return; }
+    liveOwnerSearchTimer = setTimeout(async () => {
+      picks.innerHTML = '<div class="hint">Searching …</div>';
+      const rows = await searchOwners(q, 7);
+      if (!picks || search.value.trim() !== q) return;
+      if (!rows.length) {
+        picks.innerHTML = '<div class="hint">No owner match.</div>';
+        return;
+      }
+      picks.innerHTML = rows.map(o =>
+        '<button class="pick" type="button" data-live-owner="' + esc(o.id) + '" data-name="' + esc(o.name || '') + '">' +
+          '<b>' + esc(o.name || ('#' + o.id)) + '</b>' +
+          '<span class="rid">act' + esc(o.act || 0) + ' · #' + esc(o.id) + '</span></button>'
+      ).join('');
+    }, 220);
+  });
+
+  if (picks) {
+    picks.addEventListener('click', ev => {
+      const btn = ev.target.closest('[data-live-owner]');
+      if (!btn) return;
+      applyOwner(btn.getAttribute('data-live-owner'), btn.getAttribute('data-name') || '');
+    });
   }
 }
 
