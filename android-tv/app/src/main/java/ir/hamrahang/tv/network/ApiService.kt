@@ -42,6 +42,15 @@ interface ApiService {
         @Query("t") type: String = "live"
     ): SearchResponseDto
 
+    // Resolve incomplete public Live cards without incrementing play counts.
+    @POST("/")
+    suspend fun resolveLives(
+        @Query("_qjs") qjs: String = "ep",
+        @Query("p") page: String = "live",
+        @Query("q1") action: String = "resolve",
+        @Body body: ir.hamrahang.tv.data.live.ResolveLivesRequest
+    ): List<LiveDto>
+
     @GET("video/latest")
     suspend fun getLatestVideos(
         @Query("_qjs") qjs: String = "ep"
