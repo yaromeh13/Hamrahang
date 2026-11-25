@@ -13,4 +13,6 @@ enum class PlaybackSource {
     FAVORITES,
 
     PLAYLIST
+
+    LIVE
 }
