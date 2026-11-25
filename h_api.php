@@ -5,6 +5,24 @@
         exit;
     }
 
+    /**
+     * Database schema reference
+     * -------------------------
+     * Canonical table/column definitions live in:
+     *   hamrahang.sql   (project root, next to this API when deployed as reference)
+     *
+     * Read that dump before changing queries, INSERT/UPDATE shapes, or JSON
+     * fields stored in *_data columns. h_api.php must stay aligned with it.
+     *
+     * Notes:
+     * - Content JSON blobs: song_data, album_data, artist_data, video_data,
+     *   live_data, playlist_data, u_data (names, des, tmb, src, …).
+     * - Relation tables: song2artist, song2album, song2video, video2artist,
+     *   item2genre, item2lang, link_song, link_video, …
+     * - If a table is used here but missing from hamrahang.sql, update the SQL
+     *   dump in the same change (do not leave schema drift).
+     */
+
     // request
     $Page   = isset($_REQUEST['p'])     ? strtolower((string)$_REQUEST['p']) : '';
     $QJS    = isset($_REQUEST['_qjs'])  ? (string)$_REQUEST['_qjs']          : '';

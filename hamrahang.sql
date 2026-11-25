@@ -237,28 +237,6 @@ CREATE TABLE IF NOT EXISTS `lyric` (
 
 -- --------------------------------------------------------
 
--- --------------------------------------------------------
-
---
--- Table structure for table `live`
---
-
-DROP TABLE IF EXISTS `live`;
-CREATE TABLE IF NOT EXISTS `live` (
-  `id_live` int(11) NOT NULL AUTO_INCREMENT,
-  `live_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `live_data` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `live_rd` date DEFAULT NULL,
-  `live_ply` int(11) NOT NULL DEFAULT 0,
-  `live_act` tinyint(1) NOT NULL DEFAULT 1,
-  `id_owner` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id_live`),
-  KEY `idx_live_owner` (`id_owner`),
-  KEY `idx_live_act` (`live_act`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
 --
 -- Table structure for table `playlist`
 --
@@ -507,6 +485,28 @@ CREATE TABLE IF NOT EXISTS `video` (
   `video_act` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_video`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `live`
+-- Stream / live channels. Sources JSON in live_data.src; owner is id_owner.
+--
+
+DROP TABLE IF EXISTS `live`;
+CREATE TABLE IF NOT EXISTS `live` (
+  `id_live` int(11) NOT NULL AUTO_INCREMENT,
+  `live_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `live_data` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `live_rd` date DEFAULT NULL,
+  `live_ply` int(11) NOT NULL DEFAULT 0,
+  `live_act` tinyint(1) NOT NULL DEFAULT 1,
+  `id_owner` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id_live`),
+  KEY `idx_live_owner` (`id_owner`),
+  KEY `idx_live_act` (`live_act`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
