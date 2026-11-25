@@ -30,6 +30,7 @@
     $Q1     = isset($_REQUEST['q1'])    ? $_REQUEST['q1']                    : '';
     $Q2     = isset($_REQUEST['q2'])    ? $_REQUEST['q2']                    : '';
     $SQ     = isset($_REQUEST['sq'])    ? $_REQUEST['sq']                    : 'result';
+    $T      = isset($_REQUEST['t'])    ? strtolower(trim((string)$_REQUEST['t'])) : '';
 
 
     $TLGRM_Param = isset($_GET["tgWebAppStartParam"]) ? $_GET["tgWebAppStartParam"] : '';//tgWebAppData
@@ -11368,6 +11369,14 @@ $stmt->execute();*/
     
     if ($Page == "search" && $QJS == 'ep') {
 
+        // Optional type filter: omitted/"all" keeps the legacy all-types search.
+        $allowedSearchTypes = ['artist', 'album', 'song', 'video', 'live', 'playlist'];
+        if ($T !== '' && $T !== 'all' && !in_array($T, $allowedSearchTypes, true)) {
+            echo json_encode(['error' => 'invalid_search_type', 'allowed' => $allowedSearchTypes]);
+            exit();
+        }
+        $searchAll = ($T === '' || $T === 'all');
+
         $q = trim((string)$Q1);
         $search_obj = [
             "search" => [
@@ -11417,158 +11426,182 @@ $stmt->execute();*/
         $likeFull  = '%' . $like . '%';
         $likeStart = $like . '%';
 
-        // ---- artists ----
-        if ($allowInactive) {
-            $ACTSRC = '1=1';
-        } elseif (!empty($_SESSION['loggedin'])) {
-            $ACTSRC = 'artist_act != 0';
-        } else {
-            $ACTSRC = 'artist_act != 3';
-        }
-
-        $sql = "
-            SELECT * FROM artist
-            WHERE (artist_name LIKE '$likeFull' OR artist_data LIKE '$likeFull')
-              AND $ACTSRC
-            ORDER BY
-                CASE
-                    WHEN LOWER(artist_name) = LOWER('$like') THEN 1
-                    WHEN LOWER(artist_name) LIKE LOWER('$likeStart') THEN 2
-                    ELSE 3
-                END
-            LIMIT 21
-        ";
-        $res = $conn->query($sql);
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $search_obj["search"]["artists"][] = ARTIST_CARD($row);
+        if ($searchAll || $T === 'artist') {
+            // ---- artists ----
+            if ($allowInactive) {
+                $ACTSRC = '1=1';
+            } elseif (!empty($_SESSION['loggedin'])) {
+                $ACTSRC = 'artist_act != 0';
+            } else {
+                $ACTSRC = 'artist_act != 3';
             }
-        }
-
-        // ---- albums ----
-        $albumActSql = $allowInactive ? '1=1' : 'album_act != 0';
-        $sql = "
-            SELECT * FROM album
-            WHERE (album_name LIKE '$likeFull' OR album_data LIKE '$likeFull')
-              AND $albumActSql
-            ORDER BY
-                CASE
-                    WHEN LOWER(album_name) = LOWER('$like') THEN 1
-                    WHEN LOWER(album_name) LIKE LOWER('$likeStart') THEN 2
-                    ELSE 3
-                END,
-                album_rd DESC
-            LIMIT 21
-        ";
-        $res = $conn->query($sql);
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $search_obj["search"]["albums"][] = ALBUM_CARD($row);
+    
+            $sql = "
+                SELECT * FROM artist
+                WHERE (artist_name LIKE '$likeFull' OR artist_data LIKE '$likeFull')
+                  AND $ACTSRC
+                ORDER BY
+                    CASE
+                        WHEN LOWER(artist_name) = LOWER('$like') THEN 1
+                        WHEN LOWER(artist_name) LIKE LOWER('$likeStart') THEN 2
+                        ELSE 3
+                    END
+                LIMIT 21
+            ";
+            $res = $conn->query($sql);
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $search_obj["search"]["artists"][] = ARTIST_CARD($row);
+                }
             }
+    
+    
         }
 
-        // ---- songs ----
-        $songActSql = $allowInactive ? '1=1' : 'song_act != 0';
-        $sql = "
-            SELECT * FROM song
-            WHERE (
-                song_name LIKE '$likeFull'
-                OR song_data LIKE '$likeFull'
-            )
-              AND $songActSql
-            ORDER BY
-                CASE
-                    WHEN LOWER(song_name) = LOWER('$like') THEN 1
-                    WHEN LOWER(song_name) LIKE LOWER('$likeStart') THEN 2
-                    ELSE 3
-                END,
-                song_rd DESC
-            LIMIT 50
-        ";
-        $res = $conn->query($sql);
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $search_obj["search"]["songs"][] = SONG_CARD($row);
+        if ($searchAll || $T === 'album') {
+            // ---- albums ----
+            $albumActSql = $allowInactive ? '1=1' : 'album_act != 0';
+            $sql = "
+                SELECT * FROM album
+                WHERE (album_name LIKE '$likeFull' OR album_data LIKE '$likeFull')
+                  AND $albumActSql
+                ORDER BY
+                    CASE
+                        WHEN LOWER(album_name) = LOWER('$like') THEN 1
+                        WHEN LOWER(album_name) LIKE LOWER('$likeStart') THEN 2
+                        ELSE 3
+                    END,
+                    album_rd DESC
+                LIMIT 21
+            ";
+            $res = $conn->query($sql);
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $search_obj["search"]["albums"][] = ALBUM_CARD($row);
+                }
             }
+    
+    
         }
 
-        // ---- videos ----
-        $videoActSql = $allowInactive ? '1=1' : 'video_act != 0';
-        $sql = "
-            SELECT * FROM video
-            WHERE (
-                video_name LIKE '$likeFull'
-                OR video_data LIKE '$likeFull'
-            )
-              AND $videoActSql
-            ORDER BY
-                CASE
-                    WHEN LOWER(video_name) = LOWER('$like') THEN 1
-                    WHEN LOWER(video_name) LIKE LOWER('$likeStart') THEN 2
-                    ELSE 3
-                END,
-                video_rd DESC
-            LIMIT 21
-        ";
-        $res = $conn->query($sql);
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $search_obj["search"]["videos"][] = VIDEO_CARD($row);
+        if ($searchAll || $T === 'song') {
+            // ---- songs ----
+            $songActSql = $allowInactive ? '1=1' : 'song_act != 0';
+            $sql = "
+                SELECT * FROM song
+                WHERE (
+                    song_name LIKE '$likeFull'
+                    OR song_data LIKE '$likeFull'
+                )
+                  AND $songActSql
+                ORDER BY
+                    CASE
+                        WHEN LOWER(song_name) = LOWER('$like') THEN 1
+                        WHEN LOWER(song_name) LIKE LOWER('$likeStart') THEN 2
+                        ELSE 3
+                    END,
+                    song_rd DESC
+                LIMIT 50
+            ";
+            $res = $conn->query($sql);
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $search_obj["search"]["songs"][] = SONG_CARD($row);
+                }
             }
+    
+    
         }
 
-
-        // ---- lives ----
-        $liveActSql = $allowInactive ? '1=1' : 'live_act != 0';
-        $sql = "
-            SELECT * FROM live
-            WHERE (
-                live_name LIKE '$likeFull'
-                OR live_data LIKE '$likeFull'
-            )
-              AND $liveActSql
-            ORDER BY
-                CASE
-                    WHEN LOWER(live_name) = LOWER('$like') THEN 1
-                    WHEN LOWER(live_name) LIKE LOWER('$likeStart') THEN 2
-                    ELSE 3
-                END,
-                live_rd DESC
-            LIMIT 21
-        ";
-        $res = $conn->query($sql);
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $search_obj["search"]["lives"][] = LIVE_CARD($row);
+        if ($searchAll || $T === 'video') {
+            // ---- videos ----
+            $videoActSql = $allowInactive ? '1=1' : 'video_act != 0';
+            $sql = "
+                SELECT * FROM video
+                WHERE (
+                    video_name LIKE '$likeFull'
+                    OR video_data LIKE '$likeFull'
+                )
+                  AND $videoActSql
+                ORDER BY
+                    CASE
+                        WHEN LOWER(video_name) = LOWER('$like') THEN 1
+                        WHEN LOWER(video_name) LIKE LOWER('$likeStart') THEN 2
+                        ELSE 3
+                    END,
+                    video_rd DESC
+                LIMIT 21
+            ";
+            $res = $conn->query($sql);
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $search_obj["search"]["videos"][] = VIDEO_CARD($row);
+                }
             }
+    
+    
+    
         }
 
-        // ---- playlists ----
-        // act9 panel: also allow inactive special lists if you store them with other acts
-        $plActSql = $allowInactive ? 'pl_act IN (0,1,2,9)' : 'pl_act IN (2, 9)';
-        $sql = "
-            SELECT * FROM playlist
-            WHERE playlist_name LIKE '$likeFull'
-              AND $plActSql
-            ORDER BY
-                CASE
-                    WHEN LOWER(playlist_name) = LOWER('$like') THEN 1
-                    WHEN LOWER(playlist_name) LIKE LOWER('$likeStart') THEN 2
-                    ELSE 3
-                END,
-                updated_at DESC
-            LIMIT 21
-        ";
-        $res = $conn->query($sql);
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $search_obj["search"]["playlists"][] = PLAYLIST_CARD($row);
+        if ($searchAll || $T === 'live') {
+            // ---- lives ----
+            $liveActSql = $allowInactive ? '1=1' : 'live_act != 0';
+            $sql = "
+                SELECT * FROM live
+                WHERE (
+                    live_name LIKE '$likeFull'
+                    OR live_data LIKE '$likeFull'
+                )
+                  AND $liveActSql
+                ORDER BY
+                    CASE
+                        WHEN LOWER(live_name) = LOWER('$like') THEN 1
+                        WHEN LOWER(live_name) LIKE LOWER('$likeStart') THEN 2
+                        ELSE 3
+                    END,
+                    live_rd DESC
+                LIMIT 21
+            ";
+            $res = $conn->query($sql);
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $search_obj["search"]["lives"][] = LIVE_CARD($row);
+                }
             }
+    
+    
         }
 
-        echo json_encode($search_obj);
-        exit();
-    }
+        if ($searchAll || $T === 'playlist') {
+            // ---- playlists ----
+            // act9 panel: also allow inactive special lists if you store them with other acts
+            $plActSql = $allowInactive ? 'pl_act IN (0,1,2,9)' : 'pl_act IN (2, 9)';
+            $sql = "
+                SELECT * FROM playlist
+                WHERE playlist_name LIKE '$likeFull'
+                  AND $plActSql
+                ORDER BY
+                    CASE
+                        WHEN LOWER(playlist_name) = LOWER('$like') THEN 1
+                        WHEN LOWER(playlist_name) LIKE LOWER('$likeStart') THEN 2
+                        ELSE 3
+                    END,
+                    updated_at DESC
+                LIMIT 21
+            ";
+            $res = $conn->query($sql);
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $search_obj["search"]["playlists"][] = PLAYLIST_CARD($row);
+                }
+            }
+    
+            echo json_encode($search_obj);
+            exit();
+        }
+        }
+
+
     
    
 ?>
