@@ -272,7 +272,13 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         loadJob?.cancel()
         loadJob = viewLifecycleOwner.lifecycleScope.launch {
             // Render Room cache immediately; a failed request must not hide it.
-            val cached = runCatching { repository.getCached() }.getOrDefault(emptyList())
+            val cached = try {
+                repository.getCached()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                emptyList()
+            }
             baseRows = cached
             if (!searchApplied) render(cached)
 
