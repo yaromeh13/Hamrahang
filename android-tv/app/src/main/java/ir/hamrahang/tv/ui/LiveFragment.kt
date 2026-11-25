@@ -143,17 +143,20 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         // Keep remote navigation deterministic even on TV devices that do not
         // infer focus order from the horizontal layout.
         val rtl = input.layoutDirection == View.LAYOUT_DIRECTION_RTL
+        val hasQuery = !input.text.isNullOrEmpty()
         if (rtl) {
-            input.nextFocusLeftId = clear.id
+            input.nextFocusLeftId = if (hasQuery) clear.id else submit.id
+            input.nextFocusRightId = submit.id
             clear.nextFocusRightId = input.id
             clear.nextFocusLeftId = submit.id
-            submit.nextFocusRightId = clear.id
+            submit.nextFocusRightId = if (hasQuery) clear.id else input.id
             submit.nextFocusLeftId = input.id
         } else {
-            input.nextFocusRightId = clear.id
+            input.nextFocusRightId = if (hasQuery) clear.id else submit.id
+            input.nextFocusLeftId = submit.id
             clear.nextFocusLeftId = input.id
             clear.nextFocusRightId = submit.id
-            submit.nextFocusLeftId = clear.id
+            submit.nextFocusLeftId = if (hasQuery) clear.id else input.id
             submit.nextFocusRightId = input.id
         }
         clear.nextFocusDownId = recycler?.id ?: View.NO_ID
