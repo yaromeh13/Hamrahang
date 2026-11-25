@@ -33,7 +33,7 @@ object LiveEntityMapper {
             url = dto.url,
             genres = gson.toJson(dto.genres ?: emptyList<LiveGenre>()),
             languages = gson.toJson(dto.languages ?: emptyList<String>()),
-            owner = owner?.let(gson::toJson),
+            owner = owner?.let { gson.toJson(it) },
             isFull = isFull
         )
     }
