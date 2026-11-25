@@ -31,7 +31,7 @@ class LiveRowsAdapter(
         private val ownerName: TextView = view.findViewById(R.id.liveOwnerName)
         private val recycler: HorizontalGridView = view.findViewById(R.id.liveCardsRecycler)
 
-        fun bind(row: LiveOwnerRow) {
+        fun bind(row: LiveOwnerRow, isFirstRow: Boolean) {
             ownerHeader.visibility = if (row.featured) View.GONE else View.VISIBLE
             if (!row.featured) {
                 ownerName.text = row.owner?.name?.takeIf { it.isNotBlank() } ?: "Unknown Owner"
@@ -56,7 +56,7 @@ class LiveRowsAdapter(
             recycler.setWindowAlignmentOffsetPercent(50f)
             recycler.setItemAlignmentOffset(0)
             recycler.setItemAlignmentOffsetPercent(50f)
-            recycler.adapter = LiveAdapter(row.items, { item -> onItemClick(item, row.items) }, onItemFocus)
+            recycler.adapter = LiveAdapter(row.items, { item -> onItemClick(item, row.items) }, onItemFocus, isFirstRow)
         }
     }
 
@@ -67,7 +67,7 @@ class LiveRowsAdapter(
     }
 
     override fun onBindViewHolder(holder: RowVH, position: Int) {
-        holder.bind(rows[position])
+        holder.bind(rows[position], position == 0)
     }
 
     override fun getItemCount(): Int = rows.size
