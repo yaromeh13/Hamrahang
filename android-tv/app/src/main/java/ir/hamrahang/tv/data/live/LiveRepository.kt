@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import ir.hamrahang.tv.data.local.DatabaseProvider
 import ir.hamrahang.tv.data.local.entity.OwnerEntity
 import ir.hamrahang.tv.network.ApiClient
+import kotlinx.coroutines.CancellationException
 
 class LiveRepository {
     private val liveDao = DatabaseProvider.database().liveDao()
@@ -33,11 +34,15 @@ class LiveRepository {
         }.mapNotNull { it.id?.toLongOrNull() }.distinct()
 
         val resolvedById = if (needsResolve.isNotEmpty()) {
-            runCatching {
+            try {
                 ApiClient.api.resolveLives(
-                    body = ir.hamrahang.tv.data.live.ResolveLivesRequest(needsResolve)
+                    body = ResolveLivesRequest(needsResolve)
                 ).associateBy { it.id }
-            }.getOrDefault(emptyMap())
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                emptyMap()
+            }
         } else {
             emptyMap()
         }
