@@ -25,10 +25,34 @@ class LiveRepository {
         val cards = response.search.lives.orEmpty()
         val now = System.currentTimeMillis()
 
-        val entities = cards.mapIndexedNotNull { index, dto ->
+        // Only ask the full-card resolver for search results that are not full
+        // and do not already have a complete local copy.
+        val localById = liveDao.getByIds(cards.mapNotNull { it.id }).associateBy { it.id }
+        val needsResolve = cards.filter { dto ->
+            !dto.isFullCard && localById[dto.id]?.isFull != true
+        }.mapNotNull { it.id?.toLongOrNull() }.distinct()
+
+        val resolvedById = if (needsResolve.isNotEmpty()) {
+            runCatching {
+                ApiClient.api.resolveLives(
+                    body = ir.hamrahang.tv.data.live.ResolveLivesRequest(needsResolve)
+                ).associateBy { it.id }
+            }.getOrDefault(emptyMap())
+        } else {
+            emptyMap()
+        }
+
+        val entities = cards.mapIndexedNotNull { index, searchDto ->
+            val id = searchDto.id ?: return@mapIndexedNotNull null
+            val local = localById[id] ?: liveDao.get(id)
+            val dto = if (searchDto.isFullCard) {
+                searchDto
+            } else {
+                resolvedById[id] ?: searchDto
+            }
             syncOwner(dto, now)
             LiveEntityMapper.merge(
-                old = dto.id?.let { liveDao.get(it) },
+                old = local,
                 dto = dto,
                 position = index,
                 updatedAt = now,
