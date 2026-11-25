@@ -88,10 +88,22 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
                 val hasText = !s.isNullOrEmpty()
                 clear.visibility = if (hasText) View.VISIBLE else View.GONE
 
-                val horizontalTarget = if (hasText) clear.id else submit.id
-                input.nextFocusRightId = horizontalTarget
-                input.nextFocusLeftId = horizontalTarget
-                submit.nextFocusLeftId = if (hasText) clear.id else input.id
+                val rtl = input.layoutDirection == View.LAYOUT_DIRECTION_RTL
+                if (rtl) {
+                    input.nextFocusLeftId = if (hasText) clear.id else submit.id
+                    input.nextFocusRightId = submit.id
+                    clear.nextFocusRightId = input.id
+                    clear.nextFocusLeftId = submit.id
+                    submit.nextFocusRightId = if (hasText) clear.id else input.id
+                    submit.nextFocusLeftId = input.id
+                } else {
+                    input.nextFocusRightId = if (hasText) clear.id else submit.id
+                    input.nextFocusLeftId = submit.id
+                    clear.nextFocusLeftId = input.id
+                    clear.nextFocusRightId = submit.id
+                    submit.nextFocusLeftId = if (hasText) clear.id else input.id
+                    submit.nextFocusRightId = input.id
+                }
 
                 // Clearing the query (by the X button or Backspace) restores
                 // the original Live rows without another network request.
@@ -130,9 +142,21 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
 
         // Keep remote navigation deterministic even on TV devices that do not
         // infer focus order from the horizontal layout.
-        clear.nextFocusRightId = submit.id
-        clear.nextFocusLeftId = input.id
-        submit.nextFocusRightId = input.id
+        val rtl = input.layoutDirection == View.LAYOUT_DIRECTION_RTL
+        if (rtl) {
+            input.nextFocusLeftId = clear.id
+            clear.nextFocusRightId = input.id
+            clear.nextFocusLeftId = submit.id
+            submit.nextFocusRightId = clear.id
+            submit.nextFocusLeftId = input.id
+        } else {
+            input.nextFocusRightId = clear.id
+            clear.nextFocusLeftId = input.id
+            clear.nextFocusRightId = submit.id
+            submit.nextFocusLeftId = clear.id
+            submit.nextFocusRightId = input.id
+        }
+        clear.nextFocusDownId = recycler?.id ?: View.NO_ID
         submit.nextFocusDownId = recycler?.id ?: View.NO_ID
     }
 
