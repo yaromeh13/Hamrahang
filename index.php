@@ -4531,7 +4531,7 @@ function renderEditor() {
       : isArtist
         ? 'The global name becomes <code>artist_name</code> exactly as typed (case preserved, e.g. 2AFM). Extra rows go into <code>data.names</code>.'
         : isLive
-          ? 'The global name becomes <code>live_name</code>; extra rows go into <code>data.names</code>. No artists — owner is on the live row.'
+          ? 'The global name becomes <code>live_name</code>; extra rows go into <code>data.names</code>. No artists — set Owner on Sources rows (→ id_owner on save).'
           : 'The global name becomes <code>song_name</code> exactly as typed (case preserved). Extra rows go into <code>data.names</code>.';
 
   steps += '<section class="estep">' +
@@ -4617,32 +4617,13 @@ function renderEditor() {
   '</section>';
 
   if (isLive) {
+    /* Owner criterion = Owner field on source rows (same UI as song/video).
+       On save later: live.id_owner from sources[].user — not stored inside live_data.src. */
     steps += '<section class="estep">' +
-      '<h2><span class="num">3</span> Owner</h2>' +
-      '<div class="estep-row">' +
-        '<label for="fLiveOwnerSearch">Stream owner</label>' +
-        '<div>' +
-          '<div class="rel-attach-row">' +
-            '<input class="input" id="fLiveOwnerId" type="text" inputmode="numeric" ' +
-              'placeholder="Public owner id" value="' + esc(d.ownerId > 0 ? d.ownerId : '') + '" ' +
-              'spellcheck="false" style="max-width:160px">' +
-            '<input class="input" id="fLiveOwnerSearch" type="search" ' +
-              'placeholder="Search owner name or id …" spellcheck="false" ' +
-              'value="' + esc(d.ownerName || '') + '">' +
-          '</div>' +
-          '<div class="pick-list" id="liveOwnerPicks"></div>' +
-          '<div class="hint" style="margin-top:6px">' +
-            'Stored as <code>live.id_owner</code>. Mirrored onto each source in the card JSON for clients. ' +
-            'Act 7+ owners only in pick list.</div>' +
-        '</div>' +
-      '</div>' +
-    '</section>';
-
-    steps += '<section class="estep">' +
-      '<h2><span class="num">4</span> Sources</h2>' +
+      '<h2><span class="num">3</span> Sources</h2>' +
       '<div class="hint" style="margin:0 0 10px">' +
-        'Unlike song/video link tables, live streams are stored in <code>live_data.src</code> as JSON. ' +
-        'Owner is not per-source — it comes from the Owner field above.</div>' +
+        'Stream URLs are stored in <code>live_data.src</code> (JSON only — no link table). ' +
+        'Owner on each source row is the criterion for <code>live.id_owner</code>; owner is not kept inside data.</div>' +
       sourcesSectionHtml(d) +
     '</section>';
   } else if (isArtist) {
@@ -4964,13 +4945,10 @@ function collectDraft() {
 
   const des = $('#fDes');   if (des) d.des = des.value.trim();
   const lan = $('#fLan');   if (lan) d.lan = lan.value;
-  const liveOwnId = $('#fLiveOwnerId');
-  if (liveOwnId && d.table === 'live') {
-    d.ownerId = Number(liveOwnId.value) || 0;
-  }
-  const liveOwnName = $('#fLiveOwnerSearch');
-  if (liveOwnName && d.table === 'live' && !d.ownerName) {
-    d.ownerName = liveOwnName.value.trim();
+  // live: owner criterion = sources[].user (Owner field on source rows)
+  if (d.table === 'live' && Array.isArray(d.sources)) {
+    const withUser = d.sources.find(s => s && Number(s.user) > 0);
+    d.ownerId = withUser ? (Number(withUser.user) || 0) : 0;
   }
   const durEl = $('#fDur');
   if (durEl) {
@@ -6049,7 +6027,6 @@ function bindEditor() {
   bindSourcesEditor();
   bindTrackSearch();
   bindSongLinkSearch();
-  bindLiveOwnerSearch();
 }
 
 let songLinkSearchTimer = null;
@@ -6213,65 +6190,6 @@ function normalizeAudioUrl(url) {
   }
 }
 
-
-let liveOwnerSearchTimer = null;
-function bindLiveOwnerSearch() {
-  if (!state.item || state.item.table !== 'live') return;
-  const idInp = $('#fLiveOwnerId');
-  const search = $('#fLiveOwnerSearch');
-  const picks = $('#liveOwnerPicks');
-  if (!search || search.dataset.bound === '1') return;
-  search.dataset.bound = '1';
-
-  const applyOwner = (id, name) => {
-    if (!state.item) return;
-    state.item.ownerId = Number(id) || 0;
-    state.item.ownerName = name || '';
-    if (idInp) idInp.value = state.item.ownerId > 0 ? String(state.item.ownerId) : '';
-    search.value = state.item.ownerName || '';
-    if (picks) picks.innerHTML = '';
-    (state.item.sources || []).forEach(s => {
-      if (s) s.user = state.item.ownerId;
-    });
-  };
-
-  if (idInp) {
-    idInp.addEventListener('change', () => {
-      const id = Number(idInp.value) || 0;
-      state.item.ownerId = id;
-      if (!id) state.item.ownerName = '';
-    });
-  }
-
-  search.addEventListener('input', () => {
-    clearTimeout(liveOwnerSearchTimer);
-    const q = search.value.trim();
-    if (!picks) return;
-    if (q.length < 1) { picks.innerHTML = ''; return; }
-    liveOwnerSearchTimer = setTimeout(async () => {
-      picks.innerHTML = '<div class="hint">Searching …</div>';
-      const rows = await searchOwners(q, 7);
-      if (!picks || search.value.trim() !== q) return;
-      if (!rows.length) {
-        picks.innerHTML = '<div class="hint">No owner match.</div>';
-        return;
-      }
-      picks.innerHTML = rows.map(o =>
-        '<button class="pick" type="button" data-live-owner="' + esc(o.id) + '" data-name="' + esc(o.name || '') + '">' +
-          '<b>' + esc(o.name || ('#' + o.id)) + '</b>' +
-          '<span class="rid">act' + esc(o.act || 0) + ' · #' + esc(o.id) + '</span></button>'
-      ).join('');
-    }, 220);
-  });
-
-  if (picks) {
-    picks.addEventListener('click', ev => {
-      const btn = ev.target.closest('[data-live-owner]');
-      if (!btn) return;
-      applyOwner(btn.getAttribute('data-live-owner'), btn.getAttribute('data-name') || '');
-    });
-  }
-}
 
 function bindSourcesEditor() {
   const list = $('#srcList');
