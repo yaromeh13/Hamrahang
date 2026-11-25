@@ -12,5 +12,10 @@ data class LiveEntity(
     val meta: String,
     val sources: String,
     val position: Int,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val url: String? = null,
+    val genres: String = "[]",
+    val languages: String = "[]",
+    val owner: String? = null,
+    val isFull: Boolean = false
 )
