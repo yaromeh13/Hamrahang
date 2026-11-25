@@ -145,8 +145,9 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         }
 
         input.setOnEditorActionListener { _, actionId, event ->
-            val enterPressed = event?.keyCode == KeyEvent.KEYCODE_ENTER &&
-                event.action == KeyEvent.ACTION_DOWN
+            val enterPressed = event?.let {
+                it.keyCode == KeyEvent.KEYCODE_ENTER && it.action == KeyEvent.ACTION_DOWN
+            } == true
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 actionId == EditorInfo.IME_ACTION_DONE ||
                 enterPressed
