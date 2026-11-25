@@ -189,22 +189,16 @@ class PlaybackQueueAdapter(
         holder.title.text = item.title
         holder.artist.text = item.artists.joinToString(" - ") { it.displayTitle() }
 
-        val fallback = when (item.contentType) {
-            ir.hamrahang.tv.data.local.ContentType.VIDEO,
-            ir.hamrahang.tv.data.local.ContentType.MUSICVIDEO -> R.drawable.ic_video
-            ir.hamrahang.tv.data.local.ContentType.ARTIST -> R.drawable.ic_profile
-            ir.hamrahang.tv.data.local.ContentType.ALBUM -> R.drawable.ic_album_disk
-            ir.hamrahang.tv.data.local.ContentType.PLAYLIST -> R.drawable.ic_playlist
+        val fallback = when {
+            item.liveMedia != null -> R.drawable.ic_live
+            item.contentType == ir.hamrahang.tv.data.local.ContentType.VIDEO ||
+                item.contentType == ir.hamrahang.tv.data.local.ContentType.MUSICVIDEO -> R.drawable.ic_video
+            item.contentType == ir.hamrahang.tv.data.local.ContentType.ARTIST -> R.drawable.ic_profile
+            item.contentType == ir.hamrahang.tv.data.local.ContentType.ALBUM -> R.drawable.ic_album_disk
+            item.contentType == ir.hamrahang.tv.data.local.ContentType.PLAYLIST -> R.drawable.ic_playlist
             else -> R.drawable.ic_song
         }
-        val typeIcon = when (item.contentType) {
-            ir.hamrahang.tv.data.local.ContentType.VIDEO,
-            ir.hamrahang.tv.data.local.ContentType.MUSICVIDEO -> R.drawable.ic_video
-            ir.hamrahang.tv.data.local.ContentType.ARTIST -> R.drawable.ic_profile
-            ir.hamrahang.tv.data.local.ContentType.ALBUM -> R.drawable.ic_album_disk
-            ir.hamrahang.tv.data.local.ContentType.PLAYLIST -> R.drawable.ic_playlist
-            else -> R.drawable.ic_song
-        }
+        val typeIcon = fallback
         holder.mediaTypeIcon.setImageResource(typeIcon)
 
         Glide.with(holder.itemView)
