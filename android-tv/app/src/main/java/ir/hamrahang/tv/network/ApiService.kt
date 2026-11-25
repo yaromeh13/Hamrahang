@@ -33,6 +33,15 @@ interface ApiService {
         @Query("_qjs") qjs: String = "ep"
     ): List<LiveDto>
 
+    // Web search endpoint: ?_qjs=ep&p=search&q1=<query>&t=live
+    @GET("/")
+    suspend fun searchLives(
+        @Query("_qjs") qjs: String = "ep",
+        @Query("p") page: String = "search",
+        @Query("q1") query: String,
+        @Query("t") type: String = "live"
+    ): SearchResponseDto
+
     @GET("video/latest")
     suspend fun getLatestVideos(
         @Query("_qjs") qjs: String = "ep"
