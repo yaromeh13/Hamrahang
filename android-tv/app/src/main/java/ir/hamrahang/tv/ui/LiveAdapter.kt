@@ -14,7 +14,8 @@ import ir.hamrahang.tv.util.ImageResolver
 
 class LiveAdapter(
     private var items: List<LiveItem>,
-    private val onClick: (LiveItem) -> Unit
+    private val onClick: (LiveItem) -> Unit,
+    private val onFocus: (LiveItem) -> Unit
 ) : RecyclerView.Adapter<LiveAdapter.VH>() {
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
@@ -41,6 +42,9 @@ class LiveAdapter(
 
         holder.itemView.setOnFocusChangeListener { _, hasFocus ->
             holder.coverFrame.isSelected = hasFocus
+            if (hasFocus) {
+                onFocus(item)
+            }
         }
         holder.itemView.setOnClickListener { onClick(item) }
     }
