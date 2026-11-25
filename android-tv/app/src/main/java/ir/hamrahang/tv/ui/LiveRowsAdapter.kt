@@ -20,7 +20,7 @@ data class LiveOwnerRow(
 
 class LiveRowsAdapter(
     private var rows: List<LiveOwnerRow>,
-    private val onItemClick: (LiveItem) -> Unit,
+    private val onItemClick: (LiveItem, List<LiveItem>) -> Unit,
     private val onItemFocus: (LiveItem) -> Unit
 ) : RecyclerView.Adapter<LiveRowsAdapter.RowVH>() {
 
@@ -48,7 +48,7 @@ class LiveRowsAdapter(
             recycler.setWindowAlignmentOffsetPercent(50f)
             recycler.setItemAlignmentOffset(0)
             recycler.setItemAlignmentOffsetPercent(50f)
-            recycler.adapter = LiveAdapter(row.items, onItemClick, onItemFocus)
+            recycler.adapter = LiveAdapter(row.items, { item -> onItemClick(item, row.items) }, onItemFocus)
         }
     }
 
