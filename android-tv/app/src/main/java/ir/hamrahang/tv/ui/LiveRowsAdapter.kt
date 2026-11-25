@@ -15,7 +15,8 @@ import ir.hamrahang.tv.util.ImageResolver
 
 data class LiveOwnerRow(
     val owner: SourceOwner?,
-    val items: List<LiveItem>
+    val items: List<LiveItem>,
+    val featured: Boolean = false
 )
 
 class LiveRowsAdapter(
@@ -25,17 +26,24 @@ class LiveRowsAdapter(
 ) : RecyclerView.Adapter<LiveRowsAdapter.RowVH>() {
 
     inner class RowVH(view: View) : RecyclerView.ViewHolder(view) {
+        private val ownerHeader: View = view.findViewById(R.id.liveOwnerHeader)
         private val ownerIcon: ImageView = view.findViewById(R.id.liveOwnerIcon)
         private val ownerName: TextView = view.findViewById(R.id.liveOwnerName)
         private val recycler: HorizontalGridView = view.findViewById(R.id.liveCardsRecycler)
 
         fun bind(row: LiveOwnerRow) {
-            ownerName.text = row.owner?.name?.takeIf { it.isNotBlank() } ?: "Unknown Owner"
-            ImageResolver.request(
-                ownerIcon,
-                ImageResolver.owner(row.owner),
-                R.drawable.ic_live
-            ).centerCrop().into(ownerIcon)
+            ownerHeader.visibility = if (row.featured) View.GONE else View.VISIBLE
+            if (!row.featured) {
+                ownerName.text = row.owner?.name?.takeIf { it.isNotBlank() } ?: "Unknown Owner"
+                ImageResolver.request(
+                    ownerIcon,
+                    ImageResolver.owner(row.owner),
+                    R.drawable.ic_live
+                ).centerCrop().into(ownerIcon)
+            } else {
+                ownerName.text = ""
+                ownerIcon.setImageDrawable(null)
+            }
 
             recycler.setNumRows(1)
             recycler.setHorizontalSpacing(
