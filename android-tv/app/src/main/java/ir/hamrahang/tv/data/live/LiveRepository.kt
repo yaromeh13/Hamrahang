@@ -58,7 +58,7 @@ class LiveRepository {
             }
             syncOwner(dto, now)
             // Search ranking must not rewrite the default Live-page ordering.
-            val cachePosition = local?.position ?: (Int.MAX_VALUE - index)
+            val cachePosition = local?.position ?: (Int.MAX_VALUE - 100 + index)
             LiveEntityMapper.merge(
                 old = local,
                 dto = dto,
