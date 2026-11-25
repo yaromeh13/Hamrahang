@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import ir.hamrahang.tv.contract.Focusable
 import androidx.lifecycle.lifecycleScope
 import androidx.leanback.widget.BaseGridView
+import androidx.leanback.widget.HorizontalGridView
 import androidx.leanback.widget.VerticalGridView
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.live.LiveItem
@@ -27,6 +28,7 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
     private var adapter: LiveRowsAdapter? = null
     private var recycler: VerticalGridView? = null
     private var loadJob: kotlinx.coroutines.Job? = null
+    private var initialFocusPending = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,7 +46,11 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
             clipToPadding = false
         }
 
-        adapter = LiveRowsAdapter(emptyList(), ::playLive)
+        adapter = LiveRowsAdapter(
+            emptyList(),
+            onItemClick = ::playLive,
+            onItemFocus = { item -> BackgroundManager.set(item.thumb.takeIf { it.isNotBlank() }) }
+        )
         recycler?.adapter = adapter
 
         loadRows()
@@ -57,19 +63,40 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
     }
 
     override fun requestInitialFocus() {
-        recycler?.post {
-            recycler?.setSelectedPosition(0)
-            recycler?.requestFocus()
-            recycler?.findViewHolderForAdapterPosition(0)
-                ?.itemView
-                ?.findViewById<androidx.leanback.widget.HorizontalGridView>(R.id.liveCardsRecycler)
-                ?.post {
-                    val row = recycler?.findViewHolderForAdapterPosition(0)
-                        ?.itemView
-                        ?.findViewById<androidx.leanback.widget.HorizontalGridView>(R.id.liveCardsRecycler)
-                    row?.setSelectedPosition(0)
-                    row?.requestFocus()
+        initialFocusPending = true
+        focusFirstLiveCard()
+    }
+
+    /**
+     * Wait for the first owner row and its nested horizontal card list to be
+     * laid out before requesting focus. This avoids leaving focus on the page
+     * container when RecyclerView has not attached its first card yet.
+     */
+    private fun focusFirstLiveCard() {
+        val list = recycler ?: return
+        if (list.adapter?.itemCount == 0) return
+
+        list.post {
+            if (!isAdded || !initialFocusPending) return@post
+            list.setSelectedPosition(0)
+
+            list.post {
+                val row = list.findViewHolderForAdapterPosition(0)
+                    ?.itemView
+                    ?.findViewById<HorizontalGridView>(R.id.liveCardsRecycler)
+                    ?: return@post
+
+                row.setSelectedPosition(0)
+                row.post {
+                    val firstCard = row.getChildAt(0)
+                    if (firstCard != null) {
+                        initialFocusPending = false
+                        firstCard.requestFocus()
+                    } else {
+                        row.requestFocus()
+                    }
                 }
+            }
         }
     }
 
@@ -111,20 +138,8 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
             }.filter { it.items.isNotEmpty() }
         )
 
-        if (items.isNotEmpty()) {
-            recycler?.post {
-                if (recycler?.hasFocus() != true) {
-                    recycler?.findViewHolderForAdapterPosition(0)
-                        ?.itemView
-                        ?.findViewById<androidx.leanback.widget.HorizontalGridView>(R.id.liveCardsRecycler)
-                        ?.let { row ->
-                            row.post {
-                                row.setSelectedPosition(0)
-                                row.getChildAt(0)?.requestFocus()
-                            }
-                        }
-                }
-            }
+        if (initialFocusPending && items.isNotEmpty()) {
+            focusFirstLiveCard()
         }
     }
 
