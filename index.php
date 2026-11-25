@@ -5287,6 +5287,11 @@ function attachCreatedToParent(created) {
   }
 }
 
+  // Live: owner public id from server changes
+  if (res && res.changes && res.changes.owner != null) {
+    payload.ownerId = Number(res.changes.owner) || 0;
+  }
+
   // Prefer server-side media keys (id_img) so the saved card does not keep data: URLs
   if (res && res.changes && Array.isArray(res.changes.media) && res.changes.media.length) {
     const fromServer = [];
@@ -5345,6 +5350,7 @@ function renderSaved(p, res) {
   const isSong   = (d.table === 'song');
   const isVideo  = (d.table === 'video');
   const isArtist = (d.table === 'artist');
+  const isLive   = (d.table === 'live');
   const trackCount = (Array.isArray(d.tracks) ? d.tracks.length : 0);
   const songCount  = (Array.isArray(d.songs) ? d.songs.length : 0);
   const albumCount = (Array.isArray(d.albums) ? d.albums.length : 0);
@@ -5399,8 +5405,30 @@ function renderSaved(p, res) {
     '<div class="saved-cell" style="grid-column:1/-1"><b>Genres</b>' +
       '<div class="artist-chips genre-chips" style="margin-top:3px">' + genreChipsHtml(d, true) + '</div></div>';
 
-  // Artists chips only for non-artist items
-  if (!isArtist) {
+  // Live uses Owner (id_owner / source user), not Artists
+  if (isLive) {
+    let ownerLabel = '—';
+    const oid = Number(d.ownerId) || 0;
+    if (oid > 0) {
+      const cached = (typeof getOwner === 'function') ? getOwner(oid) : null;
+      const nm = (d.ownerName || (cached && cached.name) || '').trim();
+      ownerLabel = nm ? (nm + ' · #' + oid) : ('#' + oid);
+    } else if (Array.isArray(d.sources)) {
+      const s = d.sources.find(x => x && Number(x.user) > 0);
+      if (s) {
+        const uid = Number(s.user) || 0;
+        const cached = (typeof getOwner === 'function') ? getOwner(uid) : null;
+        const nm = (cached && cached.name) || '';
+        ownerLabel = nm ? (nm + ' · #' + uid) : ('#' + uid);
+      }
+    }
+    metaCells +=
+      '<div class="saved-cell" style="grid-column:1/-1"><b>Owner</b>' +
+        '<div class="artist-chips" style="margin-top:3px">' +
+          '<span class="chip">' + esc(ownerLabel) + '</span></div></div>' +
+      '<div class="saved-cell" style="grid-column:1/-1"><b>Sources</b>' +
+        '<div class="saved-media-list" style="margin-top:8px">' + savedSourcesHtml(d) + '</div></div>';
+  } else if (!isArtist) {
     metaCells +=
       '<div class="saved-cell" style="grid-column:1/-1"><b>Artists</b>' +
         '<div class="artist-chips" style="margin-top:3px">' + artistChipsHtml(d, true) + '</div></div>';
