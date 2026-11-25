@@ -23,6 +23,11 @@
     <string name="trending">Trending</string>
 
     <string name="search_hint">Search...</string>
+    <string name="live_search_hint">Search live streams</string>
+    <string name="live_search_submit">Search</string>
+    <string name="live_search_clear">Clear search</string>
+    <string name="live_search_empty">No live streams found.</string>
+    <string name="live_search_failed">Search failed; showing cached results.</string>
 
     <string name="tab_result">Result</string>
     <string name="tab_tracks">Tracks</string>
