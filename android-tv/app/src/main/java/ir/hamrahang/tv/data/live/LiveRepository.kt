@@ -13,37 +13,81 @@ class LiveRepository {
     suspend fun getCached(): List<LiveItem> =
         liveDao.getAll().map(LiveEntityMapper::toDomain)
 
+    /**
+     * Search uses the same web search endpoint as the admin/web client.
+     * Search results are upserted only; they must never evict unrelated cached lives.
+     */
+    suspend fun search(query: String): List<LiveItem> {
+        val term = query.trim()
+        if (term.isEmpty()) return emptyList()
+
+        val response = ApiClient.api.searchLives(query = term)
+        val cards = response.search.lives.orEmpty()
+        val now = System.currentTimeMillis()
+
+        val entities = cards.mapIndexedNotNull { index, dto ->
+            syncOwner(dto, now)
+            LiveEntityMapper.merge(
+                old = dto.id?.let { liveDao.get(it) },
+                dto = dto,
+                position = index,
+                updatedAt = now,
+                isFull = dto.isFullCard
+            )
+        }
+
+        if (entities.isNotEmpty()) liveDao.upsertAll(entities)
+        return getByIds(cards.mapNotNull { it.id })
+    }
+
+    suspend fun getByIds(ids: List<String>): List<LiveItem> {
+        if (ids.isEmpty()) return emptyList()
+        val cached = liveDao.getByIds(ids).associateBy { it.id }
+        return ids.mapNotNull { id -> cached[id]?.let(LiveEntityMapper::toDomain) }
+    }
+
     suspend fun refresh(): List<LiveItem> {
         val remote = ApiClient.api.getLatestLives()
         val now = System.currentTimeMillis()
 
         val entities = remote.mapIndexedNotNull { index, dto ->
-            dto.sources.orEmpty()
-                .mapNotNull { it.owner }
-                .distinctBy { it.id }
-                .forEach { owner ->
-                    ownerDao.upsert(
-                        OwnerEntity(
-                            id = owner.id,
-                            name = owner.name?.takeIf { it.isNotBlank() }
-                                ?: "User #${owner.id}",
-                            meta = owner.meta?.let { gson.toJson(it) } ?: "{}",
-                            updatedAt = now
-                        )
-                    )
-                }
-
-            LiveEntityMapper.fromDto(dto, index, now)
+            syncOwner(dto, now)
+            LiveEntityMapper.merge(
+                old = dto.id?.let { liveDao.get(it) },
+                dto = dto,
+                position = index,
+                updatedAt = now,
+                isFull = dto.isFullCard
+            )
         }
 
         if (entities.isNotEmpty()) {
             liveDao.upsertAll(entities)
             liveDao.deleteExcept(entities.map { it.id })
         } else {
-            // An empty server response is authoritative; keep no stale live cards.
+            // An empty server response is authoritative for the latest-list refresh only.
             liveDao.clear()
         }
 
         return getCached()
+    }
+
+    private suspend fun syncOwner(dto: LiveDto, now: Long) {
+        val owners = buildList {
+            dto.owner?.let(::add)
+            dto.sources.orEmpty().mapNotNull { it.owner }.forEach(::add)
+        }.distinctBy { it.id }
+
+        owners.forEach { owner ->
+            ownerDao.upsert(
+                OwnerEntity(
+                    id = owner.id,
+                    name = owner.name?.takeIf { it.isNotBlank() }
+                        ?: "User #${owner.id}",
+                    meta = owner.meta?.let { gson.toJson(it) } ?: "{}",
+                    updatedAt = now
+                )
+            )
+        }
     }
 }
