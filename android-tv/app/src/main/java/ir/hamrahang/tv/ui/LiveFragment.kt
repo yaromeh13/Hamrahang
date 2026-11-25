@@ -126,6 +126,21 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
 
         submit.setOnClickListener { performLiveSearch() }
 
+        input.setOnFocusChangeListener { focusedView, hasFocus ->
+            if (!hasFocus) hideSearchKeyboard(focusedView)
+        }
+
+        input.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN &&
+                event.action == KeyEvent.ACTION_DOWN
+            ) {
+                hideSearchKeyboard(input)
+                initialFocusPending = true
+                input.post { focusFirstLiveCard() }
+            }
+            false
+        }
+
         input.setOnEditorActionListener { _, actionId, event ->
             val enterPressed = event?.keyCode == KeyEvent.KEYCODE_ENTER &&
                 event.action == KeyEvent.ACTION_DOWN
