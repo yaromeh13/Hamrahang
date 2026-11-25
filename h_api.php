@@ -11596,11 +11596,11 @@ $stmt->execute();*/
                 }
             }
     
-            echo json_encode($search_obj);
-            exit();
-        }
         }
 
+        echo json_encode($search_obj);
+        exit();
+    }
 
     
    
