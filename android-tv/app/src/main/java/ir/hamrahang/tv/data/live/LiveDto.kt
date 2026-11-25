@@ -10,6 +10,10 @@ data class LiveGenre(
     val name: String? = null
 )
 
+data class ResolveLivesRequest(
+    val ids: List<Long>
+)
+
 data class LiveDto(
     val id: String? = null,
     val name: String? = null,
