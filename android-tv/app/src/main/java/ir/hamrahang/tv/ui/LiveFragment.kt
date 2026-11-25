@@ -347,6 +347,7 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
 
     override fun onDestroyView() {
         loadJob?.cancel()
+        searchApplied = false
         searchInput?.setText("")
         searchInput = null
         searchClear = null
