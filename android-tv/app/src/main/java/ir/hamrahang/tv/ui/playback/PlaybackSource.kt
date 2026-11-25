@@ -12,7 +12,7 @@ enum class PlaybackSource {
 
     FAVORITES,
 
-    PLAYLIST
+    PLAYLIST,
 
     LIVE
 }
