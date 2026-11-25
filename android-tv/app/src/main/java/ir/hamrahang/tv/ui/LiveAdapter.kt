@@ -15,7 +15,8 @@ import ir.hamrahang.tv.util.ImageResolver
 class LiveAdapter(
     private var items: List<LiveItem>,
     private val onClick: (LiveItem) -> Unit,
-    private val onFocus: (LiveItem) -> Unit
+    private val onFocus: (LiveItem) -> Unit,
+    private val isFirstRow: Boolean = false
 ) : RecyclerView.Adapter<LiveAdapter.VH>() {
 
     inner class VH(view: View) : RecyclerView.ViewHolder(view) {
@@ -39,6 +40,10 @@ class LiveAdapter(
         ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_live)
             .transform(CenterCrop(), RoundedCorners(7))
             .into(holder.cover)
+
+        // The first visible row is the remote-control path back to search.
+        holder.itemView.nextFocusUpId =
+            if (isFirstRow) R.id.liveSearchSubmit else View.NO_ID
 
         holder.itemView.setOnFocusChangeListener { _, hasFocus ->
             holder.coverFrame.isSelected = hasFocus
