@@ -1,28 +1,33 @@
 package ir.hamrahang.tv.ui
 
-import android.net.Uri
+import android.content.Context
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
-import ir.hamrahang.tv.contract.Focusable
 import androidx.lifecycle.lifecycleScope
 import androidx.leanback.widget.BaseGridView
 import androidx.leanback.widget.HorizontalGridView
 import androidx.leanback.widget.VerticalGridView
 import ir.hamrahang.tv.R
+import ir.hamrahang.tv.contract.Focusable
 import ir.hamrahang.tv.data.live.LiveItem
 import ir.hamrahang.tv.data.live.LiveRepository
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.player.MediaType
-import ir.hamrahang.tv.player.PlayerManager
-import ir.hamrahang.tv.player.PlayerState
+import ir.hamrahang.tv.player.PlayerMedia
 import ir.hamrahang.tv.player.BackgroundManager
 import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.playback.PlaybackItem
 import ir.hamrahang.tv.playback.PlaybackSession
 import ir.hamrahang.tv.playback.PlaybackSource
-import ir.hamrahang.tv.player.PlayerMedia
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
@@ -30,13 +35,22 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
     private val repository = LiveRepository()
     private var adapter: LiveRowsAdapter? = null
     private var recycler: VerticalGridView? = null
-    private var loadJob: kotlinx.coroutines.Job? = null
+    private var searchInput: EditText? = null
+    private var searchClear: TextView? = null
+    private var searchSubmit: TextView? = null
+    private var loadJob: Job? = null
     private var initialFocusPending = false
+    private var searchApplied = false
+    private var baseRows: List<LiveItem> = emptyList()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         recycler = view.findViewById(R.id.liveRowsRecycler)
+        searchInput = view.findViewById(R.id.liveSearchInput)
+        searchClear = view.findViewById(R.id.liveSearchClear)
+        searchSubmit = view.findViewById(R.id.liveSearchSubmit)
+
         recycler?.apply {
             setNumColumns(1)
             setItemAlignmentOffset(0)
@@ -52,11 +66,135 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         adapter = LiveRowsAdapter(
             emptyList(),
             onItemClick = ::playLive,
-            onItemFocus = { item -> BackgroundManager.set(item.thumb.takeIf { it.isNotBlank() }) }
+            onItemFocus = { item ->
+                BackgroundManager.set(item.thumb.takeIf { it.isNotBlank() })
+            }
         )
         recycler?.adapter = adapter
 
+        bindLiveSearch()
         loadRows()
+    }
+
+    private fun bindLiveSearch() {
+        val input = searchInput ?: return
+        val clear = searchClear ?: return
+        val submit = searchSubmit ?: return
+
+        input.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val hasText = !s.isNullOrEmpty()
+                clear.visibility = if (hasText) View.VISIBLE else View.GONE
+
+                val horizontalTarget = if (hasText) clear.id else submit.id
+                input.nextFocusRightId = horizontalTarget
+                input.nextFocusLeftId = horizontalTarget
+                submit.nextFocusLeftId = if (hasText) clear.id else input.id
+
+                // Clearing the query (by the X button or Backspace) restores
+                // the original Live rows without another network request.
+                if (!hasText && searchApplied) {
+                    loadJob?.cancel()
+                    searchApplied = false
+                    render(baseRows)
+                }
+            }
+
+            override fun afterTextChanged(s: android.text.Editable?) = Unit
+        })
+
+        clear.setOnClickListener {
+            loadJob?.cancel()
+            input.setText("")
+            input.requestFocus()
+            hideSearchKeyboard(input)
+        }
+
+        submit.setOnClickListener { performLiveSearch() }
+
+        input.setOnEditorActionListener { _, actionId, event ->
+            val enterPressed = event?.keyCode == KeyEvent.KEYCODE_ENTER &&
+                event.action == KeyEvent.ACTION_DOWN
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                actionId == EditorInfo.IME_ACTION_DONE ||
+                enterPressed
+            ) {
+                performLiveSearch()
+                true
+            } else {
+                false
+            }
+        }
+
+        // Keep remote navigation deterministic even on TV devices that do not
+        // infer focus order from the horizontal layout.
+        clear.nextFocusRightId = submit.id
+        clear.nextFocusLeftId = input.id
+        submit.nextFocusRightId = input.id
+        submit.nextFocusDownId = recycler?.id ?: View.NO_ID
+    }
+
+    private fun hideSearchKeyboard(target: View) {
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(target.windowToken, 0)
+    }
+
+    private fun performLiveSearch() {
+        val input = searchInput ?: return
+        val query = input.text?.toString()?.trim().orEmpty()
+        if (query.isEmpty()) {
+            searchApplied = false
+            render(baseRows)
+            input.requestFocus()
+            return
+        }
+
+        hideSearchKeyboard(input)
+        loadJob?.cancel()
+        loadJob = viewLifecycleOwner.lifecycleScope.launch {
+            searchSubmit?.isEnabled = false
+            try {
+                val results = repository.search(query)
+                if (!isAdded || searchInput?.text?.toString()?.trim() != query) return@launch
+                searchApplied = true
+                render(results)
+                if (results.isEmpty()) {
+                    Toast.makeText(
+                        requireContext(),
+                        R.string.live_search_empty,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    initialFocusPending = true
+                    focusFirstLiveCard()
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                if (!isAdded || searchInput?.text?.toString()?.trim() != query) return@launch
+                // Search remains useful offline: filter the locally cached Live cards.
+                val localMatches = baseRows.filter { item ->
+                    val needle = query.lowercase()
+                    item.name.orEmpty().lowercase().contains(needle) ||
+                        item.names.orEmpty().values.any { it.lowercase().contains(needle) }
+                }
+                searchApplied = true
+                render(localMatches)
+                Toast.makeText(
+                    requireContext(),
+                    R.string.live_search_failed,
+                    Toast.LENGTH_SHORT
+                ).show()
+                if (localMatches.isNotEmpty()) {
+                    initialFocusPending = true
+                    focusFirstLiveCard()
+                }
+            } finally {
+                searchSubmit?.isEnabled = true
+            }
+        }
     }
 
     /** Refresh the current Live page without replacing its Fragment or Player. */
@@ -108,11 +246,13 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         loadJob = viewLifecycleOwner.lifecycleScope.launch {
             // Render Room cache immediately; a failed request must not hide it.
             val cached = runCatching { repository.getCached() }.getOrDefault(emptyList())
-            render(cached)
+            baseRows = cached
+            if (!searchApplied) render(cached)
 
             try {
                 val fresh = repository.refresh()
-                render(fresh)
+                baseRows = fresh
+                if (!searchApplied) render(fresh)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -207,6 +347,12 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
 
     override fun onDestroyView() {
         loadJob?.cancel()
+        searchInput?.setText("")
+        searchInput = null
+        searchClear = null
+        searchSubmit = null
+        baseRows = emptyList()
+        searchApplied = false
         recycler?.adapter = null
         recycler = null
         adapter = null
