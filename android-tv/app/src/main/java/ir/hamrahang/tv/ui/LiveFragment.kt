@@ -132,18 +132,32 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
             if (!owners.containsKey(ownerId)) owners[ownerId] = owner
         }
 
-        adapter?.submit(
-            grouped.map { (ownerId, liveItems) ->
-                LiveOwnerRow(
-                    owner = owners[ownerId],
-                    items = liveItems
-                )
-            }.filter { it.items.isNotEmpty() }
-        )
+        val rows = grouped.map { (ownerId, liveItems) ->
+            val owner = owners[ownerId]
+            val featured = isHamrahangOwner(owner)
+            LiveOwnerRow(
+                owner = owner,
+                items = liveItems,
+                featured = featured
+            )
+        }.filter { it.items.isNotEmpty() }
+            .sortedByDescending { it.featured }
+
+        adapter?.submit(rows)
 
         if (initialFocusPending && items.isNotEmpty()) {
             focusFirstLiveCard()
         }
+    }
+
+    private fun isHamrahangOwner(owner: ir.hamrahang.tv.data.SourceOwner?): Boolean {
+        if (owner == null) return false
+
+        val name = owner.name?.trim()?.lowercase().orEmpty()
+        if (name == "hamrahang" || name == "همراهانگ") return true
+
+        val ownerUrl = owner.meta?.url?.trim()?.lowercase().orEmpty()
+        return ownerUrl.contains("hamrahang.ir")
     }
 
     private fun playLive(selected: LiveItem, ownerItems: List<LiveItem>) {
