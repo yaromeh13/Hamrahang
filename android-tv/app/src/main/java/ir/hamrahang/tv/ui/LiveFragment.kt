@@ -380,7 +380,6 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         searchClear = null
         searchSubmit = null
         baseRows = emptyList()
-        searchApplied = false
         recycler?.adapter = null
         recycler = null
         adapter = null
