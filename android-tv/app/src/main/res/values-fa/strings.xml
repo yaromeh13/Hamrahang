@@ -21,6 +21,11 @@
     <string name="trending">پر بازدید</string>
 
     <string name="search_hint">جستجو کنید</string>
+    <string name="live_search_hint">جستجو در پخش زنده</string>
+    <string name="live_search_submit">جستجو</string>
+    <string name="live_search_clear">پاک کردن جست‌وجو</string>
+    <string name="live_search_empty">نتیجه‌ای برای این جست‌وجو پیدا نشد.</string>
+    <string name="live_search_failed">جست‌وجو انجام نشد؛ نتایج ذخیره‌شده نمایش داده شدند.</string>
 
     <string name="tab_result">همه</string>
     <string name="tab_tracks">آهنگ ها</string>
