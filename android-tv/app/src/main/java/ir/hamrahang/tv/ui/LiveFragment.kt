@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.leanback.widget.BaseGridView
 import androidx.leanback.widget.HorizontalGridView
 import androidx.leanback.widget.VerticalGridView
+import ir.hamrahang.tv.MainActivity
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.contract.Focusable
 import ir.hamrahang.tv.data.live.LiveItem
@@ -133,15 +134,56 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
             if (!hasFocus) hideSearchKeyboard(focusedView)
         }
 
+        // Match SearchFragment: DPAD_DOWN leaves the EditText explicitly.
+        // Do not let the keyboard or EditText consume the navigation key.
         input.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN &&
-                event.action == KeyEvent.ACTION_DOWN
+            if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    hideSearchKeyboard(input)
+                    val target = if (clear.visibility == View.VISIBLE) clear else submit
+                    target.requestFocus()
+                    true
+                }
+
+                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    hideSearchKeyboard(input)
+                    (activity as? MainActivity)?.onReturnToMenu()
+                    true
+                }
+
+                else -> false
+            }
+        }
+
+        clear.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN &&
+                keyCode == KeyEvent.KEYCODE_DPAD_UP
+            ) {
+                input.requestFocus()
+                true
+            } else {
+                false
+            }
+        }
+
+        submit.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN &&
+                keyCode == KeyEvent.KEYCODE_DPAD_UP
+            ) {
+                input.requestFocus()
+                true
+            } else if (event.action == KeyEvent.ACTION_DOWN &&
+                keyCode == KeyEvent.KEYCODE_DPAD_DOWN
             ) {
                 hideSearchKeyboard(input)
                 initialFocusPending = true
-                input.post { focusFirstLiveCard() }
+                focusFirstLiveCard()
+                true
+            } else {
+                false
             }
-            false
         }
 
         input.setOnEditorActionListener { _, actionId, event ->
@@ -181,17 +223,6 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         clear.nextFocusDownId = recycler?.id ?: View.NO_ID
         submit.nextFocusDownId = recycler?.id ?: View.NO_ID
 
-        val downToResults = View.OnKeyListener { source, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN &&
-                event.action == KeyEvent.ACTION_DOWN
-            ) {
-                initialFocusPending = true
-                source.post { focusFirstLiveCard() }
-            }
-            false
-        }
-        clear.setOnKeyListener(downToResults)
-        submit.setOnKeyListener(downToResults)
     }
 
     private fun hideSearchKeyboard(target: View) {
