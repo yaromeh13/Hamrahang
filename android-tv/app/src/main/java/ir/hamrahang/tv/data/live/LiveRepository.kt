@@ -28,7 +28,12 @@ class LiveRepository {
 
         // Only ask the full-card resolver for search results that are not full
         // and do not already have a complete local copy.
-        val localById = liveDao.getByIds(cards.mapNotNull { it.id }).associateBy { it.id }
+        val cardIds = cards.mapNotNull { it.id }
+        val localById = if (cardIds.isEmpty()) {
+            emptyMap()
+        } else {
+            liveDao.getByIds(cardIds).associateBy { it.id }
+        }
         val needsResolve = cards.filter { dto ->
             val id = dto.id
             !dto.isFullCard && (id == null || localById[id]?.isFull != true)
