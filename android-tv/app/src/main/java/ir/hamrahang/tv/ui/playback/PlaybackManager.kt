@@ -438,41 +438,68 @@ object PlaybackManager {
 
     private suspend fun playCurrent() {
         val context = appContext ?: return
-        val session = _session.value ?: return
         val item = _currentItem.value ?: return
-        val mediaType = when (item.contentType) {
+        val mediaType = if (item.liveMedia != null) {
+            MediaType.AUDIO
+        } else when (item.contentType) {
             ContentType.SONG, ContentType.PODCAST -> MediaType.AUDIO
             ContentType.VIDEO, ContentType.MUSICVIDEO -> MediaType.VIDEO
             else -> return
         }
 
-        // ----------------------------------------------
-        // جلوگیری از پخش مجدد همان Media
-        // ----------------------------------------------
-
+        // Avoid restarting the station when the same queue item remains selected.
         val currentMedia = PlayerManager.getCurrentMedia()
+        val targetMediaId = item.liveMedia?.id ?: item.id
         if (
-            currentMedia?.id == item.id &&
+            currentMedia?.id == targetMediaId &&
             currentMedia.type == mediaType &&
             currentContentType == item.contentType
-        ) {
-            return
-        }
+        ) return
 
-        // Media Type
-        // ----------------------------------------------
-        when (mediaType) {
-            MediaType.AUDIO -> {
-                if (item.contentType == ContentType.PODCAST) {
-                    playPodcast(context = context, item = item)
-                } else {
-                    playSong(context = context, item = item)
-                }
-            }
-            MediaType.VIDEO -> {
-                playVideo(context = context, item = item)
-            }
+        when {
+            item.liveMedia != null -> playLive(context, item)
+            mediaType == MediaType.AUDIO && item.contentType == ContentType.PODCAST ->
+                playPodcast(context, item)
+            mediaType == MediaType.AUDIO -> playSong(context, item)
+            else -> playVideo(context, item)
         }
+    }
+
+    /** Plays a Live station selected from the active Owner queue. */
+    private fun playLive(context: Context, item: PlaybackItem) {
+        val media = item.liveMedia ?: return
+        val playableSources = media.sources.mapNotNull { source ->
+            val rawUrl = source.url.trim()
+            if (rawUrl.isEmpty()) return@mapNotNull null
+            val url = android.net.Uri.parse(rawUrl)
+                .buildUpon()
+                .appendQueryParameter("dt", System.currentTimeMillis().toString())
+                .build()
+                .toString()
+            source.copy(url = url)
+        }
+        if (playableSources.isEmpty()) return
+
+        val artwork = media.artwork
+        val selected = playableSources.firstOrNull()
+        PlayerState.updatePlaybackInfo {
+            copy(
+                visible = true,
+                mediaId = media.id,
+                mediaType = MediaType.AUDIO,
+                artwork = artwork,
+                title = media.title.orEmpty(),
+                artists = emptyList(),
+                metadata = null,
+                lyrics = null,
+                lyricsEntries = emptyList(),
+                sources = playableSources,
+                selectedSource = selected
+            )
+        }
+        BackgroundManager.set(artwork)
+        currentContentType = item.contentType
+        PlayerManager.play(context, media.copy(sources = playableSources))
     }
 
     // PLAY SONG
