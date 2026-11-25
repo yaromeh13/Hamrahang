@@ -6,6 +6,7 @@
     android:paddingBottom="@dimen/_18dp">
 
     <LinearLayout
+        android:id="@+id/liveOwnerHeader"
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:gravity="center_vertical"
