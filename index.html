@@ -5819,8 +5819,11 @@ try {
             SN.latest_live = UARDB('live', ar);
             for (i = 0; i < SN.latest_live.length; i++) {
                 item = SN.live[SN.latest_live[i]];
-                if (item && item.owner && typeof putOwnerIfNew === 'function') {
-                    putOwnerIfNew(item.owner);
+                if (item) {
+                    item.full = true;
+                    if (item.owner && typeof putOwnerIfNew === 'function') {
+                        putOwnerIfNew(item.owner);
+                    }
                 }
             }
             if (typeof saveOwnersToLocal === 'function') { saveOwnersToLocal(); }
@@ -5861,8 +5864,11 @@ try {
             if (found.lives && isArray(found.lives)) {
                 for (i = 0; i < found.lives.length; i++) {
                     var liveItem = SN.live && SN.live[found.lives[i]];
-                    if (liveItem && liveItem.owner && typeof putOwnerIfNew === 'function') {
-                        putOwnerIfNew(liveItem.owner);
+                    if (liveItem) {
+                        liveItem.full = true;
+                        if (liveItem.owner && typeof putOwnerIfNew === 'function') {
+                            putOwnerIfNew(liveItem.owner);
+                        }
                     }
                 }
                 if (typeof saveOwnersToLocal === 'function') { saveOwnersToLocal(); }
