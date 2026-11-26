@@ -5706,6 +5706,48 @@ try {
         });
     }
     
+    function ULIV(Q, callback) {
+        var value = Q ? Q[1] : null;
+        var item;
+        var id;
+
+        if (!SN.live || typeof SN.live !== 'object' || isArray(SN.live)) {
+            SN.live = {};
+        }
+
+        if (value && typeof value === 'object') {
+            item = value;
+            id = item.id;
+            if (id == null) {
+                if (callback) { callback(false, null); }
+                return;
+            }
+            item.full = true;
+            SN.live[id] = item;
+            if (item.owner && typeof putOwnerIfNew === 'function') {
+                putOwnerIfNew(item.owner);
+                saveOwnersToLocal();
+            }
+            if (typeof collectOwnersFromItem === 'function') {
+                collectOwnersFromItem(item);
+            }
+            if (callback) { callback(true, item); }
+            return;
+        }
+
+        id = value;
+        item = SN.live[id];
+        if (item && item.full) {
+            if (callback) { callback(true, item); }
+            return;
+        }
+
+        gjs(['live', id], function (success, jd) {
+            item = SN.live && SN.live[id] ? SN.live[id] : null;
+            if (callback) { callback(!!(success && item), item); }
+        });
+    }
+
     function UHOM(Q) {
     
         var ar = Q[1];
@@ -5771,6 +5813,17 @@ try {
                 // Add Artist If Not Exists
                 UARDB('artist', [item]);
             }
+        }
+
+        if (p == 'live') {
+            SN.latest_live = UARDB('live', ar);
+            for (i = 0; i < SN.latest_live.length; i++) {
+                item = SN.live[SN.latest_live[i]];
+                if (item && item.owner && typeof putOwnerIfNew === 'function') {
+                    putOwnerIfNew(item.owner);
+                }
+            }
+            if (typeof saveOwnersToLocal === 'function') { saveOwnersToLocal(); }
         }
     
         return;
