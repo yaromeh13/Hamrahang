@@ -8980,7 +8980,7 @@ try {
             }
 
             function draw() {
-                if (SN.routePath !== '/live') { return; }
+                if (String(SN.routePath || '').replace(/\/+$/, '') !== '/live') { return; }
                 MCNT.innerHTML = '';
                 if (!valid.length) {
                     var empty = OA(document.createElement("div"), {className: "error-message-container"});
@@ -9055,7 +9055,7 @@ try {
 
         MCNT.appendChild(OA(document.createElement("div"), {className: "page-loading-container", innerHTML: '<div class="spinner-large"></div>'}));
         gjs(['live', 'latest'], function (success) {
-            if (SN.routePath !== '/live') { return; }
+            if (String(SN.routePath || '').replace(/\/+$/, '') !== '/live') { return; }
             if (success) {
                 render(SN.latest_live || []);
             } else {
