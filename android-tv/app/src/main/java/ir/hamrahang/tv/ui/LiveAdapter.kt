@@ -3,11 +3,13 @@ package ir.hamrahang.tv.ui
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.KeyEvent
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import ir.hamrahang.tv.MainActivity
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.live.LiveItem
 import ir.hamrahang.tv.util.ImageResolver
@@ -41,9 +43,45 @@ class LiveAdapter(
             .transform(CenterCrop(), RoundedCorners(7))
             .into(holder.cover)
 
-        // The first visible row is the remote-control path back to search.
-        holder.itemView.nextFocusUpId =
-            if (isFirstRow) R.id.liveSearchSubmit else View.NO_ID
+        // Handle navigation on the focused card itself. Leanback's nested
+        // HorizontalGridView can consume DPAD before nextFocusUpId is followed.
+        holder.itemView.setOnKeyListener { card, keyCode, event ->
+            if (event.action != KeyEvent.ACTION_DOWN) {
+                return@setOnKeyListener false
+            }
+
+            val position = holder.bindingAdapterPosition
+            if (position == RecyclerView.NO_POSITION) {
+                return@setOnKeyListener false
+            }
+
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP -> {
+                    if (isFirstRow) {
+                        card.rootView.findViewById<View>(R.id.liveSearchSubmit)
+                            ?.requestFocus()
+                        true
+                    } else {
+                        false
+                    }
+                }
+
+                KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    val rtl = card.layoutDirection == View.LAYOUT_DIRECTION_RTL
+                    val menuEdgePosition = if (rtl) itemCount - 1 else 0
+                    if (position == menuEdgePosition) {
+                        (card.context as? android.app.Activity)
+                            ?.let { it as? MainActivity }
+                            ?.onReturnToMenu()
+                        true
+                    } else {
+                        false
+                    }
+                }
+
+                else -> false
+            }
+        }
 
         holder.itemView.setOnFocusChangeListener { _, hasFocus ->
             holder.coverFrame.isSelected = hasFocus
