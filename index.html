@@ -8821,6 +8821,167 @@ try {
         xhr.send(null);
     }
     
+    function CRLVCards(ids) {
+        ids = isArray(ids) ? ids : [];
+        if (!ids.length) { return 0; }
+
+        var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1 live-cards-section"});
+        var row = OA(document.createElement("div"), {className: "container video live-card-row"});
+        var count = 0;
+        var i, id, item, thumb, card, box, link, art, placeholder, image, title;
+
+        for (i = 0; i < ids.length; i++) {
+            id = (typeof ids[i] === 'object') ? ids[i].id : ids[i];
+            item = SN.live ? SN.live[id] : null;
+            if (!item) { continue; }
+
+            card = OA(document.createElement("div"), {className: "item-box live-card"});
+            box = OA(document.createElement("div"), {className: "box"});
+            link = OA(document.createElement("a"), {
+                href: "#",
+                className: "focusable live-card-link",
+                title: item.name || "Live"
+            });
+            link._item = item;
+
+            link.addEventListener("focus", function () {
+                SetPlayListContext(ids, 'live', this._item);
+            });
+            link.addEventListener("click", function (ev) {
+                if (ev && ev.preventDefault) { ev.preventDefault(); }
+                SetPlayListContext(ids, 'live', this._item);
+                setPlayQueue(PlyQueueRows, this._item.id, 'live');
+            });
+
+            art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
+            placeholder = OA(document.createElement("span"), {className: "placeholder"});
+            art.appendChild(placeholder);
+            thumb = item.meta && item.meta.tmb ? item.meta.tmb : "";
+            if (thumb) {
+                image = OA(document.createElement("img"), {src: UT + thumb + ".jpg", alt: item.name || "Live"});
+                art.appendChild(image);
+            }
+            link.appendChild(art);
+            box.appendChild(link);
+            card.appendChild(box);
+
+            title = OA(document.createElement("div"), {className: "text1", innerHTML: item.name || "Live"});
+            card.appendChild(title);
+            row.appendChild(card);
+            count++;
+        }
+
+        if (count) {
+            sec.appendChild(row);
+            MCNT.appendChild(sec);
+            return count;
+        }
+        return 0;
+    }
+
+    function CRLV(callback) {
+        var cached = (SN.latest_live && isArray(SN.latest_live)) ? SN.latest_live : [];
+        var rendered = false;
+
+        function render(ids) {
+            var valid = isArray(ids) ? ids : [];
+            var missing = [];
+            var i, item;
+
+            for (i = 0; i < valid.length; i++) {
+                item = SN.live ? SN.live[valid[i]] : null;
+                if (!item || !item.full) { missing.push(valid[i]); }
+            }
+
+            function draw() {
+                if (SN.routePath !== '/live') { return; }
+                MCNT.innerHTML = '';
+                if (!valid.length) {
+                    var empty = OA(document.createElement("div"), {className: "error-message-container"});
+                    empty.appendChild(OA(document.createElement("div"), {className: "text1 p-top-1-5", innerHTML: "No Live channels found."}));
+                    MCNT.appendChild(empty);
+                } else {
+                    var groups = {};
+                    var order = [];
+                    var j, liveItem, ownerId, group, owner, head, ownerImage, ownerTitle, thumbRef, thumbUrl;
+
+                    for (j = 0; j < valid.length; j++) {
+                        liveItem = SN.live ? SN.live[valid[j]] : null;
+                        if (!liveItem) { continue; }
+
+                        owner = liveItem.owner || null;
+                        ownerId = owner && owner.id != null ? String(owner.id) : "0";
+                        if (!groups[ownerId]) {
+                            groups[ownerId] = {owner: owner, ids: []};
+                            order.push(ownerId);
+                        }
+                        groups[ownerId].ids.push(liveItem.id);
+                        if (owner && typeof putOwnerIfNew === 'function') { putOwnerIfNew(owner); }
+                    }
+
+                    if (typeof saveOwnersToLocal === 'function') { saveOwnersToLocal(); }
+
+                    for (j = 0; j < order.length; j++) {
+                        group = groups[order[j]];
+                        owner = getOwner(order[j]) || group.owner || {id: 0, name: "Hamrahang", meta: {}};
+
+                        head = OA(document.createElement("div"), {className: "section-header live-owner-header"});
+                        ownerImage = OA(document.createElement("div"), {className: "live-owner-image"});
+                        thumbRef = ownerMetaThumbKey(owner);
+                        thumbUrl = ownerThumbUrl(thumbRef);
+                        if (thumbUrl) {
+                            ownerImage.appendChild(OA(document.createElement("img"), {src: thumbUrl, alt: owner.name || "Owner"}));
+                        } else {
+                            ownerImage.appendChild(OA(document.createElement("span"), {className: "live-owner-placeholder", innerHTML: (owner.name || "H").charAt(0)}));
+                        }
+                        ownerTitle = OA(document.createElement("h2"), {className: "title", innerHTML: owner.name || "Hamrahang"});
+                        head.appendChild(ownerImage);
+                        head.appendChild(ownerTitle);
+                        MCNT.appendChild(head);
+
+                        CRLVCards(group.ids);
+                    }
+                }
+
+                sn.makeFocusable();
+                var first = getByTag("a", MCNT);
+                if (first) { sn.focus(first); }
+                rendered = true;
+                if (callback) { callback(); }
+            }
+
+            if (missing.length) {
+                ResolveItems('live', missing, draw);
+            } else {
+                draw();
+            }
+        }
+
+        if (cached.length) {
+            render(cached);
+            gjs(['live', 'latest'], function (success) {
+                if (success && SN.routePath === '/live' && SN.latest_live && isArray(SN.latest_live) && rendered) {
+                    render(SN.latest_live);
+                }
+            });
+            return;
+        }
+
+        MCNT.appendChild(OA(document.createElement("div"), {className: "page-loading-container", innerHTML: '<div class="spinner-large"></div>'}));
+        gjs(['live', 'latest'], function (success) {
+            if (SN.routePath !== '/live') { return; }
+            if (success) {
+                render(SN.latest_live || []);
+            } else {
+                MCNT.innerHTML = '';
+                var error = OA(document.createElement("div"), {className: "error-message-container"});
+                error.appendChild(OA(document.createElement("div"), {className: "text1 p-top-1-5", innerHTML: "Unable to load Live channels."}));
+                MCNT.appendChild(error);
+                if (callback) { callback(); }
+            }
+        });
+    }
+
     function CRHP(P, QS, callback) {
 
         P = P || 'video';
@@ -13114,7 +13275,7 @@ function removeFromPlayQueue(itemId, itemType) {
     
         var type = row.type || 'song';
     
-        if (!IsPlayableType(type)) { return; }
+        if (!IsPlayableType(type) || type === 'live') { return; }
     
         var P = ensurePlayer();
         var key = queueItemKey(row);
