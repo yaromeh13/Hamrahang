@@ -5793,7 +5793,8 @@ try {
                 { key: 'albums',      type: 'album' },
                 { key: 'musicvideos', type: 'musicvideo' },
                 { key: 'podcasts',    type: 'podcast' },
-                { key: 'videos',      type: 'video' }
+                { key: 'videos',      type: 'video' },
+                { key: 'lives',       type: 'live' }
             ];
     
             var i;
@@ -5804,6 +5805,16 @@ try {
                 }
             }
     
+            if (found.lives && isArray(found.lives)) {
+                for (i = 0; i < found.lives.length; i++) {
+                    var liveItem = SN.live && SN.live[found.lives[i]];
+                    if (liveItem && liveItem.owner && typeof putOwnerIfNew === 'function') {
+                        putOwnerIfNew(liveItem.owner);
+                    }
+                }
+                if (typeof saveOwnersToLocal === 'function') { saveOwnersToLocal(); }
+            }
+
             if (found.q) {
                 SN.search = found;
                 log("SN.search: ", SN.search);
@@ -5866,6 +5877,8 @@ try {
                         UART(['artist', jd.artist]);
                     } else if (jd.album) {
                         ULBM(['album', jd.album]);
+                    } else if (jd.live) {
+                        ULIV(['live', jd.live]);
                     } else if (jd.search) {
                         USRC(['search', jd.search]);
                     } else {
@@ -7139,6 +7152,9 @@ try {
                 }
                 CRSA(LPS[2], LPS[3], done);
                 break;
+            case 'live':
+                CRLV(done);
+                break;
             case 'search':
                 CRSR(LPS[2], LPS[3], done);
                 break;
@@ -7399,7 +7415,7 @@ try {
 
     // PLAYABLE_TYPE
     function IsPlayableType(T) {
-        return (T === 'song' || T === 'podcast' || T === 'musicvideo' || T === 'video');
+        return (T === 'song' || T === 'podcast' || T === 'musicvideo' || T === 'video' || T === 'live');
     }
 
     /* =========================================================
@@ -7764,6 +7780,13 @@ try {
                 UARDB((item.meta && item.meta.type === 'podcast') ? 'podcast' : 'song', [item]);
             } else if (endpoint === 'video') {
                 UARDB((item.meta && item.meta.type === 'video') ? 'video' : 'musicvideo', [item]);
+            } else if (endpoint === 'live') {
+                item.full = true;
+                UARDB('live', [item]);
+                if (item.owner && typeof putOwnerIfNew === 'function') {
+                    putOwnerIfNew(item.owner);
+                    saveOwnersToLocal();
+                }
             } else {
                 UARDB(endpoint, [item]);
             }
@@ -7784,6 +7807,9 @@ try {
             }
             if (type === 'video' || type === 'musicvideo') {
                 return !!((SN.video && SN.video[id]) || (SN.musicvideo && SN.musicvideo[id]));
+            }
+            if (type === 'live') {
+                return !!(SN.live && SN.live[id] && SN.live[id].full);
             }
             return !!(SN[type] && SN[type][id]);
         }
@@ -8209,7 +8235,8 @@ try {
                 { key: 'artists',     tabKey: 'artists',     label: 'Artists',      render: function () { CRAS(SN.search.artists); } },
                 { key: 'albums',      tabKey: 'albums',      label: 'Albums',       render: function () { CRSS(SN.search.albums, 'album'); } },
                 { key: 'podcasts',    tabKey: 'podcasts',    label: 'Podcasts',     render: function () { CRSS(SN.search.podcasts, 'podcast'); } },
-                { key: 'videos',      tabKey: 'videos',      label: 'Videos',       render: function () { CRVN(SN.search.videos, 'video'); } }
+                { key: 'videos',      tabKey: 'videos',      label: 'Videos',       render: function () { CRVN(SN.search.videos, 'video'); } },
+                { key: 'lives',       tabKey: 'lives',       label: 'Live',         render: function () { CRLVCards(SN.search.lives); } }
             ];
     
             var hed = OA(document.createElement("div"), {className: "main-tabs"});
@@ -13310,6 +13337,9 @@ function removeFromPlayQueue(itemId, itemType) {
         if (type === 'video') {
             return SN.video && SN.video[id] ? SN.video[id] : null;
         }
+        if (type === 'live') {
+            return SN.live && SN.live[id] ? SN.live[id] : null;
+        }
     
         return null;
     }
@@ -13343,6 +13373,13 @@ function removeFromPlayQueue(itemId, itemType) {
                 }
             });
     
+            return;
+        }
+
+        if (type === 'live') {
+            ULIV(['live', row.id], function (success, item) {
+                if (callback) { callback(!!success, item || null); }
+            });
             return;
         }
     
