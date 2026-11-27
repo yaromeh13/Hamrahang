@@ -7234,11 +7234,11 @@ if (!empty($_SESSION['loggedin'])) {
             return;
         }
         if (P === 'song' && !routeMap[`song_${QS}`]) {
-            await CRSP(QS,'song');
+            await CREP(QS,'song');
             return;
         }
         if (P === 'album') {
-            await CRSP(QS,'album');
+            await CREP(QS,'album');
             return;
         }
         if (P === 'playlist') {
@@ -7788,7 +7788,7 @@ if (!empty($_SESSION['loggedin'])) {
     
     }
     
-    async function CRSP(q,T) {
+    async function CREP(q,T) {
         
         let e = null;
         let url = HS;

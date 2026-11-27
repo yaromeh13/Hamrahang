@@ -25,7 +25,7 @@ Do not copy Web TV rules into this app: there is no ES5 requirement, no D-pad / 
 | Path | Handler | Role |
 |---|---|---|
 | `/` and list paths such as `/song/top` | `CRHP` | Home and catalog lists |
-| `/song/{id}`, `/album/{id}` | `CRSP` | Song, podcast, or album detail |
+| `/song/{id}`, `/album/{id}` | `CREP` | Song, podcast, or album detail |
 | `/video/{id}` | `CRVP` | Video / music-video detail |
 | `/artist/{id}` | `CRAP` | Artist detail |
 | `/playlist/{id}` | `CRPP` | Playlist detail |
@@ -188,7 +188,7 @@ Add a row when a helper’s job changes. Do not document a guess.
 | Helper | Responsibility |
 |---|---|
 | `chp(url)` | SPA navigation and history. |
-| `CRHP` / `CRSP` / `CRVP` / `CRAP` / `CRPP` | Home, song/album, video, artist, playlist pages. |
+| `CRHP` / `CREP` / `CRVP` / `CRAP` / `CRPP` | Home, song/album, video, artist, playlist pages. |
 | `CRNF()` | Not-found content and a control back to home. |
 | `CRGC` / `CRSC` / `CRGL` | Grid, carousel card, track line. |
 | `CRLV` / `CRLVDetail` / `CRLVCards` | Live directory, channel detail, and Live carousel cards. |
@@ -230,7 +230,7 @@ click on card <a>
                  ├─ clearMainContent()         main column only; shell stays
                  └─ switch on the first path segment
                       ├─ /song/{id} or /podcast detail via CRHP
-                      │    └─ CRSP(id, 'song' | 'album' for /album/{id})
+                      │    └─ CREP(id, 'song' | 'album' for /album/{id})
                       ├─ /video/{id} or /musicvideo detail via CRHP
                       │    └─ CRVP(id)
                       ├─ /artist/{id}
