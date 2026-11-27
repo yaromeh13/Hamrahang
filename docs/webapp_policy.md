@@ -208,7 +208,128 @@ Add a row when a helper’s job changes. Do not document a guess.
 
 ---
 
-## 7. Change checklist
+## 7. Card click paths
+
+This is the runtime map for a click on a rendered card. Hover (`UHERO`) is not part of these paths. Groups share one tree; the type list on each tree is the set of cards that take that path.
+
+Cards are built by `CRSC` (carousel), `CRGC` (grid), and `CRGL` (track line). After a page finishes drawing, `ADE()` binds every `.item-box a`, `.artist-box a`, `.track-line a`, `.artists a`, `.artists-list a`, and `.section-header a`. The attribute `listener="true"` stops a second bind on the same node. `ADE()` always calls `preventDefault()` and `chp(href)`, so the browser does not do a full reload.
+
+### 7.1 Open the item page
+
+**Cards:** song, podcast, album, playlist, music video, video, artist.  
+**Hit area:** artwork link and title link. Artist cards have no play button, so the whole card uses this path. A name under a card (`artists-inline` / `CRAL`) is the same path with an artist URL.
+
+```text
+click on card <a>
+  └─ ADE() click listener
+       └─ preventDefault()
+            └─ chp(href)
+                 ├─ history.pushState(href)
+                 ├─ if the mobile max player is open → minimizeMaxToMini()
+                 ├─ beforePageClear()          pull video out of the page stage
+                 ├─ clearMainContent()         main column only; shell stays
+                 └─ switch on the first path segment
+                      ├─ /song/{id} or /podcast detail via CRHP
+                      │    └─ CRSP(id, 'song' | 'album' for /album/{id})
+                      ├─ /video/{id} or /musicvideo detail via CRHP
+                      │    └─ CRVP(id)
+                      ├─ /artist/{id}
+                      │    └─ CRAP(id)
+                      ├─ /playlist/{id}
+                      │    └─ CRPP(id, 'playlist')
+                      ├─ list URLs such as /song/top (See all on a section header)
+                      │    └─ CRHP(section, query)
+                      └─ unknown id / unknown list key
+                           └─ CRNF()
+                 └─ done()
+                      ├─ song or artist detail → CHHD() sets document.title and preload thumb
+                      └─ the new page calls ADE() again for its own links
+```
+
+**Result:** the main column is the item or list page. The player queue and the current track are not changed. Playback keeps running under the new page.
+
+`CRHP` sends a numeric id to the detail renderer above. A word such as `top` or `latest` stays a list and does not open a detail page.
+
+### 7.2 Play from the card
+
+**Hit area:** the play control on `CRSC`, `CRGC`, and `CRGL`. The handler calls `stopPropagation()`, so `ADE()` does not also open the page. Artist cards do not render this control.
+
+**Playable cards:** song, podcast, music video, video.
+
+```text
+click .play
+  └─ stopPropagation()
+       └─ setPlayQueue(cardList, item.id, type)
+            ├─ onQueueReplaced()
+            ├─ normalizeQueueRows()
+            ├─ keep only QUEUEABLE_TYPES
+            ├─ replace the in-memory queue and redraw it (CRQT)
+            ├─ same id + type + index already playing
+            │    └─ TogglePlayPause()
+            └─ otherwise
+                 └─ playQueueAt(index)
+                      └─ ensureQueueItemLoaded()
+                           └─ PlayPreferredSource()
+                                └─ PlayMediaSourceAt(picked index)
+```
+
+**Result:** that item starts, or pauses if it was already the current row. The page does not change. The queue is the list that built the card (`ar`), starting at the clicked id.
+
+**Collection cards:** album, playlist.
+
+```text
+click .play
+  └─ stopPropagation()
+       └─ playCollectionFromCard(id, 'album' | 'playlist')
+            ├─ album  → ULBM(['album', id])  → e.songs
+            └─ playlist → UPLS(['playlist', id]) → e.items
+                 └─ setPlayQueue(children, firstChildId, 'song')
+                      └─ same tree as the playable cards above
+```
+
+**Result:** the page stays. The queue becomes the album or playlist tracks and playback starts at the first child. An empty collection returns without changing the queue.
+
+### 7.3 More menu on the card
+
+**Cards:** every non-artist card from `CRSC`, `CRGC`, and `CRGL` (the dot control).
+
+```text
+click .menu / .more
+  └─ CRBW(id, type)
+       └─ bottom sheet for that item
+            ├─ Go to {type}
+            │    └─ close sheet → chp(item URL)
+            │         └─ same page tree as section 7.1
+            ├─ Go to artist (when the item has artists)
+            │    └─ CRBW(id, type, 'art')
+            └─ Download (playable types only)
+                 └─ CRBW(id, type, 'don')
+                      └─ renderDownloadSources()
+```
+
+**Result:** the sheet opens on top of the current page. Only "Go to …" changes the route, and it reuses section 7.1. Download does not navigate and does not change the queue.
+
+### 7.4 Live cards
+
+**Cards:** live video and live audio rows from `CRLVCards`. These cards have no play control and no more control. The link handler calls `chp` itself. `ADE()` may also see the same `.item-box a`; both calls use `liveRoute(item)`, which is the same URL.
+
+```text
+click live card <a>
+  └─ CRLVCards click listener
+       └─ chp(liveRoute(item))     /live/{id}/{slug}
+            └─ chp() case 'live'
+                 ├─ second segment is a number → CRLVDetail(id)
+                 │    └─ use SN.live[id] if full, otherwise resolve, then draw
+                 │         missing record → CRNF()
+                 └─ otherwise → CRLV()
+                      └─ directory (section 2.5)
+```
+
+**Result:** the live detail page opens. The card click does not call `setPlayQueue`. Playback starts only from the controls on that detail page. Stream URLs are not read from `ha_live_cache_v1`; a cached card still resolves before full playback data is required.
+
+---
+
+## 8. Change checklist
 
 1. Name the page, helper, or API action.
 2. Read the current function in `ha.php` and its callers.
@@ -216,11 +337,11 @@ Add a row when a helper’s job changes. Do not document a guess.
 4. Keep playback on `getPlayableSources` indexes.
 5. Keep page lyrics bound to their item; do not let the player overwrite them.
 6. Persist only through the keys in section 5. Do not write the catalog into `localStorage`.
-7. Update this file when a route, storage key, or player/lyric rule changes.
+7. Update this file when a route, storage key, player/lyric rule, or card click path changes.
 
 ---
 
-## 8. Not in this document
+## 9. Not in this document
 
 These belong to the legacy Web TV document (`docs/webtv_policy.md`) / `index.html` and must not be treated as Web App rules:
 
