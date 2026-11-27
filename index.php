@@ -865,7 +865,8 @@ h2{font-size:16px;margin:0 0 10px}
 .src-row.is-locked{border-color:color-mix(in srgb, var(--warn) 45%, var(--line));background:color-mix(in srgb, var(--warn) 8%, #0f1017)}
 .src-row.is-demo{border-color:color-mix(in srgb, var(--accent) 35%, var(--line));}
 .src-kind.is-demo{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 50%, var(--line));}
-.src-main{display:grid;grid-template-columns:40px minmax(0,1fr) 72px minmax(138px,168px) minmax(120px,160px) auto 36px;gap:8px;align-items:center}
+.src-main{display:grid;grid-template-columns:40px minmax(0,1fr) 72px minmax(120px,160px) auto 36px;gap:8px;align-items:center}
+.src-main.is-live{grid-template-columns:40px minmax(0,1fr) 72px minmax(138px,168px) minmax(120px,160px) auto 36px}
 .src-protocol{width:100%;min-width:0;cursor:pointer}
 .src-owner{position:relative;min-width:0}
 .src-owner .src-user{width:100%}
@@ -1693,6 +1694,7 @@ function toRows(table, items) {
   if (!Array.isArray(items)) return [];
   return items.map(item => ({
     type  : inferType(table, item),
+    media_type: table === 'live' && String(item.media_type || '').toLowerCase() === 'video' ? 'video' : (table === 'live' ? 'audio' : ''),
     table : table,
     id    : Number(item.id) || 0,
     name  : item.name || '(untitled)',
@@ -1835,6 +1837,8 @@ function thumbHtml(row) {
 
 function rowHtml(row) {
   const label = TYPE_LABEL[row.type] || row.type;
+  const liveMediaLabel = row.type === 'live' ? (row.media_type === 'video' ? 'Video' : 'Audio') : '';
+  const liveMediaClass = row.type === 'live' ? (row.media_type === 'video' ? 'badge-video' : 'badge-audio') : '';
   const parts = [];
   if (row.artists) parts.push(esc(row.artists));
   if (row.url) parts.push(esc(row.url));
@@ -1851,6 +1855,7 @@ function rowHtml(row) {
       '</div>' +
       '<div class="result-meta">' +
         '<span class="badge badge-' + esc(row.type) + '">' + esc(label) + '</span>' +
+        (liveMediaLabel ? '<span class="badge ' + liveMediaClass + '">' + esc(liveMediaLabel) + '</span>' : '') +
         '<span class="rid">#' + esc(row.id) + '</span>' +
       '</div>' +
       '<button class="btn btn-ghost btn-sm" type="button" data-edit="' +
@@ -1955,7 +1960,7 @@ function buildDraft(table, full) {
   return {
     table   : table,
     type    : inferType(table, full),
-    media_type: (table === 'live' && String(full.media_type || '').toLowerCase() === 'video') ? 'video' : 'audio',
+    media_type: table === 'live' ? (String(full.media_type || '').toLowerCase() === 'video' ? 'video' : 'audio') : '',
     id      : Number(full.id) || 0,
     name    : full.name || '',
     names   : names,
@@ -1978,7 +1983,7 @@ function buildDraft(table, full) {
     albums  : albumsFromCard(full),
     videos  : videosFromCard(full),
     songs   : songsFromCard(full),
-    sources : sourcesFromCard(full),
+    sources : sourcesFromCard(full, table),
     tracks  : tracksFromCard(full),
     dur     : (meta.dur != null && meta.dur !== '') ? Number(meta.dur) : 0,
     // artist-only profile fields
@@ -2274,7 +2279,7 @@ function syncSnUser(user) {
  * After PHP update: { id, url, bit, user, act }.
  * act7: server already filtered; client still hides others as a soft guard.
  */
-function sourcesFromCard(full) {
+function sourcesFromCard(full, table) {
   const list = [];
   let raw = [];
   if (Array.isArray(full.sources)) raw = full.sources;
@@ -2316,7 +2321,7 @@ function sourcesFromCard(full) {
       id   : id,
       url  : url,
       bit  : bit,
-      protocol: String(s.protocol || ''),
+      protocol: table === 'live' ? String(s.protocol || '') : '',
       user : user,
       act  : act,
       _key : 's' + i + '_' + (id || i)
@@ -2551,6 +2556,7 @@ function payloadToDraft(p) {
       id   : Number(s && s.id) || 0,
       url  : (s && s.url) || '',
       bit  : Number(s && s.bit) || 0,
+      protocol: String((s && s.protocol) || ''),
       user : Number(s && s.user) || 0,
       act  : (s && s.act != null) ? Number(s.act) : 1,
       _key : s._key || ('s_' + Math.random().toString(36).slice(2, 8))
@@ -3912,7 +3918,7 @@ function savedSourcesHtml(d) {
     return '<div class="saved-media-row">' +
       '<span class="badge" style="flex:none">' + esc(actLabel) + '</span>' +
       '<span class="badge badge-song" style="flex:none">' + esc((s.bit || 0) + 'k') + '</span>' +
-      (s.protocol ? '<span class="badge" style="flex:none">' + esc(s.protocol) + '</span>' : '') +
+      (d.table === 'live' && s.protocol ? '<span class="badge" style="flex:none">' + esc(s.protocol) + '</span>' : '') +
       '<span class="badge" style="flex:none">' +
         esc(ownerDisplayName(getOwner(s.user) || { id: Number(s.user) || 0, name: '' })) +
       '</span>' +
@@ -4078,12 +4084,13 @@ function sourceRowHtml(s, index) {
   const canEditUser = isAct9() && !locked;
   const cls = 'src-row' + (off ? ' is-off' : '') + (locked ? ' is-locked' : '') + (isDemo ? ' is-demo' : '');
   const key = s._key || ('k' + index);
+  const isLive = !!(state.item && state.item.table === 'live');
 
   // NOTE: do NOT put data-src-act on the row — that attribute is only for action buttons.
   // A row-level data-src-act made every click (inputs, seek bar) re-render the section.
   let html = '<div class="' + cls + '" data-src-row data-src-key="' + esc(key) + '" ' +
     'data-src-id="' + esc(s.id || 0) + '" data-src-row-act="' + esc(a) + '">' +
-    '<div class="src-main">' +
+    '<div class="src-main' + (isLive ? ' is-live' : '') + '">' +
       '<button class="src-play" type="button" data-src-play title="Play / pause" ' +
         (s.url ? '' : 'disabled') + '>' +
         '<svg data-src-icon viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">' +
@@ -4094,8 +4101,8 @@ function sourceRowHtml(s, index) {
       '<input class="input src-bit" data-src-bit type="number" min="0" max="9999" step="1" ' +
         'placeholder="bit" title="Bitrate (kbps)" value="' + esc(s.bit || '') + '"' +
         (canEdit ? '' : ' readonly') + '>' +
-      '<select class="input src-protocol" data-src-protocol title="Stream protocol / delivery method"' +
-        (canEdit ? '' : ' disabled') + '>' + protocolOptionsHtml(s.protocol) + '</select>' +
+      (isLive ? '<select class="input src-protocol" data-src-protocol title="Stream protocol / delivery method"' +
+        (canEdit ? '' : ' disabled') + '>' + protocolOptionsHtml(s.protocol) + '</select>' : '') +
       sourceOwnerFieldHtml(s, canEditUser);
 
   // Kind toggle: orig ↔ demo (fixed ~4-letter labels so button width stays stable)
@@ -4146,10 +4153,13 @@ function sourceRowHtml(s, index) {
 
 function sourcesSectionHtml(d) {
   const rows = Array.isArray(d.sources) ? d.sources : [];
-  const isVideo = d.table === 'video';
-  const playHint = isVideo
-    ? 'Play uses HTML5 <code>video</code> for duration (picture if the browser allows). Quality/bitrate is manual (kbps). Sync via <code>link_video</code>.'
-    : 'Play uses HTML5 <code>audio</code> for duration. Bitrate is manual. Sync via <code>link_song</code>.';
+  const isLive = d.table === 'live';
+  const isVideo = d.table === 'video' || (isLive && d.media_type === 'video');
+  const playHint = isLive
+    ? 'Preview uses HTML5 <code>' + (isVideo ? 'video' : 'audio') + '</code> based on the Live media type above. Live sources are stored in <code>live_data.src</code>; bitrate is manual (kbps).'
+    : (isVideo
+        ? 'Play uses HTML5 <code>video</code> for duration (picture if the browser allows). Quality/bitrate is manual (kbps). Sync via <code>link_video</code>.'
+        : 'Play uses HTML5 <code>audio</code> for duration. Bitrate is manual. Sync via <code>link_song</code>.');
   // Kick off owner resolve (non-blocking); refresh labels when done
   const ownerIds = rows.map(s => Number(s.user) || 0).filter(id => id > 0);
   if (ownerIds.length) {
@@ -4180,6 +4190,7 @@ function sourcesSectionHtml(d) {
     '</div>' +
     '<div class="hint" style="margin-top:8px">' + playHint +
       ' act 0 = off · 1 = orig · 2 = demo · 3 = locked.</div>' +
+    (isLive ? '<div class="hint" style="margin-top:5px"><b>Protocol:</b> describes how the stream is delivered (for example HLS, DASH or HTTP), not its codec. It is optional metadata and does not guarantee browser/player support. Leave it on Auto / Not specified when unknown.</div>' : '') +
   '</div>';
 }
 
@@ -4870,10 +4881,17 @@ function showItemZone() {
 /** Stop any playing source preview (call on leave editor / submit). */
 function stopAllSources() {
   if (typeof srcAudio !== 'undefined' && srcAudio) {
-    try { srcAudio.pause(); } catch (e) {}
+    try {
+      srcAudio.pause();
+      srcAudio.removeAttribute('src');
+      srcAudio.load();
+    } catch (e) {}
     srcAudio = null;
   }
   if (typeof srcPlayingKey !== 'undefined') srcPlayingKey = null;
+  $('#srcList .src-play').forEach(b => setSrcPlayIcon(b, false));
+  $('#srcList [data-src-prog]').forEach(p => p.classList.remove('is-on'));
+  $('#srcList [data-src-vprev]').forEach(h => { h.hidden = true; h.innerHTML = ''; });
 }
 
 function pushEditStack() {
@@ -5025,7 +5043,7 @@ function collectDraft() {
       id  : Number(row.getAttribute('data-src-id')) || 0,
       url : url,
       bit : bitEl && bitEl.value !== '' ? Number(bitEl.value) : 0,
-      protocol: protocolEl ? protocolEl.value.trim() : '',
+      protocol: d.table === 'live' && protocolEl ? protocolEl.value.trim() : '',
       user: userEl && userEl.value !== '' ? Number(userEl.value) : myUserId(),
       act : Number(row.getAttribute('data-src-row-act')) || 0,
       _key: row.getAttribute('data-src-key') || ''
@@ -5245,7 +5263,7 @@ async function submitItem(event) {
       id  : s.id || 0,
       url : s.url,
       bit : s.bit || 0,
-      protocol: s.protocol || '',
+      protocol: d.table === 'live' ? (s.protocol || '') : undefined,
       user: s.user || 0,
       act : (s.act != null) ? s.act : 1
     })),
@@ -6208,7 +6226,11 @@ let srcAudio = null; // HTMLMediaElement (Audio or Video)
 let srcPlayingKey = null;
 
 function makeSourceMedia() {
-  if (state.item && state.item.table === 'video') {
+  const isVideo = !!(state.item && (
+    state.item.table === 'video' ||
+    (state.item.table === 'live' && state.item.media_type === 'video')
+  ));
+  if (isVideo) {
     const v = document.createElement('video');
     v.preload = 'metadata';
     v.playsInline = true;
@@ -6815,7 +6837,9 @@ function handleZoneClick(event) {
 
   const mediaTypeBtn = t.closest('[data-media-type-to]');
   if (mediaTypeBtn && state.item && state.item.table === 'live') {
-    state.item.media_type = mediaTypeBtn.getAttribute('data-media-type-to') === 'video' ? 'video' : 'audio';
+    const nextMediaType = mediaTypeBtn.getAttribute('data-media-type-to') === 'video' ? 'video' : 'audio';
+    if (state.item.media_type !== nextMediaType) stopAllSources();
+    state.item.media_type = nextMediaType;
     $$('#typeSwitch [data-media-type-to]').forEach(b => {
       b.classList.toggle('is-on', b.getAttribute('data-media-type-to') === state.item.media_type);
     });
