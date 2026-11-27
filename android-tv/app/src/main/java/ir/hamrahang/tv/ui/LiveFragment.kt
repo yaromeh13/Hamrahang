@@ -406,7 +406,7 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
             rows += LiveOwnerRow(owner, videoItems, mediaType = MediaType.VIDEO, systemOwner = systemOwner, showHeader = showHeader)
         }
         if (audioItems.isNotEmpty()) {
-            rows += LiveOwnerRow(owner, audioItems, mediaType = MediaType.AUDIO, systemOwner = systemOwner, showHeader = showHeader && videoItems.isEmpty())
+            rows += LiveOwnerRow(owner, audioItems, mediaType = MediaType.AUDIO, systemOwner = systemOwner, showHeader = systemOwner || (showHeader && videoItems.isEmpty()))
         }
     }
 
