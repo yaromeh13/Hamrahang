@@ -15,6 +15,28 @@ It is intentionally broader than image selection. New, verified product scenario
 - Image/media CDN URLs are a separate concern from API endpoints; preserve the currently verified image host unless a deliberate, verified policy change is approved.
 - Prefer small, architecture-aligned changes. Preserve local data, current screen state, focus, scroll, playback queue, and active playback unless a scenario explicitly requires otherwise.
 
+
+## Mandatory development workflow
+
+Before implementing or changing Android TV behavior, follow this sequence:
+
+1. **Compare the product scenarios first.** Inspect the relevant behavior in the current Web TV reference, especially `index.html` on the repository's `main` branch, and inspect the corresponding Android implementation. Record the actual differences between Web and Android before deciding what needs to change.
+2. **Audit existing APIs before API work.** Before creating, changing, or adding an API request/endpoint, inspect the existing Web implementation and API behavior (including the relevant code in `index.html` and the API implementation such as `h_api.php`). Reuse the existing contract where appropriate; do not assume a new endpoint, parameter, response field, or behavior exists.
+3. **Inspect the current source.** Re-fetch/read all relevant files before editing. Do not rely solely on an old chat excerpt, a previous patch, or an earlier source snapshot.
+4. **Keep Android native.** Match the Web product scenario and user-visible behavior, but implement it with the existing native Android TV architecture and D-pad interaction patterns. Do not port the Web UI or its browser-specific implementation into Android.
+5. **Make minimal, architecture-aligned changes.** Avoid unnecessary rewrites, broad refactors, duplicate infrastructure, and unapproved behavior changes. Preserve existing data, focus, scroll, navigation, and playback state.
+6. **Explain substantial changes before editing.** For a significant behavior or architecture change, first describe the observed Web/Android difference, the proposed approach, affected files, and relevant risks; wait for approval when the change goes beyond the user's explicit request.
+7. **Preserve the toolchain constraints.** Do not raise or otherwise change the established Gradle, Android Gradle Plugin, Kotlin, JDK, compileSdk, minSdk, or targetSdk versions, or add dependencies that violate them, unless explicitly approved.
+8. **Report changes precisely.** When presenting a code change, identify each exact repository-relative file path and provide the complete corrected function/block (not an ambiguous partial snippet). State what was and was not build-tested or device-tested.
+
+### API host and contract requirements
+
+- Every API request made by Android TV must target `https://hamrahang.ir`.
+- Do not use another domain as an API host or fallback unless the user explicitly authorizes it.
+- This restriction concerns API requests; it does not automatically prohibit separately verified image/media CDN URLs where the existing media policy permits them.
+- The Web implementation is the first place to inspect for an existing API contract. Do not create or modify API behavior until the relevant Web behavior and server-side API implementation have been reviewed.
+
+
 ## Contents
 
 1. [Network, Offline Mode & Recovery Policy](#1-network-offline-mode--recovery-policy)
