@@ -3,6 +3,7 @@ package ir.hamrahang.tv.data.live
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.MediaSource
 import ir.hamrahang.tv.data.SourceOwner
+import com.google.gson.annotations.SerializedName
 
 data class LiveGenre(
     val id: Long? = null,
@@ -23,7 +24,8 @@ data class LiveDto(
     val genres: List<LiveGenre>? = null,
     val languages: List<String>? = null,
     val owner: SourceOwner? = null,
-    val sources: List<MediaSource>? = null
+    val sources: List<MediaSource>? = null,
+    @SerializedName("media_type") val mediaType: String? = null
 ) {
     // LIVE_CARD is a complete playable card: metadata plus its stream sources.
     val isFullCard: Boolean
