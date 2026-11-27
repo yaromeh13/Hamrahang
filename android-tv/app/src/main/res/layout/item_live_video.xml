@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="220dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:background="@android:color/transparent">
+
+    <FrameLayout
+        android:id="@+id/coverFrame"
+        android:layout_width="210dp"
+        android:layout_height="118dp"
+        android:background="@drawable/card_bg">
+
+        <ImageView
+            android:id="@+id/itemCover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="6dp"
+            android:scaleType="centerCrop"
+            android:background="@drawable/card_thumbnail_surface"
+            android:clipToOutline="true"/>
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/itemTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#FFF"
+        android:textSize="@dimen/_9ssp"
+        android:maxLines="1"/>
+
+    <TextView
+        android:id="@+id/itemSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#ccc"
+        android:textSize="@dimen/_7ssp"
+        android:maxLines="1"/>
+</LinearLayout>
