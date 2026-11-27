@@ -48,7 +48,15 @@ object LiveEntityMapper {
     ): LiveEntity? {
         val fresh = fromDto(dto, position, updatedAt, isFull) ?: return null
         if (old == null) return fresh
-        if (old.isFull && !isFull) return old
+        if (old.isFull && !isFull) {
+            return old.copy(
+                position = position,
+                updatedAt = updatedAt,
+                mediaType = dto.mediaType?.takeIf { it.isNotBlank() }?.let {
+                    if (it.equals("video", true)) "video" else "audio"
+                } ?: old.mediaType
+            )
+        }
 
         return fresh.copy(
             name = fresh.name?.takeIf { it.isNotBlank() } ?: old.name,
