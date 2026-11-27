@@ -358,87 +358,108 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
     }
 
     private fun render(items: List<LiveItem>) {
-        val grouped = LinkedHashMap<Long, MutableList<LiveItem>>()
-        val owners = LinkedHashMap<Long, ir.hamrahang.tv.data.SourceOwner?>()
+        val rows = mutableListOf<LiveOwnerRow>()
 
-        items.forEach { item ->
-            val owner = item.owner
-            val ownerId = owner?.id ?: Long.MIN_VALUE
-            grouped.getOrPut(ownerId) { mutableListOf() }.add(item)
-            if (!owners.containsKey(ownerId)) owners[ownerId] = owner
+        // Owner ID 0 and missing owner are the same system-owned section.
+        val systemItems = items.filter { it.owner == null || it.owner.id == 0L }
+        appendMediaRows(
+            rows = rows,
+            owner = null,
+            items = systemItems,
+            systemOwner = true
+        )
+
+        val ownerGroups = LinkedHashMap<Long, MutableList<LiveItem>>()
+        items.filter { it.owner != null && it.owner.id != 0L }.forEach { item ->
+            ownerGroups.getOrPut(item.owner!!.id) { mutableListOf() }.add(item)
         }
 
-        val rows = grouped.map { (ownerId, liveItems) ->
-            val owner = owners[ownerId]
-            val featured = isHamrahangOwner(owner)
-            LiveOwnerRow(
-                owner = owner,
-                items = liveItems,
-                featured = featured
+        ownerGroups.values.forEach { ownerItems ->
+            appendMediaRows(
+                rows = rows,
+                owner = ownerItems.firstOrNull()?.owner,
+                items = ownerItems,
+                systemOwner = false
             )
-        }.filter { it.items.isNotEmpty() }
-            .sortedByDescending { it.featured }
+        }
 
         adapter?.submit(rows)
 
-        if (initialFocusPending && items.isNotEmpty()) {
+        if (initialFocusPending && rows.isNotEmpty()) {
             focusFirstLiveCard()
         }
     }
 
-    private fun isHamrahangOwner(owner: ir.hamrahang.tv.data.SourceOwner?): Boolean {
-        if (owner == null) return false
+    private fun appendMediaRows(
+        rows: MutableList<LiveOwnerRow>,
+        owner: ir.hamrahang.tv.data.SourceOwner?,
+        items: List<LiveItem>,
+        systemOwner: Boolean
+    ) {
+        val videoItems = items.filter { it.isVideo }
+        val audioItems = items.filterNot { it.isVideo }
 
-        val name = owner.name?.trim()?.lowercase().orEmpty()
-        if (name == "hamrahang" || name == "همراهانگ") return true
-
-        val ownerUrl = owner.meta?.url?.trim()?.lowercase().orEmpty()
-        return ownerUrl.contains("hamrahang.ir")
+        if (videoItems.isNotEmpty()) {
+            rows += LiveOwnerRow(owner, videoItems, mediaType = MediaType.VIDEO, systemOwner = systemOwner)
+        }
+        if (audioItems.isNotEmpty()) {
+            rows += LiveOwnerRow(owner, audioItems, mediaType = MediaType.AUDIO, systemOwner = systemOwner)
+        }
     }
 
     private fun playLive(selected: LiveItem, ownerItems: List<LiveItem>) {
-        val queueItems = ownerItems.mapNotNull { live ->
-            val sources = live.sources.filter { it.url.isNotBlank() }
-            if (sources.isEmpty()) return@mapNotNull null
+        val mediaType = if (selected.isVideo) MediaType.VIDEO else MediaType.AUDIO
+        val contentType = if (selected.isVideo) ContentType.VIDEO else ContentType.SONG
 
-            val artwork = live.thumb.takeIf { it.isNotBlank() }
-            val media = PlayerMedia(
-                id = "live_${live.id}",
-                title = live.title,
-                artist = live.owner?.name ?: "Live",
-                artwork = artwork,
-                sources = sources,
-                type = MediaType.AUDIO,
-                contentType = ContentType.SONG
-            )
-            PlaybackItem(
-                id = media.id ?: return@mapNotNull null,
-                title = live.title,
-                artwork = artwork,
-                artists = emptyList(),
-                contentType = ContentType.SONG,
-                liveMedia = media
-            )
-        }
+        val queueItems = ownerItems
+            .filter { it.isVideo == selected.isVideo }
+            .mapNotNull { live ->
+                val sources = live.sources.filter { it.url.isNotBlank() }
+                if (sources.isEmpty()) return@mapNotNull null
+
+                val artwork = live.thumb.takeIf { it.isNotBlank() }
+                val media = PlayerMedia(
+                    id = "live_${live.id}",
+                    title = live.title,
+                    artist = live.owner?.name ?: "Live",
+                    artwork = artwork,
+                    sources = sources,
+                    type = mediaType,
+                    contentType = contentType
+                )
+                PlaybackItem(
+                    id = media.id ?: return@mapNotNull null,
+                    title = live.title,
+                    artwork = artwork,
+                    artists = emptyList(),
+                    contentType = contentType,
+                    liveMedia = media
+                )
+            }
         if (queueItems.isEmpty()) return
 
         val selectedId = "live_${selected.id}"
         val selectedIndex = queueItems.indexOfFirst { it.id == selectedId }
             .takeIf { it >= 0 } ?: 0
-        val ownerName = selected.owner?.name?.takeIf { it.isNotBlank() } ?: "Live"
+        val ownerName = selected.owner?.name?.takeIf { it.isNotBlank() }
+            ?: if (selected.isVideo) "Live Video" else "Live Audio"
 
-        // The queue contains only stations from the selected Owner row.
         PlaybackManager.start(
             PlaybackSession(
-                id = "live_owner_${selected.owner?.id ?: ownerName}",
+                id = "live_${selected.owner?.id ?: "system"}_${mediaType.name.lowercase()}",
                 title = ownerName,
                 source = PlaybackSource.LIVE,
                 items = queueItems,
                 currentIndex = selectedIndex,
-                mediaType = MediaType.AUDIO
+                mediaType = mediaType
             )
         )
-        UiNavigator.openPlayback()
+
+        if (selected.isVideo) {
+            UiNavigator.openFullscreenPlayer()
+        } else {
+            UiNavigator.openPlayback()
+        }
     }
 
     override fun onDestroyView() {
