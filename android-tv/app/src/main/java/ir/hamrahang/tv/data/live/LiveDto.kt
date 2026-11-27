@@ -29,5 +29,5 @@ data class LiveDto(
 ) {
     // LIVE_CARD is a complete playable card: metadata plus its stream sources.
     val isFullCard: Boolean
-        get() = !name.isNullOrBlank() && meta != null && sources != null
+        get() = !name.isNullOrBlank() && meta != null && !sources.isNullOrEmpty()
 }
