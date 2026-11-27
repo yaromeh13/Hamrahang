@@ -4889,9 +4889,13 @@ function stopAllSources() {
     srcAudio = null;
   }
   if (typeof srcPlayingKey !== 'undefined') srcPlayingKey = null;
-  $('#srcList .src-play').forEach(b => setSrcPlayIcon(b, false));
-  $('#srcList [data-src-prog]').forEach(p => p.classList.remove('is-on'));
-  $('#srcList [data-src-vprev]').forEach(h => { h.hidden = true; h.innerHTML = ''; });
+
+  $$('#srcList .src-play').forEach(b => setSrcPlayIcon(b, false));
+  $$('#srcList [data-src-prog]').forEach(p => p.classList.remove('is-on'));
+  $$('#srcList [data-src-vprev]').forEach(h => {
+    h.hidden = true;
+    h.innerHTML = '';
+  });
 }
 
 function pushEditStack() {
