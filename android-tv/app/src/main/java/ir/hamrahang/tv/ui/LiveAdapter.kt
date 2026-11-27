@@ -28,9 +28,12 @@ class LiveAdapter(
         val coverFrame: View = view.findViewById(R.id.coverFrame)
     }
 
+    override fun getItemViewType(position: Int): Int =
+        if (items[position].isVideo) 1 else 0
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_content, parent, false)
+        val layout = if (viewType == 1) R.layout.item_live_video else R.layout.item_content
+        val view = LayoutInflater.from(parent.context).inflate(layout, parent, false)
         return VH(view)
     }
 
