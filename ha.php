@@ -6873,6 +6873,7 @@ if (!empty($_SESSION['loggedin'])) {
             link.append(artwork);
             link.addEventListener('click', function (ev) {
                 if (ev && ev.preventDefault) ev.preventDefault();
+                if (ev && ev.stopPropagation) ev.stopPropagation();
                 chp(liveRoute(item));
             });
 
