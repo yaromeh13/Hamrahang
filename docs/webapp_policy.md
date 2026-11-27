@@ -4,7 +4,7 @@
 
 This is the living reference for routes, playback, lyrics, local data, and shared helpers. Update it when an established behavior or storage contract changes.
 
-Do not copy Web TV rules into this app: no ES5 requirement, no D-pad / `spatial_navigation.js`, no dual base-CSS + `tv.css` layer, and no Live-channel page model.
+Do not copy Web TV rules into this app: there is no ES5 requirement, no D-pad / `spatial_navigation.js` navigation model, and no dual base-CSS + `tv.css` layer. The Web App has its own Live routes and data flow; those must not be confused with the legacy Web TV implementation.
 
 ---
 
@@ -31,6 +31,8 @@ Do not copy Web TV rules into this app: no ES5 requirement, no D-pad / `spatial_
 | `/playlist/{id}` | `CRPP` | Playlist detail |
 | `/search/...` | `CRSR` | Search |
 | `/library/...` | `CRLP` | Library views |
+| `/live` | `CRLV` | Live channel directory |
+| `/live/{id}/{slug}` | `CRLVDetail` | Live channel detail / playback entry |
 | `/setting/...` | `CRSA` | Account, history, favorites, playlists, settings |
 | `/pair/{token}` | `CRPair` | Device pairing |
 | `/verify`, `/verify-email`, `/link-email` | `CRVerify` | Email confirm / link |
@@ -60,6 +62,38 @@ Playlist hover must not invent an artist prefix on the URL. Playlist thumbs use 
 ### 2.4 Settings
 
 `CRSA` builds accordion sections: Profile, History, Favorites, Playlists, Settings. Paths `audio`, `video`, and `devices` fold into the Settings section. Audio and video quality lists live inside that section, not as separate pages.
+
+### 2.5 Live
+
+Live is a first-class route in the Web App, separate from the on-demand catalog routes. The router handles the `live` path explicitly:
+
+- `/live` is rendered by `CRLV()`.
+- `/live/{id}/{slug}` is rendered by `CRLVDetail(id)`. The numeric ID is the record key; the slug is descriptive.
+- `liveRoute(item)` builds the channel route and URL-encodes the ID and slug.
+- `liveMediaType(item)` reads the top-level `media_type`. Only `video` is classified as video; missing or other values default to audio. Do not infer this from `meta.type`.
+
+#### Data loading and cache
+
+- `SN.live` is the in-memory map of Live records keyed by ID. `SN.latest_live` is the ordered list of latest Live IDs.
+- `CRLV()` calls `LoadLiveCache()` and paints cached records first when available. It then refreshes the listing with `gjs(['live', 'latest'])`; the refresh redraws the page only while the current route is still `/live`.
+- When no cached IDs are available, the page shows its loading state and requests the latest list before rendering. Failed initial loading displays the Live-specific error state.
+- Records that are not fully resolved are loaded through the existing `EnsureItems('live', ids)` / `gjs(['live', 'resolve'], ...)` flow. `mergeResolvedItems` stores resolved Live records with `full: true`.
+- The localStorage cache is `ha_live_cache_v1`. It stores up to 100 latest IDs and lightweight record metadata. `SaveLiveCache()` deliberately removes `sources` and resets `full` to `false`, because stream URLs may expire and must be resolved again when required. `LoadLiveCache()` restores the cached records into `SN.live` and restores the available IDs into `SN.latest_live`.
+
+#### Grouping and cards
+
+- Ownerless/system channels are displayed first. Their fixed sections are video (**پخش زنده تصویری**) followed by audio (**پخش زنده صوتی**).
+- Owned channels are grouped by owner. Each owner retains a name and, when available, an avatar thumbnail. If an owner has both media types, separate video and audio rows are rendered under that owner.
+- `CRLVCards(ids, mediaType)` uses the existing horizontal carousel pattern (`CCRL`) when the row contains more than two cards.
+- Video cards use a `16:9` artwork ratio and prefer `meta.tmv`, then `meta.tmb`. Audio cards use a square `1:1` ratio and `meta.tmb`.
+- A Live SVG placeholder remains underneath the artwork so the card has a deliberate fallback when no thumbnail is available.
+- Listing callbacks guard against a route change before redrawing the page, preventing a delayed Live response from replacing a different page.
+
+#### Detail and player integration
+
+- `CRLVDetail(id)` uses a full local record when available; otherwise it resolves the selected channel before rendering. Missing records use the normal not-found flow.
+- Live is integrated into the app's existing queue and player infrastructure. Keep its media type distinction intact and reuse the current player / queue functions rather than creating a separate playback pipeline.
+- Stream source URLs are runtime data. Do not persist them in `ha_live_cache_v1`; resolve the channel again when a cached card is opened or needs full playback data.
 
 ---
 
@@ -110,6 +144,7 @@ One player state object (`ensurePlayer`). Do not start a second playback pipelin
 | `SN.player` / `ensurePlayer()` | Queue, index, now-playing, shuffle history, play generation. |
 | `SN.state` | `ready`, `online`. |
 | `SN.config` | `home` and `api` origins. |
+| `SN.live`, `SN.latest_live` | Live record map and latest Live ID list; Live metadata may also be restored from `ha_live_cache_v1`. |
 
 List endpoints also stash id lists such as `SN.top_song` on the `SN` object. Those ids are useless after reload until the list is fetched again.
 
@@ -122,6 +157,7 @@ List endpoints also stash id lists such as `SN.top_song` on the `SN` object. Tho
 | `ha_owner` | `SN.owners` | Map of source owners `{ id, name, meta.tmb }`. New ids are inserted once; existing rows are not overwritten. Id `0` is Hamrahang and is not labeled in download rows. | `saveOwnersToLocal` after `putOwnerIfNew` |
 | `ha_user` | cache read by `CheckLoginStatus` | Small cached profile so the UI can paint before refresh | Login / profile update |
 | `ha_rftk` | — | Refresh token. Access token is not stored here. | Login; removed on logout or rejected refresh |
+| `ha_live_cache_v1` | `SN.live`, `SN.latest_live` | Up to 100 latest Live IDs and lightweight Live metadata; `sources` are excluded and cached rows are marked `full: false`. | `SaveLiveCache()` after Live list refresh / Live resolve |
 | `did` | — | Stable device id created once | `GetOrCreateDeviceId` |
 
 `LoadProfile()` fills missing favorite types with empty arrays and copies `playlistEntities` back into `SN.playlist` so local playlists survive reload. Server playlists are still loaded from the API when the user is logged in.
@@ -131,6 +167,7 @@ Logout removes `ha_rftk` and `ha_user`. It does not wipe `ha_profile`, `ha_setti
 ### 5.3 API
 
 - JSON reads go through `gjs`. Authenticated writes go through `gja` with `Authorization: Bearer` when `SN.accessToken` is set.
+- Live listing uses `gjs(['live', 'latest'])`; full channel data is loaded through `gjs(['live', 'resolve'], ...)` via `EnsureItems`. Inspect `h_api.php` and a real response before changing either action or its response contract.
 - Inspect `h_api.php` and a real response before changing a query or action name.
 - Do not refetch an entity that is already `full` in `SN` unless the caller passed an explicit refresh.
 - Optional `meta` fields (`tmb`, `tmv`, `cvr`, `art`, `dur`, `des`, `rls`, `ncp`) must be checked before use.
@@ -154,6 +191,9 @@ Add a row when a helper’s job changes. Do not document a guess.
 | `CRHP` / `CRSP` / `CRVP` / `CRAP` / `CRPP` | Home, song/album, video, artist, playlist pages. |
 | `CRNF()` | Not-found content and a control back to home. |
 | `CRGC` / `CRSC` / `CRGL` | Grid, carousel card, track line. |
+| `CRLV` / `CRLVDetail` / `CRLVCards` | Live directory, channel detail, and Live carousel cards. |
+| `liveMediaType` / `liveRoute` / `splitLiveMediaIds` | Live media classification, canonical channel route, and audio/video grouping. |
+| `LoadLiveCache` / `SaveLiveCache` | Restore and persist lightweight Live metadata without expiring stream sources. |
 | `resolveThumb` / `resolveThumbUrl` | Artwork key and URL. |
 | `UARDB(type, list)` | Merge API rows into `SN[type]`. |
 | `gjs` / `gja` | Public JSON read / authorized JSON action. |
@@ -182,11 +222,12 @@ Add a row when a helper’s job changes. Do not document a guess.
 
 ## 8. Not in this document
 
-These belong to `webtv.md` / `index.html` and must not be treated as web-app rules:
+These belong to the legacy Web TV document (`docs/webtv_policy.md`) / `index.html` and must not be treated as Web App rules:
 
 - ES5-only syntax and XMLHttpRequest-only networking
 - `spatial_navigation.js`, D-pad sections, and `tv.css` progressive enhancement
-- Live channel rows (`SN.live`, `SN.latest_live`)
 - PNG icon fallbacks for TV asset limits
+
+The Web App's `/live` routes, `SN.live` / `SN.latest_live`, Live cache, and Live resolution flow are documented in section 2.5 above. They are distinct from the legacy Web TV implementation.
 
 Still to document only after reading the code, not from memory: every `gjs`/`gja` action name, and the full favorite/playlist sync sequence after login.

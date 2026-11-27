@@ -1,5 +1,7 @@
 # Web TV — Reference & Development Rules
 
+> **Implementation source of truth:** The canonical implementation reference for this document is the repository-root **`index.html`** file. The Web TV behavior and helper descriptions below are derived from the implementation in that file, not from assumptions about the separate Web App. If this document and `index.html` disagree, inspect the relevant implementation in `index.html` before changing either one; update this document whenever the established behavior changes.
+
 > **Compatibility notice:** This Web TV is used on both **legacy and modern TV browsers**. All changes must preserve operation on older Smart TV browsers with limited JavaScript and CSS support.
 
 This document is the living reference for the Web TV implementation, its behavior, compatibility rules, visual structure, JavaScript helpers, and future development decisions. Update it whenever an established behavior or shared helper changes.
@@ -73,20 +75,51 @@ The navigation and page transitions must remain usable with directional keys and
 
 ### 2.4 Live page
 
-The Live page is built from the locally available Live records and the latest Live ID list.
+The Live page and its detail route are implemented in the repository-root `index.html`. The main entry points are `CRLV()` (Live listing), `CRLVDetail(id)` (single-channel detail route), and `CRLVCards(ids, mediaType)` (card rendering).
 
-- Live records are read from `SN.live`; the latest list is held in `SN.latest_live`.
-- Ownerless Live channels are displayed in two fixed sections, in this order:
+#### Routes and media classification
+
+- The route dispatcher handles `live` explicitly. `/live` opens `CRLV()`.
+- A route whose second path segment is a numeric Live ID opens `CRLVDetail(id)`.
+- `liveRoute(item)` builds `/live/{id}/{slug}`. The numeric ID is the lookup key; the optional slug is descriptive and is built from the owner's URL/name and the channel URL.
+- `liveMediaType(item)` reads the top-level `media_type`, case-insensitively. Only the value `video` is classified as video; every other or missing value is treated as audio.
+- Do not infer Live media type from `meta.type` or from the artwork ratio.
+
+#### Loading and local data
+
+- `SN.latest_live` stores the latest Live ID list; `SN.live` stores the corresponding Live records keyed by ID.
+- `CRLV()` renders from the cached ID list first when it is available, then requests a fresh list through `gjs(['live', 'latest'], ...)`.
+- If no cached IDs are available, the page shows its loading state and requests the latest list before rendering.
+- Records missing from `SN.live`, or records that are not marked `full`, are passed to `ResolveItems('live', ids, callback)` before the page is drawn.
+- The asynchronous listing callbacks check that the current route is still `/live` before replacing the page content. Preserve this guard so a late response cannot overwrite another page.
+- `CRLVDetail(id)` uses an already-full local record when possible; otherwise it resolves that ID through `ResolveItems('live', [id], callback)`.
+
+#### Grouping and display order
+
+- Channels without an owner are grouped under owner ID `0` and rendered first, without an owner-name heading.
+- The ownerless group has two possible fixed sections, in this order:
   1. **پخش زنده تصویری**
   2. **پخش زنده صوتی**
-- These fixed sections use the Live navigation icon (SVG when available, PNG fallback).
-- Channels belonging to an owner retain the owner's name and image/avatar.
-- If an owner has both video and audio channels, render separate video and audio rows under that owner.
-- Video Live cards use the video-card presentation; audio Live cards use the audio/music-card presentation.
-- A video Live card opens the main fullscreen player directly. The user can still minimize the player.
-- Audio Live keeps the existing internal-player flow; the user can choose to open the main player.
-- For video artwork, prefer `meta.tmv`, then fall back to `meta.tmb`. For audio artwork, prefer `meta.tmb`.
-- If a Live record has no usable thumbnail, show the Live icon as its card-art fallback.
+- Owned channels are grouped by owner while retaining the order in which owners first appear in the latest ID list.
+- Each owner keeps its name and avatar/thumbnail where available. If no avatar is available, the implementation shows a text placeholder based on the owner's name.
+- If an owner has both media types, the implementation renders separate video and audio rows under that owner, with video before audio.
+- Empty media-type groups are not rendered. If the latest list is empty, the page displays its empty-state message.
+
+#### Cards, artwork, and focus
+
+- `CRLVCards(ids, mediaType)` renders only records matching the requested media type.
+- Video cards use a `16:9` artwork ratio; audio cards use a `1:1` ratio.
+- Artwork is resolved through `resolveThumbUrl(item, null, typeHint)`: the video hint is `video`, while the audio hint is `live`. Keep artwork selection centralized in the shared thumbnail helper.
+- If no usable thumbnail URL is returned, the card retains its Live-icon placeholder instead of displaying a broken image.
+- Focusing a Live card updates the playlist context with `SetPlayListContext(ids, 'live', item)`.
+- Clicking a card prevents the browser's default navigation, sets the same playlist context, navigates through `chp(liveRoute(item))`, and calls `setPlayQueue(PlyQueueRows, item.id, 'live')`.
+- After the listing is rendered, the page calls `sn.makeFocusable()` and moves focus to the first card when one exists. The detail renderer refreshes focusability after inserting its card.
+
+#### Detail route and playback boundary
+
+- `CRLVDetail(id)` renders the selected channel's type heading and a single Live card after the full record is available.
+- The card click handler is responsible for setting the playlist context, changing to the canonical Live route, and setting the Live queue.
+- Do not document or introduce a separate Live player path based only on the listing/detail renderers. Any change to actual playback start, player presentation, queue advancement, or audio/video controls must be checked against the relevant player and queue callers in `index.html` first.
 
 ### 2.5 Playback
 
@@ -111,11 +144,13 @@ This section is the primary inventory of shared JavaScript helpers. Add entries 
 | `resolveThumbUrl(e, ART, typeHint)` | Converts the artwork key returned by `resolveThumb()` into its image URL using the existing thumbnail base URL. |
 | `resolveHeroBg(e)` | Resolves the artwork key used for a video/music-video hero background (`meta.art` first, then `meta.tmv`). |
 | `resolveHeroBgUrl(e)` | Converts the hero artwork key into its image URL. |
-| `liveMediaType(item)` | Determines whether a Live record belongs to the video or audio presentation. |
+| `liveMediaType(item)` | Reads the top-level `media_type`; only `video` is video, and missing/other values default to audio. |
+| `liveRoute(item)` | Builds the canonical `/live/{id}/{slug}` route; the numeric ID is the lookup key and the slug is descriptive. |
 | `splitLiveMediaIds(ids)` | Splits Live IDs into separate video and audio lists using the cached Live records. |
 | `appendLiveTypeHeader(title)` | Creates one of the fixed ownerless Live section headings with the Live SVG/PNG icon. |
 | `CRLVCards(ids, mediaType)` | Renders Live cards for one media type, using the appropriate card ratio and artwork fallback. |
-| `CRLV(callback)` | Builds the Live page, groups records by owner, and renders the ownerless and owner-specific audio/video rows. |
+| `CRLV(callback)` | Loads cached/latest Live IDs, resolves incomplete records, groups channels by owner, and renders video/audio rows. |
+| `CRLVDetail(id, callback)` | Resolves a full Live record when needed and renders its single-channel detail view. |
 | `SetPlayListContext(ids, type, item)` | Sets the playlist context for the selected content collection and item. |
 | `setPlayQueue(rows, id, type)` | Sets/opens the playback queue for the selected item and content type. |
 | `OpenMainPlayer()` | Opens the main player interface. |
