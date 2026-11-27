@@ -10954,15 +10954,32 @@ $stmt->execute();*/
             $meta['des'] = is_string($live_data->des) ? $live_data->des : (string)$live_data->des;
         }
 
-        // Thumbnail — follow SONG_CARD: resolve live_data.tmb through ThumbImage().
-        $thumb = '';
+        // Media metadata — same image roles as VIDEO_CARD.
+        // Keep every available image role in the Live card JSON.
         if (!empty($live_data->tmb)) {
-            $thumb = ThumbImage($live_data->tmb);
+            $t = ThumbImage($live_data->tmb);
+            if ($t) $meta['tmb'] = $t;
         }
-        if ($thumb) {
-            $meta['tmb'] = $thumb;
+        if (!empty($live_data->tmv)) {
+            $t = ThumbImage($live_data->tmv);
+            if ($t) $meta['tmv'] = $t;
         }
-
+        if (!empty($live_data->cvr)) {
+            $t = ThumbImage($live_data->cvr);
+            if ($t) $meta['cvr'] = $t;
+        }
+        if (!empty($live_data->art) && is_string($live_data->art) && !is_numeric($live_data->art)) {
+            $t = ThumbImage($live_data->art);
+            if ($t) $meta['art'] = $t;
+        }
+        if (!empty($live_data->gal) && (is_array($live_data->gal) || is_object($live_data->gal))) {
+            $gal = [];
+            foreach ((array)$live_data->gal as $gk) {
+                $t = ThumbImage($gk);
+                if ($t) $gal[] = $t;
+            }
+            if ($gal) $meta['gal'] = $gal;
+        }
 
         $meta['type'] = 'live';
         if ($meta) $live['meta'] = $meta;
