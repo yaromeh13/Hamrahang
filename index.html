@@ -7212,7 +7212,7 @@ try {
                 CRSA(LPS[2], LPS[3], done);
                 break;
             case 'live':
-                if (/^\\d+$/.test(LPS[2])) {
+                if (/^\d+$/.test(LPS[2])) {
                     CRLVDetail(LPS[2], done);
                 } else {
                     CRLV(done);
@@ -8931,7 +8931,7 @@ try {
         if (owner && Number(owner.id) > 0) {
             ownerUrl = String(owner.url || '').replace(/^[-_]+|[-_]+$/g, '');
             if (!ownerUrl && owner.name) {
-                ownerUrl = String(owner.name).toLowerCase().replace(/\\s+/g, '_')
+                ownerUrl = String(owner.name).toLowerCase().replace(/\s+/g, '_')
                     .replace(/^[-_]+|[-_]+$/g, '');
             }
         }
