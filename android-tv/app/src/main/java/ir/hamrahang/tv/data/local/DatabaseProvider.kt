@@ -314,6 +314,14 @@ object DatabaseProvider {
         }
     }
 
+    private val MIGRATION_37_38 = object : Migration(37, 38) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL(
+                "ALTER TABLE live ADD COLUMN mediaType TEXT NOT NULL DEFAULT 'audio'"
+            )
+        }
+    }
+
     fun init(context: Context) {
         db = Room.databaseBuilder(
             context.applicationContext,
@@ -329,7 +337,8 @@ object DatabaseProvider {
                 MIGRATION_33_34,
                 MIGRATION_34_35,
                 MIGRATION_35_36,
-                MIGRATION_36_37
+                MIGRATION_36_37,
+                MIGRATION_37_38
             )
             // Never erase a user's offline library to recover from an unknown schema.
             // Missing migration paths now fail visibly instead of silently deleting data.
