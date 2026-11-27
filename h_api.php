@@ -6611,6 +6611,11 @@ $stmt->execute();*/
                 }
                 unset($data['gnr'], $data['lan']);
 
+                // Live media kind is separate from the content type (which remains "live").
+                $mediaType = (isset($JSD->media_type) && strtolower(trim((string)$JSD->media_type)) === 'video')
+                    ? 'video' : 'audio';
+                $data['media_type'] = $mediaType;
+
                 if (property_exists($JSD, 'names')) {
                     if (is_object($JSD->names) || is_array($JSD->names)) {
                         $names = [];
@@ -6690,6 +6695,8 @@ $stmt->execute();*/
                         $bit = isset($S->bit) ? (int)$S->bit : 0;
                         $entry = ['url' => $url];
                         if ($bit > 0) $entry['bit'] = $bit;
+                        $protocol = isset($S->protocol) ? substr(strtolower(trim((string)$S->protocol)), 0, 24) : '';
+                        if ($protocol !== '') $entry['protocol'] = $protocol;
                         $ty = isset($S->type) ? strtolower(trim((string)$S->type)) : '';
                         if ($ty !== '' && $ty !== 'original') $entry['type'] = $ty;
                         $srcArr[] = $entry;
@@ -6750,9 +6757,10 @@ $stmt->execute();*/
 
                 $typeInt = ContentTypeToInt('live');
                 $changes = [
-                    'name'    => $live_name,
-                    'media'   => $mediaOut,
-                    'sources' => $sourcesOut,
+                    'name'       => $live_name,
+                    'media_type' => $mediaType,
+                    'media'      => $mediaOut,
+                    'sources'    => $sourcesOut,
                     'owner'   => ($id_owner && (int)$id_owner > 0) ? ((int)$id_owner + (int)$IDHM) : 0,
                 ];
 
@@ -8561,7 +8569,13 @@ $stmt->execute();*/
                     if ($des !== '') $data['des'] = $des;
                 }
 
+                // Older clients omit media_type; Live defaults to audio.
+                $mediaType = (isset($JSD->media_type) && strtolower(trim((string)$JSD->media_type)) === 'video')
+                    ? 'video' : 'audio';
+                $data['media_type'] = $mediaType;
+
                 $srcArr = [];
+                $sourcesOut = [];
                 $ownerReal = 0;
                 if (isset($JSD->sources) && is_array($JSD->sources)) {
                     foreach ($JSD->sources as $S) {
@@ -8571,9 +8585,12 @@ $stmt->execute();*/
                         $bit = isset($S->bit) ? (int)$S->bit : 0;
                         $entry = ['url' => $url];
                         if ($bit > 0) $entry['bit'] = $bit;
+                        $protocol = isset($S->protocol) ? substr(strtolower(trim((string)$S->protocol)), 0, 24) : '';
+                        if ($protocol !== '') $entry['protocol'] = $protocol;
                         $ty = isset($S->type) ? strtolower(trim((string)$S->type)) : '';
                         if ($ty !== '' && $ty !== 'original') $entry['type'] = $ty;
                         $srcArr[] = $entry;
+                        $sourcesOut[] = $entry;
                         if (isset($S->user) && (int)$S->user > 0) {
                             $pubU = (int)$S->user;
                             $pu = PublicIdToReal($pubU, $IDHM);
@@ -8724,9 +8741,11 @@ $stmt->execute();*/
                     'id'      => $pubId,
                     'real_id' => $realId,
                     'changes' => [
-                        'name'  => $live_name,
-                        'media' => $mediaOut,
-                        'owner' => $ownerReal > 0 ? ($ownerReal + (int)$IDHM) : 0,
+                        'name'       => $live_name,
+                        'media_type' => $mediaType,
+                        'media'      => $mediaOut,
+                        'sources'    => $sourcesOut,
+                        'owner'      => $ownerReal > 0 ? ($ownerReal + (int)$IDHM) : 0,
                     ],
                 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 exit();
@@ -10936,6 +10955,10 @@ $stmt->execute();*/
         $meta['type'] = 'live';
         if ($meta) $live['meta'] = $meta;
 
+        // Backward compatibility: Live items without media_type are audio.
+        $live['media_type'] = (isset($live_data->media_type) && strtolower((string)$live_data->media_type) === 'video')
+            ? 'video' : 'audio';
+
         // Genres / languages via item2* (item_type = live = 7)
         $typeLive = ContentTypeToInt('live');
         if ($typeLive !== null) {
@@ -10974,6 +10997,9 @@ $stmt->execute();*/
 
                 if (isset($source_data['bit']) && $source_data['bit'] !== '') {
                     $src['bit'] = (int)$source_data['bit'];
+                }
+                if (!empty($source_data['protocol'])) {
+                    $src['protocol'] = substr(strtolower(trim((string)$source_data['protocol'])), 0, 24);
                 }
 
                 if ($owner) {
