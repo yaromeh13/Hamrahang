@@ -11068,7 +11068,7 @@ $stmt->execute();*/
                     $src['user'] = (int)$owner['id'];
                 }
 
-                if (!empty($source_data['file_id']))
+                if (!empty($source_data['file_id'])) {
                     $src['file_id'] = (string)$source_data['file_id'];
                 }
                 if (!empty($source_data['file_unq'])) {
