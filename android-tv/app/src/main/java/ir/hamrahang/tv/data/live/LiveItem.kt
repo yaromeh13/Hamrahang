@@ -15,8 +15,15 @@ data class LiveItem(
     val url: String? = null,
     val genres: List<LiveGenre> = emptyList(),
     val languages: List<String> = emptyList(),
-    val owner: SourceOwner? = null
+    val owner: SourceOwner? = null,
+    val mediaType: String = "audio"
 ) : LocalizedTitle {
+    val isVideo: Boolean
+        get() = mediaType.equals("video", ignoreCase = true)
+
     val thumb: String
-        get() = ImageResolver.thumb(meta?.tmb)
+        get() = ImageResolver.thumb(
+            if (isVideo) meta?.tmv?.takeIf { it.isNotBlank() } ?: meta?.tmb
+            else meta?.tmb
+        )
 }
