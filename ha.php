@@ -2960,6 +2960,7 @@ if (!empty($_SESSION['loggedin'])) {
     
     const ITEM_TYPES = ['song', 'podcast', 'musicvideo', 'video', 'album', 'artist', 'playlist'];
     const PLAYABLE_TYPES = ['song', 'podcast', 'musicvideo', 'video'];
+    const QUEUEABLE_TYPES = PLAYABLE_TYPES.concat(['live']);
     const FOLLOWABLE_TYPES = ['artist', 'album', 'playlist'];
     const HISTORY_MAX = 50;
     const HISTORY_FLUSH_N = 5;
@@ -6976,35 +6977,214 @@ if (!empty($_SESSION['loggedin'])) {
     async function CRLVDetail(id, callback) {
         LoadLiveCache();
         const cached = SN.live && SN.live[id] ? SN.live[id] : null;
+        let callbackDone = false;
+
+        const isCurrentRoute = () => {
+            let path = window.location.pathname || '';
+            while (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
+            return path === '/live/' + id || path.indexOf('/live/' + id + '/') === 0;
+        };
+
+        function finish() {
+            if (callbackDone) return;
+            callbackDone = true;
+            if (callback) callback();
+        }
 
         function draw() {
+            if (!isCurrentRoute()) return;
             const item = SN.live && SN.live[id] ? SN.live[id] : null;
             if (!item) {
                 CRNF('Live channel not found.');
-                if (callback) callback();
+                finish();
                 return;
             }
 
+            const isVideo = liveMediaType(item) === 'video';
+            const owner = item.owner && typeof item.owner === 'object' ? item.owner : null;
+            const thumb = item.meta
+                ? (isVideo ? (item.meta.tmv || item.meta.tmb) : item.meta.tmb)
+                : null;
+
             MCNT.innerHTML = '';
             document.title = (item.name || 'Live') + ' | Hamrahang';
-            appendLiveTypeHeader(liveMediaType(item) === 'video' ? 'پخش زنده تصویری' : 'پخش زنده صوتی');
-            CRLVCards([item.id], liveMediaType(item));
+            appendLiveTypeHeader(isVideo ? 'پخش زنده تصویری' : 'پخش زنده صوتی');
+
+            const header = OA(document.createElement('div'), {
+                className: 'page-detail-header-container' + (isVideo ? ' video-page-header' : '')
+            });
+
+            let stage = null;
+            let thumbWrap = null;
+            let videoSlot = null;
+            let inlineBar = null;
+
+            if (isVideo) {
+                stage = OA(document.createElement('div'), { className: 'video-stage ratio ratio-16x9' });
+                thumbWrap = OA(document.createElement('div'), { className: 'video-stage-thumb' });
+                if (thumb) {
+                    thumbWrap.append(OA(document.createElement('img'), {
+                        className: 'video-poster',
+                        src: UT + thumb + '.jpg',
+                        alt: item.name || 'Live'
+                    }));
+                }
+                videoSlot = OA(document.createElement('div'), { className: 'video-stage-slot' });
+                inlineBar = OA(document.createElement('div'), { className: 'video-inline-controls vis-none' });
+
+                const seek = OA(document.createElement('input'), {
+                    type: 'range',
+                    className: 'video-inline-seek',
+                    min: 0,
+                    max: 100,
+                    step: 0.1,
+                    value: 0
+                });
+                const row = OA(document.createElement('div'), { className: 'video-inline-row' });
+                const times = OA(document.createElement('div'), { className: 'video-inline-times' });
+                times.append(
+                    OA(document.createElement('span'), { className: 't-cur', innerHTML: '0:00' }),
+                    OA(document.createElement('span'), { innerHTML: ' / ' }),
+                    OA(document.createElement('span'), { className: 't-dur', innerHTML: '0:00' })
+                );
+                const inlineActions = OA(document.createElement('div'), { className: 'video-inline-actions' });
+                const fsBtn = OA(document.createElement('div'), {
+                    className: 'video-inline-fs',
+                    title: 'Fullscreen',
+                    innerHTML: svg_fsc
+                });
+                fsBtn.addEventListener('click', openPlayerShell);
+                inlineActions.append(fsBtn);
+                row.append(times, inlineActions);
+                inlineBar.append(seek, row);
+                stage.append(thumbWrap, videoSlot, inlineBar);
+                header.append(stage);
+            } else {
+                const artwork = OA(document.createElement('div'), { className: 'thumbail' });
+                artwork.append(OA(document.createElement('span'), {
+                    className: 'placeholder',
+                    innerHTML: typeof svg_liv !== 'undefined' ? svg_liv : ''
+                }));
+                if (thumb) {
+                    artwork.append(OA(document.createElement('img'), {
+                        src: UT + thumb + '.jpg',
+                        alt: item.name || 'Live'
+                    }));
+                }
+                header.append(artwork);
+            }
+
+            const content = OA(document.createElement('div'), { className: 'content' });
+            const titleWrap = OA(document.createElement('div'), { className: 'title' });
+            titleWrap.append(OA(document.createElement('h1'), {
+                title: item.name_fa || '',
+                innerHTML: item.name || 'Live'
+            }));
+            const ownerLine = OA(document.createElement('div'), {
+                className: 'artists',
+                textContent: owner && owner.name ? 'Live by ' + owner.name : 'Live stream'
+            });
+            const details = OA(document.createElement('div'), { className: 'detailes' });
+            if (item.meta && item.meta.ncp != null && item.meta.ncp !== '') {
+                details.append(OA(document.createElement('div'), {
+                    className: 'detaile',
+                    innerHTML: svg_playc + ' ' + item.meta.ncp
+                }));
+            }
+            content.append(titleWrap, ownerLine, details);
+            header.append(content);
+            applyPageBackdrop(item, header);
+            MCNT.append(header);
+
+            const actionBar = OA(document.createElement('div'), { className: 'page-detail-actions' });
+            const play = OA(document.createElement('div'), {
+                className: 'play-pause',
+                innerHTML: svg_plys
+            });
+            play.setAttribute('data-item-id', String(item.id));
+            play.addEventListener('click', async (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                try {
+                    await setPlayQueue([{ id: item.id, type: 'live' }], item.id, 'live');
+                    const P = ensurePlayer();
+                    if (isVideo && P.nowPlaying &&
+                        P.nowPlaying.type === 'live' &&
+                        Number(P.nowPlaying.id) === Number(item.id) &&
+                        P.nowPlaying.player === 'video') {
+                        enterInlineVideoStage(stage, thumbWrap, videoSlot, inlineBar);
+                    }
+                } catch (err) {
+                    console.warn('Live playback failed:', err && err.message ? err.message : err);
+                    CRTM('Unable to start Live playback');
+                }
+            });
+
+            const isFav = IsFavorite('live', item.id);
+            const bookmark = OA(document.createElement('div'), {
+                className: 'btn btn-model-1 focusable',
+                innerHTML: isFav ? svg_fav2 : svg_fav
+            });
+            bookmark.addEventListener('click', () => {
+                const now = ToggleFavorite('live', item.id);
+                bookmark.innerHTML = now ? svg_fav2 : svg_fav;
+            });
+
+            const share = OA(document.createElement('div'), {
+                className: 'btn btn-model-1',
+                innerHTML: svg_sha
+            });
+            share.addEventListener('click', () => copyText(window.location.href, 'Link copied'));
+
+            const more = OA(document.createElement('div'), {
+                className: 'btn btn-model-1',
+                innerHTML: svg_dot
+            });
+            more.addEventListener('click', () => CRBW(item.id, 'live'));
+
+            actionBar.append(play, bookmark, share, more);
+            MCNT.append(actionBar);
+
+            if (item.meta && (item.meta.des || item.meta.rls || item.meta.ncp != null || item.meta.dur != null)) {
+                MCNT.append(
+                    OA(document.createElement('div'), {
+                        className: 'section-header m-top-3',
+                        innerHTML: '<h2 class="title">About Live</h2>'
+                    }),
+                    CRAB(item.meta)
+                );
+            }
+
+            if (isVideo) {
+                const P = ensurePlayer();
+                if (P.nowPlaying && P.nowPlaying.type === 'live' &&
+                    Number(P.nowPlaying.id) === Number(item.id) &&
+                    P.nowPlaying.player === 'video') {
+                    enterInlineVideoStage(stage, thumbWrap, videoSlot, inlineBar);
+                }
+            }
+
             try { ADE(); } catch (e) {}
-            if (callback) callback();
+            finish();
         }
 
         if (cached && cached.full) {
             draw();
             return;
         }
+
         if (cached) draw();
+
         try {
             const ready = await EnsureItems('live', [id]);
-            if (ready.length && (window.location.pathname || '').indexOf('/live/' + id) === 0) draw();
-            else if (!cached) draw();
+            if (ready.length && isCurrentRoute()) {
+                draw();
+            } else if (!cached && isCurrentRoute()) {
+                draw();
+            }
         } catch (err) {
             console.warn('Live detail resolve failed:', err && err.message ? err.message : err);
-            if (!cached) draw();
+            if (!cached && isCurrentRoute()) draw();
         }
     }
 
@@ -13972,6 +14152,7 @@ const PROFILE_KEY = 'ha_profile';
         else if (T === 'artist') url = HA;
         else if (T === 'playlist') url = HPL;
         else if (T === 'video' || T === 'musicvideo') url = HV;
+        else if (T === 'live') url = '/live/';
     
         const artistList = [];
         let primaryArtistUrl = '';
@@ -13996,7 +14177,7 @@ const PROFILE_KEY = 'ha_profile';
         
         const isFav = IsFavorite(T, id);
     
-        if (PLAYABLE_TYPES.indexOf(T) !== -1) {
+        if (QUEUEABLE_TYPES.indexOf(T) !== -1) {
             
             const btnLike = OA(document.createElement('div'), {
                 className: 'item',
@@ -14019,15 +14200,17 @@ const PROFILE_KEY = 'ha_profile';
             });
             nodes.push(btnQ);
     
-            const tm2 = OA(document.createElement('div'), {
-                className: 'item',
-                innerHTML: svg_a2p + 'Add to Playlist'
-            });
-            tm2.addEventListener('click', () => {
-                // بدون بستن sheet — اگر ensureBottomSheet داری
-                CRBW(id, T, 'pls', ctx);
-            });
-            nodes.push(tm2);
+            if (T !== 'live') {
+                const tm2 = OA(document.createElement('div'), {
+                    className: 'item',
+                    innerHTML: svg_a2p + 'Add to Playlist'
+                });
+                tm2.addEventListener('click', () => {
+                    // بدون بستن sheet — اگر ensureBottomSheet داری
+                    CRBW(id, T, 'pls', ctx);
+                });
+                nodes.push(tm2);
+            }
         } else {
             const btnFav = OA(document.createElement('div'), {
                 className: 'item',
@@ -14081,7 +14264,7 @@ const PROFILE_KEY = 'ha_profile';
         });
         tm4.addEventListener('click', () => {
             RmvDBW();
-            chp(url + e.id + '/' + (T !== 'artist' ? primaryArtistUrl + '-' : '') + (e.url || ''));
+            chp(T === 'live' ? liveRoute(e) : url + e.id + '/' + (T !== 'artist' ? primaryArtistUrl + '-' : '') + (e.url || ''));
         });
         nodes.push(tm4);
     
@@ -14602,7 +14785,7 @@ const PROFILE_KEY = 'ha_profile';
                     position: i
                 };
             })
-            .filter((r) => PLAYABLE_TYPES.indexOf(r.type || 'song') !== -1)
+            .filter((r) => QUEUEABLE_TYPES.indexOf(r.type || 'song') !== -1)
             .sort((a, b) => a.position - b.position)
             .filter((r) => {
     
@@ -14778,7 +14961,7 @@ const PROFILE_KEY = 'ha_profile';
         const beforeFilter = rows.length;
     
         rows = rows.filter(
-            (r) => PLAYABLE_TYPES.indexOf(r.type || 'song') !== -1
+            (r) => QUEUEABLE_TYPES.indexOf(r.type || 'song') !== -1
         );
     
         if (rows.length !== beforeFilter) {
@@ -14868,6 +15051,7 @@ const PROFILE_KEY = 'ha_profile';
     function addToPlayQueue(itemId, itemType) {
         const P = ensurePlayer();
         const type = itemType || 'song';
+        if (QUEUEABLE_TYPES.indexOf(type) === -1) return false;
         if (P.queue.some((r) => Number(r.id) === Number(itemId) && r.type === type)) return false;
         P.queue.push({ id: itemId, type, position: P.queue.length });
         CRQT();
@@ -15170,6 +15354,7 @@ const PROFILE_KEY = 'ha_profile';
             else if (type === 'podcast') { item = SN.podcast && SN.podcast[row.id]; itemUrl = HS; }
             else if (type === 'musicvideo') { item = SN.musicvideo && SN.musicvideo[row.id]; itemUrl = HV; }
             else if (type === 'video') { item = SN.video && SN.video[row.id]; itemUrl = HV; }
+            else if (type === 'live') { item = SN.live && SN.live[row.id]; itemUrl = liveRoute(item); }
             if (!item) return;
 
             const artistList = [];
@@ -15179,6 +15364,7 @@ const PROFILE_KEY = 'ha_profile';
                 if (SN.artist && SN.artist[aid]) artistList.push(SN.artist[aid]);
             });
             if (artistList.length) primaryArtistUrl = artistList[0].url || '';
+            const detailHref = type === 'live' ? liveRoute(item) : itemUrl + item.id + '/' + primaryArtistUrl + '-' + (item.url || '');
 
             const isCurrent =
                 P.queueIndex >= 0 &&
@@ -15195,10 +15381,10 @@ const PROFILE_KEY = 'ha_profile';
                 rowEl.append(num);
 
                 const thumb = OA(document.createElement('div'), { className: 'pq-thumb' });
-                let tmb = item.meta && item.meta.tmb ? item.meta.tmb : null;
+                let tmb = item.meta ? (type === 'live' && liveMediaType(item) === 'video' ? (item.meta.tmv || item.meta.tmb) : item.meta.tmb) : null;
                 if (!tmb && artistList.length === 1 && artistList[0].meta) tmb = artistList[0].meta.tmb || null;
                 if (tmb) thumb.append(OA(document.createElement('img'), { src: UT + tmb + '.jpg', alt: '' }));
-                else thumb.append(OA(document.createElement('span'), { className: 'placeholder', innerHTML: svg_sng }));
+                else thumb.append(OA(document.createElement('span'), { className: 'placeholder', innerHTML: type === 'live' ? svg_liv : svg_sng }));
                 const playIdx = () => {
                     const idx = P.queue.findIndex((r) => Number(r.id) === Number(row.id) && r.type === type);
                     if (idx >= 0) playQueueAt(idx);
@@ -15211,7 +15397,7 @@ const PROFILE_KEY = 'ha_profile';
                     className: 'n1',
                     innerHTML: (item.name || '') + itemAltNamesHtml(item)
                 }));
-                const aNames = artistList.map((a) => a.name).filter(Boolean).join(' - ');
+                const aNames = type === 'live' ? ((item.owner && item.owner.name) || '') : artistList.map((a) => a.name).filter(Boolean).join(' - ');
                 if (aNames) meta.append(OA(document.createElement('div'), { className: 'n2', innerHTML: aNames }));
                 meta.addEventListener('click', playIdx);
                 rowEl.append(meta);
@@ -15247,11 +15433,11 @@ const PROFILE_KEY = 'ha_profile';
                 className: 'track-line' + (isCurrent ? ' playing' : '')
             });
             const ela = OA(document.createElement('a'), {
-                href: itemUrl + item.id + '/' + primaryArtistUrl + '-' + (item.url || '')
+                href: detailHref
             });
-            const artwork = OA(document.createElement('div'), { className: 'artwork ratio ratio-1x1' });
+            const artwork = OA(document.createElement('div'), { className: 'artwork ratio ' + (type === 'live' && liveMediaType(item) === 'video' ? 'ratio-16x9' : 'ratio-1x1') });
             artwork.append(OA(document.createElement('span'), { className: 'placeholder' }));
-            let tmb2 = item.meta && item.meta.tmb ? item.meta.tmb : null;
+            let tmb2 = item.meta ? (type === 'live' && liveMediaType(item) === 'video' ? (item.meta.tmv || item.meta.tmb) : item.meta.tmb) : null;
             if (!tmb2 && artistList.length === 1 && artistList[0].meta) tmb2 = artistList[0].meta.tmb || null;
             if (tmb2) artwork.append(OA(document.createElement('img'), { src: UT + tmb2 + '.jpg' }));
             ela.append(artwork);
@@ -15269,19 +15455,23 @@ const PROFILE_KEY = 'ha_profile';
             const det = OA(document.createElement('div'), { className: 'title' });
             const titleA = OA(document.createElement('a'), {
                 draggable: 'false',
-                href: itemUrl + item.id + '/' + primaryArtistUrl + '-' + (item.url || ''),
+                href: detailHref,
                 innerHTML: (item.name || '') + itemAltNamesHtml(item)
             });
             det.append(titleA);
             const dt2 = OA(document.createElement('div'), { className: 'text2 artist artists-inline' });
-            artistList.forEach((artistObj, j) => {
-                const artL = OA(document.createElement('a'), {
-                    href: HA + artistObj.id + '/' + (artistObj.url || '')
+            if (type === 'live') {
+                if (item.owner && item.owner.name) dt2.append(OA(document.createElement('span'), { innerHTML: item.owner.name }));
+            } else {
+                artistList.forEach((artistObj, j) => {
+                    const artL = OA(document.createElement('a'), {
+                        href: HA + artistObj.id + '/' + (artistObj.url || '')
+                    });
+                    artL.append(OA(document.createElement('span'), { innerHTML: artistObj.name }));
+                    dt2.append(artL);
+                    if (j < artistList.length - 1) dt2.append(OA(document.createElement('span'), { innerHTML: ' - ' }));
                 });
-                artL.append(OA(document.createElement('span'), { innerHTML: artistObj.name }));
-                dt2.append(artL);
-                if (j < artistList.length - 1) dt2.append(OA(document.createElement('span'), { innerHTML: ' - ' }));
-            });
+            }
             dst.append(det, dt2);
 
             const dmt = OA(document.createElement('div'), { className: 'meta' });
@@ -15333,7 +15523,8 @@ const PROFILE_KEY = 'ha_profile';
     }
 
     // ---- media helpers ----
-    function playerKind(type) {
+    function playerKind(type, item) {
+        if (type === 'live') return liveMediaType(item) === 'video' ? 'video' : 'audio';
         return (type === 'video' || type === 'musicvideo') ? 'video' : 'audio';
     }
     
@@ -15353,6 +15544,7 @@ const PROFILE_KEY = 'ha_profile';
     function getItemFromQueueRow(row) {
         if (!row) return null;
         const t = row.type || 'song';
+        if (t === 'live' && SN.live && SN.live[row.id]) return SN.live[row.id];
         if (t === 'song' && SN.song && SN.song[row.id]) return SN.song[row.id];
         if (t === 'podcast' && SN.podcast && SN.podcast[row.id]) return SN.podcast[row.id];
         if (t === 'musicvideo' && SN.musicvideo && SN.musicvideo[row.id]) return SN.musicvideo[row.id];
@@ -15373,6 +15565,7 @@ const PROFILE_KEY = 'ha_profile';
         const t = row.type || 'song';
         try {
             if (t === 'song' || t === 'podcast') await gjs(['song', row.id]);
+            else if (t === 'live') await gjs(['live', row.id]);
             else await gjs(['video', row.id]);
         } catch (e) {
             console.warn('ensureQueueItemLoaded', e);
@@ -16917,7 +17110,7 @@ const PROFILE_KEY = 'ha_profile';
             return;
         }
         
-        const kind = playerKind(row.type);
+        const kind = playerKind(row.type, item);
         // سوییچ مدیا: pause + clear src روی عنصر غیرفعال
         if (kind === 'video') {
             if (Audio) {
