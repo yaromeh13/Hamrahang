@@ -21,5 +21,7 @@ data class LiveEntity(
     val languages: String = "[]",
     val owner: String? = null,
     @ColumnInfo(defaultValue = "0")
-    val isFull: Boolean = false
+    val isFull: Boolean = false,
+    @ColumnInfo(defaultValue = "'audio'")
+    val mediaType: String = "audio"
 )
