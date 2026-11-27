@@ -3635,6 +3635,10 @@ fieldset:disabled .btn {
 }
 
 .live-owner-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 42px;
     width: 42px;
     height: 42px;
     min-width: 42px;
@@ -3651,20 +3655,40 @@ fieldset:disabled .btn {
     object-fit: cover;
 }
 
-/* Fixed Live type headers use the same compact icon as the navigation. */
+/* Fixed Live type headers: center SVG/PNG exactly in the circular holder. */
 .live-type-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    line-height: normal;
+    line-height: 0;
 }
 
-.live-type-icon svg,
-.live-type-icon img {
-    display: inline-block;
+.live-type-icon > svg,
+.live-type-icon > img {
+    display: block;
+    flex: 0 0 24px;
     width: 24px;
     height: 24px;
-    vertical-align: middle;
+    margin: auto;
+    object-fit: contain;
+    border-radius: 0;
+}
+
+/* A channel without artwork uses the same Live icon as its visual fallback. */
+.live-card-placeholder-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.live-card-placeholder-icon > svg,
+.live-card-placeholder-icon > img {
+    display: block;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    margin: auto;
     object-fit: contain;
     border-radius: 0;
 }
