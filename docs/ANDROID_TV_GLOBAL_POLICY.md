@@ -42,7 +42,8 @@ Before implementing or changing Android TV behavior, follow this sequence:
 1. [Network, Offline Mode & Recovery Policy](#1-network-offline-mode--recovery-policy)
 2. [Image & Media Policy](#2-image--media-policy)
 3. [Code Reference Index](#3-code-reference-index)
-4. [Future Policy Sections](#4-future-policy-sections)
+4. [Live — Audio & Video Behavior](#4-live--audio--video-behavior)
+5. [Future Policy Sections](#5-future-policy-sections)
 
 ---
 
@@ -589,12 +590,13 @@ Paths below are repository-relative and were checked against the current `main` 
 
 | File / area | Responsibility |
 |---|---|
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/AppDatabase.kt` | Room database schema and current database version (35 in the inspected source). |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/DatabaseProvider.kt` | Room construction and registered schema migrations. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/AppDatabase.kt` | Room database schema and current database version (38 in the inspected source). |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/DatabaseProvider.kt` | Room construction and registered schema migrations, including Live media-type migration 37→38. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/DatabaseUpdater.kt` | Maps/merges received DTO data into local Room entities. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/data/auth/AuthSessionManager.kt` | Account/session restoration used by MainActivity during startup/recovery. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/data/playlist/PlaylistRepository.kt` | Playlist refresh and synchronization used by the current reconnect flow. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/data/` | Content DTOs, repositories, Room entities and DAOs; inspect the specific repository before changing a content type's offline behavior. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/` | Live DTO/domain models, repository, Room mapper and latest/search/resolve data flow. |
 
 ## 3.4 Images and playback
 
@@ -604,10 +606,14 @@ Paths below are repository-relative and were checked against the current `main` 
 | `android-tv/app/src/main/res/drawable/art_focus_border.xml` | Transparent outer circular artist focus frame; red border only when selected. |
 | `android-tv/app/src/main/res/layout/item_content.xml` | Shared square content card image area and centered fallback display. |
 | `android-tv/app/src/main/res/layout/item_musicvideo.xml` | Shared landscape Video/MusicVideo image area and centered fallback display. |
+| `android-tv/app/src/main/res/layout/item_live_video.xml` | Landscape 16:9 card layout used by Live video items. |
 | `android-tv/app/src/main/res/layout/item_artist.xml` | Circular artist image card layout. |
 | `android-tv/app/src/main/res/drawable/card_thumbnail_surface.xml` | Dark rounded background directly behind square/landscape thumbnail content. |
 | `android-tv/app/src/main/res/drawable/artist_thumbnail_surface.xml` | Dark circular background directly behind artist artwork/fallback. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt` | Artwork-key priority, thumbnail URL construction, Hero/owner resolution, shared Glide request helper. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveFragment.kt` | Live page loading/search, owner and media-type grouping, and Audio/Video playback entry points. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveRowsAdapter.kt` | Owner/system section headers and horizontal Live card rows. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveAdapter.kt` | Live card binding, thumbnail fallback, D-pad focus and square/landscape layout selection. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | ExoPlayer ownership, current media/source, playback position and player controls. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerState.kt` | Shared player UI/playback state (verify exact path before editing if the source is moved). |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/channel/HomeChannelPublisher.kt` | Publishes Android TV Home Channel content; currently called during app initialization and reconnect. |
@@ -620,7 +626,140 @@ Paths below are repository-relative and were checked against the current `main` 
 
 ---
 
-# 4. Future Policy Sections
+# 4. Live — Audio & Video Behavior
+
+## 4.1 Scope and relationship to Web TV
+
+This section defines the Android TV behavior for Live audio and Live video. The Web TV implementation in the current `index.html` is the product-scenario reference; Android must reproduce the user-visible scenario through native Fragments, Leanback rows, D-pad navigation and the existing playback architecture.
+
+This policy covers Live card data, grouping, artwork, card presentation, incomplete-card resolution, and the playback entry point. It does **not** define the Live player's LIVE indicator, elapsed-time/duration display, or seek-bar behavior. Those player controls are intentionally deferred until the user specifies their expected behavior.
+
+### Core rules
+
+- Read the top-level API field `media_type` to distinguish Live video from Live audio.
+- A missing or unrecognized `media_type` is treated as audio for backward compatibility.
+- Do not infer media type from the source URL, file extension, or optional source metadata.
+- Do not change the existing API host or create a new Live API contract. Android uses the existing API at `https://hamrahang.ir`.
+- Keep Live data in the existing Live repository and Room cache; do not create a parallel cache or new API storage model for presentation-only behavior.
+- Keep Android native and D-pad friendly. Web routes and browser-specific UI are reference behavior, not implementation instructions for Android.
+- Source `protocol` metadata, where available, is descriptive metadata only. It does not by itself guarantee that a particular streaming protocol is supported by the player.
+
+## 4.2 Required Live page scenarios
+
+### A. System-owned or ownerless Live cards
+
+- Cards with no owner and cards whose owner ID is `0` belong to the system-owned Live sections.
+- Show separate fixed sections:
+  1. **Live Video**
+  2. **Live Audio**
+- Show the Live icon in the section artwork area.
+- Do not show an empty/unknown owner title for these system sections.
+- Keep the two media types in separate horizontal rows; do not mix audio and video cards in one row.
+
+### B. Live cards belonging to other owners
+
+- Group cards by their owner.
+- Preserve the owner's display name and owner artwork.
+- If an owner has both media types, show separate Video and Audio rows under that owner.
+- Avoid repeating the same owner header for both rows when the layout can represent the split as one owner group.
+- Do not merge different owners into one queue or one visual group.
+
+### C. Card artwork and aspect ratio
+
+- Live Audio cards use the existing square content-card presentation.
+- Live Video cards use a landscape **16:9** presentation.
+- For Live Video artwork, prefer `meta.tmv`, then fall back to `meta.tmb`.
+- For Live Audio artwork, use `meta.tmb`.
+- If a card has no usable thumbnail or image loading fails, show the Live fallback icon centered in the image viewport.
+- The thumbnail fallback must not remove or alter the card's outer focus border, D-pad focus behavior, title, or click handling.
+
+### D. Selecting and playing a Live card
+
+- Selecting a Live Audio card starts an audio Live session using the existing internal playback entry point.
+- Selecting a Live Video card starts a video Live session and opens the main fullscreen player directly.
+- Audio queues contain only Live Audio cards from the selected owner/system section.
+- Video queues contain only Live Video cards from the selected owner/system section.
+- Preserve the selected card as the queue's current item; do not silently start from the first item when the selected item is available.
+- Keep the existing shared player/session architecture. Do not create a second ExoPlayer solely for Live video.
+- The fullscreen player must continue to support the application's existing minimize/return-to-mini-player behavior where that behavior is already supported by the shared player architecture.
+
+### E. Incomplete Live cards and offline cache
+
+- The latest Live response may contain summary cards without all metadata or playable sources.
+- Reuse the existing Live resolve operation to complete incomplete cards; do not invent a new endpoint or response shape.
+- Resolve only cards that are incomplete and do not already have a complete cached copy.
+- If resolving a card fails, retain and use its complete local Room copy when one exists.
+- A search failure must not make cached Live cards unusable; local search/filtering remains available.
+- Do not overwrite a complete local Live record with an incomplete summary response.
+- Preserve existing owner data, card ordering and unrelated cached Live records when merging results.
+
+## 4.3 Current Android implementation — source audit
+
+The following implementation was re-opened on the `main` branch while this section was added. This is a source audit, not a claim that the app has passed a Gradle build or TV/device test.
+
+| Area | Current source implementation | Status |
+|---|---|---|
+| API model | `data/live/LiveDto.kt` maps the top-level JSON `media_type` field. A missing value is treated as audio by the domain model. | Implemented. |
+| Domain model and artwork | `data/live/LiveItem.kt` exposes `isVideo`; video thumbnail priority is `tmv → tmb`, while audio uses `tmb`. | Implemented. |
+| Room persistence | `data/local/entity/LiveEntity.kt` stores `mediaType`. `AppDatabase.kt` is version 38, and `DatabaseProvider.kt` adds migration 37→38 with an audio default for existing rows. | Implemented in source; migration still needs runtime verification against an existing database. |
+| DTO/entity mapping | `data/live/LiveEntityMapper.kt` maps media type and preserves the existing value when an update omits it. A complete cached card is retained when a partial response arrives. | Implemented in source. |
+| Latest list and resolve | `data/live/LiveRepository.kt` resolves incomplete latest cards when no complete local copy exists; a resolver failure falls back to the cached complete record. | Implemented in source. |
+| Search and offline fallback | The same repository resolves incomplete search results. `LiveFragment.kt` falls back to filtering cached Live items if the remote search fails. | Implemented in source. |
+| Owner/media grouping | `ui/LiveFragment.kt` groups owner ID 0 and missing owners as system-owned, then splits each owner group into Video and Audio rows. | Implemented in source. |
+| Section header | `ui/LiveRowsAdapter.kt` displays fixed Live Video/Live Audio headings for system rows and owner name/artwork for other rows. | Implemented in source. |
+| Card layout | `ui/LiveAdapter.kt` selects `item_live_video.xml` for video and `item_content.xml` for audio. | Implemented in source; visual sizing should be checked on TV. |
+| Playback routing | `ui/LiveFragment.kt` creates type-specific Live queue items, opens the fullscreen player for video and the internal playback screen for audio. `playback/PlaybackManager.kt` uses the Live media type when preparing playback. | Implemented in source; playback and minimize behavior need device testing. |
+| Player LIVE controls | The player-specific LIVE indicator, elapsed time/duration and seek-bar policy has not been specified by the user. | Deliberately deferred; do not change in this section. |
+
+## 4.4 Relevant Android source paths
+
+| File | Responsibility |
+|---|---|
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/LiveDto.kt` | Deserializes Live API cards, including top-level `media_type`. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/LiveItem.kt` | Live domain model, audio/video classification and thumbnail priority. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/LiveRepository.kt` | Latest list, search, resolve, owner synchronization and offline fallback. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/LiveEntityMapper.kt` | Converts and merges Live DTOs and Room entities without replacing complete cached cards with partial responses. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/entity/LiveEntity.kt` | Persists Live metadata, owner, sources and media type. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/AppDatabase.kt` | Room schema version 38 and Live entity registration. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/DatabaseProvider.kt` | Live schema migrations, including 37→38. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveFragment.kt` | Loads and groups Live cards, handles search and starts type-specific Live sessions. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveRowsAdapter.kt` | Renders owner/system headers and horizontal rows. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveAdapter.kt` | Renders Live cards, selects the card layout and handles D-pad focus/clicks. |
+| `android-tv/app/src/main/res/layout/item_live_video.xml` | Landscape Live Video card layout. |
+| `android-tv/app/src/main/res/layout/item_content.xml` | Square Live Audio card layout. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/playback/PlaybackManager.kt` | Shared playback manager; selects the media type for Live playback. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | Shared ExoPlayer ownership and player controls. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/PlayerFragment.kt` | Main player UI. Do not change its LIVE indicator/time/seek behavior until the user provides the remaining requirements. |
+
+## 4.5 State preservation and regression risks
+
+- Preserve the selected Live card and the correct queue index when starting playback.
+- Keep Audio and Video queues separate, including for owners that publish both types.
+- Preserve the existing D-pad focus path between search controls, rows and cards.
+- Do not clear or replace cached Live data merely because a resolve or search request failed.
+- Keep the Room 37→38 migration non-destructive; existing Live rows must receive the backward-compatible audio default.
+- Do not let a card without a thumbnail display stale artwork recycled from another card/owner.
+- Do not assume source protocol metadata automatically enables HLS, DASH or another playback implementation.
+- Do not interrupt an already playing item while loading or refreshing Live metadata.
+
+## 4.6 Acceptance criteria
+
+1. A Live item with `media_type = "video"` appears in a Video row and a Live item with `media_type = "audio"` (or no media type) appears in an Audio row.
+2. Ownerless and owner-ID-0 cards appear under the fixed Live Video/Live Audio headings, never under Unknown Owner.
+3. An owner with both types has separate Video and Audio rows, with the owner's identity retained.
+4. Audio cards are square; video cards are landscape 16:9.
+5. Video thumbnails prefer `tmv` then `tmb`; audio thumbnails use `tmb`; missing artwork shows the Live icon.
+6. Selecting audio opens the internal audio playback flow; selecting video opens the main fullscreen player.
+7. The selected Live item is the current queue item, and queue contents do not mix audio and video.
+8. An incomplete latest/search card is resolved through the existing API contract where needed; a complete local card remains usable if resolution fails.
+9. Existing Room data survives migration to version 38.
+10. D-pad focus, row navigation, back navigation and the existing shared player/minimize behavior work on the target TV.
+11. The app builds with the established project toolchain and is tested on an Android TV device/emulator.
+12. The player's LIVE indicator, time/duration and seek bar remain unchanged until their behavior is separately specified and approved.
+
+---
+
+# 5. Future Policy Sections
 
 Add new policies here as they are discussed and confirmed. Keep each topic separate and include:
 
