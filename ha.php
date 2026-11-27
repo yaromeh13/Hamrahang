@@ -7034,21 +7034,8 @@ if (!empty($_SESSION['loggedin'])) {
                 videoSlot = OA(document.createElement('div'), { className: 'video-stage-slot' });
                 inlineBar = OA(document.createElement('div'), { className: 'video-inline-controls vis-none' });
 
-                const seek = OA(document.createElement('input'), {
-                    type: 'range',
-                    className: 'video-inline-seek',
-                    min: 0,
-                    max: 100,
-                    step: 0.1,
-                    value: 0
-                });
+                // Live controls intentionally omit elapsed time and seek until their behavior is specified.
                 const row = OA(document.createElement('div'), { className: 'video-inline-row' });
-                const times = OA(document.createElement('div'), { className: 'video-inline-times' });
-                times.append(
-                    OA(document.createElement('span'), { className: 't-cur', innerHTML: '0:00' }),
-                    OA(document.createElement('span'), { innerHTML: ' / ' }),
-                    OA(document.createElement('span'), { className: 't-dur', innerHTML: '0:00' })
-                );
                 const inlineActions = OA(document.createElement('div'), { className: 'video-inline-actions' });
                 const fsBtn = OA(document.createElement('div'), {
                     className: 'video-inline-fs',
@@ -7057,8 +7044,8 @@ if (!empty($_SESSION['loggedin'])) {
                 });
                 fsBtn.addEventListener('click', openPlayerShell);
                 inlineActions.append(fsBtn);
-                row.append(times, inlineActions);
-                inlineBar.append(seek, row);
+                row.append(inlineActions);
+                inlineBar.append(row);
                 stage.append(thumbWrap, videoSlot, inlineBar);
                 header.append(stage);
             } else {
