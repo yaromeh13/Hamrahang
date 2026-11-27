@@ -44,7 +44,7 @@ import ir.hamrahang.tv.data.local.entity.PodcastEntity
         PlaylistItemEntity::class,
         LiveEntity::class
     ],
-    version = 37,
+    version = 38,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
