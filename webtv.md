@@ -208,15 +208,122 @@ The existence of a metadata field must not be assumed. Always preserve the docum
 
 ## 6. Remote Control and Focus Navigation
 
-- D-pad / remote navigation is a first-class interaction model.
-- Interactive cards and controls must participate in the existing focus-navigation system.
-- After rendering a new page or replacing a content row, refresh focusability through the existing navigation flow.
-- Focus should move predictably between navigation, rows, cards, and player controls.
-- Do not remove keyboard/remote focus outlines without providing an equally visible replacement.
-- Avoid click-only interactions for controls that users must also operate with a TV remote.
+### 6.1 Navigation engine
+
+The Web TV uses **`spatial_navigation.js`** as its spatial / directional focus-navigation engine.
+
+- The file is written in **ES5-compatible JavaScript**. The current source was checked for modern syntax such as `let`, `const`, arrow functions, classes, template literals, and `async/await`; none was found.
+- The implementation is based on Luke Chang's JavaScript Spatial Navigation project and includes project-side compatibility work for older TV browsers.
+- Its compatibility work is intended to make selector matching, focus tracking, and collection handling more resilient on older Samsung/LG TV browser engines.
+- Keep this file ES5-compatible. Do not introduce newer JavaScript syntax or APIs without a verified fallback for the oldest supported TV browsers.
+- This is a source-level compatibility review, not a claim that every TV model or browser has been runtime-tested.
+
+### 6.2 Compatibility helpers inside `spatial_navigation.js`
+
+The file contains the following important helpers and fallback layers:
+
+| Helper | Responsibility / compatibility purpose |
+|---|---|
+| `nodeContains(root, el)` | Checks whether an element belongs to a root element. Uses native `contains()` when available and falls back to walking the `parentNode` chain. |
+| `trimSel(str)` | Trims whitespace from selector strings without requiring newer string APIs. |
+| `matchOneSelector(el, sel)` | Matches common selectors manually, including `#id tag`, `#id .class`, `.class`, `tag`, and `tag.class`; uses document-level `querySelectorAll` only as a later fallback. |
+| `elementMatchesSelector(selector)` | Tries available native `matches` variants, then document `querySelectorAll`, then manual selector matching. This specifically avoids trusting a false result from some broken TV implementations. |
+| `arrayFilter(arr, fn)` | Array-filter replacement implemented with a basic loop. |
+| `arrayFind(arr, fn)` | Array-find replacement implemented with a basic loop. |
+| `arrayForEach(arr, fn)` | Array-forEach replacement implemented with a basic loop. |
+| `arrayMap(arr, fn)` | Array-map replacement implemented with a basic loop. |
+| `objectKeys(obj)` | Uses `Object.keys` when available and otherwise enumerates own properties with `hasOwnProperty`. |
+| `queryAll(selector, root)` | Collects matching elements; prefers `querySelectorAll` and has manual fallbacks for common simple selectors. |
+| `getCurrentFocusedElement()` | Uses `document.activeElement`; if an older TV resets it to `body`, recovers the last focused element remembered by the navigation sections. |
+
+The file also provides an `Array.isArray` polyfill when that method is missing.
+
+**Important limitation:** the source still uses DOM event methods such as `window.addEventListener` and `window.removeEventListener`. It does not currently provide an `attachEvent` fallback. Do not describe the file as supporting every legacy browser regardless of its DOM API; test the actual target browser or add a carefully scoped fallback if a supported device lacks these methods.
+
+### 6.3 Loading and initialization order
+
+The application loads `spatial_navigation.js` before the inline application code that configures and uses `SpatialNavigation`.
+
+The current startup sequence in `index.html` is:
+
+1. Load `spatial_navigation.js`, which exposes the global `window.SpatialNavigation` object.
+2. In the navigation setup code, assign the global object to the local `sn` variable.
+3. Call `sn.init()` once. This registers the keyboard and focus event listeners used by the navigation engine.
+4. Register the application's navigation sections with `sn.add()`.
+5. Call `sn.makeFocusable()` to prepare the current matching elements.
+6. Call `sn.focus('main')` to place the initial focus in the main content section.
+7. When dynamic content is rendered later, call `makeFocusable()` again for the new elements and explicitly restore or move focus when that screen's flow requires it.
+
+The engine's `init()` is guarded by an internal ready flag, so repeated calls do not register the same listeners again while it remains initialized. Section registration and focus preparation are separate operations: adding a section does not itself make all its matching elements focusable.
+
+### 6.4 Navigation sections configured by the Web TV
+
+| Section ID | Selector / configuration | Purpose |
+|---|---|---|
+| `menu` | `#menu a, #menu .focusable` | Sidebar menu. Entering restores the last focused item; moving right can enter `main`. |
+| `nav` | `disabled: true` | Registered but disabled section. |
+| `main` | `#main-content a, #main-content .focusable` | Main page content and cards. Entering restores the last focused item; moving left can return to `menu`. |
+| `player-box` | `#player-box .btn, #player-box .focusable` | Player controls. Uses `restrict: 'self-only'` and defaults to `#play`. |
+| `modal` | `#modal .btn, #modal .focusable` | Legacy settings modal section. Uses `restrict: 'self-only'` and defaults to `#default-view`. |
+| `hpop` | `#hpop .focusable` | In-app popup section. Uses `restrict: 'self-only'` and a default focus element inside the popup body. |
+
+### 6.5 Public SpatialNavigation methods used by the app
+
+| Method | How the Web TV uses it |
+|---|---|
+| `init()` | Installs the engine's keydown, keyup, focus, and blur listeners during navigation setup. |
+| `add(config)` | Registers the named navigation sections and their selectors / movement rules. |
+| `makeFocusable(sectionId)` | Adds `tabindex="-1"` to matching elements that are not already natively focusable; can target one section or all registered sections. |
+| `focus(target)` | Moves focus to a section, selector, or element. Used for initial focus and after page / panel transitions. |
+| `enable(sectionId)` / `disable(sectionId)` | Activates or temporarily disables a section, such as when moving between player controls and a modal. |
+| `pause()` / `resume()` | Temporarily pauses or resumes directional navigation processing. |
+| `move(direction)` | Programmatic directional movement supported by the engine. |
+| `remove(sectionId)` / `clear()` | Removes one or all registered sections when explicitly needed. |
+
+### 6.6 Application-side focus helpers and remote handling
+
+These helpers and handlers live in `index.html`; they are not part of the navigation library itself:
+
+| Helper / handler | Responsibility |
+|---|---|
+| `CFOC(target, section)` | Refreshes focusability for the requested section, finds a target element, and focuses it. Includes fallback lookup for selected selectors when `querySelector` is unavailable. |
+| `dpadKey(keyCode)` | Creates and dispatches a keyboard `keydown` event for the virtual D-Pad direction buttons. |
+| Virtual D-Pad `onclick` handler | Converts Up / Down / Left / Right controls to key codes 38 / 40 / 37 / 39. Its OK action dispatches the SpatialNavigation enter events and then a click to the focused element. |
+| `sn:enter-down` / `sn:enter-up` | Events emitted by the virtual OK control to match the navigation engine's Enter interaction events. |
+| `sn:focused` | Navigation event used by application code for focus-related behavior and diagnostics where registered. |
+
+The navigation engine itself handles physical remote / keyboard arrow keys through its global `keydown` listener. Enter handling includes the regular Enter key and the Samsung / TV key codes explicitly handled in the source.
+
+### 6.7 When focus is refreshed after rendering
+
+The application must refresh focusability after creating or replacing dynamic content. Current examples in `index.html` include:
+
+- Initial application setup: `sn.makeFocusable()`, followed by `sn.focus('main')`.
+- Live page: after Live rows and cards have been rendered, call `sn.makeFocusable()` and focus the first available card.
+- Search results: after rendering the result list, call `sn.makeFocusable()` and focus the first result link.
+- Tabs: after tab setup, call `sn.makeFocusable()` and focus the active tab.
+- Library and followed-content views: refresh the main section after rendering, then focus the first available item (some flows defer this briefly with `setTimeout` so the triggering click can finish).
+- Player queue: call `makeFocusable()` after queue controls are inserted.
+- Popup / modal / player transitions: enable or disable the relevant section, refresh focusability where needed, and move focus into the active section or restore the previous focus when closing.
+
+When adding a new dynamic screen or component, follow the same pattern: render its DOM first, refresh focusability for the affected section, then move focus only when the interaction flow requires it. Avoid focusing an element before it has been inserted into the document.
+
+### 6.8 Optional jQuery integration
+
+The navigation file receives `window.jQuery` as its optional wrapper argument. If jQuery is present, selector parsing and matching can use jQuery methods, and the file exposes a jQuery interface. The Web TV's current setup and section registration use the plain JavaScript `SpatialNavigation` global API; jQuery is not required for the documented application calls.
+
+### 6.9 Maintenance rules
+
+- Keep `spatial_navigation.js` ES5-compatible.
+- Preserve the manual selector and collection fallbacks when changing the engine; they exist for older / inconsistent TV browser implementations.
+- Do not replace the compatibility helpers with modern-only methods such as `Element.matches`, `Array.prototype.find`, or `Object.keys` without retaining the current fallbacks.
+- Do not call `makeFocusable()` before dynamic elements have been inserted into the DOM.
+- Avoid unnecessary global focus resets. Preserve the last focused element when returning from a modal, popup, or player panel.
+- If changing a section selector or its ID, inspect every `focus()`, `enable()`, `disable()`, and `makeFocusable()` caller in `index.html`.
+- After modifying this section or the library, verify the source remains ES5-compatible and test directional movement, Enter / OK, Back, section transitions, and focus restoration on representative older and modern TV browsers.
 
 ---
-
+ 
 ## 7. Change Checklist
 
 Before modifying Web TV code:
