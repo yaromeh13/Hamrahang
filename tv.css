@@ -3653,8 +3653,10 @@ fieldset:disabled .btn {
 
 /* Fixed Live type headers use the same compact icon as the navigation. */
 .live-type-icon {
-    text-align: center;
-    line-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: normal;
 }
 
 .live-type-icon svg,
