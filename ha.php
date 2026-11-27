@@ -2958,7 +2958,7 @@ if (!empty($_SESSION['loggedin'])) {
     var TGID = '';
     var TGDV = false;
     
-    const ITEM_TYPES = ['song', 'podcast', 'musicvideo', 'video', 'album', 'artist', 'playlist'];
+    const ITEM_TYPES = ['song', 'podcast', 'musicvideo', 'video', 'album', 'artist', 'playlist', 'live'];
     const PLAYABLE_TYPES = ['song', 'podcast', 'musicvideo', 'video'];
     const QUEUEABLE_TYPES = PLAYABLE_TYPES.concat(['live']);
     const FOLLOWABLE_TYPES = ['artist', 'album', 'playlist'];
@@ -5912,6 +5912,7 @@ if (!empty($_SESSION['loggedin'])) {
         if (t === 'album') return typeof svg_pls !== 'undefined' ? svg_pls : '';
         if (t === 'playlist') return typeof svg_pls !== 'undefined' ? svg_pls : '';
         if (t === 'musicvideo' || t === 'video') return typeof svg_vdo !== 'undefined' ? svg_vdo : '';
+        if (t === 'live') return typeof svg_liv !== 'undefined' ? svg_liv : '';
         return typeof svg_sng !== 'undefined' ? svg_sng : '';
     }
 
@@ -5923,7 +5924,8 @@ if (!empty($_SESSION['loggedin'])) {
             video: 'Videos',
             album: 'Albums',
             artist: 'Artists',
-            playlist: 'Playlists'
+            playlist: 'Playlists',
+            live: 'Live'
         };
         return map[type] || type;
     }
