@@ -6779,7 +6779,7 @@ function handleZoneClick(event) {
   const mediaTypeBtn = t.closest('[data-media-type-to]');
   if (mediaTypeBtn && state.item && state.item.table === 'live') {
     state.item.media_type = mediaTypeBtn.getAttribute('data-media-type-to') === 'video' ? 'video' : 'audio';
-    $('#typeSwitch [data-media-type-to]').forEach(b => {
+    $$('#typeSwitch [data-media-type-to]').forEach(b => {
       b.classList.toggle('is-on', b.getAttribute('data-media-type-to') === state.item.media_type);
     });
     return;
