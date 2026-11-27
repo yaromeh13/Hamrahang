@@ -18,7 +18,8 @@ data class LiveOwnerRow(
     val owner: SourceOwner?,
     val items: List<LiveItem>,
     val mediaType: MediaType,
-    val systemOwner: Boolean = false
+    val systemOwner: Boolean = false,
+    val showHeader: Boolean = true
 )
 
 class LiveRowsAdapter(
@@ -34,10 +35,11 @@ class LiveRowsAdapter(
         private val recycler: HorizontalGridView = view.findViewById(R.id.liveCardsRecycler)
 
         fun bind(row: LiveOwnerRow, isFirstRow: Boolean) {
-            ownerHeader.visibility = View.VISIBLE
+            ownerHeader.visibility = if (row.showHeader) View.VISIBLE else View.GONE
             if (row.systemOwner) {
                 ownerName.text = if (row.mediaType == MediaType.VIDEO) "Live Video" else "Live Audio"
                 ownerIcon.scaleType = ImageView.ScaleType.CENTER_INSIDE
+                com.bumptech.glide.Glide.with(ownerIcon).clear(ownerIcon)
                 ownerIcon.setImageResource(R.drawable.ic_live)
             } else {
                 ownerName.text = row.owner?.name?.takeIf { it.isNotBlank() } ?: "Unknown Owner"
