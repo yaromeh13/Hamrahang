@@ -366,7 +366,8 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
             rows = rows,
             owner = null,
             items = systemItems,
-            systemOwner = true
+            systemOwner = true,
+            showHeader = true
         )
 
         val ownerGroups = LinkedHashMap<Long, MutableList<LiveItem>>()
@@ -379,7 +380,8 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
                 rows = rows,
                 owner = ownerItems.firstOrNull()?.owner,
                 items = ownerItems,
-                systemOwner = false
+                systemOwner = false,
+                showHeader = true
             )
         }
 
@@ -394,16 +396,17 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
         rows: MutableList<LiveOwnerRow>,
         owner: ir.hamrahang.tv.data.SourceOwner?,
         items: List<LiveItem>,
-        systemOwner: Boolean
+        systemOwner: Boolean,
+        showHeader: Boolean
     ) {
         val videoItems = items.filter { it.isVideo }
         val audioItems = items.filterNot { it.isVideo }
 
         if (videoItems.isNotEmpty()) {
-            rows += LiveOwnerRow(owner, videoItems, mediaType = MediaType.VIDEO, systemOwner = systemOwner)
+            rows += LiveOwnerRow(owner, videoItems, mediaType = MediaType.VIDEO, systemOwner = systemOwner, showHeader = showHeader)
         }
         if (audioItems.isNotEmpty()) {
-            rows += LiveOwnerRow(owner, audioItems, mediaType = MediaType.AUDIO, systemOwner = systemOwner)
+            rows += LiveOwnerRow(owner, audioItems, mediaType = MediaType.AUDIO, systemOwner = systemOwner, showHeader = showHeader && videoItems.isEmpty())
         }
     }
 
