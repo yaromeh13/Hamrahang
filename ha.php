@@ -3063,6 +3063,64 @@ if (!empty($_SESSION['loggedin'])) {
     
         return ids;
     }
+
+    // Live cards are kept in SN as the in-memory local database and in
+    // localStorage as a lightweight metadata cache. Stream URLs are deliberately
+    // excluded because they may expire; a card can be resolved again when opened.
+    const LIVE_CACHE_KEY = 'ha_live_cache_v1';
+    const LIVE_CACHE_LIMIT = 100;
+
+    function SaveLiveCache() {
+        try {
+            const ids = Array.isArray(SN.latest_live) ? SN.latest_live.slice(0, LIVE_CACHE_LIMIT) : [];
+            const items = [];
+
+            for (const id of ids) {
+                const item = SN.live && SN.live[id] ? SN.live[id] : null;
+                if (!item || item.id == null) continue;
+
+                const cached = { ...item };
+                delete cached.sources;
+                cached.full = false;
+                items.push(cached);
+            }
+
+            localStorage.setItem(LIVE_CACHE_KEY, JSON.stringify({
+                version: 1,
+                savedAt: Date.now(),
+                ids,
+                items
+            }));
+        } catch (e) {
+            console.warn('SaveLiveCache failed:', e && e.message ? e.message : e);
+        }
+    }
+
+    function LoadLiveCache() {
+        if (SN._liveCacheLoaded) return;
+        SN._liveCacheLoaded = true;
+
+        try {
+            const raw = localStorage.getItem(LIVE_CACHE_KEY);
+            if (!raw) return;
+
+            const cache = JSON.parse(raw);
+            if (!cache || cache.version !== 1 || !Array.isArray(cache.ids) || !Array.isArray(cache.items)) return;
+
+            if (!SN.live || typeof SN.live !== 'object' || Array.isArray(SN.live)) SN.live = {};
+            UARDB('live', cache.items);
+
+            for (const item of cache.items) {
+                if (item && item.id != null && SN.live[item.id] && !SN.live[item.id].full) {
+                    SN.live[item.id].full = false;
+                }
+            }
+
+            SN.latest_live = cache.ids.filter(id => !!(SN.live && SN.live[id]));
+        } catch (e) {
+            console.warn('LoadLiveCache failed:', e && e.message ? e.message : e);
+        }
+    }
     
     async function UART(Q) {
     
@@ -3494,6 +3552,25 @@ if (!empty($_SESSION['loggedin'])) {
             }
         }
         
+        // ---- Live list ----
+        if (p === 'live') {
+            if (!SN.live || typeof SN.live !== 'object' || Array.isArray(SN.live)) SN.live = {};
+
+            SN.latest_live = [];
+            for (let i = 0; i < ar.length; i++) {
+                const item = ar[i];
+                if (!item || item.id == null) continue;
+
+                UARDB('live', [item]);
+                const liveItem = SN.live[item.id];
+                if (liveItem) {
+                    liveItem.full = true;
+                    SN.latest_live.push(item.id);
+                }
+            }
+            SaveLiveCache();
+        }
+
         // ---- playlist list ----
         if (p === 'playlist') {
             if (!SN.playlist || typeof SN.playlist !== 'object') SN.playlist = {};
@@ -3615,10 +3692,14 @@ if (!empty($_SESSION['loggedin'])) {
                 UARDB('album', [item]);
             } else if (type === 'artist') {
                 UARDB('artist', [item]);
+            } else if (type === 'live') {
+                UARDB('live', [{ ...item, full: true }]);
             } else {
                 UARDB(type, [item]);
             }
         }
+
+        if (type === 'live') SaveLiveCache();
     }
     
     const gjs = async (U, options = null) => {
@@ -3689,6 +3770,8 @@ if (!empty($_SESSION['loggedin'])) {
                 ULBM(['album', jd.album]);
             } else if (jd.playlist) {
                 UPLS(['playlist', jd.playlist]);
+            } else if (jd.live) {
+                mergeResolvedItems('live', [jd.live]);
             } else if (jd.search) {
                 USRC(['search', jd.search]);
             } else {
@@ -3726,6 +3809,9 @@ if (!empty($_SESSION['loggedin'])) {
             if (!SN.video || typeof SN.video !== 'object') SN.video = {};
             if (!SN.musicvideo || typeof SN.musicvideo !== 'object') SN.musicvideo = {};
         }
+        if (type === 'live' && (!SN.live || typeof SN.live !== 'object' || Array.isArray(SN.live))) {
+            SN.live = {};
+        }
     
         const isPresent = (id) => {
             if (type === 'song' || type === 'podcast') {
@@ -3733,6 +3819,9 @@ if (!empty($_SESSION['loggedin'])) {
             }
             if (type === 'video' || type === 'musicvideo') {
                 return !!(SN.video?.[id] || SN.musicvideo?.[id]);
+            }
+            if (type === 'live') {
+                return !!(SN.live?.[id] && SN.live[id].full);
             }
             return !!(SN[snKey] && SN[snKey][id]);
         };
@@ -3751,6 +3840,8 @@ if (!empty($_SESSION['loggedin'])) {
                 await gjs(['artist', 'resolve'], { ids: missing });
             } else if (type === 'video' || type === 'musicvideo') {
                 await gjs(['video', 'resolve'], { ids: missing });
+            } else if (type === 'live') {
+                await gjs(['live', 'resolve'], { ids: missing });
             } else {
                 console.warn('EnsureItems: resolve not ready for', type);
                 return ids.filter(isPresent);
@@ -4306,6 +4397,14 @@ if (!empty($_SESSION['loggedin'])) {
                 
             case 'library':
                 CRLP(LPS[2], LPS[3], done);
+                break;
+
+            case 'live':
+                if (/^\d+$/.test(LPS[2] || '')) {
+                    CRLVDetail(LPS[2], done);
+                } else {
+                    CRLV(done);
+                }
                 break;
     
             default:
@@ -6658,6 +6757,257 @@ if (!empty($_SESSION['loggedin'])) {
         try { ADE(); } catch (e) {}
     }
     
+    function liveMediaType(item) {
+        return String(item && item.media_type || '').toLowerCase() === 'video' ? 'video' : 'audio';
+    }
+
+    function liveRoute(item) {
+        if (!item || item.id == null) return '/live';
+        const slug = item.url || item.slug || String(item.id);
+        return '/live/' + encodeURIComponent(item.id) + '/' + encodeURIComponent(slug);
+    }
+
+    function splitLiveMediaIds(ids) {
+        const split = { video: [], audio: [] };
+        for (const value of (Array.isArray(ids) ? ids : [])) {
+            const id = value && typeof value === 'object' ? value.id : value;
+            const item = SN.live && SN.live[id] ? SN.live[id] : null;
+            if (!item) continue;
+            split[liveMediaType(item)].push(item.id);
+        }
+        return split;
+    }
+
+    function appendLiveTypeHeader(title) {
+        const head = OA(document.createElement('div'), { className: 'section-header live-owner-header m-top-2' });
+        const icon = OA(document.createElement('span'), { className: 'live-type-icon', innerHTML: typeof svg_liv !== 'undefined' ? svg_liv : '' });
+        const label = OA(document.createElement('h2'), { className: 'title', innerHTML: title });
+        icon.style.display = 'inline-flex';
+        icon.style.width = '38px';
+        icon.style.height = '38px';
+        icon.style.marginRight = '12px';
+        icon.style.alignItems = 'center';
+        icon.style.justifyContent = 'center';
+        icon.style.flex = '0 0 38px';
+        head.style.justifyContent = 'flex-start';
+        head.append(icon, label);
+        MCNT.append(head);
+    }
+
+    function appendLiveOwnerHeader(owner) {
+        const head = OA(document.createElement('div'), { className: 'section-header live-owner-header m-top-2' });
+        const avatar = OA(document.createElement('div'), { className: 'live-owner-image' });
+        const title = OA(document.createElement('h2'), { className: 'title', innerHTML: owner && owner.name ? owner.name : 'Hamrahang' });
+        const thumb = owner && owner.meta ? owner.meta.tmb : null;
+
+        avatar.style.width = '42px';
+        avatar.style.height = '42px';
+        avatar.style.marginRight = '12px';
+        avatar.style.borderRadius = '50%';
+        avatar.style.overflow = 'hidden';
+        avatar.style.background = '#333';
+        avatar.style.display = 'inline-flex';
+        avatar.style.alignItems = 'center';
+        avatar.style.justifyContent = 'center';
+        avatar.style.flex = '0 0 42px';
+
+        if (thumb) {
+            const img = OA(document.createElement('img'), { src: UT + thumb + '.jpg', alt: owner.name || 'Owner' });
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            avatar.append(img);
+        } else {
+            avatar.textContent = (owner && owner.name ? owner.name : 'H').charAt(0);
+        }
+
+        head.style.justifyContent = 'flex-start';
+        head.append(avatar, title);
+        MCNT.append(head);
+    }
+
+    function CRLVCards(ids, mediaType) {
+        const isVideo = mediaType === 'video';
+        const section = OA(document.createElement("section"), {
+            className: "section-carousel-container m-top-1 live-cards-section"
+        });
+        const carousel = OA(document.createElement("div"), {
+            className: "carousel-container" + (isVideo ? " video" : "")
+        });
+        let count = 0;
+
+        (Array.isArray(ids) ? ids : []).forEach((value) => {
+            const id = value && typeof value === 'object' ? value.id : value;
+            const item = SN.live && SN.live[id] ? SN.live[id] : null;
+            if (!item || liveMediaType(item) !== mediaType) return;
+
+            const card = OA(document.createElement("div"), { className: "item-box live-card" });
+            const box = OA(document.createElement("div"), { className: "box" });
+            const link = OA(document.createElement("a"), {
+                href: liveRoute(item),
+                title: item.name || 'Live'
+            });
+            const artwork = OA(document.createElement("div"), {
+                className: "artwork ratio " + (isVideo ? "ratio-16x9" : "ratio-1x1")
+            });
+            const placeholder = OA(document.createElement("span"), {
+                className: "placeholder",
+                innerHTML: typeof svg_liv !== 'undefined' ? svg_liv : ''
+            });
+
+            artwork.append(placeholder);
+
+            const thumb = item.meta
+                ? (isVideo ? (item.meta.tmv || item.meta.tmb) : item.meta.tmb)
+                : null;
+            if (thumb) {
+                artwork.append(OA(document.createElement('img'), {
+                    src: UT + thumb + '.jpg',
+                    alt: item.name || 'Live'
+                }));
+            }
+
+            link.append(artwork);
+            link.addEventListener('click', function (ev) {
+                if (ev && ev.preventDefault) ev.preventDefault();
+                chp(liveRoute(item));
+            });
+
+            box.append(link);
+            card.append(box);
+            card.append(OA(document.createElement('div'), {
+                className: 'text1',
+                innerHTML: item.name || 'Live'
+            }));
+            carousel.append(card);
+            count++;
+        });
+
+        if (!count) return 0;
+        section.append(carousel);
+
+        // Same horizontal carousel controller used by Home cards.
+        if (count > 2) CCRL(section);
+
+        MCNT.append(section);
+        return count;
+    }
+
+    function CRLV(callback) {
+        LoadLiveCache();
+        const cachedIds = Array.isArray(SN.latest_live) ? SN.latest_live.slice() : [];
+        const isLiveRoute = () => (window.location.pathname || '').replace(/\/+$/, '') === '/live';
+
+        function draw(ids) {
+            if (!isLiveRoute()) return;
+            const valid = [];
+            const groups = new Map();
+
+            for (const value of (Array.isArray(ids) ? ids : [])) {
+                const id = value && typeof value === 'object' ? value.id : value;
+                const item = SN.live && SN.live[id] ? SN.live[id] : null;
+                if (!item) continue;
+                valid.push(item.id);
+
+                const owner = item.owner || null;
+                const ownerId = owner && owner.id != null ? String(owner.id) : '0';
+                if (!groups.has(ownerId)) groups.set(ownerId, { owner, ids: [] });
+                groups.get(ownerId).ids.push(item.id);
+            }
+
+            MCNT.innerHTML = '';
+            if (!valid.length) {
+                MCNT.append(OA(document.createElement('div'), { className: 'error-message-container', innerHTML: '<div class="text1 m-top-1-5">No Live channels found.</div>' }));
+                if (callback) callback();
+                return;
+            }
+
+            // Ownerless/system channels are always first: Video, then Audio.
+            const system = groups.get('0');
+            if (system) {
+                const split = splitLiveMediaIds(system.ids);
+                if (split.video.length) {
+                    appendLiveTypeHeader('پخش زنده تصویری');
+                    CRLVCards(split.video, 'video');
+                }
+                if (split.audio.length) {
+                    appendLiveTypeHeader('پخش زنده صوتی');
+                    CRLVCards(split.audio, 'audio');
+                }
+            }
+
+            for (const [ownerId, group] of groups.entries()) {
+                if (ownerId === '0') continue;
+                appendLiveOwnerHeader(group.owner || { name: 'Hamrahang' });
+                const split = splitLiveMediaIds(group.ids);
+                if (split.video.length) CRLVCards(split.video, 'video');
+                if (split.audio.length) CRLVCards(split.audio, 'audio');
+            }
+
+            try { ADE(); } catch (e) {}
+            if (callback) callback();
+        }
+
+        if (cachedIds.length) {
+            draw(cachedIds);
+            // Background refresh updates the local database, then redraws the cards.
+            gjs(['live', 'latest']).then(function (result) {
+                if (result && result.error) throw new Error(result.error);
+                if (isLiveRoute()) draw(SN.latest_live || []);
+            }).catch(function (err) {
+                console.warn('Live background refresh failed:', err && err.message ? err.message : err);
+            });
+            return;
+        }
+
+        MCNT.append(OA(document.createElement('div'), { className: 'page-loading-container', innerHTML: '<div class="spinner-large"></div>' }));
+        gjs(['live', 'latest']).then(function (result) {
+            if (result && result.error) throw new Error(result.error);
+            if (isLiveRoute()) draw(SN.latest_live || []);
+        }).catch(function (err) {
+            if (!isLiveRoute()) return;
+            MCNT.innerHTML = '';
+            MCNT.append(OA(document.createElement('div'), { className: 'error-message-container', innerHTML: '<div class="text1 m-top-1-5">Unable to load Live channels.</div>' }));
+            console.warn('Live initial load failed:', err && err.message ? err.message : err);
+            if (callback) callback();
+        });
+    }
+
+    async function CRLVDetail(id, callback) {
+        LoadLiveCache();
+        const cached = SN.live && SN.live[id] ? SN.live[id] : null;
+
+        function draw() {
+            const item = SN.live && SN.live[id] ? SN.live[id] : null;
+            if (!item) {
+                CRNF('Live channel not found.');
+                if (callback) callback();
+                return;
+            }
+
+            MCNT.innerHTML = '';
+            document.title = (item.name || 'Live') + ' | Hamrahang';
+            appendLiveTypeHeader(liveMediaType(item) === 'video' ? 'پخش زنده تصویری' : 'پخش زنده صوتی');
+            CRLVCards([item.id], liveMediaType(item));
+            try { ADE(); } catch (e) {}
+            if (callback) callback();
+        }
+
+        if (cached && cached.full) {
+            draw();
+            return;
+        }
+        if (cached) draw();
+        try {
+            const ready = await EnsureItems('live', [id]);
+            if (ready.length && (window.location.pathname || '').indexOf('/live/' + id) === 0) draw();
+            else if (!cached) draw();
+        } catch (err) {
+            console.warn('Live detail resolve failed:', err && err.message ? err.message : err);
+            if (!cached) draw();
+        }
+    }
+
     async function CRHP(P, QS) {
     
         const tabsConfig = [
@@ -10398,7 +10748,7 @@ const PROFILE_KEY = 'ha_profile';
         const nav = OA(document.createElement('nav'), { className: 'menu' });
         const items = [
             { href: '/', label: 'Home', icon: typeof svg_home !== 'undefined' ? svg_home : '', labeled: true },
-            { href: '/live', label: 'Song', icon: typeof svg_liv !== 'undefined' ? svg_liv : '', labeled: true },
+            { href: '/live', label: 'Live', icon: typeof svg_liv !== 'undefined' ? svg_liv : '', labeled: true },
             { href: '/search', label: 'Search', icon: typeof svg_srh !== 'undefined' ? svg_srh : '', labeled: true },
             { href: '/library', label: 'Library', icon: typeof svg_lib !== 'undefined' ? svg_lib : '', labeled: false },
             { href: '/setting/account', label: 'Account', icon: typeof svg_acc !== 'undefined' ? svg_acc : '', labeled: true }
