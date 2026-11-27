@@ -10929,7 +10929,7 @@ $stmt->execute();*/
     // Owner is nested inside sources, matching song/video source objects.
     // =========================================================================
     function LIVE_CARD($row_live) {
-        global $IDHM;
+        global $conn, $IDHM;
 
         $live = [];
         $live['id']   = (int)$row_live['id_live'] + (int)$IDHM;
