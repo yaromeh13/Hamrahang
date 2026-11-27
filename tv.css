@@ -3651,6 +3651,22 @@ fieldset:disabled .btn {
     object-fit: cover;
 }
 
+/* Fixed Live type headers use the same compact icon as the navigation. */
+.live-type-icon {
+    text-align: center;
+    line-height: 42px;
+}
+
+.live-type-icon svg,
+.live-type-icon img {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    object-fit: contain;
+    border-radius: 0;
+}
+
 .live-owner-placeholder {
     display: flex;
     align-items: center;
