@@ -6611,9 +6611,15 @@ $stmt->execute();*/
                 }
                 unset($data['gnr'], $data['lan']);
 
-                // Live media kind is separate from the content type (which remains "live").
-                $mediaType = (isset($JSD->media_type) && strtolower(trim((string)$JSD->media_type)) === 'video')
-                    ? 'video' : 'audio';
+                // Preserve the saved media kind for older edit clients that omit media_type.
+                // New cards still default to audio; explicit values are normalized.
+                if (property_exists($JSD, 'media_type')) {
+                    $mediaType = (strtolower(trim((string)$JSD->media_type)) === 'video')
+                        ? 'video' : 'audio';
+                } else {
+                    $mediaType = (isset($data['media_type']) && strtolower(trim((string)$data['media_type'])) === 'video')
+                        ? 'video' : 'audio';
+                }
                 $data['media_type'] = $mediaType;
 
                 if (property_exists($JSD, 'names')) {
@@ -6693,12 +6699,15 @@ $stmt->execute();*/
                         $url = trim((string)(isset($S->url) ? $S->url : ''));
                         if ($url === '') continue;
                         $bit = isset($S->bit) ? (int)$S->bit : 0;
-                        $entry = ['url' => $url];
+                        $sourceAct = SourceActFromPayload($S);
+                        $entry = [
+                            'url'  => $url,
+                            'act'  => $sourceAct,
+                            'type' => SourceActToType($sourceAct),
+                        ];
                         if ($bit > 0) $entry['bit'] = $bit;
                         $protocol = isset($S->protocol) ? substr(strtolower(trim((string)$S->protocol)), 0, 24) : '';
                         if ($protocol !== '') $entry['protocol'] = $protocol;
-                        $ty = isset($S->type) ? strtolower(trim((string)$S->type)) : '';
-                        if ($ty !== '' && $ty !== 'original') $entry['type'] = $ty;
                         $srcArr[] = $entry;
                         $sourcesOut[] = $entry;
                         if (isset($S->user) && (int)$S->user > 0) {
@@ -8583,12 +8592,15 @@ $stmt->execute();*/
                         $url = trim((string)(isset($S->url) ? $S->url : ''));
                         if ($url === '') continue;
                         $bit = isset($S->bit) ? (int)$S->bit : 0;
-                        $entry = ['url' => $url];
+                        $sourceAct = SourceActFromPayload($S);
+                        $entry = [
+                            'url'  => $url,
+                            'act'  => $sourceAct,
+                            'type' => SourceActToType($sourceAct),
+                        ];
                         if ($bit > 0) $entry['bit'] = $bit;
                         $protocol = isset($S->protocol) ? substr(strtolower(trim((string)$S->protocol)), 0, 24) : '';
                         if ($protocol !== '') $entry['protocol'] = $protocol;
-                        $ty = isset($S->type) ? strtolower(trim((string)$S->type)) : '';
-                        if ($ty !== '' && $ty !== 'original') $entry['type'] = $ty;
                         $srcArr[] = $entry;
                         $sourcesOut[] = $entry;
                         if (isset($S->user) && (int)$S->user > 0) {
@@ -10978,6 +10990,35 @@ $stmt->execute();*/
             $live['owner'] = $owner;
         }
 
+        // Source visibility follows SONG(): public gets original + demo;
+        // admin level 7+ gets own card sources, level 9+ gets every source.
+        $callerId = 0;
+        $callerAct = 0;
+        try {
+            $callerId = (int)GetUserIdFromAccessToken();
+            if ($callerId > 0) {
+                $stU = $conn->prepare('SELECT act FROM user WHERE id_user = ? LIMIT 1');
+                if ($stU) {
+                    $stU->bind_param('i', $callerId);
+                    $stU->execute();
+                    $ru = $stU->get_result()->fetch_assoc();
+                    $stU->close();
+                    if ($ru) $callerAct = (int)$ru['act'];
+                }
+            }
+        } catch (Throwable $e) {
+            $callerId = 0;
+            $callerAct = 0;
+        }
+
+        $isAdminPanel = (
+            isset($_SERVER['HTTP_X_HAMRAHANG_CLIENT'])
+            && $_SERVER['HTTP_X_HAMRAHANG_CLIENT'] === 'cdn_admin'
+        );
+        $allowAllSources = ($isAdminPanel && $callerAct >= 9);
+        $allowOwnSources = ($isAdminPanel && $callerAct >= 7 && $callerId > 0
+            && (int)($row_live['id_owner'] ?? 0) === $callerId);
+
         // Streams live inside live_data.src (JSON array).
         $live['sources'] = [];
         if (!empty($live_data->src) && is_array($live_data->src)) {
@@ -10990,9 +11031,21 @@ $stmt->execute();*/
                     continue;
                 }
 
+                // Backward compatibility: old rows stored only the textual type.
+                $sourceAct = isset($source_data['act'])
+                    ? SourceTypeToAct($source_data['act'])
+                    : SourceTypeToAct($source_data['type'] ?? 'original');
+
+                if ($allowAllSources || $allowOwnSources) {
+                    // Admin editor may inspect all states for its allowed scope.
+                } elseif (!in_array($sourceAct, [1, 2], true)) {
+                    // Public API: hide off (0) and locked (3) sources.
+                    continue;
+                }
+
                 $src = [
                     'url'  => (string)$source_data['url'],
-                    'type' => !empty($source_data['type']) ? (string)$source_data['type'] : 'original',
+                    'type' => SourceActToType($sourceAct),
                 ];
 
                 if (isset($source_data['bit']) && $source_data['bit'] !== '') {
@@ -11004,12 +11057,18 @@ $stmt->execute();*/
 
                 if ($owner) {
                     $src['owner'] = $owner;
+                }
+
+                if ($allowAllSources || $allowOwnSources) {
+                    $src['act'] = $sourceAct;
                     if (!empty($owner['id'])) {
                         $src['user'] = (int)$owner['id'];
                     }
+                } elseif ($owner && !empty($owner['id'])) {
+                    $src['user'] = (int)$owner['id'];
                 }
 
-                if (!empty($source_data['file_id'])) {
+                if (!empty($source_data['file_id']))
                     $src['file_id'] = (string)$source_data['file_id'];
                 }
                 if (!empty($source_data['file_unq'])) {
