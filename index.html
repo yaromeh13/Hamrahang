@@ -14590,7 +14590,7 @@ function removeFromPlayQueue(itemId, itemType) {
     
         var i;
         for (i = 0; i < currentEls.length; i++) { currentEls[i].innerHTML = FormatTime(current); }
-        for (i = 0; i < finalEls.length; i++) { finalEls[i].innerHTML = FormatTime(duration); }
+        for (i = 0; i < finalEls.length; i++) { finalEls[i].innerHTML = duration === Infinity ? "LIVE" : FormatTime(duration); }
         for (i = 0; i < barEls.length; i++) { barEls[i].style.width = percent + "%"; }
     }
     
