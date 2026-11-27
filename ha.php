@@ -7562,19 +7562,21 @@ if (!empty($_SESSION['loggedin'])) {
                 readyIds = await EnsureItems(route.itemType, data);
             }
             if (!readyIds.length) return;
-    
-            const hed = OA(document.createElement('div'), { className: 'section-header m-top-1' });
-            hed.append(
-                OA(document.createElement('h1'), {
-                    className: 'title',
-                    innerHTML: route.label
-                })
-            );
-            MCNT.append(hed);
-    
+
             if (route.listMode === 'live') {
                 renderLiveFavoriteRows(readyIds, false);
-            } else if (route.listMode === 'line') {
+            } else {
+                const hed = OA(document.createElement('div'), { className: 'section-header m-top-1' });
+                hed.append(
+                    OA(document.createElement('h1'), {
+                        className: 'title',
+                        innerHTML: route.label
+                    })
+                );
+                MCNT.append(hed);
+            }
+    
+            if (route.listMode === 'line') {
                 CRGL(readyIds, route.itemType);
             } else if (route.listMode === 'grid') {
                 const grid = CRGC(readyIds, route.itemType);
