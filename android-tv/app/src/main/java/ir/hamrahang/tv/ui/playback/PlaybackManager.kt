@@ -439,9 +439,7 @@ object PlaybackManager {
     private suspend fun playCurrent() {
         val context = appContext ?: return
         val item = _currentItem.value ?: return
-        val mediaType = if (item.liveMedia != null) {
-            MediaType.AUDIO
-        } else when (item.contentType) {
+        val mediaType = item.liveMedia?.type ?: when (item.contentType) {
             ContentType.SONG, ContentType.PODCAST -> MediaType.AUDIO
             ContentType.VIDEO, ContentType.MUSICVIDEO -> MediaType.VIDEO
             else -> return
@@ -486,7 +484,7 @@ object PlaybackManager {
             copy(
                 visible = true,
                 mediaId = media.id,
-                mediaType = MediaType.AUDIO,
+                mediaType = media.type,
                 artwork = artwork,
                 title = media.title.orEmpty(),
                 artists = emptyList(),
