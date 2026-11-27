@@ -8981,13 +8981,16 @@ try {
             art = OA(document.createElement("div"), {
                 className: "artwork " + (isVideo ? "ratio ratio-16x9" : "ratio ratio-1x1")
             });
-            placeholder = OA(document.createElement("span"), {className: "placeholder"});
+            placeholder = OA(document.createElement("span"), {className: "placeholder live-card-placeholder-icon"});
             art.appendChild(placeholder);
 
             thumbUrl = resolveThumbUrl(item, null, isVideo ? 'video' : 'live');
             if (thumbUrl) {
                 image = OA(document.createElement("img"), {src: thumbUrl, alt: item.name || "Live"});
                 art.appendChild(image);
+            } else {
+                /* Keep a recognizable Live fallback when a channel has no artwork. */
+                placeholder.innerHTML = getIcon(svg_live, "svg_live");
             }
 
             link.appendChild(art);
