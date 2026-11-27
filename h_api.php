@@ -2124,7 +2124,7 @@ $stmt->execute();*/
     
             $out = [
                 'song' => [], 'artist' => [], 'album' => [],
-                'video' => [], 'musicvideo' => [], 'podcast' => [], 'playlist' => []
+                'video' => [], 'musicvideo' => [], 'podcast' => [], 'playlist' => [], 'live' => []
             ];
     
             while ($row = $result->fetch_assoc()) {
@@ -2325,7 +2325,7 @@ $stmt->execute();*/
     
             $out = [
                 'song' => [], 'artist' => [], 'album' => [],
-                'video' => [], 'musicvideo' => [], 'podcast' => [], 'playlist' => []
+                'video' => [], 'musicvideo' => [], 'podcast' => [], 'playlist' => [], 'live' => []
             ];
     
             while ($row = $result->fetch_assoc()) {
