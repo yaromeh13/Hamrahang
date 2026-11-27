@@ -5565,7 +5565,10 @@ function renderSaved(p, res) {
           '<h2>' + esc(d.name || '(untitled)') + '</h2>' +
           (d.names.fa ? '<div class="fa">' + esc(d.names.fa) + '</div>' : '') +
           '<div style="margin-top:8px"><span class="badge badge-' + esc(d.type) + '">' +
-            esc(TYPE_LABEL[d.type] || d.type) + '</span></div>' +
+            esc(TYPE_LABEL[d.type] || d.type) + '</span>' +
+            (isLive ? ' <span class="badge ' + (d.media_type === 'video' ? 'badge-video' : 'badge-audio') + '">' +
+              (d.media_type === 'video' ? 'Video' : 'Audio') + '</span>' : '') +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="saved-meta">' + metaCells + '</div>' +
