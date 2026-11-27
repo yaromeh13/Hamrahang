@@ -7011,7 +7011,6 @@ if (!empty($_SESSION['loggedin'])) {
 
             MCNT.innerHTML = '';
             document.title = (item.name || 'Live') + ' | Hamrahang';
-            appendLiveTypeHeader(isVideo ? 'پخش زنده تصویری' : 'پخش زنده صوتی');
 
             const header = OA(document.createElement('div'), {
                 className: 'page-detail-header-container' + (isVideo ? ' video-page-header' : '')
