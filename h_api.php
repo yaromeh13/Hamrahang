@@ -10992,24 +10992,29 @@ $stmt->execute();*/
 
         // Source visibility follows SONG(): public gets original + demo;
         // admin level 7+ gets own card sources, level 9+ gets every source.
-        $callerId = 0;
-        $callerAct = 0;
-        try {
-            $callerId = (int)GetUserIdFromAccessToken();
-            if ($callerId > 0) {
-                $stU = $conn->prepare('SELECT act FROM user WHERE id_user = ? LIMIT 1');
-                if ($stU) {
-                    $stU->bind_param('i', $callerId);
-                    $stU->execute();
-                    $ru = $stU->get_result()->fetch_assoc();
-                    $stU->close();
-                    if ($ru) $callerAct = (int)$ru['act'];
+        static $sourceAccess = null;
+        if ($sourceAccess === null) {
+            $sourceAccess = ['id' => 0, 'act' => 0];
+            try {
+                $callerId = (int)GetUserIdFromAccessToken();
+                if ($callerId > 0) {
+                    $stU = $conn->prepare('SELECT act FROM user WHERE id_user = ? LIMIT 1');
+                    if ($stU) {
+                        $stU->bind_param('i', $callerId);
+                        $stU->execute();
+                        $ru = $stU->get_result()->fetch_assoc();
+                        $stU->close();
+                        if ($ru) {
+                            $sourceAccess = ['id' => $callerId, 'act' => (int)$ru['act']];
+                        }
+                    }
                 }
+            } catch (Throwable $e) {
+                $sourceAccess = ['id' => 0, 'act' => 0];
             }
-        } catch (Throwable $e) {
-            $callerId = 0;
-            $callerAct = 0;
         }
+        $callerId = (int)$sourceAccess['id'];
+        $callerAct = (int)$sourceAccess['act'];
 
         $isAdminPanel = (
             isset($_SERVER['HTTP_X_HAMRAHANG_CLIENT'])
