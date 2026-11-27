@@ -11927,16 +11927,35 @@ try {
     }
 
     function UpdateMainProgressBar() {
-        var media = GetActiveMediaElement();
-        if (!media) { return; }
-        var current = media.currentTime || 0;
-        var duration = media.duration || 0;
-        var percent = duration > 0 ? (current / duration) * 100 : 0;
-        if (ProgressBar) { ProgressBar.style.width = percent + "%"; }
-        if (currentEl) { currentEl.innerHTML = FormatTime(current); }
-        if (finalEl) { finalEl.innerHTML = FormatTime(duration); }
-        if (typeof LyricsEngine !== 'undefined') {LyricsEngine.sync(current);}
-    }
+	    var media = GetActiveMediaElement();
+	    if (!media) { return; }
+	
+	    var current = media.currentTime || 0;
+	    var duration = media.duration;
+	    var isLive = duration === Infinity;
+	    var percent = (!isLive && isFinite(duration) && duration > 0)
+	        ? (current / duration) * 100
+	        : 0;
+	
+	    /* Live streams have no finite end time or percentage-based progress. */
+	    if (currentEl) {
+	        currentEl.style.display = isLive ? "none" : "";
+	        if (!isLive) { currentEl.innerHTML = FormatTime(current); }
+	    }
+	    if (MainProgress) {
+	        MainProgress.style.display = isLive ? "none" : "";
+	    }
+	    if (ProgressBar) {
+	        ProgressBar.style.width = percent + "%";
+	    }
+	    if (finalEl) {
+	        finalEl.innerHTML = isLive ? "LIVE" : FormatTime(duration);
+	        finalEl.style.color = isLive ? "#fc1748" : "";
+	        finalEl.style.fontWeight = isLive ? "bold" : "";
+	    }
+	
+	    if (typeof LyricsEngine !== 'undefined') { LyricsEngine.sync(current); }
+	}
     
     function OpenMainPlayer() {
 
