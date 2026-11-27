@@ -34,7 +34,8 @@ object LiveEntityMapper {
             genres = gson.toJson(dto.genres ?: emptyList<LiveGenre>()),
             languages = gson.toJson(dto.languages ?: emptyList<String>()),
             owner = owner?.let { gson.toJson(it) },
-            isFull = isFull
+            isFull = isFull,
+            mediaType = dto.mediaType?.takeIf { it.equals("video", true) }?.lowercase() ?: "audio"
         )
     }
 
@@ -58,7 +59,10 @@ object LiveEntityMapper {
             genres = if (!dto.genres.isNullOrEmpty()) fresh.genres else old.genres,
             languages = if (!dto.languages.isNullOrEmpty()) fresh.languages else old.languages,
             owner = fresh.owner ?: old.owner,
-            isFull = old.isFull || isFull
+            isFull = old.isFull || isFull,
+            mediaType = dto.mediaType?.takeIf { it.isNotBlank() }?.let {
+                if (it.equals("video", true)) "video" else "audio"
+            } ?: old.mediaType
         )
     }
 
@@ -87,7 +91,8 @@ object LiveEntityMapper {
             languages = runCatching {
                 gson.fromJson<List<String>>(entity.languages, languagesType)
             }.getOrNull() ?: emptyList(),
-            owner = owner
+            owner = owner,
+            mediaType = entity.mediaType
         )
     }
 }
