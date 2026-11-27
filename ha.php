@@ -6800,16 +6800,8 @@ if (!empty($_SESSION['loggedin'])) {
     function appendLiveOwnerHeader(owner) {
         const head = OA(document.createElement('div'), { className: 'section-header live-owner-header m-top-2' });
         const avatar = OA(document.createElement('div'), { className: 'live-owner-image' });
-        const icon = OA(document.createElement('span'), { className: 'live-type-icon', innerHTML: typeof svg_liv !== 'undefined' ? svg_liv : '' });
         const title = OA(document.createElement('h2'), { className: 'title', innerHTML: owner && owner.name ? owner.name : 'Hamrahang' });
         const thumb = owner && owner.meta ? owner.meta.tmb : null;
-        icon.style.display = 'inline-flex';
-        icon.style.width = '30px';
-        icon.style.height = '30px';
-        icon.style.marginRight = '10px';
-        icon.style.alignItems = 'center';
-        icon.style.justifyContent = 'center';
-        icon.style.flex = '0 0 30px';
 
         avatar.style.width = '42px';
         avatar.style.height = '42px';
@@ -6833,14 +6825,76 @@ if (!empty($_SESSION['loggedin'])) {
         }
 
         head.style.justifyContent = 'flex-start';
-        head.append(avatar, icon, title);
+        head.append(avatar, title);
         MCNT.append(head);
     }
 
-    // Live rows now use the same card renderer and hover controls as other media.
-    // The dedicated Live page still owns its grouping and audio/video separation.
     function CRLVCards(ids, mediaType) {
-        return CRSC(ids, 'live', null, mediaType);
+        const isVideo = mediaType === 'video';
+        const section = OA(document.createElement("section"), {
+            className: "section-carousel-container m-top-1 live-cards-section"
+        });
+        const carousel = OA(document.createElement("div"), {
+            className: "carousel-container" + (isVideo ? " video" : "")
+        });
+        let count = 0;
+
+        (Array.isArray(ids) ? ids : []).forEach((value) => {
+            const id = value && typeof value === 'object' ? value.id : value;
+            const item = SN.live && SN.live[id] ? SN.live[id] : null;
+            if (!item || liveMediaType(item) !== mediaType) return;
+
+            const card = OA(document.createElement("div"), { className: "item-box live-card" });
+            const box = OA(document.createElement("div"), { className: "box" });
+            const link = OA(document.createElement("a"), {
+                href: liveRoute(item),
+                title: item.name || 'Live'
+            });
+            const artwork = OA(document.createElement("div"), {
+                className: "artwork ratio " + (isVideo ? "ratio-16x9" : "ratio-1x1")
+            });
+            const placeholder = OA(document.createElement("span"), {
+                className: "placeholder",
+                innerHTML: typeof svg_liv !== 'undefined' ? svg_liv : ''
+            });
+
+            artwork.append(placeholder);
+
+            const thumb = item.meta
+                ? (isVideo ? (item.meta.tmv || item.meta.tmb) : item.meta.tmb)
+                : null;
+            if (thumb) {
+                artwork.append(OA(document.createElement('img'), {
+                    src: UT + thumb + '.jpg',
+                    alt: item.name || 'Live'
+                }));
+            }
+
+            link.append(artwork);
+            link.addEventListener('click', function (ev) {
+                if (ev && ev.preventDefault) ev.preventDefault();
+                if (ev && ev.stopPropagation) ev.stopPropagation();
+                chp(liveRoute(item));
+            });
+
+            box.append(link);
+            card.append(box);
+            card.append(OA(document.createElement('div'), {
+                className: 'text1',
+                innerHTML: item.name || 'Live'
+            }));
+            carousel.append(card);
+            count++;
+        });
+
+        if (!count) return 0;
+        section.append(carousel);
+
+        // Same horizontal carousel controller used by Home cards.
+        if (count > 2) CCRL(section);
+
+        MCNT.append(section);
+        return count;
     }
 
     function CRLV(callback) {
@@ -6957,6 +7011,7 @@ if (!empty($_SESSION['loggedin'])) {
 
             MCNT.innerHTML = '';
             document.title = (item.name || 'Live') + ' | Hamrahang';
+            appendLiveTypeHeader(isVideo ? 'پخش زنده تصویری' : 'پخش زنده صوتی');
 
             const header = OA(document.createElement('div'), {
                 className: 'page-detail-header-container' + (isVideo ? ' video-page-header' : '')
@@ -7438,6 +7493,13 @@ if (!empty($_SESSION['loggedin'])) {
                 itemType: 'musicvideo',
                 listMode: 'grid',
                 href: '/library/favorite/musicvideo'
+            },
+            favorite_live: {
+                label: 'Your Bookmark TV Live',
+                source: 'favorite.live',
+                itemType: 'live',
+                listMode: 'live',
+                href: '/library/favorite/live'
             }
         };
     
@@ -7449,6 +7511,7 @@ if (!empty($_SESSION['loggedin'])) {
             'favorite_artist',
             'favorite_album',
             'favorite_playlist',
+            'favorite_live',
             'history_song',
             'history_podcast',
             'history_musicvideo',
@@ -7510,7 +7573,9 @@ if (!empty($_SESSION['loggedin'])) {
             );
             MCNT.append(hed);
     
-            if (route.listMode === 'line') {
+            if (route.listMode === 'live') {
+                renderLiveFavoriteRows(readyIds, false);
+            } else if (route.listMode === 'line') {
                 CRGL(readyIds, route.itemType);
             } else if (route.listMode === 'grid') {
                 const grid = CRGC(readyIds, route.itemType);
@@ -7536,6 +7601,11 @@ if (!empty($_SESSION['loggedin'])) {
                 }
                 if (!readyIds.length) continue;
     
+                if (route.listMode === 'live') {
+                    renderLiveFavoriteRows(readyIds, true);
+                    continue;
+                }
+
                 const hed = OA(document.createElement('div'), { className: 'section-header m-top-3' });
                 const ht = OA(document.createElement('h2'), {
                     className: 'title',
@@ -7555,6 +7625,38 @@ if (!empty($_SESSION['loggedin'])) {
             ADE();
         }
         
+        // Live favorites are stored under one type but displayed as TV and Radio rows.
+        function renderLiveFavoriteRows(ids, withSeeAll) {
+            const groups = splitLiveMediaIds(ids);
+            const rows = [
+                { ids: groups.video, label: 'Your Bookmark TV Live', mediaType: 'video' },
+                { ids: groups.audio, label: 'Your Bookmark Radio Live', mediaType: 'audio' }
+            ];
+
+            rows.forEach((row) => {
+                if (!row.ids || !row.ids.length) return;
+
+                const hed = OA(document.createElement('div'), {
+                    className: 'section-header ' + (withSeeAll ? 'm-top-3' : 'm-top-1')
+                });
+                hed.append(OA(document.createElement(withSeeAll ? 'h2' : 'h1'), {
+                    className: 'title',
+                    innerHTML: row.label
+                }));
+
+                if (withSeeAll) {
+                    hed.append(OA(document.createElement('a'), {
+                        className: 'see-all',
+                        innerHTML: 'See All',
+                        href: '/library/favorite/live'
+                    }));
+                }
+
+                MCNT.append(hed);
+                CRLVCards(row.ids, row.mediaType);
+            });
+        }
+
         function getUserData(path, itemType) {
             if (!SN.profile) return null;
         
@@ -12117,15 +12219,11 @@ const PROFILE_KEY = 'ha_profile';
     }
 
 
-    function CRSC(ar, T, ART, liveMediaTypeFilter) {
+    function CRSC(ar, T, ART) {
     
-        const isLive = T === 'live';
-        const isVideoish = (T === 'musicvideo' || T === 'video' || (isLive && liveMediaTypeFilter === 'video'));
-        const sec = OA(document.createElement("section"), {
-            className: "section-carousel-container m-top-1" + (isLive ? " live-cards-section" : "")
-        });
+        const sec = OA(document.createElement("section"), {className: "section-carousel-container m-top-1"});
+        const isVideoish = (T === 'musicvideo' || T === 'video');
         const sec_div = OA(document.createElement("div"), {className: "carousel-container " + (isVideoish ? "video" : "")});
-        ar = Array.isArray(ar) ? ar : [];
         ar.forEach((id) => {
             // id ممکن است object با id باشد
             if (id && typeof id === 'object' && id.id != null) id = id.id;
@@ -12133,8 +12231,7 @@ const PROFILE_KEY = 'ha_profile';
             let e = null;
             let url = HS;
             let TPS = svg_sng;
-
-            if (isLive) { e = SN.live ? SN.live[id] : null; url = '/live/'; TPS = svg_liv; }
+            
             if (T == 'song') {e = SN.song ? SN.song[id] : null; url = HS; }
             if (T == 'album') {e = SN.album ? SN.album[id] : null; url = HL; }
             if (T == 'video') {e = SN.video ? SN.video[id] : null; url = HV; }
@@ -12144,8 +12241,6 @@ const PROFILE_KEY = 'ha_profile';
             if (T == 'musicvideo') {e = SN.musicvideo ? SN.musicvideo[id] : null; url = HV; }
 
             if (!e) {console.log("CRSC: " + T + " not found:", id);return;}
-            if (isLive && liveMediaTypeFilter && liveMediaType(e) !== liveMediaTypeFilter) return;
-            const cardIsVideo = isLive ? liveMediaType(e) === 'video' : isVideoish;
 
             let  artistList = [];
             let  primaryArtistUrl = "";
@@ -12182,21 +12277,16 @@ const PROFILE_KEY = 'ha_profile';
             });
 
             const itemSlug = e.url || String(e.id);
-            const itemHref = isLive
-                ? liveRoute(e)
-                : ((T === 'playlist' || T === 'artist')
-                    ? (url + e.id + '/' + itemSlug)
-                    : (url + e.id + '/' + (primaryArtistUrl ? primaryArtistUrl + '-' : '') + itemSlug));
-            const ela = OA(document.createElement("a"), {href: itemHref, title: e.name || ''});
-            const art = OA(document.createElement("div"), {className: "artwork ratio " + (cardIsVideo ? "ratio-16x9" : "ratio-1x1")});
+            const itemHref = (T === 'playlist' || T === 'artist')
+                ? (url + e.id + '/' + itemSlug)
+                : (url + e.id + '/' + (primaryArtistUrl ? primaryArtistUrl + '-' : '') + itemSlug);
+            const ela = OA(document.createElement("a"), {href: itemHref});
+            const art = OA(document.createElement("div"), {className: "artwork ratio " + (isVideoish ? "ratio-16x9" : "ratio-1x1")});
             const sep = OA(document.createElement("span"), {className: "placeholder " + (T === "artist" ? "rounded-circle" : ""), innerHTML: TPS });
             art.append(sep);
-
-            const liveThumb = isLive && e.meta
-                ? (cardIsVideo ? (e.meta.tmv || e.meta.tmb) : e.meta.tmb)
-                : null;
-            const srcThumb = isLive ? (liveThumb ? UT + liveThumb + '.jpg' : '') : resolveThumbUrl(e, ART);
-            if (srcThumb) art.append(OA(document.createElement('img'), { src: srcThumb, alt: e.name || '' }));
+            
+            const srcThumb = resolveThumbUrl(e, ART);
+            if (srcThumb) art.append(OA(document.createElement('img'), { src: srcThumb }));
 
             ela.append(art);
             elb.append(ela);
@@ -12213,9 +12303,7 @@ const PROFILE_KEY = 'ha_profile';
                     ev.stopPropagation();
                     if (!e) return;
             
-                    if (isLive) {
-                        setPlayQueue(ar, e.id, 'live');
-                    } else if (T === 'song' || T === 'podcast' || T === 'musicvideo' || T === 'video') {
+                    if (T === 'song' || T === 'podcast' || T === 'musicvideo' || T === 'video') {
                         setPlayQueue(ar, e.id, T);
                     } else if (T === 'album' || T === 'playlist') {
                         playCollectionFromCard(e.id, T);
@@ -13163,10 +13251,8 @@ const PROFILE_KEY = 'ha_profile';
         if (t === 'artist') {
             dtnClass = 'thumbail artwork rounded-circle';
             TPS = typeof svg_usr !== 'undefined' ? svg_usr : TPS;
-        } else if (t === 'musicvideo' || t === 'video' || (t === 'live' && liveMediaType(e) === 'video')) {
+        } else if (t === 'musicvideo' || t === 'video') {
             dtnClass = 'thumbail artwork ratio ratio-16x9';
-        } else if (t === 'live') {
-            TPS = typeof svg_liv !== 'undefined' ? svg_liv : TPS;
         } else if (t === 'playlist') {
             TPS = typeof svg_pls !== 'undefined' ? svg_pls : TPS;
         } else if (t === 'album') {
@@ -13181,9 +13267,7 @@ const PROFILE_KEY = 'ha_profile';
             })
         );
 
-        const thumb = t === 'live'
-            ? (e.meta ? (liveMediaType(e) === 'video' ? (e.meta.tmv || e.meta.tmb) : e.meta.tmb) : null)
-            : (resolveThumb(e) || null);
+        const thumb = resolveThumb(e) || null;
         if (thumb) {
             dtn.append(
                 OA(document.createElement('img'), {
