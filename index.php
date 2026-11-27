@@ -860,7 +860,7 @@ h2{font-size:16px;margin:0 0 10px}
 .src-row.is-locked{border-color:color-mix(in srgb, var(--warn) 45%, var(--line));background:color-mix(in srgb, var(--warn) 8%, #0f1017)}
 .src-row.is-demo{border-color:color-mix(in srgb, var(--accent) 35%, var(--line));}
 .src-kind.is-demo{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 50%, var(--line));}
-.src-main{display:grid;grid-template-columns:40px minmax(0,1fr) 72px minmax(120px,160px) auto 36px;gap:8px;align-items:center}
+.src-main{display:grid;grid-template-columns:40px minmax(0,1fr) 72px 92px minmax(120px,160px) auto 36px;gap:8px;align-items:center}
 .src-owner{position:relative;min-width:0}
 .src-owner .src-user{width:100%}
 .src-owner-label{
@@ -871,7 +871,7 @@ h2{font-size:16px;margin:0 0 10px}
 .src-owner .pick-list{position:absolute;z-index:5;left:0;right:0;top:100%;margin-top:4px;max-height:180px;overflow:auto}
 @media (max-width:760px){
   .src-main{grid-template-columns:40px minmax(0,1fr);gap:8px}
-  .src-main .src-bit,.src-main .src-owner,.src-main .src-kind,.src-main .src-del{grid-column:2}
+  .src-main .src-bit,.src-main .src-protocol,.src-main .src-owner,.src-main .src-kind,.src-main .src-del{grid-column:2}
 }
 .src-play{
   width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
@@ -1949,6 +1949,7 @@ function buildDraft(table, full) {
   return {
     table   : table,
     type    : inferType(table, full),
+    media_type: (table === 'live' && String(full.media_type || '').toLowerCase() === 'video') ? 'video' : 'audio',
     id      : Number(full.id) || 0,
     name    : full.name || '',
     names   : names,
@@ -2309,6 +2310,7 @@ function sourcesFromCard(full) {
       id   : id,
       url  : url,
       bit  : bit,
+      protocol: String(s.protocol || ''),
       user : user,
       act  : act,
       _key : 's' + i + '_' + (id || i)
@@ -2575,6 +2577,14 @@ function zoneBarHtml(d, backLabel) {
  * other tables -> single read-only badge
  */
 function typeSwitchHtml(d) {
+  if (d.table === 'live') {
+    const mediaType = d.media_type === 'video' ? 'video' : 'audio';
+    return '<div class="type-switch" id="typeSwitch">' +
+      '<span class="badge badge-live is-on">Live</span>' +
+      '<button type="button" class="badge badge-audio' + (mediaType === 'audio' ? ' is-on' : '') + '" data-media-type-to="audio">Audio</button>' +
+      '<button type="button" class="badge badge-video' + (mediaType === 'video' ? ' is-on' : '') + '" data-media-type-to="video">Video</button>' +
+    '</div>';
+  }
   let options = null;
   if (d.table === 'song')  options = ['song', 'podcast'];
   if (d.table === 'video') options = ['musicvideo', 'video'];
@@ -3896,6 +3906,7 @@ function savedSourcesHtml(d) {
     return '<div class="saved-media-row">' +
       '<span class="badge" style="flex:none">' + esc(actLabel) + '</span>' +
       '<span class="badge badge-song" style="flex:none">' + esc((s.bit || 0) + 'k') + '</span>' +
+      (s.protocol ? '<span class="badge" style="flex:none">' + esc(s.protocol) + '</span>' : '') +
       '<span class="badge" style="flex:none">' +
         esc(ownerDisplayName(getOwner(s.user) || { id: Number(s.user) || 0, name: '' })) +
       '</span>' +
@@ -4044,6 +4055,9 @@ function sourceRowHtml(s, index) {
         'value="' + esc(s.url || '') + '" spellcheck="false"' + (canEdit ? '' : ' readonly') + '>' +
       '<input class="input src-bit" data-src-bit type="number" min="0" max="9999" step="1" ' +
         'placeholder="bit" title="Bitrate (kbps)" value="' + esc(s.bit || '') + '"' +
+        (canEdit ? '' : ' readonly') + '>' +
+      '<input class="input src-protocol" data-src-protocol type="text" maxlength="24" autocomplete="off" ' +
+        'placeholder="protocol" title="Stream protocol (e.g. hls, http); may be empty" value="' + esc(s.protocol || '') + '"' +
         (canEdit ? '' : ' readonly') + '>' +
       sourceOwnerFieldHtml(s, canEditUser);
 
@@ -4966,6 +4980,7 @@ function collectDraft() {
   $$('#srcList [data-src-row]').forEach(row => {
     const urlEl = row.querySelector('[data-src-url]');
     const bitEl = row.querySelector('[data-src-bit]');
+    const protocolEl = row.querySelector('[data-src-protocol]');
     const userEl = row.querySelector('[data-src-user]');
     const url = urlEl ? urlEl.value.trim() : '';
     // Keep empty rows while editing (new source); only drop them on submit payload
@@ -4973,6 +4988,7 @@ function collectDraft() {
       id  : Number(row.getAttribute('data-src-id')) || 0,
       url : url,
       bit : bitEl && bitEl.value !== '' ? Number(bitEl.value) : 0,
+      protocol: protocolEl ? protocolEl.value.trim() : '',
       user: userEl && userEl.value !== '' ? Number(userEl.value) : myUserId(),
       act : Number(row.getAttribute('data-src-row-act')) || 0,
       _key: row.getAttribute('data-src-key') || ''
@@ -5187,10 +5203,12 @@ async function submitItem(event) {
           artists: t.artists || ''
         }))
       : undefined,
+    media_type: d.table === 'live' ? (d.media_type === 'video' ? 'video' : 'audio') : undefined,
     sources: (d.sources || []).filter(s => s && String(s.url || '').trim()).map(s => ({
       id  : s.id || 0,
       url : s.url,
       bit : s.bit || 0,
+      protocol: s.protocol || '',
       user: s.user || 0,
       act : (s.act != null) ? s.act : 1
     })),
@@ -6432,6 +6450,7 @@ function bindSourcesEditor() {
         id: 0,
         url: '',
         bit: 320,
+        protocol: '',
         user: myUserId(),
         act: 1,
         _key: 'n_' + Math.random().toString(36).slice(2, 9)
@@ -6754,6 +6773,15 @@ function handleZoneClick(event) {
     const s = $('#trackSearch'), pl = $('#trackPicks');
     if (s) s.value = '';
     if (pl) pl.innerHTML = '';
+    return;
+  }
+
+  const mediaTypeBtn = t.closest('[data-media-type-to]');
+  if (mediaTypeBtn && state.item && state.item.table === 'live') {
+    state.item.media_type = mediaTypeBtn.getAttribute('data-media-type-to') === 'video' ? 'video' : 'audio';
+    $('#typeSwitch [data-media-type-to]').forEach(b => {
+      b.classList.toggle('is-on', b.getAttribute('data-media-type-to') === state.item.media_type);
+    });
     return;
   }
 
