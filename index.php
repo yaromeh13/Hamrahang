@@ -2562,6 +2562,12 @@ function payloadToDraft(p) {
       _key : s._key || ('s_' + Math.random().toString(36).slice(2, 8))
     })),
     dur     : Number(p.dur) || 0,
+    // Live media kind — must survive saved-card + re-edit round-trip
+    media_type: (p.table === 'live' || p.type === 'live')
+      ? (String(p.media_type || '').toLowerCase() === 'video' ? 'video' : 'audio')
+      : (p.media_type || ''),
+    ownerId : Number(p.ownerId) || 0,
+    ownerName: p.ownerName ? String(p.ownerName) : '',
     raw     : null
   };
 }
@@ -2664,6 +2670,7 @@ function emptyDraft(table, type) {
     tlg     : '',
     ownerId : 0,
     ownerName: '',
+    media_type: table === 'live' ? 'audio' : '',
     raw     : null
   };
 }
@@ -5364,9 +5371,14 @@ function attachCreatedToParent(created) {
   }
 }
 
-  // Live: owner public id from server changes
-  if (res && res.changes && res.changes.owner != null) {
-    payload.ownerId = Number(res.changes.owner) || 0;
+  // Live: owner + media_type from server changes (authoritative after save)
+  if (res && res.changes) {
+    if (res.changes.owner != null) {
+      payload.ownerId = Number(res.changes.owner) || 0;
+    }
+    if (res.changes.media_type != null) {
+      payload.media_type = String(res.changes.media_type).toLowerCase() === 'video' ? 'video' : 'audio';
+    }
   }
 
   // Prefer server-side media keys (id_img) so the saved card does not keep data: URLs
