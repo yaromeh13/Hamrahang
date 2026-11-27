@@ -1,0 +1,192 @@
+# Web App — Reference & Development Rules
+
+> **Scope:** This document describes the browser web app in `ha.php` (with `main.css` and `h_api.php`). It is a modern single-page app for phone and desktop browsers. It is **not** the legacy Web TV in `index.html`.
+
+This is the living reference for routes, playback, lyrics, local data, and shared helpers. Update it when an established behavior or storage contract changes.
+
+Do not copy Web TV rules into this app: no ES5 requirement, no D-pad / `spatial_navigation.js`, no dual base-CSS + `tv.css` layer, and no Live-channel page model.
+
+---
+
+## 1. Platform
+
+- Runtime is modern JavaScript in `ha.php` (`const` / `let`, `async`/`await`, `fetch`).
+- UI shell is built in JavaScript (`CRSB`, `CRPL`, `CRDX`, and related builders). Static HTML only keeps the roots those builders fill.
+- Styles live in the inline `<style>` block of `ha.php` and in `main.css`. There is no separate legacy fallback stylesheet.
+- Canonical origin for pages and API: **`https://hamrahang.ir`**. Do not add another API host without an explicit decision.
+- Navigation is pointer, touch, and normal browser history (`pushState` / `popstate`). Do not add a spatial-focus engine here.
+
+---
+
+## 2. Application structure
+
+`chp(url)` is the router. It pushes history when a URL is given, pulls video out of the page before clearing content (`beforePageClear`), then dispatches on the first path segment.
+
+| Path | Handler | Role |
+|---|---|---|
+| `/` and list paths such as `/song/top` | `CRHP` | Home and catalog lists |
+| `/song/{id}`, `/album/{id}` | `CRSP` | Song, podcast, or album detail |
+| `/video/{id}` | `CRVP` | Video / music-video detail |
+| `/artist/{id}` | `CRAP` | Artist detail |
+| `/playlist/{id}` | `CRPP` | Playlist detail |
+| `/search/...` | `CRSR` | Search |
+| `/library/...` | `CRLP` | Library views |
+| `/setting/...` | `CRSA` | Account, history, favorites, playlists, settings |
+| `/pair/{token}` | `CRPair` | Device pairing |
+| `/verify`, `/verify-email`, `/link-email` | `CRVerify` | Email confirm / link |
+| `/reset/{token}` | `CRReset` | Password reset |
+| anything else | `CRNF` | Not-found page |
+
+Unknown catalog keys inside `CRHP` also call `CRNF`. A JSON body `{ "error": "not_found" }` from the API must not render an empty home.
+
+### 2.1 Home
+
+Home order is the `homeOrder` list inside `CRHP`: featured videos, top songs, new tracks, new music videos, per-type recently played rows, top playlists, top artists. User rows read `SN.profile`, not a second cache.
+
+### 2.2 Cards and lists
+
+- Grids: `CRGC` returns the section node; the caller appends it.
+- Horizontal cards: `CRSC`.
+- Track lines: `CRGL` (play state, duration, more-menu).
+- Artwork goes through `resolveThumb` / `resolveThumbUrl`. Missing art keeps the placeholder span; do not leave an `<img>` with an empty `src`.
+- Video-like items prefer `meta.tmv`, then `meta.tmb`. Other items prefer `meta.tmb`. Player spinning art prefers `tmb`, then `tmv`, then `cvr`. Stage background prefers `art`, then `tmv`, then `tmb`.
+
+### 2.3 Sidebar hero (desktop only)
+
+`UHERO` fills `#hero` on hover and adds `row` on the menu. `clearHeroMenu` removes that state on navigation and when the pointer enters the menu. Hero is hidden on small screens; do not add a mobile hero flow.
+
+Playlist hover must not invent an artist prefix on the URL. Playlist thumbs use the playlist placeholder icon when there is no image.
+
+### 2.4 Settings
+
+`CRSA` builds accordion sections: Profile, History, Favorites, Playlists, Settings. Paths `audio`, `video`, and `devices` fold into the Settings section. Audio and video quality lists live inside that section, not as separate pages.
+
+---
+
+## 3. Playback
+
+One player state object (`ensurePlayer`). Do not start a second playback pipeline.
+
+- Playable types: `song`, `podcast`, `musicvideo`, `video`.
+- `getPlayableSources(item)` is the only list the player indexes. It drops demo sources (`type === "demo"`) and rows without `url`. `nowPlaying.sourceIndex` is an index into **that** list, never into the raw `item.sources` array (download lists may still include demos).
+- Manual quality change calls `PlayMediaSourceAt(index, { preserveTime: true })`.
+- Automatic failover in `handleSourceFailure` must use the same `preserveTime: true` so a failed source does not restart the track at 0 when `currentTime` is already past 0.25s. A brand-new queue item still starts through `PlayPreferredSource` without preserving time.
+- Quality preference is `audioQuality` or `videoQuality` from settings (`high` / `medium` / `low`), mapped onto real bitrates by `pickSourceByQuality`.
+- Repeat and shuffle are settings (`repeatMode`, `shuffleMode`) plus in-memory shuffle history on the player object. The queue itself is memory-only and is cleared on a full reload.
+- Desktop chrome is `maximum-player-desktop` (`CRDX`). Fullscreen chrome is `#player` / `#player-box` (`CRPL`). Minimize/maximize must not drop the current item.
+- Owner badge on the desktop bar and `#player-owner` reads the **playable** source at `sourceIndex` (`resolveNowPlayingOwner`). Fullscreen badge shows an image only when the owner has a thumb; it has no placeholder. The desktop badge may show the download icon placeholder.
+
+---
+
+## 4. Lyrics
+
+`LyricsEngine` is the only lyric renderer. Callers mount a container; they do not parse LRC themselves.
+
+- Source data is `item.lyrics[]` with `lng` and `body` (`knd` / `fmt` may mark LRC).
+- Timed text uses `parseLrc`. A positive `[offset:…]` is applied in `findIndex` (timestamp + offset compared with current time).
+- Untimed text uses `parsePlain`.
+- `mount(el, mode, view, bindItem)`: if `bindItem` is set, that box keeps a snapshot of **that** item. It must not follow whatever the player starts next. Highlight runs only when the playing item id matches the snapshot.
+- Player surfaces (`mountDefaults`, media-stage, panels) stay unbound and follow the current item.
+- Views: `normal`, `line`, `focus`, `card`, plus `static` when there are no timestamps. Video playback forces the `line` view from `getMainSettings` even if the user picked another mode.
+- Font size and family apply only where a mount opts into the lyric skin. Other page text keeps the default font.
+- Clicks on a timed line seek only when that mount belongs to the item that is actually playing.
+- Intro lines (`[intro]` … `[/intro]`) stay on player mounts and are hidden on bound page mounts.
+
+---
+
+## 5. Data, memory, and localStorage
+
+`SN` is the in-memory store for the whole session. Only the keys below are written to `localStorage`. Catalog objects are **not** persisted: a reload refetches them.
+
+`canUseLocalStorage()` probes `localStorage` once (`HAS_LOCAL`). If it throws, profile and the other writes are skipped instead of breaking the page.
+
+### 5.1 What stays only in `SN` (lost on reload)
+
+| Key | Contents |
+|---|---|
+| `SN.song`, `SN.podcast`, `SN.video`, `SN.musicvideo`, `SN.album`, `SN.artist` | Entities merged by `UARDB` / `gjs`. `full` means the detailed payload is already loaded. |
+| `SN.search` | Last search result payload. |
+| `SN.user` (live session) | Logged-in user after refresh. `SN.accessToken` is memory-only. |
+| `SN.player` / `ensurePlayer()` | Queue, index, now-playing, shuffle history, play generation. |
+| `SN.state` | `ready`, `online`. |
+| `SN.config` | `home` and `api` origins. |
+
+List endpoints also stash id lists such as `SN.top_song` on the `SN` object. Those ids are useless after reload until the list is fetched again.
+
+### 5.2 localStorage keys
+
+| Key | Memory mirror | What is stored | When it is written |
+|---|---|---|---|
+| `ha_profile` | `SN.profile` | `favorite` (one id array per `ITEM_TYPES` entry), `playlist` (id list), `playlistEntities` (full local playlist objects), `history` (`{id, type, at}`, max 50 rows **per playable type**), `search` | `SaveProfile()` after favorite, playlist, history, or search changes |
+| `ha_settings` | `SN.settings` | Audio/video quality, lyric font/mode/lang, `playerShowLyrics`, `rotatingHeader`, `keepControllerVisible`, `repeatMode`, `shuffleMode`, sleep timer, view flags | `SetSetting` → `SaveSettingsToStorage` |
+| `ha_owner` | `SN.owners` | Map of source owners `{ id, name, meta.tmb }`. New ids are inserted once; existing rows are not overwritten. Id `0` is Hamrahang and is not labeled in download rows. | `saveOwnersToLocal` after `putOwnerIfNew` |
+| `ha_user` | cache read by `CheckLoginStatus` | Small cached profile so the UI can paint before refresh | Login / profile update |
+| `ha_rftk` | — | Refresh token. Access token is not stored here. | Login; removed on logout or rejected refresh |
+| `did` | — | Stable device id created once | `GetOrCreateDeviceId` |
+
+`LoadProfile()` fills missing favorite types with empty arrays and copies `playlistEntities` back into `SN.playlist` so local playlists survive reload. Server playlists are still loaded from the API when the user is logged in.
+
+Logout removes `ha_rftk` and `ha_user`. It does not wipe `ha_profile`, `ha_settings`, or `ha_owner` (those are device-local, not only account data).
+
+### 5.3 API
+
+- JSON reads go through `gjs`. Authenticated writes go through `gja` with `Authorization: Bearer` when `SN.accessToken` is set.
+- Inspect `h_api.php` and a real response before changing a query or action name.
+- Do not refetch an entity that is already `full` in `SN` unless the caller passed an explicit refresh.
+- Optional `meta` fields (`tmb`, `tmv`, `cvr`, `art`, `dur`, `des`, `rls`, `ncp`) must be checked before use.
+
+### 5.4 Accounts (short)
+
+- Email login, register, verify, forgot-password, and change-password are API actions. Confirmation mail is plain English text.
+- Profile edit can set name and avatar. Avatar bytes are cropped to a square in the browser before upload.
+- Adding an email to an account that already owns that email is a confirm-by-link merge, not an instant overwrite.
+- User `act`: `1` normal, `2`–`5` commercial (5 = recycled row), `6` blocked, `7`–`9` admin. Document this in `h_api.php` comments if the codes change.
+
+---
+
+## 6. Shared helpers (web app)
+
+Add a row when a helper’s job changes. Do not document a guess.
+
+| Helper | Responsibility |
+|---|---|
+| `chp(url)` | SPA navigation and history. |
+| `CRHP` / `CRSP` / `CRVP` / `CRAP` / `CRPP` | Home, song/album, video, artist, playlist pages. |
+| `CRNF()` | Not-found content and a control back to home. |
+| `CRGC` / `CRSC` / `CRGL` | Grid, carousel card, track line. |
+| `resolveThumb` / `resolveThumbUrl` | Artwork key and URL. |
+| `UARDB(type, list)` | Merge API rows into `SN[type]`. |
+| `gjs` / `gja` | Public JSON read / authorized JSON action. |
+| `LoadProfile` / `SaveProfile` | `SN.profile` ↔ `ha_profile`. |
+| `GetSetting` / `SetSetting` | `SN.settings` ↔ `ha_settings`. |
+| `ensureOwnersMap` / `getOwner` / `putOwnerIfNew` | `SN.owners` ↔ `ha_owner`. |
+| `getPlayableSources` / `PlayMediaSourceAt` / `PlayPreferredSource` | Source list and playback. |
+| `resolveNowPlayingOwner` | Owner of the source currently indexed for playback. |
+| `LyricsEngine.mount` / `loadFromItem` / `sync` | Lyric parse, bind, and time sync. |
+| `setPlayQueue` / `playQueueAt` | Queue and current item. |
+| `UHERO` / `clearHeroMenu` | Desktop sidebar preview. |
+
+---
+
+## 7. Change checklist
+
+1. Name the page, helper, or API action.
+2. Read the current function in `ha.php` and its callers.
+3. If data is involved, read `h_api.php` and one real JSON body first.
+4. Keep playback on `getPlayableSources` indexes.
+5. Keep page lyrics bound to their item; do not let the player overwrite them.
+6. Persist only through the keys in section 5. Do not write the catalog into `localStorage`.
+7. Update this file when a route, storage key, or player/lyric rule changes.
+
+---
+
+## 8. Not in this document
+
+These belong to `webtv.md` / `index.html` and must not be treated as web-app rules:
+
+- ES5-only syntax and XMLHttpRequest-only networking
+- `spatial_navigation.js`, D-pad sections, and `tv.css` progressive enhancement
+- Live channel rows (`SN.live`, `SN.latest_live`)
+- PNG icon fallbacks for TV asset limits
+
+Still to document only after reading the code, not from memory: every `gjs`/`gja` action name, and the full favorite/playlist sync sequence after login.
