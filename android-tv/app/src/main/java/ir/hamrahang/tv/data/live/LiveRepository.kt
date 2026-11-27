@@ -87,10 +87,44 @@ class LiveRepository {
         val remote = ApiClient.api.getLatestLives()
         val now = System.currentTimeMillis()
 
-        val entities = remote.mapIndexedNotNull { index, dto ->
+        // Resolve incomplete latest cards in one request, but retain a complete
+        // offline copy if the resolver is temporarily unavailable.
+        val ids = remote.mapNotNull { it.id }
+        val localById = if (ids.isEmpty()) {
+            emptyMap()
+        } else {
+            liveDao.getByIds(ids).associateBy { it.id }
+        }
+        val needsResolve = remote.filter { dto ->
+            val id = dto.id
+            !dto.isFullCard && (id == null || localById[id]?.isFull != true)
+        }.mapNotNull { it.id?.toLongOrNull() }.distinct()
+
+        val resolvedById = if (needsResolve.isNotEmpty()) {
+            try {
+                ApiClient.api.resolveLives(
+                    body = ResolveLivesRequest(needsResolve)
+                ).associateBy { it.id }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                emptyMap()
+            }
+        } else {
+            emptyMap()
+        }
+
+        val entities = remote.mapIndexedNotNull { index, remoteDto ->
+            val id = remoteDto.id ?: return@mapIndexedNotNull null
+            val local = localById[id]
+            val dto = if (remoteDto.isFullCard) {
+                remoteDto
+            } else {
+                resolvedById[id] ?: remoteDto
+            }
             syncOwner(dto, now)
             LiveEntityMapper.merge(
-                old = dto.id?.let { liveDao.get(it) },
+                old = local,
                 dto = dto,
                 position = index,
                 updatedAt = now,
