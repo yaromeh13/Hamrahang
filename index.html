@@ -7212,7 +7212,11 @@ try {
                 CRSA(LPS[2], LPS[3], done);
                 break;
             case 'live':
-                CRLV(done);
+                if (/^\\d+$/.test(LPS[2])) {
+                    CRLVDetail(LPS[2], done);
+                } else {
+                    CRLV(done);
+                }
                 break;
             case 'search':
                 CRSR(LPS[2], LPS[3], done);
@@ -8913,6 +8917,32 @@ try {
             : 'audio';
     }
 
+    /*
+     * Canonical Live route:
+     * - Owned channel: /live/{id}/{owner-url}-{live-url}
+     * - Public/system channel: /live/{id}/{live-url}
+     * Trim separators so an empty owner never creates a leading dash.
+     */
+    function liveRoute(item) {
+        var owner = item && item.owner ? item.owner : null;
+        var itemUrl = String(item && item.url ? item.url : '').replace(/^[-_]+|[-_]+$/g, '');
+        var ownerUrl = '';
+
+        if (owner && Number(owner.id) > 0) {
+            ownerUrl = String(owner.url || '').replace(/^[-_]+|[-_]+$/g, '');
+            if (!ownerUrl && owner.name) {
+                ownerUrl = String(owner.name).toLowerCase().replace(/\\s+/g, '_')
+                    .replace(/^[-_]+|[-_]+$/g, '');
+            }
+        }
+
+        var slug = ownerUrl && itemUrl ? ownerUrl + '-' + itemUrl
+                 : (ownerUrl || itemUrl);
+
+        return '/live/' + encodeURIComponent(item && item.id != null ? item.id : '') +
+            (slug ? '/' + encodeURIComponent(slug) : '');
+    }
+
     function splitLiveMediaIds(ids) {
         var split = {video: [], audio: []};
         var i, id, item;
@@ -8963,7 +8993,7 @@ try {
             });
             box = OA(document.createElement("div"), {className: "box"});
             link = OA(document.createElement("a"), {
-                href: "#",
+                href: liveRoute(item),
                 className: "focusable live-card-link",
                 title: item.name || "Live"
             });
@@ -8975,6 +9005,7 @@ try {
             link.addEventListener("click", function (ev) {
                 if (ev && ev.preventDefault) { ev.preventDefault(); }
                 SetPlayListContext(ids, 'live', this._item);
+                chp(liveRoute(this._item));
                 setPlayQueue(PlyQueueRows, this._item.id, 'live');
             });
 
@@ -9009,6 +9040,40 @@ try {
             return count;
         }
         return 0;
+    }
+
+    /*
+     * Direct Live landing (/live/{id}/{slug}).
+     * Resolve the full card by public ID, then show that channel as its own page.
+     * Playback remains controlled by the card click, matching Song detail behavior.
+     */
+    function CRLVDetail(id, callback) {
+        function draw() {
+            var item = SN.live ? SN.live[id] : null;
+            if (!item || !item.full) {
+                CRNF();
+                if (callback) { callback(false); }
+                return;
+            }
+
+            MCNT.innerHTML = '';
+            appendLiveTypeHeader(
+                liveMediaType(item) === 'video' ? 'پخش زنده تصویری' : 'پخش زنده صوتی'
+            );
+            CRLVCards([item.id], liveMediaType(item));
+
+            if (sn && typeof sn.makeFocusable === 'function') {
+                sn.makeFocusable();
+            }
+            if (callback) { callback(true); }
+        }
+
+        var current = SN.live ? SN.live[id] : null;
+        if (current && current.full) {
+            draw();
+        } else {
+            ResolveItems('live', [id], draw);
+        }
     }
 
     function CRLV(callback) {
