@@ -699,7 +699,12 @@ h2{font-size:16px;margin:0 0 10px}
 .badge-musicvideo{background:#f43f5e2b;color:#fd93a7}
 .badge-video{background:#f43f5e2b;color:#fd93a7}
 .badge-playlist{background:#06b6d429;color:#77dff1}
-.badge-live{background:#ef444429;color:#fca5a5}
+.badge-live{background:#8b5cf633;color:#d6c5ff}
+.badge-audio{background:#14b8a626;color:#5eead4;border:1px solid #14b8a640}
+.badge-video{background:#3b82f626;color:#93c5fd;border:1px solid #3b82f640}
+.badge-audio.is-on{background:#0f9f8b;color:#fff;border-color:#34d8c0;box-shadow:0 0 0 2px #14b8a633}
+.badge-video.is-on{background:#2563c7;color:#fff;border-color:#60a5fa;box-shadow:0 0 0 2px #3b82f633}
+.badge-live.is-on{background:#7041bd;color:#fff;border:1px solid #ad8aff}
 .badge-user{background:#64748b33;color:#cbd5e1}
 .badge-owner{background:#a78bfa33;color:#c4b5fd}
 @media (max-width:640px){
@@ -860,7 +865,8 @@ h2{font-size:16px;margin:0 0 10px}
 .src-row.is-locked{border-color:color-mix(in srgb, var(--warn) 45%, var(--line));background:color-mix(in srgb, var(--warn) 8%, #0f1017)}
 .src-row.is-demo{border-color:color-mix(in srgb, var(--accent) 35%, var(--line));}
 .src-kind.is-demo{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 50%, var(--line));}
-.src-main{display:grid;grid-template-columns:40px minmax(0,1fr) 72px 92px minmax(120px,160px) auto 36px;gap:8px;align-items:center}
+.src-main{display:grid;grid-template-columns:40px minmax(0,1fr) 72px minmax(138px,168px) minmax(120px,160px) auto 36px;gap:8px;align-items:center}
+.src-protocol{width:100%;min-width:0;cursor:pointer}
 .src-owner{position:relative;min-width:0}
 .src-owner .src-user{width:100%}
 .src-owner-label{
@@ -4029,6 +4035,38 @@ function sourceOwnerFieldHtml(s, canEditUser) {
   return html;
 }
 
+function protocolOptionsHtml(value) {
+  const options = [
+    ['', 'Auto / Not specified'],
+    ['hls', 'HLS'],
+    ['dash', 'MPEG-DASH'],
+    ['http', 'HTTP / HTTPS (Progressive)'],
+    ['mss', 'Microsoft Smooth Streaming'],
+    ['hds', 'Adobe HDS (Legacy)'],
+    ['icecast', 'Icecast (Audio)'],
+    ['shoutcast', 'SHOUTcast (Audio)'],
+    ['webrtc', 'WebRTC'],
+    ['rtmp', 'RTMP'],
+    ['rtmps', 'RTMPS'],
+    ['rtsp', 'RTSP'],
+    ['rtp', 'RTP'],
+    ['udp', 'UDP'],
+    ['srt', 'SRT'],
+    ['rist', 'RIST'],
+    ['zixi', 'Zixi'],
+    ['other', 'Other']
+  ];
+  const current = String(value || '').toLowerCase();
+  let html = options.map(option =>
+    '<option value="' + esc(option[0]) + '"' + (current === option[0] ? ' selected' : '') + '>' +
+      esc(option[1]) + '</option>'
+  ).join('');
+  if (current && !options.some(option => option[0] === current)) {
+    html += '<option value="' + esc(value) + '" selected>Custom: ' + esc(value) + '</option>';
+  }
+  return html;
+}
+
 function sourceRowHtml(s, index) {
   const act = Number(s.act);
   const a = (act === 0 || act === 1 || act === 2 || act === 3) ? act : 1;
@@ -4056,9 +4094,8 @@ function sourceRowHtml(s, index) {
       '<input class="input src-bit" data-src-bit type="number" min="0" max="9999" step="1" ' +
         'placeholder="bit" title="Bitrate (kbps)" value="' + esc(s.bit || '') + '"' +
         (canEdit ? '' : ' readonly') + '>' +
-      '<input class="input src-protocol" data-src-protocol type="text" maxlength="24" autocomplete="off" ' +
-        'placeholder="protocol" title="Stream protocol (e.g. hls, http); may be empty" value="' + esc(s.protocol || '') + '"' +
-        (canEdit ? '' : ' readonly') + '>' +
+      '<select class="input src-protocol" data-src-protocol title="Stream protocol / delivery method"' +
+        (canEdit ? '' : ' disabled') + '>' + protocolOptionsHtml(s.protocol) + '</select>' +
       sourceOwnerFieldHtml(s, canEditUser);
 
   // Kind toggle: orig ↔ demo (fixed ~4-letter labels so button width stays stable)
