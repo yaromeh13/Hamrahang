@@ -8907,21 +8907,60 @@ try {
         xhr.send(null);
     }
     
-    function CRLVCards(ids) {
+    function liveMediaType(item) {
+        return String(item && item.media_type || '').toLowerCase() === 'video'
+            ? 'video'
+            : 'audio';
+    }
+
+    function splitLiveMediaIds(ids) {
+        var split = {video: [], audio: []};
+        var i, id, item;
+
         ids = isArray(ids) ? ids : [];
-        if (!ids.length) { return 0; }
-
-        var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1 live-cards-section"});
-        var row = OA(document.createElement("div"), {className: "container video live-card-row"});
-        var count = 0;
-        var i, id, item, thumb, card, box, link, art, placeholder, image, title;
-
         for (i = 0; i < ids.length; i++) {
             id = (typeof ids[i] === 'object') ? ids[i].id : ids[i];
             item = SN.live ? SN.live[id] : null;
             if (!item) { continue; }
+            split[liveMediaType(item)].push(item.id != null ? item.id : id);
+        }
 
-            card = OA(document.createElement("div"), {className: "item-box live-card"});
+        return split;
+    }
+
+    function appendLiveTypeHeader(title) {
+        var head = OA(document.createElement("div"), {className: "section-header live-owner-header"});
+        var ownerImage = OA(document.createElement("div"), {className: "live-owner-image live-type-icon"});
+        var ownerTitle = OA(document.createElement("h2"), {className: "title", innerHTML: title});
+
+        /* Same SVG/PNG fallback used by the Live item in the main navigation. */
+        ownerImage.innerHTML = getIcon(svg_live, "svg_live");
+        head.appendChild(ownerImage);
+        head.appendChild(ownerTitle);
+        MCNT.appendChild(head);
+    }
+
+    function CRLVCards(ids, mediaType) {
+        ids = isArray(ids) ? ids : [];
+        mediaType = mediaType === 'video' ? 'video' : 'audio';
+        if (!ids.length) { return 0; }
+
+        var isVideo = mediaType === 'video';
+        var sec = OA(document.createElement("div"), {className: "section-carousel-container p-top-1 live-cards-section"});
+        var row = OA(document.createElement("div"), {
+            className: "container" + (isVideo ? " video" : "") + " live-card-row"
+        });
+        var count = 0;
+        var i, id, item, card, box, link, art, placeholder, thumbUrl, image, title;
+
+        for (i = 0; i < ids.length; i++) {
+            id = (typeof ids[i] === 'object') ? ids[i].id : ids[i];
+            item = SN.live ? SN.live[id] : null;
+            if (!item || liveMediaType(item) !== mediaType) { continue; }
+
+            card = OA(document.createElement("div"), {
+                className: "item-box live-card" + (isVideo ? " live-card-video" : " live-card-audio")
+            });
             box = OA(document.createElement("div"), {className: "box"});
             link = OA(document.createElement("a"), {
                 href: "#",
@@ -8939,14 +8978,18 @@ try {
                 setPlayQueue(PlyQueueRows, this._item.id, 'live');
             });
 
-            art = OA(document.createElement("div"), {className: "artwork ratio ratio-1x1"});
+            art = OA(document.createElement("div"), {
+                className: "artwork " + (isVideo ? "ratio ratio-16x9" : "ratio ratio-1x1")
+            });
             placeholder = OA(document.createElement("span"), {className: "placeholder"});
             art.appendChild(placeholder);
-            thumb = item.meta && item.meta.tmb ? item.meta.tmb : "";
-            if (thumb) {
-                image = OA(document.createElement("img"), {src: UT + thumb + ".jpg", alt: item.name || "Live"});
+
+            thumbUrl = resolveThumbUrl(item, null, isVideo ? 'video' : 'live');
+            if (thumbUrl) {
+                image = OA(document.createElement("img"), {src: thumbUrl, alt: item.name || "Live"});
                 art.appendChild(image);
             }
+
             link.appendChild(art);
             box.appendChild(link);
             card.appendChild(box);
@@ -8982,6 +9025,7 @@ try {
             function draw() {
                 if (String(SN.routePath || '').replace(/\/+$/, '') !== '/live') { return; }
                 MCNT.innerHTML = '';
+
                 if (!valid.length) {
                     var empty = OA(document.createElement("div"), {className: "error-message-container"});
                     empty.appendChild(OA(document.createElement("div"), {className: "text1 p-top-1-5", innerHTML: "No Live channels found."}));
@@ -8990,6 +9034,7 @@ try {
                     var groups = {};
                     var order = [];
                     var j, liveItem, ownerId, group, owner, head, ownerImage, ownerTitle, thumbRef, thumbUrl;
+                    var mediaRows;
 
                     for (j = 0; j < valid.length; j++) {
                         liveItem = SN.live ? SN.live[valid[j]] : null;
@@ -9007,7 +9052,29 @@ try {
 
                     if (typeof saveOwnersToLocal === 'function') { saveOwnersToLocal(); }
 
+                    /*
+                     * Ownerless channels are the two fixed sections at the top.
+                     * Video is always placed before Audio; no "Hamrahang" owner
+                     * heading is rendered for this group.
+                     */
+                    group = groups["0"];
+                    if (group) {
+                        mediaRows = splitLiveMediaIds(group.ids);
+                        if (mediaRows.video.length) {
+                            appendLiveTypeHeader("پخش زنده تصویری");
+                            CRLVCards(mediaRows.video, "video");
+                        }
+                        if (mediaRows.audio.length) {
+                            appendLiveTypeHeader("پخش زنده صوتی");
+                            CRLVCards(mediaRows.audio, "audio");
+                        }
+                    }
+
+                    /* Owned channels keep their existing owner title and avatar.
+                       Their Audio and Video cards are rendered in separate rows. */
                     for (j = 0; j < order.length; j++) {
+                        if (order[j] === "0") { continue; }
+
                         group = groups[order[j]];
                         owner = getOwner(order[j]) || group.owner || {id: 0, name: "Hamrahang", meta: {}};
 
@@ -9025,7 +9092,9 @@ try {
                         head.appendChild(ownerTitle);
                         MCNT.appendChild(head);
 
-                        CRLVCards(group.ids);
+                        mediaRows = splitLiveMediaIds(group.ids);
+                        if (mediaRows.video.length) { CRLVCards(mediaRows.video, "video"); }
+                        if (mediaRows.audio.length) { CRLVCards(mediaRows.audio, "audio"); }
                     }
                 }
 
@@ -10261,7 +10330,7 @@ try {
                 current &&
                 String(current.id) === String(e.id) &&
                 current.player === "video" &&
-                playerKind(T) === "video"
+                playerKind(T, e) === "video"
             ) {
                 OpenMainPlayer();
                 TogglePlayPause();
@@ -13447,7 +13516,10 @@ function removeFromPlayQueue(itemId, itemType) {
         }
     }
     
-    function playerKind(type) {
+    function playerKind(type, item) {
+        if (type === 'live') {
+            return String(item && item.media_type || '').toLowerCase() === 'video' ? 'video' : 'audio';
+        }
         return (type === 'video' || type === 'musicvideo') ? 'video' : 'audio';
     }
     
@@ -14252,7 +14324,7 @@ function removeFromPlayQueue(itemId, itemType) {
                 return;
             }
     
-            var kind = playerKind(row.type);
+            var kind = playerKind(row.type, item);
     
             // سوییچ بین Audio و Video
             if (kind === 'video') {
@@ -14295,9 +14367,11 @@ function removeFromPlayQueue(itemId, itemType) {
     
             if (kind === 'video') {
                 OpenMainPlayer();
-                chp(HV + row.id, function () {
-                    CRQT();
-                });
+                if (row.type !== 'live') {
+                    chp(HV + row.id, function () {
+                        CRQT();
+                    });
+                }
             }
         
             UpdateNowPlayingMeta(item);
@@ -14400,7 +14474,7 @@ function removeFromPlayQueue(itemId, itemType) {
                         current.type === btn._itemType ||
                         (
                             current.player === "video" &&
-                            playerKind(btn._itemType) === "video"
+                            playerKind(btn._itemType, current.item) === "video"
                         )
                     )
                 );
