@@ -39,7 +39,7 @@ class LiveRowsAdapter(
             if (row.systemOwner) {
                 ownerName.text = if (row.mediaType == MediaType.VIDEO) "Live Video" else "Live Audio"
                 ownerIcon.scaleType = ImageView.ScaleType.CENTER_INSIDE
-                com.bumptech.glide.Glide.with(ownerIcon).clear(ownerIcon)
+                com.bumptech.glide.Glide.with(ownerIcon.context).clear(ownerIcon)
                 ownerIcon.setImageResource(R.drawable.ic_live)
             } else {
                 ownerName.text = row.owner?.name?.takeIf { it.isNotBlank() } ?: "Unknown Owner"
