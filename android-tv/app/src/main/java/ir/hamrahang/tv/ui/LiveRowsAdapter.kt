@@ -11,12 +11,14 @@ import androidx.recyclerview.widget.RecyclerView
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.SourceOwner
 import ir.hamrahang.tv.data.live.LiveItem
+import ir.hamrahang.tv.player.MediaType
 import ir.hamrahang.tv.util.ImageResolver
 
 data class LiveOwnerRow(
     val owner: SourceOwner?,
     val items: List<LiveItem>,
-    val featured: Boolean = false
+    val mediaType: MediaType,
+    val systemOwner: Boolean = false
 )
 
 class LiveRowsAdapter(
@@ -32,17 +34,19 @@ class LiveRowsAdapter(
         private val recycler: HorizontalGridView = view.findViewById(R.id.liveCardsRecycler)
 
         fun bind(row: LiveOwnerRow, isFirstRow: Boolean) {
-            ownerHeader.visibility = if (row.featured) View.GONE else View.VISIBLE
-            if (!row.featured) {
+            ownerHeader.visibility = View.VISIBLE
+            if (row.systemOwner) {
+                ownerName.text = if (row.mediaType == MediaType.VIDEO) "Live Video" else "Live Audio"
+                ownerIcon.scaleType = ImageView.ScaleType.CENTER_INSIDE
+                ownerIcon.setImageResource(R.drawable.ic_live)
+            } else {
                 ownerName.text = row.owner?.name?.takeIf { it.isNotBlank() } ?: "Unknown Owner"
+                ownerIcon.scaleType = ImageView.ScaleType.CENTER_CROP
                 ImageResolver.request(
                     ownerIcon,
                     ImageResolver.owner(row.owner),
                     R.drawable.ic_live
                 ).centerCrop().into(ownerIcon)
-            } else {
-                ownerName.text = ""
-                ownerIcon.setImageDrawable(null)
             }
 
             recycler.setNumRows(1)
