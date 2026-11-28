@@ -28,4 +28,11 @@
     <string name="section_favorite_albums">آلبوم‌های نشان‌شده</string>
     <string name="your_playlists">پلی‌لیست‌های شما</string>
     <string name="bookmarked_playlists">پلی‌لیست‌های نشان‌شده</string>
+    <string name="live_title">پخش زنده</string>
+    <string name="live_hamrahang">همراهنگ</string>
+    <string name="live_creator">سازنده</string>
+    <string name="live_audio">پخش زنده صوتی</string>
+    <string name="live_video">پخش زنده تصویری</string>
+    <string name="live_empty">در حال حاضر پخش زنده‌ای برای نمایش وجود ندارد.</string>
+    <string name="live_load_failed">دریافت پخش‌های زنده ممکن نشد. اتصال اینترنت را بررسی و دوباره تلاش کنید.</string>
 </resources>
