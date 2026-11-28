@@ -6,7 +6,7 @@ import ir.hamrahang.tv.data.artist.ArtistMeta
 
 /**
  * Single source of truth for artwork-key priority and Hamrahang image URLs.
- * This class only resolves URLs; loading remains asynchronous through Glide.
+ * This class is UI-independent: consuming app modules perform the actual image loading.
  */
 object ImageResolver {
 
