@@ -80,7 +80,9 @@ class MainActivity : AppCompatActivity() {
         val token = SessionToken(this, ComponentName(this, MobilePlaybackService::class.java))
         controllerFuture = MediaController.Builder(this, token).buildAsync().also { future ->
             future.addListener({
-                runCatching { future.get() }.onSuccess { mediaController = it }
+                if (controllerFuture === future) {
+                    runCatching { future.get() }.onSuccess { mediaController = it }
+                }
             }, directExecutor)
         }
     }
@@ -132,7 +134,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun bindMiniPlayer() {
-        binding.miniPlayPause.setOnClickListener { PlayerManager.toggle() }
+        binding.miniPlayPause.setOnClickListener {
+            val controller = mediaController
+            if (controller == null) {
+                PlayerManager.toggle()
+            } else if (controller.isPlaying) {
+                controller.pause()
+            } else {
+                controller.play()
+            }
+        }
         binding.miniPlayer.setOnClickListener {
             if (PlayerState.playbackInfo.value.mediaType == MediaType.VIDEO) {
                 startActivity(Intent(this, VideoActivity::class.java))
