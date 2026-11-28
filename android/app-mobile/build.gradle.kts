@@ -8,7 +8,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "ir.hamrahang.app"
+        applicationId = "app.hamrahang.ir"
         minSdk = 21
         targetSdk = 36
         versionCode = 1
