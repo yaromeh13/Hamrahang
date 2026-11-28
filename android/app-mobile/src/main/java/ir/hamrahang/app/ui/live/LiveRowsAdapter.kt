@@ -46,6 +46,7 @@ class LiveRowsAdapter(
             if (row.mediaType == MediaType.VIDEO) R.string.live_video else R.string.live_audio
         )
 
+        Glide.with(holder.ownerArtwork).clear(holder.ownerArtwork)
         if (row.isSystem) {
             holder.ownerArtwork.setImageResource(R.drawable.ic_nav_live)
             holder.ownerArtwork.imageTintList = android.content.res.ColorStateList.valueOf(
