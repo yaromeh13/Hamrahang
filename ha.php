@@ -7846,16 +7846,6 @@ if (!empty($_SESSION['loggedin'])) {
 
         if (isLive) {
             document.title = (e.name || 'Live') + ' | Hamrahang';
-            const path = (window.location.pathname || '').replace(/\/+$/, '');
-            const livePath = (HLV + q).replace(/\/+$/, '');
-            if (path !== livePath && path.indexOf(livePath + '/') !== 0) {
-                if (callback) callback();
-                return;
-            }
-            if (liveMediaType(e) !== 'audio') {
-                await CRLVDetail(q, callback);
-                return;
-            }
         }
     
         //AudLst[0] = e;
