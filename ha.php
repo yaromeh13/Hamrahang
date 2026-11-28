@@ -4402,11 +4402,7 @@ if (!empty($_SESSION['loggedin'])) {
                 break;
 
             case 'live':
-                if (/^\d+$/.test(LPS[2] || '')) {
-                    CRLVDetail(LPS[2], done);
-                } else {
-                    CRLV(done);
-                }
+                CRLV(LPS[2], LPS[3], done);
                 break;
     
             default:
@@ -6830,10 +6826,37 @@ if (!empty($_SESSION['loggedin'])) {
         MCNT.append(head);
     }
 
-    function CRLV(callback) {
+    function CRLV(P, QS, callback) {
+        const routeMap = {
+            latest: {
+                path: 'latest',
+                rootAlias: true,
+                fetch: ['live', 'latest'],
+                getIds: () => Array.isArray(SN.latest_live) ? SN.latest_live : []
+            }
+        };
+
+        const routeKey = P || 'latest';
+        if (/^\d+$/.test(routeKey)) {
+            CRLVDetail(routeKey, callback);
+            return;
+        }
+
+        const route = routeMap[routeKey];
+        if (!route) {
+            CRNF('Unknown Live route: ' + routeKey);
+            if (callback) callback();
+            return;
+        }
+
         LoadLiveCache();
-        const cachedIds = Array.isArray(SN.latest_live) ? SN.latest_live.slice() : [];
-        const isLiveRoute = () => (window.location.pathname || '').replace(/\/+$/, '') === HLV.replace(/\/+$/, '');
+        const cachedIds = route.getIds().slice();
+        const basePath = HLV.replace(/\/+$/, '');
+        const routePath = (HLV + (route.path || routeKey)).replace(/\/+$/, '');
+        const isLiveRoute = () => {
+            const path = (window.location.pathname || '').replace(/\/+$/, '');
+            return path === routePath || (route.rootAlias && path === basePath);
+        };
 
         function draw(ids) {
             if (!isLiveRoute()) return;
@@ -6888,9 +6911,9 @@ if (!empty($_SESSION['loggedin'])) {
         if (cachedIds.length) {
             draw(cachedIds);
             // Background refresh updates the local database, then redraws the cards.
-            gjs(['live', 'latest']).then(function (result) {
+            gjs(route.fetch).then(function (result) {
                 if (result && result.error) throw new Error(result.error);
-                if (isLiveRoute()) draw(SN.latest_live || []);
+                if (isLiveRoute()) draw(route.getIds());
             }).catch(function (err) {
                 console.warn('Live background refresh failed:', err && err.message ? err.message : err);
             });
