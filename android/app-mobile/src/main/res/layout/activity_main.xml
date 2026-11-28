@@ -74,10 +74,10 @@
         android:layoutDirection="ltr"
         app:itemActiveIndicatorStyle="@style/Widget.Hamrahang.BottomNavIndicator"
         app:itemBackground="@android:color/transparent"
-        app:itemIconSize="32dp"
+        app:itemIconSize="30dp"
         app:itemIconTint="@color/bottom_nav_icon_tint"
-        app:itemPaddingBottom="8dp"
-        app:itemPaddingTop="8dp"
+        app:itemPaddingBottom="4dp"
+        app:itemPaddingTop="4dp"
         app:itemRippleColor="@android:color/transparent"
         app:labelVisibilityMode="unlabeled"
         app:menu="@menu/bottom_nav" />
