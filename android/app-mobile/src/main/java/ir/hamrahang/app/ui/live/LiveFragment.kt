@@ -21,6 +21,7 @@ import ir.hamrahang.tv.playback.PlaybackItem
 import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.playback.PlaybackSession
 import ir.hamrahang.tv.playback.PlaybackSource
+import ir.hamrahang.tv.util.ImageResolver
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -29,7 +30,8 @@ data class LiveOwnerRow(
     val ownerName: String,
     val ownerArtwork: String?,
     val mediaType: MediaType,
-    val items: List<LiveItem>
+    val items: List<LiveItem>,
+    val isSystem: Boolean = false
 )
 
 class LiveFragment : Fragment(R.layout.fragment_live_mobile) {
@@ -104,14 +106,21 @@ class LiveFragment : Fragment(R.layout.fragment_live_mobile) {
             }
         }
 
-        appendOwnerRows(rows, "system", getString(R.string.live_hamrahang), null, systemItems)
+        appendOwnerRows(
+            rows = rows,
+            ownerId = "system",
+            ownerName = getString(R.string.live_hamrahang),
+            ownerArtwork = null,
+            items = systemItems,
+            isSystem = true
+        )
         owners.values.forEach { ownerItems ->
             val owner = ownerItems.firstOrNull()?.owner
             appendOwnerRows(
                 rows,
                 owner?.id?.toString() ?: "unknown",
                 owner?.name?.takeIf { it.isNotBlank() } ?: getString(R.string.live_creator),
-                owner?.meta?.tmb ?: owner?.meta?.ico ?: owner?.meta?.photo,
+                ImageResolver.owner(owner),
                 ownerItems
             )
         }
@@ -123,15 +132,30 @@ class LiveFragment : Fragment(R.layout.fragment_live_mobile) {
         ownerId: String,
         ownerName: String,
         ownerArtwork: String?,
-        items: List<LiveItem>
+        items: List<LiveItem>,
+        isSystem: Boolean = false
     ) {
         val videos = items.filter { it.isVideo }
         val audios = items.filterNot { it.isVideo }
         if (videos.isNotEmpty()) {
-            rows += LiveOwnerRow("${ownerId}_video", ownerName, ownerArtwork, MediaType.VIDEO, videos)
+            rows += LiveOwnerRow(
+                "${ownerId}_video",
+                if (isSystem) getString(R.string.live_tv) else ownerName,
+                ownerArtwork,
+                MediaType.VIDEO,
+                videos,
+                isSystem
+            )
         }
         if (audios.isNotEmpty()) {
-            rows += LiveOwnerRow("${ownerId}_audio", ownerName, ownerArtwork, MediaType.AUDIO, audios)
+            rows += LiveOwnerRow(
+                "${ownerId}_audio",
+                if (isSystem) getString(R.string.live_radio) else ownerName,
+                ownerArtwork,
+                MediaType.AUDIO,
+                audios,
+                isSystem
+            )
         }
     }
 
