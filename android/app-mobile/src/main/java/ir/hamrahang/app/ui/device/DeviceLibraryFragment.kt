@@ -27,17 +27,18 @@ import kotlinx.coroutines.withContext
 class DeviceLibraryFragment : Fragment(R.layout.fragment_device_library) {
 
     private var binding: FragmentDeviceLibraryBinding? = null
-    private val adapter = TrackAdapter { track ->
-        val items = adapter.tracks
-        val index = items.indexOf(track)
-        if (index >= 0) DeviceQueue.play(requireContext(), items, index)
-    }
+    private lateinit var adapter: TrackAdapter
     private val permissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { load() }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding = FragmentDeviceLibraryBinding.bind(view)
+        adapter = TrackAdapter { track ->
+            val items = adapter.tracks
+            val index = items.indexOf(track)
+            if (index >= 0) DeviceQueue.play(requireContext(), items, index)
+        }
         binding?.deviceList?.layoutManager = LinearLayoutManager(requireContext())
         binding?.deviceList?.adapter = adapter
         binding?.deviceAllow?.setOnClickListener { requestAccess() }
