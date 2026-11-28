@@ -15,6 +15,13 @@ android {
         versionName = "1.0"
     }
 
+    bundle {
+        // The language is switched inside the app, so every download needs all languages.
+        language {
+            enableSplit = false
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -42,4 +49,9 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.material)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.glide)
 }

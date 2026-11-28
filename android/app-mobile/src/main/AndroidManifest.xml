@@ -11,6 +11,11 @@
         android:theme="@style/Theme.HamrahangMobile">
 
         <activity
+            android:name=".ui.player.VideoActivity"
+            android:exported="false"
+            android:theme="@style/Theme.HamrahangMobile" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

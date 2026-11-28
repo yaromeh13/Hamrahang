@@ -46,7 +46,7 @@ The Android project root is `android/` (formerly `android-tv/`). Open this direc
 |---|---|---|
 | `:core` (`android/core/`) | namespace `ir.hamrahang.core` (library) | Shared data models, repositories, Room database, account session, network, ExoPlayer ownership, playback queue, source selection, lyrics parsing and sync, settings and image URL resolution. |
 | `:app-tv` (`android/app-tv/`) | `ir.hamrahang.tv` | The Android TV application: screens, adapters, Leanback and D-pad behavior, Hero, remote navigation, fullscreen player UI, messages, backgrounds and Home Channel. |
-| `:app-mobile` (`android/app-mobile/`) | `ir.hamrahang.app` | The phone application. Currently a skeleton screen connected to `:core`. |
+| `:app-mobile` (`android/app-mobile/`) | `ir.hamrahang.app` | The phone application: bottom navigation (Home, Live, Search, Library, Settings), Home feed with "See all", a mini player, a basic video screen and fa/en language selection. Live, Search and Library are placeholders. |
 
 This document governs `:app-tv`, and the shared behavior of `:core` as the TV application uses it. It does not define mobile UI behavior.
 

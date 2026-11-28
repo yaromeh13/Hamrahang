@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">همراهنگ</string>
+    <string name="nav_home">خانه</string>
+    <string name="nav_live">زنده</string>
+    <string name="nav_search">جستجو</string>
+    <string name="nav_library">کتابخانه</string>
+    <string name="nav_settings">تنظیمات</string>
+    <string name="see_all">مشاهده همه</string>
+    <string name="coming_soon">به‌زودی</string>
+    <string name="retry">تلاش دوباره</string>
+    <string name="home_empty">موردی برای نمایش نیست. اتصال اینترنت را بررسی کنید.</string>
+    <string name="language">زبان</string>
+    <string name="play_pause">پخش یا توقف</string>
+    <string name="back">بازگشت</string>
+    <string name="section_history_songs">اخیراً پخش‌شده</string>
+    <string name="section_history_musicvideos">موزیک ویدیوهای اخیر</string>
+    <string name="section_history_videos">ویدیوهای اخیر</string>
+    <string name="section_top_songs">برترین آهنگ‌ها</string>
+    <string name="section_musicvideos">موزیک ویدیوها</string>
+    <string name="section_videos">ویدیوها</string>
+    <string name="section_artists">هنرمندان</string>
+    <string name="section_favorite_musicvideos">موزیک ویدیوهای محبوب</string>
+    <string name="section_favorite_songs">آهنگ‌های محبوب</string>
+    <string name="section_favorite_podcasts">پادکست‌های نشان‌شده</string>
+    <string name="section_favorite_artists">هنرمندان دنبال‌شده</string>
+    <string name="section_favorite_videos">ویدیوهای نشان‌شده</string>
+    <string name="section_favorite_albums">آلبوم‌های نشان‌شده</string>
+    <string name="your_playlists">پلی‌لیست‌های شما</string>
+    <string name="bookmarked_playlists">پلی‌لیست‌های نشان‌شده</string>
+</resources>
