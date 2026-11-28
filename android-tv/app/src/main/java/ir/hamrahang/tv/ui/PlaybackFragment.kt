@@ -138,7 +138,7 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
                 fromUser: Boolean
             ) {
 
-                if (fromUser) {
+                if (fromUser && currentPlaybackItem()?.liveMedia == null) {
                     PlayerManager.seekTo(progress.toLong())
                 }
             }
