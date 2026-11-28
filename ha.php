@@ -2832,6 +2832,7 @@ if (!empty($_SESSION['loggedin'])) {
     var HL = "/album/";
     var HPL = "/playlist/";
     var HSR = "/search/";
+	var HLV = "/live/";
     var UT = "https://cdn.hamrahang.ir/thumb/";
     var HPLU = "https://hamrahang.ir/playlist/";
     var aaa = ["New Tracks"];
@@ -12240,6 +12241,7 @@ const PROFILE_KEY = 'ha_profile';
             if (T == 'podcast') {e = SN.podcast ? SN.podcast[id] : null; url = HS; }
             if (T == 'playlist') {e = SN.playlist ? SN.playlist[id] : null; url = HPL; TPS = svg_pls; }
             if (T == 'musicvideo') {e = SN.musicvideo ? SN.musicvideo[id] : null; url = HV; }
+			if (T == 'live') {e = SN.live ? SN.live[id] : null; url = HLV; }
 
             if (!e) {console.log("CRSC: " + T + " not found:", id);return;}
 
