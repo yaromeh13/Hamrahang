@@ -7350,6 +7350,7 @@ if (!empty($_SESSION['loggedin'])) {
 
             if (route.listMode === 'live') {
                 renderLiveFavoriteRows(readyIds, false);
+                return;
             } else {
                 const hed = OA(document.createElement('div'), { className: 'section-header m-top-1' });
                 hed.append(
