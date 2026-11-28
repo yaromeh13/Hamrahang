@@ -3,6 +3,7 @@ package ir.hamrahang.tv.player
 import android.content.Context
 import android.util.Log
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -262,10 +263,21 @@ object PlayerManager {
         player?.apply {
             stop()
             clearMediaItems()
-            setMediaItem(
-                MediaItem.fromUri(source.url),
-                startPositionMs.coerceAtLeast(0L)
-            )
+            val metadata = MediaMetadata.Builder()
+                .setTitle(media.title.orEmpty())
+                .setArtist(media.artist)
+                .apply {
+                    media.artwork?.takeIf { it.isNotBlank() }?.let {
+                        setArtworkUri(android.net.Uri.parse(it))
+                    }
+                }
+                .build()
+            val mediaItem = MediaItem.Builder()
+                .setUri(source.url)
+                .setMediaId(media.id.orEmpty())
+                .setMediaMetadata(metadata)
+                .build()
+            setMediaItem(mediaItem, startPositionMs.coerceAtLeast(0L))
             playWhenReady = autoplay
             PlayerState.setPlaybackState(PlaybackState.LOADING)
             prepare()
