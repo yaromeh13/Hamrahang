@@ -7,9 +7,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ir.hamrahang.app.R
@@ -26,7 +24,7 @@ import ir.hamrahang.tv.playback.PlaybackSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
-private data class LiveOwnerRow(
+internal data class LiveOwnerRow(
     val id: String,
     val ownerName: String,
     val ownerArtwork: String?,
@@ -55,11 +53,7 @@ class LiveFragment : Fragment(R.layout.fragment_live_mobile) {
         retry.setOnClickListener { loadRows(forceRefresh = true) }
         refresh.setOnClickListener { loadRows(forceRefresh = true) }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                loadRows(forceRefresh = false, loading = loading, empty = empty, emptyText = emptyText)
-            }
-        }
+        loadRows(forceRefresh = false, loading = loading, empty = empty, emptyText = emptyText)
     }
 
     private fun loadRows(
