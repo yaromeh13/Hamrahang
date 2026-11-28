@@ -2,7 +2,6 @@
 <resources>
     <style name="Theme.HamrahangMobile" parent="Theme.Material3.Dark.NoActionBar" />
 
-    <!-- Selected tab is icon color only; no pill behind the icon. -->
     <style name="Widget.Hamrahang.BottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@android:color/transparent</item>
     </style>
@@ -14,5 +13,10 @@
         <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
         <item name="android:padding">12dp</item>
         <item name="android:scaleType">centerInside</item>
+    </style>
+
+    <style name="CircleImage">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
     </style>
 </resources>

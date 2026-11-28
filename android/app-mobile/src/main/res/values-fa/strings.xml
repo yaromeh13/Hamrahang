@@ -22,6 +22,7 @@
     <string name="retry">تلاش دوباره</string>
     <string name="home_empty">موردی برای نمایش نیست. اتصال اینترنت را بررسی کنید.</string>
     <string name="language">زبان</string>
+    <string name="now_playing">در حال پخش</string>
     <string name="play_pause">پخش یا توقف</string>
     <string name="back">بازگشت</string>
     <string name="section_history_songs">اخیراً پخش‌شده</string>

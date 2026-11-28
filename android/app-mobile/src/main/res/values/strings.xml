@@ -22,6 +22,7 @@
     <string name="retry">Retry</string>
     <string name="home_empty">Nothing to show. Check your connection.</string>
     <string name="language">Language</string>
+    <string name="now_playing">Now playing</string>
     <string name="play_pause">Play or pause</string>
     <string name="back">Back</string>
     <string name="section_history_songs">Recently played</string>

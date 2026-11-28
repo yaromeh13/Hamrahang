@@ -1,10 +1,14 @@
 package ir.hamrahang.app
 
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.ComponentName
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
+import android.view.View
+import android.view.animation.LinearInterpolator
 import android.widget.ImageButton
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -33,6 +37,7 @@ import ir.hamrahang.app.ui.device.DeviceQueue
 import ir.hamrahang.app.ui.home.HomeFragment
 import ir.hamrahang.app.ui.home.SeeAllFragment
 import ir.hamrahang.app.ui.live.LiveFragment
+import ir.hamrahang.app.ui.player.NowPlayingFragment
 import ir.hamrahang.app.ui.player.VideoActivity
 import ir.hamrahang.tv.playback.PlaybackManager
 import ir.hamrahang.tv.player.MediaType
@@ -51,6 +56,8 @@ class MainActivity : AppCompatActivity() {
     private val directExecutor = Executor { command -> command.run() }
     private var currentTab = R.id.nav_home
     private var playerMenu = false
+    private var discAnimator: ObjectAnimator? = null
+    private var miniPlayerWantsVisible = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -81,6 +88,7 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNav.setOnItemReselectedListener { popToTabRoot() }
 
         bindLandscapeBar()
+        binding.landDisc.setOnClickListener { openPlayerScreen() }
 
         if (savedInstanceState == null) {
             showTab(R.id.nav_home)
@@ -88,7 +96,7 @@ class MainActivity : AppCompatActivity() {
             showTab(currentTab)
         }
 
-        applyOrientationUi()
+        applyOrientationUi(animateMini = false)
         bindMiniPlayer()
     }
 
@@ -115,6 +123,12 @@ class MainActivity : AppCompatActivity() {
         controllerFuture = null
         mediaController = null
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        discAnimator?.cancel()
+        discAnimator = null
+        super.onDestroy()
     }
 
     private fun showTab(itemId: Int) {
@@ -188,15 +202,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun applyOrientationUi() {
+    private fun applyOrientationUi(animateMini: Boolean = true) {
         val landscape = isLandscape()
         if (!landscape) playerMenu = false
         binding.bottomNav.isVisible = !landscape
         binding.landscapeBar.isVisible = landscape
         if (landscape) {
             refreshLandscapeIcons()
+            updateDiscArtwork(PlayerState.playbackInfo.value.artwork, PlayerState.playbackInfo.value.visible)
+            syncDiscRotation(PlayerState.uiState.value.playbackState)
+            setMiniPlayerVisible(false, animateMini)
         } else {
-            // Device tab is landscape-only; fall back to home in portrait.
             if (currentTab == R.id.nav_device) {
                 currentTab = R.id.nav_home
                 showTab(R.id.nav_home)
@@ -204,6 +220,8 @@ class MainActivity : AppCompatActivity() {
             if (binding.bottomNav.menu.findItem(currentTab) != null) {
                 binding.bottomNav.selectedItemId = currentTab
             }
+            stopDiscRotation()
+            setMiniPlayerVisible(miniPlayerWantsVisible, animateMini)
         }
     }
 
@@ -252,6 +270,105 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private fun updateDiscArtwork(artwork: Any?, hasSession: Boolean) {
+        if (!hasSession || artwork == null) {
+            binding.landDisc.setImageResource(R.mipmap.ic_launcher)
+            binding.landDisc.rotation = 0f
+            return
+        }
+        Glide.with(binding.landDisc)
+            .load(artwork)
+            .placeholder(R.mipmap.ic_launcher)
+            .error(R.mipmap.ic_launcher)
+            .circleCrop()
+            .into(binding.landDisc)
+    }
+
+    private fun syncDiscRotation(state: PlaybackState) {
+        if (!isLandscape()) {
+            stopDiscRotation()
+            return
+        }
+        if (state == PlaybackState.PLAYING) startDiscRotation() else stopDiscRotation()
+    }
+
+    private fun startDiscRotation() {
+        if (discAnimator == null) {
+            discAnimator = ObjectAnimator.ofFloat(binding.landDisc, View.ROTATION, 0f, 360f).apply {
+                duration = 12_000L
+                repeatCount = ValueAnimator.INFINITE
+                interpolator = LinearInterpolator()
+                start()
+                pause()
+            }
+        }
+        discAnimator?.resume()
+    }
+
+    private fun stopDiscRotation() {
+        discAnimator?.pause()
+    }
+
+    private fun setMiniPlayerVisible(show: Boolean, animate: Boolean) {
+        val view = binding.miniPlayer
+        view.animate().cancel()
+        if (!animate) {
+            view.isVisible = show
+            view.alpha = 1f
+            view.translationY = 0f
+            return
+        }
+        if (show) {
+            if (view.isVisible && view.alpha >= 0.99f) return
+            view.isVisible = true
+            val distance = if (view.height > 0) view.height.toFloat() else 56f * resources.displayMetrics.density
+            view.alpha = 0f
+            view.translationY = distance
+            view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(220L)
+                .start()
+        } else {
+            if (!view.isVisible) return
+            val distance = if (view.height > 0) view.height.toFloat() else 56f * resources.displayMetrics.density
+            view.animate()
+                .alpha(0f)
+                .translationY(distance)
+                .setDuration(220L)
+                .withEndAction {
+                    view.isVisible = false
+                    view.alpha = 1f
+                    view.translationY = 0f
+                }
+                .start()
+        }
+    }
+
+    private fun updateProgressBar(position: Long, duration: Long) {
+        val bar = binding.playbackProgress
+        if (duration <= 0L) {
+            bar.progress = 0
+            return
+        }
+        bar.progress = ((position.coerceAtLeast(0L) * 1000L) / duration).toInt().coerceIn(0, 1000)
+    }
+
+    private fun openPlayerScreen() {
+        val info = PlayerState.playbackInfo.value
+        if (!info.visible) return
+        if (info.mediaType == MediaType.VIDEO) {
+            startActivity(Intent(this, VideoActivity::class.java))
+            return
+        }
+        if (supportFragmentManager.findFragmentByTag(TAG_NOW_PLAYING) != null) return
+        supportFragmentManager.beginTransaction()
+            .setReorderingAllowed(true)
+            .add(R.id.fragmentContainer, NowPlayingFragment(), TAG_NOW_PLAYING)
+            .addToBackStack(TAG_NOW_PLAYING)
+            .commit()
+    }
+
     private fun togglePlayback() {
         val controller = mediaController
         if (controller == null) PlayerManager.toggle()
@@ -285,17 +402,13 @@ class MainActivity : AppCompatActivity() {
                 controller.play()
             }
         }
-        binding.miniPlayer.setOnClickListener {
-            if (PlayerState.playbackInfo.value.mediaType == MediaType.VIDEO) {
-                startActivity(Intent(this, VideoActivity::class.java))
-            }
-        }
+        binding.miniPlayer.setOnClickListener { openPlayerScreen() }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     PlayerState.playbackInfo.collect { info ->
-                        binding.miniPlayer.isVisible = info.visible
+                        miniPlayerWantsVisible = info.visible
                         binding.miniTitle.text = info.title
                         Glide.with(binding.miniArtwork)
                             .load(info.artwork)
@@ -303,6 +416,12 @@ class MainActivity : AppCompatActivity() {
                             .error(R.drawable.bg_artwork_placeholder)
                             .centerCrop()
                             .into(binding.miniArtwork)
+                        if (isLandscape()) {
+                            updateDiscArtwork(info.artwork, info.visible)
+                            setMiniPlayerVisible(false, animate = true)
+                        } else {
+                            setMiniPlayerVisible(info.visible, animate = true)
+                        }
                     }
                 }
                 launch {
@@ -311,7 +430,11 @@ class MainActivity : AppCompatActivity() {
                         binding.miniPlayPause.setImageResource(
                             if (playing) R.drawable.ic_pause else R.drawable.ic_play
                         )
-                        if (isLandscape() && playerMenu) refreshLandscapeIcons()
+                        updateProgressBar(state.position, state.duration)
+                        if (isLandscape()) {
+                            syncDiscRotation(state.playbackState)
+                            if (playerMenu) refreshLandscapeIcons()
+                        }
                     }
                 }
             }
@@ -321,5 +444,6 @@ class MainActivity : AppCompatActivity() {
     private companion object {
         const val KEY_TAB = "current_tab"
         const val KEY_PLAYER_MENU = "player_menu"
+        const val TAG_NOW_PLAYING = "now_playing"
     }
 }

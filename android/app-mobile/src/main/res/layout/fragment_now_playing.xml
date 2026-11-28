@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ImageButton
+        android:id="@+id/nowPlayingBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="start"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/back"
+        android:src="@drawable/ic_player_previous"
+        android:rotation="90" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/nowPlayingArt"
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:layout_marginTop="24dp"
+        android:scaleType="centerCrop"
+        android:src="@mipmap/ic_launcher"
+        app:shapeAppearanceOverlay="@style/CircleImage" />
+
+    <TextView
+        android:id="@+id/nowPlayingTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:textAppearance="?attr/textAppearanceHeadlineSmall" />
+
+    <TextView
+        android:id="@+id/nowPlayingSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+    <ImageButton
+        android:id="@+id/nowPlayingPlayPause"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/play_pause"
+        android:src="@drawable/ic_play" />
+</LinearLayout>
