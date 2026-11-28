@@ -115,6 +115,7 @@ One player state object (`ensurePlayer`). Do not start a second playback pipelin
 - Automatic failover in `handleSourceFailure` must use the same `preserveTime: true` so a failed source does not restart the track at 0 when `currentTime` is already past 0.25s. A brand-new queue item still starts through `PlayPreferredSource` without preserving time.
 - Quality preference is `audioQuality` or `videoQuality` from settings (`high` / `medium` / `low`), mapped onto real bitrates by `pickSourceByQuality`.
 - Repeat and shuffle are settings (`repeatMode`, `shuffleMode`) plus in-memory shuffle history on the player object. The queue itself is memory-only and is cleared on a full reload.
+- Previous behavior: for non-Live media, pressing Previous restarts the current item when `currentTime > 3` seconds. For `live` media, skip this restart shortcut and immediately navigate to the previous queue item through `getPrevQueueIndex()` / `playQueueAt()`. Preserve the existing shuffle-history and repeat-all behavior; if no previous queue item is available, do nothing.
 - Desktop chrome is `maximum-player-desktop` (`CRDX`). Fullscreen chrome is `#player` / `#player-box` (`CRPL`). Minimize/maximize must not drop the current item.
 - Owner badge on the desktop bar and `#player-owner` reads the **playable** source at `sourceIndex` (`resolveNowPlayingOwner`). Fullscreen badge shows an image only when the owner has a thumb; it has no placeholder. The desktop badge may show the download icon placeholder.
 
