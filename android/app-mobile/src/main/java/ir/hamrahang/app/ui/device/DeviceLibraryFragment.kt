@@ -17,8 +17,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import ir.hamrahang.app.R
-import ir.hamrahang.app.databinding.FragmentDeviceLibraryBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -26,27 +26,37 @@ import kotlinx.coroutines.withContext
 /** Music and videos already stored on this phone. */
 class DeviceLibraryFragment : Fragment(R.layout.fragment_device_library) {
 
-    private var binding: FragmentDeviceLibraryBinding? = null
+    private var list: RecyclerView? = null
+    private var messageBox: View? = null
+    private var messageText: TextView? = null
+    private var allowButton: MaterialButton? = null
     private lateinit var adapter: TrackAdapter
     private val permissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { load() }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding = FragmentDeviceLibraryBinding.bind(view)
+        list = view.findViewById(R.id.deviceList)
+        messageBox = view.findViewById(R.id.deviceMessage)
+        messageText = view.findViewById(R.id.deviceMessageText)
+        allowButton = view.findViewById(R.id.deviceAllow)
+
         adapter = TrackAdapter { track ->
             val items = adapter.tracks
             val index = items.indexOf(track)
             if (index >= 0) DeviceQueue.play(requireContext(), items, index)
         }
-        binding?.deviceList?.layoutManager = LinearLayoutManager(requireContext())
-        binding?.deviceList?.adapter = adapter
-        binding?.deviceAllow?.setOnClickListener { requestAccess() }
+        list?.layoutManager = LinearLayoutManager(requireContext())
+        list?.adapter = adapter
+        allowButton?.setOnClickListener { requestAccess() }
         load()
     }
 
     override fun onDestroyView() {
-        binding = null
+        list = null
+        messageBox = null
+        messageText = null
+        allowButton = null
         super.onDestroyView()
     }
 
@@ -67,23 +77,22 @@ class DeviceLibraryFragment : Fragment(R.layout.fragment_device_library) {
     }
 
     private fun load() {
-        val views = binding ?: return
         if (!hasAccess()) {
-            views.deviceList.isVisible = false
-            views.deviceMessage.isVisible = true
-            views.deviceMessageText.setText(R.string.device_permission)
-            views.deviceAllow.isVisible = true
+            list?.isVisible = false
+            messageBox?.isVisible = true
+            messageText?.setText(R.string.device_permission)
+            allowButton?.isVisible = true
             return
         }
         viewLifecycleOwner.lifecycleScope.launch {
             val tracks = withContext(Dispatchers.IO) { queryTracks() }
-            val current = binding ?: return@launch
+            if (!isAdded) return@launch
             adapter.submit(tracks)
             val empty = tracks.isEmpty()
-            current.deviceList.isVisible = !empty
-            current.deviceMessage.isVisible = empty
-            current.deviceAllow.isVisible = false
-            if (empty) current.deviceMessageText.setText(R.string.device_empty)
+            list?.isVisible = !empty
+            messageBox?.isVisible = empty
+            allowButton?.isVisible = false
+            if (empty) messageText?.setText(R.string.device_empty)
         }
     }
 

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
+import android.widget.ImageButton
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -50,12 +51,10 @@ class MainActivity : AppCompatActivity() {
     private val directExecutor = Executor { command -> command.run() }
     private var currentTab = R.id.nav_home
     private var playerMenu = false
-    private var suppressMenuCallback = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        // No-op when unchanged; otherwise AppCompat recreates the activity.
         AppCompatDelegate.setApplicationLocales(
             LocaleListCompat.forLanguageTags(AppState.language)
         )
@@ -63,7 +62,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // BottomNavigationView handles the bottom inset itself.
         ViewCompat.setOnApplyWindowInsetsListener(binding.content) { view, insets ->
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
@@ -76,15 +74,21 @@ class MainActivity : AppCompatActivity() {
         playerMenu = savedInstanceState?.getBoolean(KEY_PLAYER_MENU) == true && isLandscape()
 
         binding.bottomNav.setOnItemSelectedListener { item ->
-            if (suppressMenuCallback) return@setOnItemSelectedListener true
-            onNavigationItem(item.itemId, reselected = false)
+            currentTab = item.itemId
+            showTab(item.itemId)
+            true
         }
-        binding.bottomNav.setOnItemReselectedListener { item ->
-            if (!suppressMenuCallback) onNavigationItem(item.itemId, reselected = true)
+        binding.bottomNav.setOnItemReselectedListener { popToTabRoot() }
+
+        bindLandscapeBar()
+
+        if (savedInstanceState == null) {
+            showTab(R.id.nav_home)
+        } else if (supportFragmentManager.findFragmentById(R.id.fragmentContainer) == null) {
+            showTab(currentTab)
         }
 
-        if (savedInstanceState == null) showTab(R.id.nav_home)
-        renderMenu()
+        applyOrientationUi()
         bindMiniPlayer()
     }
 
@@ -113,7 +117,6 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
     }
 
-    /** Tabs are hidden rather than replaced, so each keeps its scroll position. */
     private fun showTab(itemId: Int) {
         popToTabRoot()
         val tag = "tab_$itemId"
@@ -141,78 +144,112 @@ class MainActivity : AppCompatActivity() {
     private fun isLandscape(): Boolean =
         resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    private fun onNavigationItem(itemId: Int, reselected: Boolean): Boolean {
-        when (itemId) {
-            R.id.nav_player_toggle -> {
-                playerMenu = !playerMenu
-                renderMenu()
-            }
-            R.id.nav_repeat -> PlaybackManager.toggleRepeat()
-            R.id.nav_previous -> DeviceQueue.previous(this)
-            R.id.nav_play -> togglePlayback()
-            R.id.nav_next -> DeviceQueue.next(this)
-            R.id.nav_shuffle -> PlaybackManager.toggleShuffle()
-            else -> {
-                currentTab = itemId
-                if (reselected) popToTabRoot() else showTab(itemId)
-                return true
-            }
+    private fun bindLandscapeBar() {
+        binding.landDevice.setOnClickListener { selectTab(R.id.nav_device) }
+        binding.landMenu.setOnClickListener {
+            playerMenu = !playerMenu
+            refreshLandscapeIcons()
         }
-        refreshPlayerIcons()
-        return false
+        binding.landSlot1.setOnClickListener { onLandSlot(1) }
+        binding.landSlot2.setOnClickListener { onLandSlot(2) }
+        binding.landSlot3.setOnClickListener { onLandSlot(3) }
+        binding.landSlot4.setOnClickListener { onLandSlot(4) }
+        binding.landSlot5.setOnClickListener { onLandSlot(5) }
     }
 
-    private fun renderMenu() {
-        if (!isLandscape()) playerMenu = false
-        suppressMenuCallback = true
-        binding.bottomNav.menu.clear()
-        binding.bottomNav.inflateMenu(
-            when {
-                !isLandscape() -> R.menu.bottom_nav
-                playerMenu -> R.menu.bottom_nav_player
-                else -> R.menu.bottom_nav_landscape
+    private fun onLandSlot(slot: Int) {
+        if (playerMenu) {
+            when (slot) {
+                1 -> PlaybackManager.toggleRepeat()
+                2 -> DeviceQueue.previous(this)
+                3 -> togglePlayback()
+                4 -> DeviceQueue.next(this)
+                5 -> PlaybackManager.toggleShuffle()
             }
-        )
-        if (binding.bottomNav.menu.findItem(currentTab) == null) {
-            currentTab = R.id.nav_home
-            showTab(currentTab)
-        }
-        val selected = if (playerMenu) R.id.nav_player_toggle else currentTab
-        if (binding.bottomNav.menu.findItem(selected) != null) {
-            binding.bottomNav.selectedItemId = selected
-        }
-        suppressMenuCallback = false
-        refreshPlayerIcons()
-    }
-
-    private fun refreshPlayerIcons() {
-        if (!playerMenu) {
-            binding.bottomNav.itemIconTintList =
-                ContextCompat.getColorStateList(this, R.color.bottom_nav_icon_tint)
+            refreshLandscapeIcons()
             return
         }
-        binding.bottomNav.itemIconTintList = null
-        val state = PlayerState.uiState.value
-        val playing = state.playbackState == PlaybackState.PLAYING
-        tint(R.id.nav_device, R.drawable.ic_nav_folder, false)
-        tint(
-            R.id.nav_repeat,
-            if (state.repeatMode == Player.REPEAT_MODE_ONE) R.drawable.ic_player_repeat_one
-            else R.drawable.ic_player_repeat,
-            state.repeatMode != Player.REPEAT_MODE_OFF
-        )
-        tint(R.id.nav_previous, R.drawable.ic_player_previous, true)
-        tint(R.id.nav_play, if (playing) R.drawable.ic_pause else R.drawable.ic_play, true)
-        tint(R.id.nav_next, R.drawable.ic_player_next, true)
-        tint(R.id.nav_shuffle, R.drawable.ic_player_shuffle, state.shuffle)
-        tint(R.id.nav_player_toggle, R.drawable.ic_nav_menu, true)
+        val tab = when (slot) {
+            1 -> R.id.nav_home
+            2 -> R.id.nav_live
+            3 -> R.id.nav_search
+            4 -> R.id.nav_library
+            else -> R.id.nav_settings
+        }
+        selectTab(tab)
     }
 
-    private fun tint(itemId: Int, icon: Int, active: Boolean) {
-        val item = binding.bottomNav.menu.findItem(itemId) ?: return
-        item.icon = ContextCompat.getDrawable(this, icon)?.mutate()?.apply {
-            setTint(if (active) Color.WHITE else 0x80FFFFFF.toInt())
+    private fun selectTab(tabId: Int) {
+        currentTab = tabId
+        showTab(tabId)
+        refreshLandscapeIcons()
+        if (!isLandscape() && binding.bottomNav.menu.findItem(tabId) != null) {
+            binding.bottomNav.selectedItemId = tabId
         }
+    }
+
+    private fun applyOrientationUi() {
+        val landscape = isLandscape()
+        if (!landscape) playerMenu = false
+        binding.bottomNav.isVisible = !landscape
+        binding.landscapeBar.isVisible = landscape
+        if (landscape) {
+            refreshLandscapeIcons()
+        } else {
+            // Device tab is landscape-only; fall back to home in portrait.
+            if (currentTab == R.id.nav_device) {
+                currentTab = R.id.nav_home
+                showTab(R.id.nav_home)
+            }
+            if (binding.bottomNav.menu.findItem(currentTab) != null) {
+                binding.bottomNav.selectedItemId = currentTab
+            }
+        }
+    }
+
+    private fun refreshLandscapeIcons() {
+        if (!isLandscape()) return
+        tintButton(binding.landDevice, R.drawable.ic_nav_folder, currentTab == R.id.nav_device)
+        tintButton(binding.landMenu, R.drawable.ic_nav_menu, playerMenu)
+
+        if (playerMenu) {
+            val state = PlayerState.uiState.value
+            val playing = state.playbackState == PlaybackState.PLAYING
+            tintButton(
+                binding.landSlot1,
+                if (state.repeatMode == Player.REPEAT_MODE_ONE) R.drawable.ic_player_repeat_one
+                else R.drawable.ic_player_repeat,
+                state.repeatMode != Player.REPEAT_MODE_OFF
+            )
+            tintButton(binding.landSlot2, R.drawable.ic_player_previous, true)
+            tintButton(binding.landSlot3, if (playing) R.drawable.ic_pause else R.drawable.ic_play, true)
+            tintButton(binding.landSlot4, R.drawable.ic_player_next, true)
+            tintButton(binding.landSlot5, R.drawable.ic_player_shuffle, state.shuffle)
+            binding.landSlot1.contentDescription = getString(R.string.nav_repeat)
+            binding.landSlot2.contentDescription = getString(R.string.nav_previous)
+            binding.landSlot3.contentDescription = getString(R.string.play_pause)
+            binding.landSlot4.contentDescription = getString(R.string.nav_next)
+            binding.landSlot5.contentDescription = getString(R.string.nav_shuffle)
+        } else {
+            tintButton(binding.landSlot1, R.drawable.ic_nav_home, currentTab == R.id.nav_home)
+            tintButton(binding.landSlot2, R.drawable.ic_nav_live, currentTab == R.id.nav_live)
+            tintButton(binding.landSlot3, R.drawable.ic_nav_search, currentTab == R.id.nav_search)
+            tintButton(binding.landSlot4, R.drawable.ic_nav_library, currentTab == R.id.nav_library)
+            tintButton(binding.landSlot5, R.drawable.ic_nav_settings, currentTab == R.id.nav_settings)
+            binding.landSlot1.contentDescription = getString(R.string.nav_home)
+            binding.landSlot2.contentDescription = getString(R.string.nav_live)
+            binding.landSlot3.contentDescription = getString(R.string.nav_search)
+            binding.landSlot4.contentDescription = getString(R.string.nav_library)
+            binding.landSlot5.contentDescription = getString(R.string.nav_settings)
+        }
+    }
+
+    private fun tintButton(button: ImageButton, icon: Int, active: Boolean) {
+        button.setImageDrawable(
+            ContextCompat.getDrawable(this, icon)?.mutate()?.apply {
+                setTint(if (active) Color.WHITE else 0x80FFFFFF.toInt())
+            }
+        )
     }
 
     private fun togglePlayback() {
@@ -274,7 +311,7 @@ class MainActivity : AppCompatActivity() {
                         binding.miniPlayPause.setImageResource(
                             if (playing) R.drawable.ic_pause else R.drawable.ic_play
                         )
-                        refreshPlayerIcons()
+                        if (isLandscape() && playerMenu) refreshLandscapeIcons()
                     }
                 }
             }
