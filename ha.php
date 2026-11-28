@@ -6826,12 +6826,6 @@ if (!empty($_SESSION['loggedin'])) {
         MCNT.append(head);
     }
 
-    function isCurrentLiveRoute(id) {
-        const path = (window.location.pathname || '').replace(/\/+$/, '');
-        const livePath = (HLV + encodeURIComponent(String(id))).replace(/\/+$/, '');
-        return path === livePath || path.indexOf(livePath + '/') === 0;
-    }
-
     async function openLiveDetail(id, callback) {
         LoadLiveCache();
 
@@ -6841,35 +6835,21 @@ if (!empty($_SESSION['loggedin'])) {
                 await EnsureItems('live', [id]);
             }
 
-            // درخواست resolve ممکن است بعد از رفتن کاربر به صفحه‌ای دیگر تمام شود.
-            if (!isCurrentLiveRoute(id)) {
-                if (callback) callback();
-                return;
-            }
-
             item = SN.live && SN.live[id] ? SN.live[id] : null;
-            if (!item || !item.full) {
-                CRNF('Live channel not found');
-                if (callback) callback();
+            if (item && liveMediaType(item) === 'audio') {
+                await CREP(id, 'live', callback);
                 return;
             }
-
-            if (liveMediaType(item) === 'video') {
+            if (item && liveMediaType(item) === 'video') {
                 await CRVP(id, 'live');
                 if (callback) callback();
                 return;
             }
-
-            await CREP(id, 'live', callback);
         } catch (err) {
-            if (!isCurrentLiveRoute(id)) {
-                if (callback) callback();
-                return;
-            }
             console.warn('Live detail dispatch failed:', err && err.message ? err.message : err);
-            CRNF('Unable to load Live channel');
-            if (callback) callback();
         }
+
+        await CRLVDetail(id, callback);
     }
 
     function CRLV(P, QS, callback) {
@@ -6979,6 +6959,866 @@ if (!empty($_SESSION['loggedin'])) {
         });
     }
 
+    async function CRLVDetail(id, callback) {
+        LoadLiveCache();
+        const cached = SN.live && SN.live[id] ? SN.live[id] : null;
+        let callbackDone = false;
+
+        const isCurrentRoute = () => {
+            let path = window.location.pathname || '';
+            while (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
+            const livePath = HLV + id;
+			return path === livePath.replace(/\/+$/, '') || path.indexOf(livePath) === 0;
+        };
+
+        function finish() {
+            if (callbackDone) return;
+            callbackDone = true;
+            if (callback) callback();
+        }
+
+        function draw() {
+            if (!isCurrentRoute()) return;
+            const item = SN.live && SN.live[id] ? SN.live[id] : null;
+            if (!item) {
+                CRNF('Live channel not found.');
+                finish();
+                return;
+            }
+
+            const isVideo = liveMediaType(item) === 'video';
+            const owner = item.owner && typeof item.owner === 'object' ? item.owner : null;
+            const thumb = item.meta
+                ? (isVideo ? (item.meta.tmv || item.meta.tmb) : item.meta.tmb)
+                : null;
+
+            MCNT.innerHTML = '';
+            document.title = (item.name || 'Live') + ' | Hamrahang';
+
+            const header = OA(document.createElement('div'), {
+                className: 'page-detail-header-container' + (isVideo ? ' video-page-header' : '')
+            });
+
+            let stage = null;
+            let thumbWrap = null;
+            let videoSlot = null;
+            let inlineBar = null;
+
+            if (isVideo) {
+                stage = OA(document.createElement('div'), { className: 'video-stage ratio ratio-16x9' });
+                thumbWrap = OA(document.createElement('div'), { className: 'video-stage-thumb' });
+                if (thumb) {
+                    thumbWrap.append(OA(document.createElement('img'), {
+                        className: 'video-poster',
+                        src: UT + thumb + '.jpg',
+                        alt: item.name || 'Live'
+                    }));
+                }
+                videoSlot = OA(document.createElement('div'), { className: 'video-stage-slot' });
+                inlineBar = OA(document.createElement('div'), { className: 'video-inline-controls vis-none' });
+
+                // Live controls intentionally omit elapsed time and seek until their behavior is specified.
+                const row = OA(document.createElement('div'), { className: 'video-inline-row' });
+                const inlineActions = OA(document.createElement('div'), { className: 'video-inline-actions' });
+                const fsBtn = OA(document.createElement('div'), {
+                    className: 'video-inline-fs',
+                    title: 'Fullscreen',
+                    innerHTML: svg_fsc
+                });
+                fsBtn.addEventListener('click', openPlayerShell);
+                inlineActions.append(fsBtn);
+                row.append(inlineActions);
+                inlineBar.append(row);
+                stage.append(thumbWrap, videoSlot, inlineBar);
+                header.append(stage);
+            } else {
+                const artwork = OA(document.createElement('div'), { className: 'thumbail' });
+                artwork.append(OA(document.createElement('span'), {
+                    className: 'placeholder',
+                    innerHTML: typeof svg_liv !== 'undefined' ? svg_liv : ''
+                }));
+                if (thumb) {
+                    artwork.append(OA(document.createElement('img'), {
+                        src: UT + thumb + '.jpg',
+                        alt: item.name || 'Live'
+                    }));
+                }
+                header.append(artwork);
+            }
+
+            const content = OA(document.createElement('div'), { className: 'content' });
+            const titleWrap = OA(document.createElement('div'), { className: 'title' });
+            titleWrap.append(OA(document.createElement('h1'), {
+                title: item.name_fa || '',
+                innerHTML: item.name || 'Live'
+            }));
+            const ownerLine = OA(document.createElement('div'), {
+                className: 'artists',
+                textContent: owner && owner.name ? 'Live by ' + owner.name : 'Live stream'
+            });
+            const details = OA(document.createElement('div'), { className: 'detailes' });
+            if (item.meta && item.meta.ncp != null && item.meta.ncp !== '') {
+                details.append(OA(document.createElement('div'), {
+                    className: 'detaile',
+                    innerHTML: svg_playc + ' ' + item.meta.ncp
+                }));
+            }
+            content.append(titleWrap, ownerLine, details);
+            header.append(content);
+            applyPageBackdrop(item, header);
+            MCNT.append(header);
+
+            const actionBar = OA(document.createElement('div'), { className: 'page-detail-actions' });
+            const play = OA(document.createElement('div'), {
+                className: 'play-pause',
+                innerHTML: svg_plys
+            });
+            play.setAttribute('data-item-id', String(item.id));
+            play.addEventListener('click', async (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                try {
+                    await setPlayQueue([{ id: item.id, type: 'live' }], item.id, 'live');
+                    const P = ensurePlayer();
+                    if (isVideo && P.nowPlaying &&
+                        P.nowPlaying.type === 'live' &&
+                        Number(P.nowPlaying.id) === Number(item.id) &&
+                        P.nowPlaying.player === 'video') {
+                        enterInlineVideoStage(stage, thumbWrap, videoSlot, inlineBar);
+                    }
+                } catch (err) {
+                    console.warn('Live playback failed:', err && err.message ? err.message : err);
+                    CRTM('Unable to start Live playback');
+                }
+            });
+
+            const isFav = IsFavorite('live', item.id);
+            const bookmark = OA(document.createElement('div'), {
+                className: 'btn btn-model-1 focusable',
+                innerHTML: isFav ? svg_fav2 : svg_fav
+            });
+            bookmark.addEventListener('click', () => {
+                const now = ToggleFavorite('live', item.id);
+                bookmark.innerHTML = now ? svg_fav2 : svg_fav;
+            });
+
+            const share = OA(document.createElement('div'), {
+                className: 'btn btn-model-1',
+                innerHTML: svg_sha
+            });
+            share.addEventListener('click', () => copyText(window.location.href, 'Link copied'));
+
+            const more = OA(document.createElement('div'), {
+                className: 'btn btn-model-1',
+                innerHTML: svg_dot
+            });
+            more.addEventListener('click', () => CRBW(item.id, 'live'));
+
+            actionBar.append(play, bookmark, share, more);
+            MCNT.append(actionBar);
+
+            if (item.meta && (item.meta.des || item.meta.rls || item.meta.ncp != null || item.meta.dur != null)) {
+                MCNT.append(
+                    OA(document.createElement('div'), {
+                        className: 'section-header m-top-3',
+                        innerHTML: '<h2 class="title">About Live</h2>'
+                    }),
+                    CRAB(item.meta)
+                );
+            }
+
+            if (isVideo) {
+                const P = ensurePlayer();
+                if (P.nowPlaying && P.nowPlaying.type === 'live' &&
+                    Number(P.nowPlaying.id) === Number(item.id) &&
+                    P.nowPlaying.player === 'video') {
+                    enterInlineVideoStage(stage, thumbWrap, videoSlot, inlineBar);
+                }
+            }
+
+            try { ADE(); } catch (e) {}
+            finish();
+        }
+
+        if (cached && cached.full) {
+            draw();
+            return;
+        }
+
+        if (cached) draw();
+
+        try {
+            const ready = await EnsureItems('live', [id]);
+            if (ready.length && isCurrentRoute()) {
+                draw();
+            } else if (!cached && isCurrentRoute()) {
+                draw();
+            }
+        } catch (err) {
+            console.warn('Live detail resolve failed:', err && err.message ? err.message : err);
+            if (!cached && isCurrentRoute()) draw();
+        }
+    }
+
+    async function CRHP(P, QS) {
+    
+        const tabsConfig = [
+            { key: 'top',      label: 'Featured', qs: 'top' },
+            { key: 'latest',   label: 'Latest',   qs: 'latest' },
+            { key: 'trending', label: 'Trending', qs: 'trending' },
+            { key: 'popular',  label: 'Popular',  qs: 'popular' }
+        ];
+    
+        const routeMap = {
+            // ---- داده‌های عمومی ----
+            'video_top':      { key: 'top_video',      label: null,                href: '/video/top',      fetch: ['video', 'top'],      type: 'musicvideo' },
+            'song_top':       { key: 'top_song',       label: 'Top Songs',         href: '/song/top',       fetch: ['song', 'top'],       type: 'song' },
+            'song_latest':    { key: 'latest_song',    label: 'New Tracks',        href: '/song/latest',    fetch: ['song', 'latest'],    type: 'song' },
+            'video_latest':   { key: 'latest_video',   label: 'New Music Videos',  href: '/video/latest',   fetch: ['video', 'latest'],   type: 'musicvideo' },
+            'artist_top':     { key: 'top_artist',     label: 'Top Artist',        href: '/artist/top',     fetch: ['artist', 'top'],     type: 'artist' },
+            'playlist_top':   { key: 'top_playlist',   label: 'Top Playlist',      href: '/playlist/top',   fetch: ['playlist', 'top'],   type: 'playlist' },
+    
+            // ---- بخش‌های کاربر ----
+            'user_history_song': {    key: 'history', label: 'Recently Played', href: '/library/history/song',    type: 'user', source: 'history', itemType: 'song', listMode: 'carousel'},
+            'user_history_podcast': {    key: 'history', label: 'Recently Played Podcasts', href: '/library/history/podcast',    type: 'user', source: 'history', itemType: 'podcast', listMode: 'carousel'},
+            'user_history_musicvideo': {    key: 'history', label: 'Recently Played Music Videos', href: '/library/history/musicvideo',    type: 'user', source: 'history', itemType: 'musicvideo', listMode: 'carousel'},
+            'user_history_video': {    key: 'history', label: 'Recently Played Videos', href: '/library/history/video',    type: 'user', source: 'history', itemType: 'video', listMode: 'carousel'},
+            'user_fav_song':        { key: 'favorite.song',  label: 'Your Favorite',     href: null,   type: 'user', source: 'favorite.song', itemType: 'song' },
+            'user_fav_artist':      { key: 'favorite.artist',label: 'Your Followed',     href: null,   type: 'user', source: 'favorite.artist', itemType: 'artist' },
+            'user_fav_album':       { key: 'favorite.album', label: 'Your Bookmark',     href: null,   type: 'user', source: 'favorite.album', itemType: 'album' },
+            'user_fav_musicvideo':  { key: 'favorite.musicvideo', label: 'Your Favorite',     href: null,   type: 'user', source: 'favorite.musicvideo', itemType: 'musicvideo' }
+        };
+
+        // ترتیب کامل صفحه هوم (همه‌چیز از اینجا مدیریت می‌شود)
+        const homeOrder = [
+            'video_top',
+            'song_top',
+            'song_latest',
+            'video_latest',
+            'user_history_song',
+            'user_history_podcast',
+            'user_history_musicvideo',
+            'user_history_video',
+            'playlist_top',
+            'artist_top',
+            
+        ];
+
+        // ---- صفحه اصلی ----
+        if (!P) {
+            await renderHome();
+            return;
+        }
+    
+        // ---- مسیرهای جزئیات ----
+        if (P === 'video' && !routeMap[`video_${QS}`]) {
+            await CRVP(QS);
+            return;
+        }
+        if (P === 'song' && !routeMap[`song_${QS}`]) {
+            await CREP(QS,'song');
+            return;
+        }
+        if (P === 'album') {
+            await CREP(QS,'album');
+            return;
+        }
+        if (P === 'playlist') {
+            await CRPP(QS,'playlist');
+            return;
+        }
+        if (P === 'artist' && !routeMap[`artist_${QS}`]) {
+            await CRAP(QS);
+            return;
+        }
+    
+        // ---- مسیرهای لیست ----
+        const routeKey = `${P}_${QS}`;
+        const route = routeMap[routeKey];
+    
+        if (!route) {
+            console.log('CRHP: Unknown route:', P, QS);
+            CRNF();
+            return;
+        }
+    
+        if (SN[route.key]?.length) {
+            renderList(route);
+            return;
+        }
+    
+        await gjs(route.fetch);
+        renderList(route);
+    
+    
+        // ========================================
+        function renderList(route) {
+            const ar = SN[route.key];
+            if (!ar || !ar.length) return;
+    
+            // تب‌ها
+            const tabContainer = OA(document.createElement('div'), { className: 'main-tabs m-top-1' });
+            const currentType = route.type === 'musicvideo' ? 'video' : route.type;
+    
+            tabsConfig.forEach(tab => {
+                const href = `/${currentType}/${tab.qs}`;
+                const isActive = (QS === tab.qs);
+    
+                const el = OA(document.createElement('a'), {
+                    className: 'item' + (isActive ? ' active' : ''),
+                    href: href,
+                    innerHTML: tab.label
+                });
+                tabContainer.append(el);
+            });
+    
+            MCNT.append(tabContainer);
+    
+            // محتوا
+            if (route.type === 'video' || route.type === 'musicvideo') {
+                const grid = CRGC(ar, route.type);
+                if (grid) MCNT.appendChild(grid);
+            }
+            if (route.type === 'song' || route.type === 'podcast' || route.type === 'album' || route.type === 'playlist') {
+                CRGL(ar, route.type);
+            }
+            if (route.type === 'artist') {
+                const grid = CRGC(ar, route.type);
+                if (grid) MCNT.appendChild(grid);
+            }
+
+            ADE();
+        }
+    
+    
+        // ========================================
+        async function renderHome() {
+            LoadProfile();
+        
+            for (const key of homeOrder) {
+                const route = routeMap[key];
+                if (!route) continue;
+        
+                // ---- بخش‌های کاربر ----
+                if (route.type === 'user') {
+                    const data = getUserData(route.source, route.itemType);
+                    if (!data || !data.length) continue;
+                
+                    let readyIds = data;
+                    if (route.itemType && ITEM_TYPES.indexOf(route.itemType) !== -1) {
+                        readyIds = await EnsureItems(route.itemType, data);
+                    }
+                    if (!readyIds.length) continue;
+                
+                    if (route.label) {
+                        const hed = OA(document.createElement('div'), { className: 'section-header m-top-3' });
+                        const ht = OA(document.createElement('h2'), {
+                            className: 'title',
+                            innerHTML: route.label
+                        });
+                        if (route.href) {
+                            const ha = OA(document.createElement('a'), {
+                                className: 'see-all',
+                                innerHTML: 'See All',
+                                href: route.href
+                            });
+                            hed.append(ht, ha);
+                        } else {
+                            hed.append(ht);
+                        }
+                        MCNT.append(hed);
+                    }
+                
+                    if (route.itemType === 'musicvideo' || route.itemType === 'video') {
+                        CRSC(readyIds, route.itemType);
+                    } else {
+                        CRSC(readyIds, route.itemType);
+                    }
+                    continue;
+                }
+        
+                // ---- بخش‌های عادی ----
+                const ar = SN[route.key];
+                if (!ar || !ar.length) continue;
+        
+                if (route.label) {
+                    const hed = OA(document.createElement('div'), { className: 'section-header m-top-3' });
+                    const ht  = OA(document.createElement('h2'), { className: 'title', innerHTML: route.label });
+        
+                    if (route.href) {
+                        const ha = OA(document.createElement('a'), {
+                            className: 'see-all',
+                            innerHTML: 'See All',
+                            href: route.href
+                        });
+                        hed.append(ht, ha);
+                    } else {
+                        hed.append(ht);
+                    }
+                    MCNT.append(hed);
+                }
+        
+                if (route.type === 'musicvideo') CRSC(ar, 'musicvideo');
+                if (route.type === 'song' || route.type === 'podcast' || route.type === 'album' || route.type === 'playlist') {
+                    CRSC(ar, route.type);
+                }
+                if (route.type === 'artist') CRSC(ar, 'artist');
+            }
+        console.log(SN);
+            ADE();
+        }
+    
+    
+        // تابع کمکی برای خواندن داده کاربر از روی مسیر نقطه‌ای
+        function getUserData(path, itemType) {
+            if (!SN.profile) return null;
+        
+            if (path === 'history') {
+                const list = SN.profile.history || [];
+                if (!itemType) return list;
+                return list
+                    .filter((row) => row && row.type === itemType)
+                    .map((row) => row.id);
+            }
+            if (path === 'favorite.song') return SN.profile.favorite?.song;
+            if (path === 'favorite.artist') return SN.profile.favorite?.artist;
+            if (path === 'favorite.album') return SN.profile.favorite?.album;
+            if (path === 'favorite.musicvideo') return SN.profile.favorite?.musicvideo;
+            return null;
+        }
+    }
+    
+    async function CRLP(P, QS) {
+
+        const routeMap = {
+            history_song: {
+                label: 'Recently Played',
+                source: 'history',
+                itemType: 'song',
+                listMode: 'line',
+                href: '/library/history/song'
+            },
+            history_podcast: {
+                label: 'Recently Played Podcasts',
+                source: 'history',
+                itemType: 'podcast',
+                listMode: 'line',
+                href: '/library/history/podcast'
+            },
+            history_musicvideo: {
+                label: 'Recently Played Music Videos',
+                source: 'history',
+                itemType: 'musicvideo',
+                listMode: 'grid',
+                href: '/library/history/musicvideo'
+            },
+            history_video: {
+                label: 'Recently Played Videos',
+                source: 'history',
+                itemType: 'video',
+                listMode: 'grid',
+                href: '/library/history/video'
+            },
+    
+            playlist: {
+                label: 'Your Playlists',
+                source: 'playlist',
+                itemType: 'playlist',
+                listMode: 'line',
+                href: '/library/playlist'
+            },
+            favorite_song: {
+                label: 'Your Favorite Songs',
+                source: 'favorite.song',
+                itemType: 'song',
+                listMode: 'line',
+                href: '/library/favorite/song'
+            },
+            favorite_artist: {
+                label: 'Your Followed',
+                source: 'favorite.artist',
+                itemType: 'artist',
+                listMode: 'carousel',
+                href: '/library/favorite/artist'
+            },
+            favorite_album: {
+                label: 'Your Bookmark Albums',
+                source: 'favorite.album',
+                itemType: 'album',
+                listMode: 'line',
+                href: '/library/favorite/album'
+            },
+            favorite_video: {
+                label: 'Your Bookmark Videos',
+                source: 'favorite.video',
+                itemType: 'video',
+                listMode: 'grid',
+                href: '/library/favorite/video'
+            },
+            favorite_playlist: {
+                label: 'Your Bookmark Playlists',
+                source: 'favorite.playlist',
+                itemType: 'playlist',
+                listMode: 'carousel',
+                href: '/library/favorite/playlist'
+            },
+            favorite_podcast: {
+                label: 'Your Bookmark Podcasts',
+                source: 'favorite.podcast',
+                itemType: 'podcast',
+                listMode: 'line',
+                href: '/library/favorite/podcast'
+            },
+            favorite_musicvideo: {
+                label: 'Your Favorite Music Videos',
+                source: 'favorite.musicvideo',
+                itemType: 'musicvideo',
+                listMode: 'grid',
+                href: '/library/favorite/musicvideo'
+            },
+            favorite_live: {
+                label: 'Your Bookmark TV Live',
+                source: 'favorite.live',
+                itemType: 'live',
+                listMode: 'live',
+                href: '/library/favorite/live'
+            }
+        };
+    
+        // خلاصه library: اول بقیه، آخر چهار تاریخچه (مثل هوم)
+        const libraryOrder = [
+            'playlist',
+            'favorite_song',
+            'favorite_musicvideo',
+            'favorite_artist',
+            'favorite_album',
+            'favorite_playlist',
+            'favorite_live',
+            'history_song',
+            'history_podcast',
+            'history_musicvideo',
+            'history_video'
+        ];
+    
+        // /library
+        if (!P) {
+            await renderLibrary();
+            return;
+        }
+    
+        // /library/history/song → P=history, QS=song
+        // /library/favorite/song → P=favorite, QS=song
+        // /library/playlist → P=playlist
+        let routeKey = P;
+        if (P === 'history' && QS) {
+            routeKey = 'history_' + QS;
+        } else if (P === 'favorite' && QS) {
+            routeKey = 'favorite_' + QS;
+        }
+    
+        const route = routeMap[routeKey];
+        if (!route) {
+            console.log('CRLP: Unknown route:', P, QS);
+            await renderLibrary();
+            return;
+        }
+    
+        await renderLibrarySection(route);
+        ADE();
+    
+        async function renderLibrarySection(route) {
+            LoadProfile();
+    
+            const data = getUserData(route.source, route.itemType);
+            if (!data || !data.length) {
+                MCNT.append(
+                    OA(document.createElement('div'), {
+                        className: 'text2 m-top-1',
+                        innerHTML: 'موردی نیست'
+                    })
+                );
+                return;
+            }
+    
+            let readyIds = data;
+            if (ITEM_TYPES.indexOf(route.itemType) !== -1) {
+                readyIds = await EnsureItems(route.itemType, data);
+            }
+            if (!readyIds.length) return;
+
+            if (route.listMode === 'live') {
+                renderLiveFavoriteRows(readyIds, false);
+            } else {
+                const hed = OA(document.createElement('div'), { className: 'section-header m-top-1' });
+                hed.append(
+                    OA(document.createElement('h1'), {
+                        className: 'title',
+                        innerHTML: route.label
+                    })
+                );
+                MCNT.append(hed);
+            }
+    
+            if (route.listMode === 'line') {
+                CRGL(readyIds, route.itemType);
+            } else if (route.listMode === 'grid') {
+                const grid = CRGC(readyIds, route.itemType);
+                if (grid) MCNT.appendChild(grid);
+            } else {
+                CRSC(readyIds, route.itemType);
+            }
+        }
+    
+        async function renderLibrary() {
+            LoadProfile();
+    
+            for (const key of libraryOrder) {
+                const route = routeMap[key];
+                if (!route) continue;
+    
+                const data = getUserData(route.source, route.itemType);
+                if (!data || !data.length) continue;
+    
+                let readyIds = data;
+                if (ITEM_TYPES.indexOf(route.itemType) !== -1) {
+                    readyIds = await EnsureItems(route.itemType, data);
+                }
+                if (!readyIds.length) continue;
+    
+                if (route.listMode === 'live') {
+                    renderLiveFavoriteRows(readyIds, true);
+                    continue;
+                }
+
+                const hed = OA(document.createElement('div'), { className: 'section-header m-top-3' });
+                const ht = OA(document.createElement('h2'), {
+                    className: 'title',
+                    innerHTML: route.label
+                });
+                const ha = OA(document.createElement('a'), {
+                    className: 'see-all',
+                    innerHTML: 'See All',
+                    href: route.href
+                });
+                hed.append(ht, ha);
+                MCNT.append(hed);
+    
+                CRSC(readyIds, route.itemType);
+            }
+    
+            ADE();
+        }
+        
+        // Live favorites are stored under one type but displayed as TV and Radio rows.
+        function renderLiveFavoriteRows(ids, withSeeAll) {
+            const groups = splitLiveMediaIds(ids);
+            const rows = [
+                { ids: groups.video, label: 'Your Bookmark TV Live', mediaType: 'video' },
+                { ids: groups.audio, label: 'Your Bookmark Radio Live', mediaType: 'audio' }
+            ];
+
+            rows.forEach((row) => {
+                if (!row.ids || !row.ids.length) return;
+
+                const hed = OA(document.createElement('div'), {
+                    className: 'section-header ' + (withSeeAll ? 'm-top-3' : 'm-top-1')
+                });
+                hed.append(OA(document.createElement(withSeeAll ? 'h2' : 'h1'), {
+                    className: 'title',
+                    innerHTML: row.label
+                }));
+
+                if (withSeeAll) {
+                    hed.append(OA(document.createElement('a'), {
+                        className: 'see-all',
+                        innerHTML: 'See All',
+                        href: '/library/favorite/live'
+                    }));
+                }
+
+                MCNT.append(hed);
+                CRSC(row.ids, 'live', null, { aspectRatio: row.mediaType === 'video' ? '16:9' : '1:1' });
+            });
+        }
+
+        function getUserData(path, itemType) {
+            if (!SN.profile) return null;
+        
+            if (path === 'history') {
+                const list = Array.isArray(SN.profile.history) ? SN.profile.history : [];
+                return list
+                    .filter((row) => {
+                        if (!row || row.id == null) return false;
+                        if (!itemType) return true;
+                        return String(row.type) === String(itemType);
+                    })
+                    .map((row) => row.id);
+            }
+            if (path === 'playlist') {
+                return SN.profile.playlist || [];
+            }
+            if (path.indexOf('favorite.') === 0) {
+                const t = path.slice(9);
+                return (SN.profile.favorite && SN.profile.favorite[t]) || [];
+            }
+            return null;
+        }
+    }
+
+    async function CRAP(q) {
+        
+        const e = await UART(['artist', q]);
+        if (!e) {
+            CRNF('Artist not found');
+            return;
+        }
+
+        var au = e.url;
+
+
+        var dhc = OA(document.createElement("div"), {className: "page-detail-header-container"});
+        var dtn = OA(document.createElement("div"), {className: "thumbail rounded-circle"});
+        var spn = OA(document.createElement("span"), {
+            className: "placeholder rounded-circle",
+            innerHTML: svg_sng
+        });
+
+        dtn.append(spn);
+
+        const thumb = e.meta && e.meta?.tmb || null;
+        if (thumb) dtn.append(OA(document.createElement('img'), {className: "rounded-circle", src: UT+thumb+".jpg" }));
+
+        var dct = OA(document.createElement("div"), {className: "content"});
+        var tlt = OA(document.createElement("div"), {className: "title"});
+        var th1 = OA(document.createElement("h1"), {
+            title: e.name_fa,
+            innerHTML: e.name
+        });
+
+        tlt.append(th1);
+
+
+        const dtl = OA(document.createElement("div"), {className: "detailes"});
+        let dtlv = '';
+        if (e.meta.flw) {
+            dtlv += e.meta.flw + ' Followers'
+            
+        }
+        dtl.innerHTML = dtlv;
+
+        dct.append(tlt, dtl);
+        dhc.append(dtn, dct);
+        MCNT.append(dhc);
+        applyPageBackdrop(e, dhc);
+
+
+        const dac = OA(document.createElement("div"), {
+            className: "page-detail-actions"
+        });
+
+        const dpl = OA(document.createElement("div"), {
+            className: "play",
+            innerHTML: svg_rdo
+        });
+
+        dpl.addEventListener('click', () => {
+            if (!e.songs || !e.songs.length) return;
+            setPlayQueue(e.songs, e.songs[0], 'song');
+        });
+
+        const isFav = IsFavorite('artist', e.id);
+        const bfl = OA(document.createElement('div'), {
+            className: 'btn btn-sm ' + (isFav ? 'btn-model-4' : 'btn-model-3'),
+            innerHTML: isFav ? 'Following' : 'Follow'
+        });
+        
+        bfl.addEventListener('click', () => {
+            const nowFavorite = ToggleFavorite('artist', e.id);
+        
+            // متن
+            bfl.innerHTML = nowFavorite ? 'Following' : 'Follow';
+        
+            // کلاس‌ها
+            bfl.classList.remove('btn-model-3', 'btn-model-4');
+            bfl.classList.add(nowFavorite ? 'btn-model-4' : 'btn-model-3');
+        });
+            
+        var dbs = OA(document.createElement("div"), {
+            className: "btn btn-model-1",
+            innerHTML: svg_sha
+        });
+        
+        dbs.addEventListener('click', () => {
+            copyText(
+                window.location.href,
+                isLive ? 'Live link copied to clipboard' : 'Artist link copied to clipboard'
+            );
+        });
+        
+        const mor = OA(document.createElement('div'), { className: 'btn btn-model-1', innerHTML: svg_dot });
+        mor._item = e;
+        mor.addEventListener("click", ()=>{
+                 CRBW(e.id,'artist');
+            },false);
+
+        dac.append(dpl, bfl, dbs, mor);
+        MCNT.append(dac);
+
+
+        // آرایهٔ خالی در JS truthy است — فقط وقتی آیتم دارد سکشن بساز
+        if (Array.isArray(e.songs) && e.songs.length) {
+            var shd = OA(document.createElement("div"), {
+                className: "section-header m-top-3",
+                innerHTML: '<h2 class="title">Latest Songs</h2>'
+            });
+            MCNT.append(shd);
+            CRSC(e.songs, 'song');
+        }
+
+        if (Array.isArray(e.musicvideos) && e.musicvideos.length) {
+            var shdMv = OA(document.createElement("div"), {
+                className: "section-header m-top-3",
+                innerHTML: '<h2 class="title">Latest Music videos</h2>'
+            });
+            MCNT.append(shdMv);
+            CRSC(e.musicvideos, 'musicvideo');
+        }
+
+        if (Array.isArray(e.songs) && e.songs.length) {
+            var shd2 = OA(document.createElement("div"), {
+                className: "section-header m-top-3",
+                innerHTML: '<h2 class="title">Songs</h2>'
+            });
+            MCNT.append(shd2);
+            CRGL(e.songs, 'song');
+        }
+
+        if (Array.isArray(e.albums) && e.albums.length) {
+            var shd3 = OA(document.createElement("div"), {
+                className: "section-header m-top-3",
+                innerHTML: '<h2 class="title">Albums</h2>'
+            });
+            MCNT.append(shd3);
+            CRSC(e.albums, 'album');
+        }
+
+        if (e.meta) {
+            const abt = CRAB(e.meta);
+            // فقط اگر CRAB واقعاً محتوا ساخت (نه هدر خالی About)
+            if (abt && abt.childNodes && abt.childNodes.length) {
+                const sabt = OA(document.createElement("div"), {
+                    className: "section-header m-top-3",
+                    innerHTML: '<h2 class="title">About Artist</h2>'
+                });
+                MCNT.appendChild(sabt);
+                MCNT.appendChild(abt);
+            }
+        }
+        
+        ADE();
+    
+    }
+    
     async function CREP(q,T,callback) {
         const isLive = T === 'live';
         let e = null;
@@ -6991,10 +7831,14 @@ if (!empty($_SESSION['loggedin'])) {
         if (isLive) {
             LoadLiveCache();
             e = SN.live && SN.live[q] ? SN.live[q] : null;
+            if (!e || !e.full) {
+                await EnsureItems('live', [q]);
+                e = SN.live && SN.live[q] ? SN.live[q] : null;
+            }
             url = HLV;
         }
 
-        if (!e || (isLive && !e.full)) {
+        if (!e) {
             CRNF(isLive ? 'Live channel not found' : (T === 'album' ? 'Album not found' : 'Track not found'));
             if (callback) callback();
             return;
@@ -7002,6 +7846,16 @@ if (!empty($_SESSION['loggedin'])) {
 
         if (isLive) {
             document.title = (e.name || 'Live') + ' | Hamrahang';
+            const path = (window.location.pathname || '').replace(/\/+$/, '');
+            const livePath = (HLV + q).replace(/\/+$/, '');
+            if (path !== livePath && path.indexOf(livePath + '/') !== 0) {
+                if (callback) callback();
+                return;
+            }
+            if (liveMediaType(e) !== 'audio') {
+                await CRLVDetail(q, callback);
+                return;
+            }
         }
     
         //AudLst[0] = e;
@@ -7454,16 +8308,16 @@ if (!empty($_SESSION['loggedin'])) {
         const isLive = T === 'live';
         let e = null;
         if (isLive) {
-            // openLiveDetail مالک resolve و اعتبارسنجی رکورد Live است.
             LoadLiveCache();
             e = SN.live && SN.live[q] ? SN.live[q] : null;
-
-            // اگر مسیر هنگام resolve عوض شده باشد، صفحه قبلی را رندر نکن.
-            if (!isCurrentLiveRoute(q)) return;
+            if (!e || !e.full) {
+                await EnsureItems('live', [q]);
+                e = SN.live && SN.live[q] ? SN.live[q] : null;
+            }
         } else {
             e = await resolveVideoItem(q);
         }
-        if (!e || (isLive && !e.full)) {
+        if (!e) {
             CRNF(isLive ? 'Live channel not found' : 'Video not found');
             return;
         }
