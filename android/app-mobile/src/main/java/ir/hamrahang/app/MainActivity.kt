@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private var playerMenu = false
     private var discAnimator: ObjectAnimator? = null
     private var miniPlayerWantsVisible = false
+    private var playerUiOpen = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -100,12 +101,37 @@ class MainActivity : AppCompatActivity() {
 
         applyOrientationUi(animateMini = false)
         bindMiniPlayer()
+        supportFragmentManager.addOnBackStackChangedListener {
+            val nowPlaying = supportFragmentManager.findFragmentByTag(TAG_NOW_PLAYING) != null
+            if (!nowPlaying && playerUiOpen) {
+                playerUiOpen = false
+                restoreChrome()
+            }
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt(KEY_TAB, currentTab)
         outState.putBoolean(KEY_PLAYER_MENU, playerMenu)
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applyOrientationUi(animateMini = true)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Returning from VideoActivity or after player UI closed.
+        if (playerUiOpen && supportFragmentManager.findFragmentByTag(TAG_NOW_PLAYING) == null) {
+            // Still open if we are about to show VideoActivity only while resumed? Video leaves this activity paused.
+            // When we resume and no now-playing fragment, restore chrome unless we just launched video in same frame.
+            if (!isFinishing) {
+                playerUiOpen = false
+                restoreChrome()
+            }
+        }
     }
 
     override fun onStart() {
@@ -209,6 +235,7 @@ class MainActivity : AppCompatActivity() {
         if (!landscape) playerMenu = false
         binding.bottomNav.isVisible = !landscape
         binding.landscapeBar.isVisible = landscape
+        val hasSession = miniPlayerWantsVisible || PlayerState.playbackInfo.value.visible
         if (landscape) {
             refreshLandscapeIcons()
             updateDiscArtwork(PlayerState.playbackInfo.value.artwork, PlayerState.playbackInfo.value.visible)
@@ -223,7 +250,16 @@ class MainActivity : AppCompatActivity() {
                 binding.bottomNav.selectedItemId = currentTab
             }
             stopDiscRotation()
-            setMiniPlayerVisible(miniPlayerWantsVisible, animateMini)
+            if (!playerUiOpen) {
+                setMiniPlayerVisible(hasSession, animateMini)
+            } else {
+                setMiniPlayerVisible(false, animateMini)
+            }
+        }
+        if (!playerUiOpen) {
+            setProgressVisible(hasSession, animateMini)
+        } else {
+            setProgressVisible(false, animateMini)
         }
     }
 
@@ -368,6 +404,9 @@ class MainActivity : AppCompatActivity() {
     private fun openPlayerScreen() {
         val info = PlayerState.playbackInfo.value
         if (!info.visible) return
+        playerUiOpen = true
+        setMiniPlayerVisible(false, animate = true)
+        setProgressVisible(false, animate = true)
         if (info.mediaType == MediaType.VIDEO) {
             startActivity(Intent(this, VideoActivity::class.java))
             return
@@ -378,6 +417,50 @@ class MainActivity : AppCompatActivity() {
             .add(R.id.fragmentContainer, NowPlayingFragment(), TAG_NOW_PLAYING)
             .addToBackStack(TAG_NOW_PLAYING)
             .commit()
+    }
+
+    private fun restoreChrome() {
+        val hasSession = miniPlayerWantsVisible || PlayerState.playbackInfo.value.visible
+        if (isLandscape()) {
+            setMiniPlayerVisible(false, animate = true)
+        } else {
+            setMiniPlayerVisible(hasSession, animate = true)
+        }
+        setProgressVisible(hasSession, animate = true)
+    }
+
+    private fun setProgressVisible(show: Boolean, animate: Boolean) {
+        val view = binding.playbackProgress
+        if (!animate) {
+            view.animate().cancel()
+            view.isVisible = show
+            view.alpha = 1f
+            return
+        }
+        if (show) {
+            if (view.isVisible && view.alpha >= 0.99f) return
+            view.animate().cancel()
+            view.isVisible = true
+            if (view.alpha >= 0.99f) view.alpha = 0f
+            view.animate()
+                .alpha(1f)
+                .setDuration(280L)
+                .setInterpolator(DecelerateInterpolator())
+                .withEndAction(null)
+                .start()
+        } else {
+            if (!view.isVisible) return
+            view.animate().cancel()
+            view.animate()
+                .alpha(0f)
+                .setDuration(240L)
+                .setInterpolator(AccelerateInterpolator())
+                .withEndAction {
+                    view.isVisible = false
+                    view.alpha = 1f
+                }
+                .start()
+        }
     }
 
     private fun togglePlayback() {
@@ -429,9 +512,16 @@ class MainActivity : AppCompatActivity() {
                             .into(binding.miniArtwork)
                         if (isLandscape()) {
                             updateDiscArtwork(info.artwork, info.visible)
+                        }
+                        if (playerUiOpen) {
                             setMiniPlayerVisible(false, animate = true)
+                            setProgressVisible(false, animate = true)
+                        } else if (isLandscape()) {
+                            setMiniPlayerVisible(false, animate = true)
+                            setProgressVisible(info.visible, animate = true)
                         } else {
                             setMiniPlayerVisible(info.visible, animate = true)
+                            setProgressVisible(info.visible, animate = true)
                         }
                     }
                 }
