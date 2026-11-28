@@ -424,7 +424,7 @@ object MoreOptionsPanel {
         container.removeAllViews()
         container.orientation = LinearLayout.VERTICAL
         val context = fragment.requireContext()
-        val mediaId = item.id.toLongOrNull()
+        val favoriteId = (item.publicId ?: item.id).toLongOrNull()
 
         val mainContent = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -503,7 +503,7 @@ object MoreOptionsPanel {
         ))
 
         var bookmarked = false
-        var bookmarkStateReady = mediaId == null
+        var bookmarkStateReady = favoriteId == null
         lateinit var bookmarkCard: View
         val favoriteLabel = if (item.contentType == ContentType.ARTIST) "Follow" else "Bookmark"
         val favoriteDoneLabel = if (item.contentType == ContentType.ARTIST) "Following" else "Bookmarked"
@@ -525,11 +525,11 @@ object MoreOptionsPanel {
         bookmarkCard = addTopAction(
             context, actionsColumn, favoriteIcon, favoriteLabel
         ) {
-            if (mediaId == null) {
+            if (favoriteId == null) {
                 MessageManager.info("This item cannot be bookmarked")
             } else if (bookmarkStateReady) {
                 fragment.viewLifecycleOwner.lifecycleScope.launch {
-                    val updated = FavoriteManager.toggle(mediaId, item.contentType)
+                    val updated = FavoriteManager.toggle(favoriteId, item.contentType)
                     renderFavoriteState(updated)
                     MessageManager.info(
                         when {
@@ -543,13 +543,13 @@ object MoreOptionsPanel {
             }
         }
 
-        if (mediaId != null) {
+        if (favoriteId != null) {
             // Wait for the persisted state before allowing a toggle.
             // This prevents the default outline from racing with the database result.
             bookmarkCard.isClickable = false
             fragment.viewLifecycleOwner.lifecycleScope.launch {
                 runCatching {
-                    FavoriteManager.isFavorite(mediaId, item.contentType)
+                    FavoriteManager.isFavorite(favoriteId, item.contentType)
                 }.onSuccess { saved ->
                     renderFavoriteState(saved)
                     bookmarkStateReady = true
@@ -566,7 +566,7 @@ object MoreOptionsPanel {
             }
         }
 
-        if (item.contentType != ContentType.PLAYLIST) {
+        if (item.contentType != ContentType.PLAYLIST && item.contentType != ContentType.LIVE) {
             addTopAction(context, actionsColumn, R.drawable.ic_add_circle, "to Queue") {
                 val added = ir.hamrahang.tv.playback.PlaybackManager.addToQueue(item)
                 when {
@@ -625,30 +625,34 @@ object MoreOptionsPanel {
             ContentType.MUSICVIDEO -> "Go to music video"
             ContentType.ARTIST -> "Go to artist"
             ContentType.PLAYLIST -> "Go to playlist"
+            ContentType.LIVE -> null
         }
-        addNavigationAction(
-            context, actionsColumn,
-            mediaIcon(item.contentType),
-            destinationLabel
-        ) {
-            close()
-            when (item.contentType) {
-                ContentType.PLAYLIST -> {
-                    val localId = playlistLocalId ?: item.id
-                    UiNavigator.runAfterPlayerDismiss {
-                        UiNavigator.openPlaylist(localId)
+        if (destinationLabel != null) {
+            addNavigationAction(
+                context, actionsColumn,
+                mediaIcon(item.contentType),
+                destinationLabel
+            ) {
+                close()
+                when (item.contentType) {
+                    ContentType.PLAYLIST -> {
+                        val localId = playlistLocalId ?: item.id
+                        UiNavigator.runAfterPlayerDismiss {
+                            UiNavigator.openPlaylist(localId)
+                        }
                     }
-                }
-                ContentType.ARTIST -> {
-                    val artist = ir.hamrahang.tv.domain.artist.Artist(
-                        id = item.id,
-                        name = item.title
-                    )
-                    UiNavigator.runAfterPlayerDismiss { UiNavigator.openArtist(artist) }
-                }
-                else -> {
-                    UiNavigator.runAfterPlayerDismiss {
-                        UiNavigator.openMediaDetail(item.contentType, item.id)
+                    ContentType.ARTIST -> {
+                        val artist = ir.hamrahang.tv.domain.artist.Artist(
+                            id = item.id,
+                            name = item.title
+                        )
+                        UiNavigator.runAfterPlayerDismiss { UiNavigator.openArtist(artist) }
+                    }
+                    ContentType.LIVE -> Unit
+                    else -> {
+                        UiNavigator.runAfterPlayerDismiss {
+                            UiNavigator.openMediaDetail(item.contentType, item.id)
+                        }
                     }
                 }
             }
