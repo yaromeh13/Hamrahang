@@ -61,10 +61,11 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="3dp"
+        android:layoutDirection="ltr"
         android:max="1000"
         android:progress="0"
         android:progressBackgroundTint="#33FFFFFF"
-        android:progressTint="#FFFFFFFF" />
+        android:progressTint="#E57373" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
