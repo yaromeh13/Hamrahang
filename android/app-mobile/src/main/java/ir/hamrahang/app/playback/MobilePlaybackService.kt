@@ -1,5 +1,7 @@
 package ir.hamrahang.app.playback
 
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -19,6 +21,15 @@ class MobilePlaybackService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
         val exoPlayer = PlayerManager.getPlayer(applicationContext)
+        exoPlayer.setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(C.USAGE_MEDIA)
+                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                .build(),
+            true
+        )
+        exoPlayer.setWakeMode(C.WAKE_MODE_LOCAL)
+        exoPlayer.setHandleAudioBecomingNoisy(true)
         val sessionPlayer = object : ForwardingPlayer(exoPlayer) {
             override fun getAvailableCommands(): Player.Commands =
                 super.getAvailableCommands().buildUpon()
