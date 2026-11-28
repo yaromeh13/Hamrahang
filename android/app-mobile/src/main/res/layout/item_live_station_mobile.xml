@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
     android:orientation="vertical"
-    android:padding="5dp">
+    android:padding="6dp">
 
     <ImageView
         android:id="@+id/liveCardArtwork"
@@ -18,9 +18,8 @@
         android:id="@+id/liveCardTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="7dp"
+        android:layout_marginTop="6dp"
         android:ellipsize="end"
-        android:maxLines="2"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textStyle="normal" />
+        android:lines="1"
+        android:textAppearance="?attr/textAppearanceBodyMedium" />
 </LinearLayout>
