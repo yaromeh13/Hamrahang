@@ -6921,9 +6921,9 @@ if (!empty($_SESSION['loggedin'])) {
         }
 
         MCNT.append(OA(document.createElement('div'), { className: 'page-loading-container', innerHTML: '<div class="spinner-large"></div>' }));
-        gjs(['live', 'latest']).then(function (result) {
+        gjs(route.fetch).then(function (result) {
             if (result && result.error) throw new Error(result.error);
-            if (isLiveRoute()) draw(SN.latest_live || []);
+            if (isLiveRoute()) draw(route.getIds());
         }).catch(function (err) {
             if (!isLiveRoute()) return;
             MCNT.innerHTML = '';
