@@ -7454,14 +7454,11 @@ if (!empty($_SESSION['loggedin'])) {
         const isLive = T === 'live';
         let e = null;
         if (isLive) {
+            // openLiveDetail مالک resolve و اعتبارسنجی رکورد Live است.
             LoadLiveCache();
             e = SN.live && SN.live[q] ? SN.live[q] : null;
-            if (!e || !e.full) {
-                await EnsureItems('live', [q]);
-                e = SN.live && SN.live[q] ? SN.live[q] : null;
-            }
 
-            // CRVP نیز باید پاسخ دیررس را برای مسیر قبلی نادیده بگیرد.
+            // اگر مسیر هنگام resolve عوض شده باشد، صفحه قبلی را رندر نکن.
             if (!isCurrentLiveRoute(q)) return;
         } else {
             e = await resolveVideoItem(q);
