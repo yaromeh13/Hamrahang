@@ -709,7 +709,7 @@ The following implementation was re-opened on the `main` branch while this secti
 | Section header | `ui/LiveRowsAdapter.kt` displays fixed Live Video/Live Audio headings for system rows and owner name/artwork for other rows. | Implemented in source. |
 | Card layout | `ui/LiveAdapter.kt` selects `item_live_video.xml` for video and `item_content.xml` for audio. | Implemented in source; visual sizing should be checked on TV. |
 | Playback routing | `ui/LiveFragment.kt` creates type-specific Live queue items, opens the fullscreen player for video and the internal playback screen for audio. `playback/PlaybackManager.kt` uses the Live media type when preparing playback. | Implemented in source; playback and minimize behavior need device testing. |
-| Player LIVE controls | The player-specific LIVE indicator, elapsed time/duration and seek-bar policy has not been specified by the user. | Deliberately deferred; do not change in this section. |
+| Player LIVE controls | `player/PlayerFragment.kt` keeps the seek bar visible; when the current queue item is Live, the duration label displays `LIVE`, stale elapsed/duration values are cleared, and stale seek progress is reset. | Implemented in source; verify on TV. |
 
 ## 4.4 Relevant Android source paths
 
@@ -755,7 +755,15 @@ The following implementation was re-opened on the `main` branch while this secti
 9. Existing Room data survives migration to version 38.
 10. D-pad focus, row navigation, back navigation and the existing shared player/minimize behavior work on the target TV.
 11. The app builds with the established project toolchain and is tested on an Android TV device/emulator.
-12. The player's LIVE indicator, time/duration and seek bar remain unchanged until their behavior is separately specified and approved.
+12. During Live playback, the seek bar remains visible, the duration label reads `LIVE`, the previous finite-media duration/elapsed values are cleared, and stale seek progress is reset.
+
+### 4.8 Live duration label and seek-bar presentation
+
+- Keep the seek bar visible during Live playback; do not hide the seek-bar container.
+- Replace the finite-media duration label with the literal text `LIVE`.
+- Clear the elapsed-time label and reset stale seek-bar progress when switching from finite media to Live, so no previous track/video time is shown as Live progress.
+- For finite media, preserve the existing elapsed/duration formatting and seek-bar progress behavior.
+- Do not infer a finite duration for Live streams.
 
 ### 4.7 Live bookmarks and More menu
 
