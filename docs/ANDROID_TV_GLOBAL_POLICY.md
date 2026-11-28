@@ -11,6 +11,7 @@ It is intentionally broader than image selection. New, verified product scenario
 - Do not introduce a new behavior merely because it is common in other applications.
 - Before changing code, reopen the current source files listed in the relevant section and check whether paths or implementation have changed.
 - Keep Android TV native, D-pad-friendly, and compatible with the project's existing Gradle, Kotlin, and Android SDK constraints.
+- Respect the module boundaries in [Project structure and module rules](#project-structure-and-module-rules).
 - All API requests must use the main API host `https://hamrahang.ir`. Do not add another API host or fallback API domain without explicit approval.
 - Image/media CDN URLs are a separate concern from API endpoints; preserve the currently verified image host unless a deliberate, verified policy change is approved.
 - Prefer small, architecture-aligned changes. Preserve local data, current screen state, focus, scroll, playback queue, and active playback unless a scenario explicitly requires otherwise.
@@ -35,6 +36,36 @@ Before implementing or changing Android TV behavior, follow this sequence:
 - Do not use another domain as an API host or fallback unless the user explicitly authorizes it.
 - This restriction concerns API requests; it does not automatically prohibit separately verified image/media CDN URLs where the existing media policy permits them.
 - The Web implementation is the first place to inspect for an existing API contract. Do not create or modify API behavior until the relevant Web behavior and server-side API implementation have been reviewed.
+
+
+## Project structure and module rules
+
+The Android project root is `android/` (formerly `android-tv/`). Open this directory in Android Studio. It contains three Gradle modules that share one toolchain.
+
+| Module | Application ID / namespace | Contents |
+|---|---|---|
+| `:core` (`android/core/`) | namespace `ir.hamrahang.core` (library) | Shared data models, repositories, Room database, account session, network, ExoPlayer ownership, playback queue, source selection, lyrics parsing and sync, settings and image URL resolution. |
+| `:app-tv` (`android/app-tv/`) | `ir.hamrahang.tv` | The Android TV application: screens, adapters, Leanback and D-pad behavior, Hero, remote navigation, fullscreen player UI, messages, backgrounds and Home Channel. |
+| `:app-mobile` (`android/app-mobile/`) | `ir.hamrahang.app` | The phone application. Currently a skeleton screen connected to `:core`. |
+
+This document governs `:app-tv`, and the shared behavior of `:core` as the TV application uses it. It does not define mobile UI behavior.
+
+### Module rules
+
+- `:core` must not depend on `:app-tv` or `:app-mobile`, or on their screens, widgets or resources. The apps depend on `:core`.
+- Leanback, Hero and D-pad/remote navigation stay in `:app-tv`; the mobile application does not use them.
+- A change in `:core` affects both applications. Build both, and preserve existing TV behavior.
+- `:core` reaches app UI only through app-provided hooks: `PlayerManager.notifier` (`PlayerNotifier`) for player messages and `PlaybackArtwork.listener` for current artwork. `App.kt` in `:app-tv` connects them to `MessageManager` and `BackgroundManager` before `PlaybackManager.init()`.
+- Kotlin packages in `:core` keep their existing `ir.hamrahang.tv.*` names even though the module is shared.
+- Kotlin cannot smart-cast a public property declared in another module. Copy it to a local `val` or use safe calls.
+
+### Build
+
+From `android/` (Windows):
+
+```
+.\gradlew :app-tv:assembleDebug :app-mobile:assembleDebug
+```
 
 
 ## Contents
@@ -223,7 +254,7 @@ This subsection records the implementation that exists in the source snapshot in
 | Startup decision | `SplashActivity.kt` observes `SplashViewModel.state`. `SplashViewModel.kt` moves to Error on unsuccessful HTTP response or exception; Retry calls `viewModel.retry()`; Offline sets `AppState.offlineMode = true` and opens MainActivity. | Manual Retry and Offline choices exist. No automatic retry loop is present in this state flow. |
 | Successful startup | In `SplashActivity.kt`, Success clears `AppState.offlineMode` and opens MainActivity. | Prevents a previous Offline selection from leaking into a later successful startup. |
 | Device network observation | `android/core/src/main/java/ir/hamrahang/tv/network/NetworkMonitor.kt` registers Android connectivity callbacks and checks `NET_CAPABILITY_INTERNET`. `App.kt` initializes NetworkMonitor. | This observes device network capability only; it does not establish API health. |
-| Network permission | `android/app-tv/src/main/AndroidManifest.xml` declares both `INTERNET` and `ACCESS_NETWORK_STATE`. | The required connectivity-state permission is now declared. |
+| Network permission | `android/app-tv/src/main/AndroidManifest.xml` and `android/core/src/main/AndroidManifest.xml` declare `INTERNET` and `ACCESS_NETWORK_STATE`. | The required connectivity-state permission is now declared. |
 | Runtime request timeout | `NetworkInterceptor.kt` emits `NetworkEvents.Event.Timeout` for a `SocketTimeoutException`. `MainActivity.kt` currently handles this event as `Unit`. | A single request timeout no longer opens a blocking overlay or reloads the screen through this MainActivity event handler. The interceptor still emits the event; other collectors/call sites must be checked before removing the event type. |
 | Runtime network loss | `MainActivity.kt` handles `InternetLost` by setting `apiReachable = false` and showing a non-blocking message through `MessageManager.warning`. | The current screen is not replaced by this handler. Local data/playback continuity still requires end-to-end testing. |
 | Device network recovery | `MainActivity.kt` handles `InternetAvailable` by showing a connected message and calling `HomeChannelPublisher.publish()`. If `apiReachable` is false and no recovery job is active, it launches a health check using `ApiClient.pingApi.ping()`. | Device connectivity and API health are now treated as separate checks. The connected message means device network available, not that the API is healthy. |
@@ -242,7 +273,7 @@ This subsection records the implementation that exists in the source snapshot in
 - The reconnect Ping uses `pingApi`, which has a 15-second total call timeout and disables OkHttp connection retry. The ordinary `api` client still has `retryOnConnectionFailure(true)`; that setting is separate from the startup/reconnect Ping client.
 - `HomeChannelPublisher.publish()` is invoked on the device-network-available event before the API Ping. This is a separate Home Channel operation and must not be interpreted as proof that API recovery succeeded.
 - `NetworkOverlay.kt` and `ReloadManager.kt` remain in the repository. The current MainActivity event handler no longer invokes the timeout overlay/reload path, but these files must not be deleted until all registration and call sites are checked.
-- The source changes recorded here have not yet been confirmed by a successful Android Gradle build or physical Android TV test.
+- After the module split, the project owner reported on 2026-11-28 that `:app-tv` and `:app-mobile` built and ran. No per-scenario TV or device test results are recorded for the behaviors in this document.
 
 ## 1.9 Current code paths — startup and reconnect
 
@@ -595,8 +626,8 @@ Paths below are repository-relative and were checked against the current `main` 
 | `android/core/src/main/java/ir/hamrahang/tv/data/local/DatabaseUpdater.kt` | Maps/merges received DTO data into local Room entities. |
 | `android/core/src/main/java/ir/hamrahang/tv/data/auth/AuthSessionManager.kt` | Account/session restoration used by MainActivity during startup/recovery. |
 | `android/core/src/main/java/ir/hamrahang/tv/data/playlist/PlaylistRepository.kt` | Playlist refresh and synchronization used by the current reconnect flow. |
-| `android/app-tv/src/main/java/ir/hamrahang/tv/data/` | Content DTOs, repositories, Room entities and DAOs; inspect the specific repository before changing a content type's offline behavior. |
-| `android/app-tv/src/main/java/ir/hamrahang/tv/data/live/` | Live DTO/domain models, repository, Room mapper and latest/search/resolve data flow. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/` | Content DTOs, repositories, Room entities and DAOs; inspect the specific repository before changing a content type's offline behavior. Hero code and search UI state remain under `android/app-tv/src/main/java/ir/hamrahang/tv/data/`. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/live/` | Live DTO/domain models, repository, Room mapper and latest/search/resolve data flow. |
 
 ## 3.4 Images and playback
 
@@ -727,7 +758,7 @@ The following implementation was re-opened on the `main` branch while this secti
 | `android/app-tv/src/main/java/ir/hamrahang/tv/ui/LiveAdapter.kt` | Renders Live cards, selects the card layout and handles D-pad focus/clicks. |
 | `android/app-tv/src/main/res/layout/item_live_video.xml` | Landscape Live Video card layout. |
 | `android/app-tv/src/main/res/layout/item_content.xml` | Square Live Audio card layout. |
-| `android/app-tv/src/main/java/ir/hamrahang/tv/playback/PlaybackManager.kt` | Shared playback manager; selects the media type for Live playback. |
+| `android/core/src/main/java/ir/hamrahang/tv/ui/playback/PlaybackManager.kt` | Shared playback manager; selects the media type for Live playback. |
 | `android/core/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | Shared ExoPlayer ownership and player controls. |
 | `android/app-tv/src/main/java/ir/hamrahang/tv/player/PlayerFragment.kt` | Main fullscreen player UI, including the Live duration label and seek-bar presentation. |
 
