@@ -118,6 +118,7 @@ One player state object (`ensurePlayer`). Do not start a second playback pipelin
 - Previous behavior: for non-Live media, pressing Previous restarts the current item when `currentTime > 3` seconds. For `live` media, skip this restart shortcut and immediately navigate to the previous queue item through `getPrevQueueIndex()` / `playQueueAt()`. Preserve the existing shuffle-history and repeat-all behavior; if no previous queue item is available, do nothing.
 - Desktop chrome is `maximum-player-desktop` (`CRDX`). Fullscreen chrome is `#player` / `#player-box` (`CRPL`). Minimize/maximize must not drop the current item.
 - Owner badge on the desktop bar and `#player-owner` reads the **playable** source at `sourceIndex` (`resolveNowPlayingOwner`). Fullscreen badge shows an image only when the owner has a thumb; it has no placeholder. The desktop badge may show the download icon placeholder.
+- Mini Player subtitle: for `live` items, show the channel owner's name from `item.owner.name` (fall back to the cached owner via `getOwner(owner.id)` when needed), not an artist name. For the public/system owner (`id === 0`, or the name `Hamrahang`), leave the subtitle empty; do not display `Hamrahang` as an artist or owner label. For non-Live items, keep the existing artist subtitle behavior unchanged.
 
 ---
 
