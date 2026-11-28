@@ -12,5 +12,7 @@ data class PlaybackItem(
     val contentType: ContentType = ContentType.SONG,
     val playCount: Long? = null,
     /** Non-null only for a Live station; keeps its stream data inside the queue item. */
-    val liveMedia: PlayerMedia? = null
+    val liveMedia: PlayerMedia? = null,
+    /** Public API ID used for account actions; queue IDs may remain namespaced. */
+    val publicId: String? = null
 )
