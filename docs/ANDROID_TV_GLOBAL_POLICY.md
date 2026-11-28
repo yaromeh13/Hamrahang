@@ -263,7 +263,7 @@ This subsection records the implementation that exists in the source snapshot in
 | Current-screen update | After Playlist sync succeeds, `MainActivity.kt` calls `HomeFragment.refreshPlaylists()` only if the fragment in `R.id.contentContainer` is a `HomeFragment`. | This is a Home/Playlist-specific refresh, not a general refresh contract for whichever screen is visible. Other screens are not yet refreshed by this recovery path. |
 | Image/media cache completion | `android/core/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt` resolves artwork and uses asynchronous Glide loading. | No independent reconnect-triggered queue or retry pass for missing image/media cache entries has been implemented in the inspected flow. |
 | Player continuity | `PlayerManager.kt` owns the reusable ExoPlayer; `PlayerState.kt` stores shared player UI state. The current reconnect handler does not call PlayerManager to stop or prepare media. | General recovery does not explicitly manipulate the player, but preservation of active playback during real network loss/recovery has not yet been verified on a device. Stream-source recovery is not implemented by this reconnect flow. |
-| Database/cache preservation | `AppDatabase.kt` declares Room version 35. `DatabaseProvider.kt` registers migrations through 33→34 and uses `fallbackToDestructiveMigration()`; the inspected provider did not show a 34→35 migration. | Do not claim that local data is guaranteed across every database upgrade. Verify the current schema/migration history and add the correct migration before relying on destructive fallback behavior. |
+| Database/cache preservation | `AppDatabase.kt` declares the current schema version. `DatabaseProvider.kt` registers explicit migrations and does not use a destructive fallback, so a missing migration path fails visibly instead of deleting data. | Every schema change needs a matching registered migration. Upgrades from existing installations still need runtime verification. |
 
 ### Important runtime limitations and edge cases
 
@@ -732,7 +732,7 @@ The following implementation was re-opened on the `main` branch while this secti
 |---|---|---|
 | API model | `data/live/LiveDto.kt` maps the top-level JSON `media_type` field. A missing value is treated as audio by the domain model. | Implemented. |
 | Domain model and artwork | `data/live/LiveItem.kt` exposes `isVideo`; video thumbnail priority is `tmv → tmb`, while audio uses `tmb`. | Implemented. |
-| Room persistence | `data/local/entity/LiveEntity.kt` stores `mediaType`. `AppDatabase.kt` is version 38, and `DatabaseProvider.kt` adds migration 37→38 with an audio default for existing rows. | Implemented in source; migration still needs runtime verification against an existing database. |
+| Room persistence | `data/local/entity/LiveEntity.kt` stores `mediaType`. `DatabaseProvider.kt` adds migration 37→38 with an audio default for existing rows. | Implemented in source; migration still needs runtime verification against an existing database. |
 | DTO/entity mapping | `data/live/LiveEntityMapper.kt` maps media type and preserves the existing value when an update omits it. A complete cached card is retained when a partial response arrives. | Implemented in source. |
 | Latest list and resolve | `data/live/LiveRepository.kt` resolves incomplete latest cards when no complete local copy exists; a resolver failure falls back to the cached complete record. | Implemented in source. |
 | Search and offline fallback | The same repository resolves incomplete search results. `LiveFragment.kt` falls back to filtering cached Live items if the remote search fails. | Implemented in source. |
@@ -751,7 +751,7 @@ The following implementation was re-opened on the `main` branch while this secti
 | `android/core/src/main/java/ir/hamrahang/tv/data/live/LiveRepository.kt` | Latest list, search, resolve, owner synchronization and offline fallback. |
 | `android/core/src/main/java/ir/hamrahang/tv/data/live/LiveEntityMapper.kt` | Converts and merges Live DTOs and Room entities without replacing complete cached cards with partial responses. |
 | `android/core/src/main/java/ir/hamrahang/tv/data/local/entity/LiveEntity.kt` | Persists Live metadata, owner, sources and media type. |
-| `android/core/src/main/java/ir/hamrahang/tv/data/local/AppDatabase.kt` | Room schema version 38 and Live entity registration. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/local/AppDatabase.kt` | Room schema declaration and Live entity registration. |
 | `android/core/src/main/java/ir/hamrahang/tv/data/local/DatabaseProvider.kt` | Live schema migrations, including 37→38. |
 | `android/app-tv/src/main/java/ir/hamrahang/tv/ui/LiveFragment.kt` | Loads and groups Live cards, handles search and starts type-specific Live sessions. |
 | `android/app-tv/src/main/java/ir/hamrahang/tv/ui/LiveRowsAdapter.kt` | Renders owner/system headers and horizontal rows. |
@@ -783,7 +783,7 @@ The following implementation was re-opened on the `main` branch while this secti
 6. Selecting audio opens the internal audio playback flow; selecting video opens the main fullscreen player.
 7. The selected Live item is the current queue item, and queue contents do not mix audio and video.
 8. An incomplete latest/search card is resolved through the existing API contract where needed; a complete local card remains usable if resolution fails.
-9. Existing Room data survives migration to version 38.
+9. Existing Room data survives schema upgrades, including migration 37→38.
 10. D-pad focus, row navigation, back navigation and the existing shared player/minimize behavior work on the target TV.
 11. The app builds with the established project toolchain and is tested on an Android TV device/emulator.
 12. During Live playback, the seek bar remains visible, the duration label reads `LIVE`, the current ExoPlayer timeline/seek window is preserved, and seek requests are not blocked merely because the item is Live.
