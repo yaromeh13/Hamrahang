@@ -61,6 +61,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layoutDirection="ltr"
+        app:itemActiveIndicatorEnabled="false"
+        app:itemBackground="@android:color/transparent"
+        app:itemIconTint="@color/bottom_nav_icon_tint"
         app:labelVisibilityMode="unlabeled"
         app:menu="@menu/bottom_nav" />
 </LinearLayout>
