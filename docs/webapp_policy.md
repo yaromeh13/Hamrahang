@@ -251,7 +251,7 @@ click on card <a>
                       │    └─ CRLV(LPS[2], LPS[3], done)
                       │         ├─ numeric ID → openLiveDetail(id, done)
                       │         │    ├─ audio → CREP(id, 'live', done)
-                      │         │    └─ video → CRLVDetail(id, done)
+                      │         │    └─ video → CRVP(id, 'live')
                       │         └─ route key → CRLV routeMap (e.g. latest)
                       ├─ list URLs such as /song/top (See all on a section header)
                       │    └─ CRHP(section, query)
@@ -270,6 +270,8 @@ click on card <a>
 
 Live directory cards and Library Live-favorite cards are both built by `CRSC(ids, 'live', ...)`; `CRLVCards` is removed and must not be reintroduced as a parallel renderer.
 
+- A Live Video detail page is rendered by `CRVP(id, 'live')`, reusing the existing video-stage, inline playback and fullscreen-player behavior. `CRVP` resolves the record from `SN.live`/`EnsureItems` when called with `T === 'live'`; it must not send the Live ID through `resolveVideoItem`.
+
 - `CRSC` creates the Live artwork and title anchors with `href: liveRoute(item)`. Both anchors use the normal `ADE()` navigation handler described in section 7.1; Live cards do not have a separate card-navigation listener.
 - `HLV` is the canonical Live directory base path. Use `HLV` for the directory and `liveRoute(item)` for a channel URL; do not hand-build Live channel paths.
 - `liveRoute(item)` returns `HLV` if the item or its ID is missing. Otherwise it builds the channel path from the encoded ID and encoded slug, using `item.url`, then `item.slug`, then the ID as fallback.
@@ -286,7 +288,7 @@ click Live card artwork or title <a>
             └─ /live/{id}/{slug} → CRLV(LPS[2], LPS[3], done)
                  └─ openLiveDetail(id, done) resolves SN.live[id] if needed
                       ├─ audio → CREP(id, 'live', done)
-                      └─ video → CRLVDetail(id, done)
+                      └─ video → CRVP(id, 'live')
                            missing record → CRNF()
 ```
 
