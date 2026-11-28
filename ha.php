@@ -16429,7 +16429,24 @@ const PROFILE_KEY = 'ha_profile';
         setArtworkEl(MaxDeskArt, srcThumb);
     
         if (MinTx1) MinTx1.innerHTML = name;
-        if (MinTx2) MinTx2.innerHTML = artistName;
+
+        // Mini Player: Live subtitle shows the channel owner, not an artist.
+        let miniSubtitle = artistName;
+        const nowPlaying = ensurePlayer().nowPlaying;
+        if (nowPlaying && nowPlaying.type === 'live') {
+            const liveOwner = item.owner && typeof item.owner === 'object' ? item.owner : null;
+            let ownerName = liveOwner && liveOwner.name ? String(liveOwner.name).trim() : '';
+            const ownerId = liveOwner && liveOwner.id != null ? Number(liveOwner.id) : null;
+
+            if (!ownerName && ownerId != null && ownerId !== 0) {
+                const cachedOwner = getOwner(ownerId);
+                ownerName = cachedOwner && cachedOwner.name ? String(cachedOwner.name).trim() : '';
+            }
+
+            miniSubtitle = ownerId === 0 || /^hamrahang$/i.test(ownerName) ? '' : ownerName;
+        }
+
+        if (MinTx2) MinTx2.innerHTML = miniSubtitle;
         if (MaxTx1) MaxTx1.innerHTML = name;
         if (MaxTx2) {
             const small = MaxTx2.querySelector('small');
