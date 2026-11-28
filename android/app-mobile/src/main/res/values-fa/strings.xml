@@ -33,6 +33,8 @@
     <string name="live_creator">سازنده</string>
     <string name="live_audio">پخش زنده صوتی</string>
     <string name="live_video">پخش زنده تصویری</string>
+    <string name="live_tv">تلویزیون</string>
+    <string name="live_radio">رادیو</string>
     <string name="live_empty">در حال حاضر پخش زنده‌ای برای نمایش وجود ندارد.</string>
     <string name="live_load_failed">دریافت پخش‌های زنده ممکن نشد. اتصال اینترنت را بررسی و دوباره تلاش کنید.</string>
 </resources>
