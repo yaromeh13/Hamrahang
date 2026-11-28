@@ -6826,6 +6826,27 @@ if (!empty($_SESSION['loggedin'])) {
         MCNT.append(head);
     }
 
+    async function openLiveDetail(id, callback) {
+        LoadLiveCache();
+
+        try {
+            let item = SN.live && SN.live[id] ? SN.live[id] : null;
+            if (!item || !item.full) {
+                await EnsureItems('live', [id]);
+            }
+
+            item = SN.live && SN.live[id] ? SN.live[id] : null;
+            if (item && liveMediaType(item) === 'audio') {
+                await CREP(id, 'live', callback);
+                return;
+            }
+        } catch (err) {
+            console.warn('Live detail dispatch failed:', err && err.message ? err.message : err);
+        }
+
+        await CRLVDetail(id, callback);
+    }
+
     function CRLV(P, QS, callback) {
         const routeMap = {
             latest: {
@@ -6838,7 +6859,7 @@ if (!empty($_SESSION['loggedin'])) {
 
         const routeKey = P || 'latest';
         if (/^\d+$/.test(routeKey)) {
-            CRLVDetail(routeKey, callback);
+            openLiveDetail(routeKey, callback);
             return;
         }
 
@@ -7724,9 +7745,9 @@ if (!empty($_SESSION['loggedin'])) {
         
         dbs.addEventListener('click', () => {
             copyText(
-                    window.location.href,
-                    'Artist link copied to clipboard'
-                );
+                window.location.href,
+                isLive ? 'Live link copied to clipboard' : 'Artist link copied to clipboard'
+            );
         });
         
         const mor = OA(document.createElement('div'), { className: 'btn btn-model-1', innerHTML: svg_dot });
@@ -7793,19 +7814,39 @@ if (!empty($_SESSION['loggedin'])) {
     
     }
     
-    async function CREP(q,T) {
-        
+    async function CREP(q,T,callback) {
+        const isLive = T === 'live';
         let e = null;
         let url = HS;
-            
+
         if (T == 'song') {e = await USNG(['song', q]); url = HS; }
         if (T == 'album') {e = await ULBM(['album', q]); url = HL; }
         if (T == 'artist') {e = await UART(['artist', q]); url = HA; }
         if (T == 'podcast') {e = await USNG(['podcast', q]); url = HS; }
+        if (isLive) {
+            LoadLiveCache();
+            e = SN.live && SN.live[q] ? SN.live[q] : null;
+            if (!e || !e.full) {
+                await EnsureItems('live', [q]);
+                e = SN.live && SN.live[q] ? SN.live[q] : null;
+            }
+            url = HLV;
+        }
 
         if (!e) {
-            CRNF(T === 'album' ? 'Album not found' : 'Track not found');
+            CRNF(isLive ? 'Live channel not found' : (T === 'album' ? 'Album not found' : 'Track not found'));
+            if (callback) callback();
             return;
+        }
+
+        if (isLive) {
+            const path = (window.location.pathname || '').replace(/\/+$/, '');
+            const livePath = (HLV + q).replace(/\/+$/, '');
+            if (path !== livePath && path.indexOf(livePath + '/') !== 0) return;
+            if (liveMediaType(e) !== 'audio') {
+                await CRLVDetail(q, callback);
+                return;
+            }
         }
     
         //AudLst[0] = e;
@@ -7813,7 +7854,7 @@ if (!empty($_SESSION['loggedin'])) {
         // ---- هدر ----
         const dhc = OA(document.createElement('div'), { className: 'page-detail-header-container' });
         const dtn = OA(document.createElement('div'), { className: 'thumbail' });
-        const spn = OA(document.createElement('span'), { className: 'placeholder', innerHTML: svg_sng });
+        const spn = OA(document.createElement('span'), { className: 'placeholder', innerHTML: isLive ? (typeof svg_liv !== 'undefined' ? svg_liv : svg_sng) : svg_sng });
         dtn.append(spn);
     
         const thumb = e.meta?.tmb || null;
@@ -7828,9 +7869,11 @@ if (!empty($_SESSION['loggedin'])) {
         tlt.append(th1);
         
         // هنرمند
-        const art = OA(document.createElement('div'), { className: 'artists', innerHTML: 'By ' });
-        // بهتر است از لیست artists استفاده کنی نه e.artist
-        if (e.artists && e.artists.length > 0) {
+        const art = OA(document.createElement('div'), { className: 'artists', innerHTML: isLive ? '' : 'By ' });
+        if (isLive) {
+            const owner = e.owner && typeof e.owner === 'object' ? e.owner : null;
+            art.textContent = owner && owner.name ? 'Live by ' + owner.name : 'Live stream';
+        } else if (e.artists && e.artists.length > 0) {
             const firstArtistId = typeof e.artists[0] === 'object' ? e.artists[0].id : e.artists[0];
             const artist = SN.artist?.[firstArtistId];
             if (artist) {
@@ -7870,22 +7913,30 @@ if (!empty($_SESSION['loggedin'])) {
             dtc.innerHTML = parts.join(' &nbsp;&nbsp; ');
         }
 
-        const artl = CRAL(e.artists);
-        dtl.append(dtc,artl);
+        if (!isLive) {
+            const artl = CRAL(e.artists);
+            dtl.append(dtc, artl);
+        } else {
+            dtl.append(dtc);
+        }
         
         dct.append(tlt, art, dtl);
         
-        const dlc = OA(document.createElement('div'), { className: 'lyric' });
-        dlc.setAttribute('data-ha-lrc', '1');
-        dlc.style.setProperty('--ha-lyric-box-size', '20px');
-        dlc.classList.add('ha-lyric-skin');
-        
-        dhc.append(dtn, dct, dlc );
+        let dlc = null;
+        if (!isLive) {
+            dlc = OA(document.createElement('div'), { className: 'lyric' });
+            dlc.setAttribute('data-ha-lrc', '1');
+            dlc.style.setProperty('--ha-lyric-box-size', '20px');
+            dlc.classList.add('ha-lyric-skin');
+        }
+
+        dhc.append(dtn, dct);
+        if (dlc) dhc.append(dlc);
         applyPageBackdrop(e, dhc);
         MCNT.append(dhc);
-        // لیریک صفحه — فقط bind به آیتم صفحه؛ loadFromItem نزن (state پلیر خراب نشود)
+        // Lyrics belong to catalog audio items, not Live channels.
         try {
-            if (LyricsEngine.hasLyrics(e)) {
+            if (!isLive && LyricsEngine.hasLyrics(e)) {
                 LyricsEngine.mount(dlc, null, 'normal', e);
             }
         } catch (err) {}
@@ -7912,16 +7963,16 @@ if (!empty($_SESSION['loggedin'])) {
                 ev.preventDefault();
                 ev.stopPropagation();
         
-                const type =
-                    T === 'podcast' || (e.meta && e.meta.type === 'podcast')
-                        ? 'podcast'
-                        : 'song';
-        
+                const type = isLive
+                    ? 'live'
+                    : (T === 'podcast' || (e.meta && e.meta.type === 'podcast') ? 'podcast' : 'song');
+
                 const P = ensurePlayer();
                 const np = P.nowPlaying;
                 const same =
                     np &&
                     Number(np.id) === Number(e.id) &&
+                    np.type === type &&
                     np.player === 'audio';
         
                 if (same) {
@@ -7973,7 +8024,7 @@ if (!empty($_SESSION['loggedin'])) {
         dac.append(dbp, dbf, showDon ? dbd : '', dbs, mor);
         MCNT.append(dac);
         
-        if (e.lyrics){
+        if (!isLive && e.lyrics){
             const dpl = OA(document.createElement('div'), { className: 'page-lyric-box' });
             const shl2 = OA(document.createElement("div"), {
                 className: "section-header m-top-3",
@@ -7994,7 +8045,7 @@ if (!empty($_SESSION['loggedin'])) {
             MCNT.appendChild(dpl);
         }
         
-        if (e.songs) {
+        if (!isLive && e.songs) {
 
             const shd2 = OA(document.createElement("div"), {
                 className: "section-header m-top-3",
@@ -8009,7 +8060,7 @@ if (!empty($_SESSION['loggedin'])) {
         // song2video → ویدیو / موزیک‌ویدیو مرتبط (کروسل افقی)
         const relMv = Array.isArray(e.musicvideos) ? e.musicvideos : [];
         const relV = Array.isArray(e.videos) ? e.videos : [];
-        if (relMv.length || relV.length) {
+        if (!isLive && (relMv.length || relV.length)) {
             const shdV = OA(document.createElement('div'), {
                 className: 'section-header m-top-3',
                 innerHTML: '<h2 class="title">Videos</h2>'
@@ -8019,7 +8070,7 @@ if (!empty($_SESSION['loggedin'])) {
             if (relV.length) CRSC(relV, 'video');
         }
         
-        if (Array.isArray(e.artists) && e.artists.length) {
+        if (!isLive && Array.isArray(e.artists) && e.artists.length) {
             const grid = CRGC(e.artists, 'artist');
             if (grid) {
                 const dal = OA(document.createElement('div'), { className: 'page-artists-list' });
@@ -8035,7 +8086,7 @@ if (!empty($_SESSION['loggedin'])) {
         if (e.meta && (e.meta.des || e.meta.rls || e.meta.ncp != null || e.meta.dur != null)) {
             const sabt = OA(document.createElement("div"), {
                 className: "section-header m-top-3",
-                innerHTML: '<h2 class="title">About ' + T + '</h2>'
+                innerHTML: '<h2 class="title">About ' + (isLive ? 'Live' : T) + '</h2>'
             });
             const abt = CRAB(e.meta);
             MCNT.appendChild(sabt);
@@ -8043,6 +8094,7 @@ if (!empty($_SESSION['loggedin'])) {
         }
 
         ADE();
+        if (callback) callback();
     }
     
     function CRAB(m) {
