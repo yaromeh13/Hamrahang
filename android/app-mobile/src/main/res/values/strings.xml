@@ -33,6 +33,8 @@
     <string name="live_creator">Creator</string>
     <string name="live_audio">Live audio</string>
     <string name="live_video">Live video</string>
+    <string name="live_tv">TV</string>
+    <string name="live_radio">Radio</string>
     <string name="live_empty">No live streams are available right now.</string>
     <string name="live_load_failed">Could not load live streams. Check your connection and try again.</string>
 </resources>
