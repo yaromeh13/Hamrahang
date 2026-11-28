@@ -84,43 +84,43 @@
 
         <ImageButton
             android:id="@+id/landDevice"
-            style="@style/Widget.Hamrahang.LandNavButton"
+            style="@style/LandNavButton"
             android:contentDescription="@string/nav_device"
             android:src="@drawable/ic_nav_folder" />
 
         <ImageButton
             android:id="@+id/landSlot1"
-            style="@style/Widget.Hamrahang.LandNavButton"
+            style="@style/LandNavButton"
             android:contentDescription="@string/nav_home"
             android:src="@drawable/ic_nav_home" />
 
         <ImageButton
             android:id="@+id/landSlot2"
-            style="@style/Widget.Hamrahang.LandNavButton"
+            style="@style/LandNavButton"
             android:contentDescription="@string/nav_live"
             android:src="@drawable/ic_nav_live" />
 
         <ImageButton
             android:id="@+id/landSlot3"
-            style="@style/Widget.Hamrahang.LandNavButton"
+            style="@style/LandNavButton"
             android:contentDescription="@string/nav_search"
             android:src="@drawable/ic_nav_search" />
 
         <ImageButton
             android:id="@+id/landSlot4"
-            style="@style/Widget.Hamrahang.LandNavButton"
+            style="@style/LandNavButton"
             android:contentDescription="@string/nav_library"
             android:src="@drawable/ic_nav_library" />
 
         <ImageButton
             android:id="@+id/landSlot5"
-            style="@style/Widget.Hamrahang.LandNavButton"
+            style="@style/LandNavButton"
             android:contentDescription="@string/nav_settings"
             android:src="@drawable/ic_nav_settings" />
 
         <ImageButton
             android:id="@+id/landMenu"
-            style="@style/Widget.Hamrahang.LandNavButton"
+            style="@style/LandNavButton"
             android:contentDescription="@string/nav_player"
             android:src="@drawable/ic_nav_menu" />
     </LinearLayout>
