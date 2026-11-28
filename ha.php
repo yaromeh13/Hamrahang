@@ -6826,6 +6826,12 @@ if (!empty($_SESSION['loggedin'])) {
         MCNT.append(head);
     }
 
+    function isCurrentLiveRoute(id) {
+        const path = (window.location.pathname || '').replace(/\/+$/, '');
+        const livePath = (HLV + encodeURIComponent(String(id))).replace(/\/+$/, '');
+        return path === livePath || path.indexOf(livePath + '/') === 0;
+    }
+
     async function openLiveDetail(id, callback) {
         LoadLiveCache();
 
@@ -6835,8 +6841,14 @@ if (!empty($_SESSION['loggedin'])) {
                 await EnsureItems('live', [id]);
             }
 
+            // درخواست resolve ممکن است بعد از رفتن کاربر به صفحه‌ای دیگر تمام شود.
+            if (!isCurrentLiveRoute(id)) {
+                if (callback) callback();
+                return;
+            }
+
             item = SN.live && SN.live[id] ? SN.live[id] : null;
-            if (!item) {
+            if (!item || !item.full) {
                 CRNF('Live channel not found');
                 if (callback) callback();
                 return;
@@ -6850,6 +6862,10 @@ if (!empty($_SESSION['loggedin'])) {
 
             await CREP(id, 'live', callback);
         } catch (err) {
+            if (!isCurrentLiveRoute(id)) {
+                if (callback) callback();
+                return;
+            }
             console.warn('Live detail dispatch failed:', err && err.message ? err.message : err);
             CRNF('Unable to load Live channel');
             if (callback) callback();
@@ -6975,14 +6991,10 @@ if (!empty($_SESSION['loggedin'])) {
         if (isLive) {
             LoadLiveCache();
             e = SN.live && SN.live[q] ? SN.live[q] : null;
-            if (!e || !e.full) {
-                await EnsureItems('live', [q]);
-                e = SN.live && SN.live[q] ? SN.live[q] : null;
-            }
             url = HLV;
         }
 
-        if (!e) {
+        if (!e || (isLive && !e.full)) {
             CRNF(isLive ? 'Live channel not found' : (T === 'album' ? 'Album not found' : 'Track not found'));
             if (callback) callback();
             return;
@@ -6990,17 +7002,6 @@ if (!empty($_SESSION['loggedin'])) {
 
         if (isLive) {
             document.title = (e.name || 'Live') + ' | Hamrahang';
-            const path = (window.location.pathname || '').replace(/\/+$/, '');
-            const livePath = (HLV + q).replace(/\/+$/, '');
-            if (path !== livePath && path.indexOf(livePath + '/') !== 0) {
-                if (callback) callback();
-                return;
-            }
-            if (liveMediaType(e) !== 'audio') {
-                await CRVP(q, 'live');
-                if (callback) callback();
-                return;
-            }
         }
     
         //AudLst[0] = e;
@@ -7459,10 +7460,13 @@ if (!empty($_SESSION['loggedin'])) {
                 await EnsureItems('live', [q]);
                 e = SN.live && SN.live[q] ? SN.live[q] : null;
             }
+
+            // CRVP نیز باید پاسخ دیررس را برای مسیر قبلی نادیده بگیرد.
+            if (!isCurrentLiveRoute(q)) return;
         } else {
             e = await resolveVideoItem(q);
         }
-        if (!e) {
+        if (!e || (isLive && !e.full)) {
             CRNF(isLive ? 'Live channel not found' : 'Video not found');
             return;
         }
