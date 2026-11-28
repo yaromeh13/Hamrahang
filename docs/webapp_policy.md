@@ -259,7 +259,29 @@ click on card <a>
 
 `CRHP` sends a numeric id to the detail renderer above. A word such as `top` or `latest` stays a list and does not open a detail page.
 
-### 7.2 Play from the card
+### 7.2 Live cards
+
+Live directory cards and Library Live-favorite cards are both built by `CRSC(ids, 'live', ...)`; `CRLVCards` is removed and must not be reintroduced as a parallel renderer.
+
+- `CRSC` creates the Live artwork and title anchors with `href: liveRoute(item)`. Both anchors use the normal `ADE()` navigation handler described in section 7.1; Live cards do not have a separate card-navigation listener.
+- `HLV` is the canonical Live directory base path. Use `HLV` for the directory and `liveRoute(item)` for a channel URL; do not hand-build Live channel paths.
+- `liveRoute(item)` returns `HLV` if the item or its ID is missing. Otherwise it builds the channel path from the encoded ID and encoded slug, using `item.url`, then `item.slug`, then the ID as fallback.
+- The Live placeholder icon stays underneath the artwork when no thumbnail is available.
+- Video Live cards use the `16:9` aspect ratio and prefer `meta.tmv`, then `meta.tmb`. Audio Live cards use the square `1:1` ratio and `meta.tmb`.
+- The Live directory and Library favorites share this card renderer. Library favorites are split into TV Live (`16:9`) and Radio Live (`1:1`) rows; the `See All` destination remains `/library/favorite/live`.
+
+**Artwork/title navigation:**
+
+```text
+click Live card artwork or title <a>
+  └─ ADE() click listener
+       └─ preventDefault() → chp(liveRoute(item))
+            └─ /live/{id}/{slug} → CRLVDetail(id)
+                 └─ use SN.live[id] if full; otherwise resolve, then draw
+                      missing record → CRNF()
+```
+
+### 7.3 Play from the card
 
 **Hit area:** the play control on `CRSC`, `CRGC`, and `CRGL`. The handler calls `stopPropagation()`, so `ADE()` does not also open the page. Artist cards do not render this control.
 
@@ -282,6 +304,8 @@ click .play
                                 └─ PlayMediaSourceAt(picked index)
 ```
 
+For Live cards, `CRSC` calls `setPlayQueue(ar, item.id, 'live')`. The queue list is the current Live row's IDs, and the selected channel becomes the starting item. The normal queue loading and player flow is used; Live does not have a separate playback pipeline.
+
 **Result:** that item starts, or pauses if it was already the current row. The page does not change. The queue is the list that built the card (`ar`), starting at the clicked id.
 
 **Collection cards:** album, playlist.
@@ -298,7 +322,7 @@ click .play
 
 **Result:** the page stays. The queue becomes the album or playlist tracks and playback starts at the first child. An empty collection returns without changing the queue.
 
-### 7.3 More menu on the card
+### 7.4 More menu on the card
 
 **Cards:** every non-artist card from `CRSC`, `CRGC`, and `CRGL` (the dot control), including Live cards.
 
@@ -316,42 +340,17 @@ click .menu / .more
                       └─ renderDownloadSources()
 ```
 
-**Result:** the sheet opens on top of the current page. Only "Go to …" changes the route, and it reuses section 7.1. Download does not navigate and does not change the queue.
+For Live cards, the standard `CRBW(item.id, 'live')` sheet is rendered by `renderItemSheetMenu()`. Its Live-relevant actions are:
 
-### 7.4 Live cards
+- **Like / Unlike:** toggles the Live favorite state.
+- **Add to Queue:** adds the selected Live channel to the current queue.
+- **Go to Live:** closes the sheet and calls `chp(liveRoute(item))`. It must use `liveRoute(item)`, not a separately assembled URL.
+- **Share / Report:** the standard sheet actions, where available.
 
-Live directory cards and Library Live-favorite cards are both built by `CRSC(ids, 'live', ...)`; the removed `CRLVCards` function must not be reintroduced as a parallel renderer. `CRSC` creates the artwork and title anchors with `href: liveRoute(item)`. The normal `ADE()` handler intercepts those anchors, calls `preventDefault()`, and routes through `chp(href)`—there is no separate Live-card click listener.
+The Live menu deliberately does not offer **Add to Playlist**. This is a Live-specific exception; do not add that action unless the runtime behavior is intentionally changed.
 
-Each Live card has the shared `.play` and `.menu` controls:
-
-```text
-click Live card artwork or title <a>
-  └─ ADE() click listener
-       └─ preventDefault() → chp(liveRoute(item))
-            └─ /live/{id}/{slug} → CRLVDetail(id)
-                 └─ use SN.live[id] if full; otherwise resolve, then draw
-                      missing record → CRNF()
-
-click Live card .play
-  └─ preventDefault() + stopPropagation()
-       └─ setPlayQueue(rowIds, item.id, 'live')
-            └─ normal queue loading / player flow
-
-click Live card .menu
-  └─ CRBW(item.id, 'live')
-       └─ renderItemSheetMenu(...)
-            ├─ Like / Unlike
-            ├─ Add to Queue
-            ├─ Go to Live → chp(liveRoute(item))
-            └─ Share / Report (where available)
-```
-
-Live is queueable and can be added to the queue, but the Live menu deliberately does not offer **Add to Playlist**. The `Go to Live` action uses `liveRoute(item)`, not a separately assembled URL.
-
-**Result:** artwork/title opens the channel detail page; `.play` starts the selected Live item using the current row's IDs as the queue; `.menu` opens the standard item sheet. Stream URLs are runtime data and are not read from `ha_live_cache_v1`; cached records still need resolving before full playback data is used.
-
----
-
+**Result:** the sheet opens on top of the current page. Only a Go to action changes the route, and it reuses section 7.1. Download does not navigate and does not change the queue.
+ 
 ## 8. Change checklist
 
 1. Name the page, helper, or API action.
