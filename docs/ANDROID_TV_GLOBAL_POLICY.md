@@ -218,19 +218,19 @@ This subsection records the implementation that exists in the source snapshot in
 
 | Area | Current implementation and exact path | Status against the required scenario |
 |---|---|---|
-| Startup Ping endpoint | `android-tv/app/src/main/java/ir/hamrahang/tv/network/ApiService.kt` declares `GET app/ping`. `ApiClient.kt` uses the base URL `https://hamrahang.ir/`. | Matches the approved API host and endpoint. |
-| Startup Ping deadline | `android-tv/app/src/main/java/ir/hamrahang/tv/network/ApiClient.kt` creates `pingClient` with `callTimeout(15, SECONDS)` and `retryOnConnectionFailure(false)`. `SplashActivity.kt` injects `ApiClient.pingApi` into `AppRepository`; `SplashViewModel.kt` calls `repo.ping()`. | The total call deadline is now configured to 15 seconds, rather than relying only on connect/read/write timeouts. Manual Retry creates a new attempt. Build/runtime verification is still pending. |
+| Startup Ping endpoint | `android/core/src/main/java/ir/hamrahang/tv/network/ApiService.kt` declares `GET app/ping`. `ApiClient.kt` uses the base URL `https://hamrahang.ir/`. | Matches the approved API host and endpoint. |
+| Startup Ping deadline | `android/core/src/main/java/ir/hamrahang/tv/network/ApiClient.kt` creates `pingClient` with `callTimeout(15, SECONDS)` and `retryOnConnectionFailure(false)`. `SplashActivity.kt` injects `ApiClient.pingApi` into `AppRepository`; `SplashViewModel.kt` calls `repo.ping()`. | The total call deadline is now configured to 15 seconds, rather than relying only on connect/read/write timeouts. Manual Retry creates a new attempt. Build/runtime verification is still pending. |
 | Startup decision | `SplashActivity.kt` observes `SplashViewModel.state`. `SplashViewModel.kt` moves to Error on unsuccessful HTTP response or exception; Retry calls `viewModel.retry()`; Offline sets `AppState.offlineMode = true` and opens MainActivity. | Manual Retry and Offline choices exist. No automatic retry loop is present in this state flow. |
 | Successful startup | In `SplashActivity.kt`, Success clears `AppState.offlineMode` and opens MainActivity. | Prevents a previous Offline selection from leaking into a later successful startup. |
-| Device network observation | `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkMonitor.kt` registers Android connectivity callbacks and checks `NET_CAPABILITY_INTERNET`. `App.kt` initializes NetworkMonitor. | This observes device network capability only; it does not establish API health. |
-| Network permission | `android-tv/app/src/main/AndroidManifest.xml` declares both `INTERNET` and `ACCESS_NETWORK_STATE`. | The required connectivity-state permission is now declared. |
+| Device network observation | `android/core/src/main/java/ir/hamrahang/tv/network/NetworkMonitor.kt` registers Android connectivity callbacks and checks `NET_CAPABILITY_INTERNET`. `App.kt` initializes NetworkMonitor. | This observes device network capability only; it does not establish API health. |
+| Network permission | `android/app-tv/src/main/AndroidManifest.xml` declares both `INTERNET` and `ACCESS_NETWORK_STATE`. | The required connectivity-state permission is now declared. |
 | Runtime request timeout | `NetworkInterceptor.kt` emits `NetworkEvents.Event.Timeout` for a `SocketTimeoutException`. `MainActivity.kt` currently handles this event as `Unit`. | A single request timeout no longer opens a blocking overlay or reloads the screen through this MainActivity event handler. The interceptor still emits the event; other collectors/call sites must be checked before removing the event type. |
 | Runtime network loss | `MainActivity.kt` handles `InternetLost` by setting `apiReachable = false` and showing a non-blocking message through `MessageManager.warning`. | The current screen is not replaced by this handler. Local data/playback continuity still requires end-to-end testing. |
 | Device network recovery | `MainActivity.kt` handles `InternetAvailable` by showing a connected message and calling `HomeChannelPublisher.publish()`. If `apiReachable` is false and no recovery job is active, it launches a health check using `ApiClient.pingApi.ping()`. | Device connectivity and API health are now treated as separate checks. The connected message means device network available, not that the API is healthy. |
 | API health result | In `MainActivity.kt`, recovery proceeds only when the Ping response is successful and its body has `status == "ok"`. A failed check logs a warning and returns without showing the startup Retry UI. | No blocking UI or reload is performed on failed runtime health validation. A later device-network-available event can start another check; there is no periodic Ping loop. |
 | Recovery work currently performed | After a successful reconnect Ping, `MainActivity.kt` calls `AuthSessionManager.refreshSession()` and `PlaylistRepository.refreshAndSync()`. | Session and Playlist are the only explicit recovery tasks in this flow. This is not yet a complete background sync for every content repository. |
 | Current-screen update | After Playlist sync succeeds, `MainActivity.kt` calls `HomeFragment.refreshPlaylists()` only if the fragment in `R.id.contentContainer` is a `HomeFragment`. | This is a Home/Playlist-specific refresh, not a general refresh contract for whichever screen is visible. Other screens are not yet refreshed by this recovery path. |
-| Image/media cache completion | `android-tv/app/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt` resolves artwork and uses asynchronous Glide loading. | No independent reconnect-triggered queue or retry pass for missing image/media cache entries has been implemented in the inspected flow. |
+| Image/media cache completion | `android/core/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt` resolves artwork and uses asynchronous Glide loading. | No independent reconnect-triggered queue or retry pass for missing image/media cache entries has been implemented in the inspected flow. |
 | Player continuity | `PlayerManager.kt` owns the reusable ExoPlayer; `PlayerState.kt` stores shared player UI state. The current reconnect handler does not call PlayerManager to stop or prepare media. | General recovery does not explicitly manipulate the player, but preservation of active playback during real network loss/recovery has not yet been verified on a device. Stream-source recovery is not implemented by this reconnect flow. |
 | Database/cache preservation | `AppDatabase.kt` declares Room version 35. `DatabaseProvider.kt` registers migrations through 33→34 and uses `fallbackToDestructiveMigration()`; the inspected provider did not show a 34→35 migration. | Do not claim that local data is guaranteed across every database upgrade. Verify the current schema/migration history and add the correct migration before relying on destructive fallback behavior. |
 
@@ -392,13 +392,13 @@ This section defines the visual treatment for content cards when the entity has 
 
 | Resource | Responsibility / current rule |
 |---|---|
-| `android-tv/app/src/main/res/drawable/card_bg.xml` | Transparent outer focus frame for rectangular cards. Only the selected state draws the 3dp red border; it does not paint a dark fill. |
-| `android-tv/app/src/main/res/drawable/card_thumbnail_surface.xml` | Rounded `#222222` surface behind the square/landscape image viewport. |
-| `android-tv/app/src/main/res/drawable/art_focus_border.xml` | Transparent outer circular artist focus frame; selected state draws the 3dp red border. |
-| `android-tv/app/src/main/res/drawable/artist_thumbnail_surface.xml` | Circular `#222222` surface behind the artist image viewport. |
-| `android-tv/app/src/main/res/layout/item_content.xml` | Shared square card layout. `coverFrame` owns the outer focus border; `itemCover` is inset 6dp and owns the dark image surface. |
-| `android-tv/app/src/main/res/layout/item_musicvideo.xml` | Shared landscape Video/MusicVideo layout. `coverFrame` owns the outer focus border; `cover` is inset 6dp and owns the dark image surface. |
-| `android-tv/app/src/main/res/layout/item_artist.xml` | Artist image layout. `artistContainer` owns the outer circular focus border; `artistImage` is inset 4dp and owns the circular dark surface. |
+| `android/app-tv/src/main/res/drawable/card_bg.xml` | Transparent outer focus frame for rectangular cards. Only the selected state draws the 3dp red border; it does not paint a dark fill. |
+| `android/app-tv/src/main/res/drawable/card_thumbnail_surface.xml` | Rounded `#222222` surface behind the square/landscape image viewport. |
+| `android/app-tv/src/main/res/drawable/art_focus_border.xml` | Transparent outer circular artist focus frame; selected state draws the 3dp red border. |
+| `android/app-tv/src/main/res/drawable/artist_thumbnail_surface.xml` | Circular `#222222` surface behind the artist image viewport. |
+| `android/app-tv/src/main/res/layout/item_content.xml` | Shared square card layout. `coverFrame` owns the outer focus border; `itemCover` is inset 6dp and owns the dark image surface. |
+| `android/app-tv/src/main/res/layout/item_musicvideo.xml` | Shared landscape Video/MusicVideo layout. `coverFrame` owns the outer focus border; `cover` is inset 6dp and owns the dark image surface. |
+| `android/app-tv/src/main/res/layout/item_artist.xml` | Artist image layout. `artistContainer` owns the outer circular focus border; `artistImage` is inset 4dp and owns the circular dark surface. |
 
 ### Adapter focus ownership
 
@@ -517,7 +517,7 @@ Media upload / ingestion
 
 - `h_api.php`: `MediaRoleToAct()`, `MediaPlanBKey()`, `IngestThumbFromSource()`, `OwnerCard()`, and the `SONG_CARD()`, `ARTIST_CARD()`, `ALBUM_CARD()`, and `VIDEO_CARD()` builders.
 - `index.html`: web image-key resolution and owner image fallback behavior.
-- `android-tv/app/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt`: Android image URL construction and artwork resolution.
+- `android/core/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt`: Android image URL construction and artwork resolution.
 
 ## 2.6 Web reference
 
@@ -566,57 +566,57 @@ Paths below are repository-relative and were checked against the current `main` 
 
 | File | Responsibility |
 |---|---|
-| `android-tv/app/src/main/java/ir/hamrahang/tv/SplashActivity.kt` | Splash animation, observing startup state, startup Retry/Offline UI, transition to MainActivity. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/SplashViewModel.kt` | Startup Ping state machine and manual retry. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/AppRepository.kt` | Startup repository wrapper for Ping. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/ApiService.kt` | Retrofit API routes, including `GET app/ping`. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/ApiClient.kt` | Main API client plus a dedicated Ping client with a 15-second total call timeout and no connection retry. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/PingResponse.kt` | Startup Ping response model. |
-| `android-tv/app/src/main/AndroidManifest.xml` | Declared Android permissions and activities; check network permissions here. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/SplashActivity.kt` | Splash animation, observing startup state, startup Retry/Offline UI, transition to MainActivity. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/SplashViewModel.kt` | Startup Ping state machine and manual retry. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/AppRepository.kt` | Startup repository wrapper for Ping. |
+| `android/core/src/main/java/ir/hamrahang/tv/network/ApiService.kt` | Retrofit API routes, including `GET app/ping`. |
+| `android/core/src/main/java/ir/hamrahang/tv/network/ApiClient.kt` | Main API client plus a dedicated Ping client with a 15-second total call timeout and no connection retry. |
+| `android/core/src/main/java/ir/hamrahang/tv/network/PingResponse.kt` | Startup Ping response model. |
+| `android/app-tv/src/main/AndroidManifest.xml` | Declared Android permissions and activities; check network permissions here. |
 
 ## 3.2 Runtime network and recovery
 
 | File | Responsibility |
 |---|---|
-| `android-tv/app/src/main/java/ir/hamrahang/tv/App.kt` | Application initialization; initializes DatabaseProvider, NetworkMonitor and other app-wide components. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkMonitor.kt` | Observes Android device network callbacks. Must remain a connectivity observer, not an API-health checker. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkEvents.kt` | Shared network event stream (timeout, available, lost). |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkInterceptor.kt` | Converts request socket timeouts into network events. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/NetworkOverlay.kt` | Existing network overlay wrapper; its Kotlin package is `ir.hamrahang.tv.ui.network`. MainActivity's current Timeout handler does not invoke it; inspect all other call sites before removal. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/network/ReloadManager.kt` | Callback holder for reload actions; it is not invoked by the current MainActivity Timeout handler. Inspect all registration/call sites before removal. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/MainActivity.kt` | Ignores individual timeout events for UI purposes; handles device network loss/availability, validates API health on reconnect, then refreshes session and Playlist; applies Playlist changes only to HomeFragment. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/App.kt` | Application initialization; initializes DatabaseProvider, NetworkMonitor and other app-wide components. |
+| `android/core/src/main/java/ir/hamrahang/tv/network/NetworkMonitor.kt` | Observes Android device network callbacks. Must remain a connectivity observer, not an API-health checker. |
+| `android/core/src/main/java/ir/hamrahang/tv/network/NetworkEvents.kt` | Shared network event stream (timeout, available, lost). |
+| `android/core/src/main/java/ir/hamrahang/tv/network/NetworkInterceptor.kt` | Converts request socket timeouts into network events. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/network/NetworkOverlay.kt` | Existing network overlay wrapper; its Kotlin package is `ir.hamrahang.tv.ui.network`. MainActivity's current Timeout handler does not invoke it; inspect all other call sites before removal. |
+| `android/core/src/main/java/ir/hamrahang/tv/network/ReloadManager.kt` | Callback holder for reload actions; it is not invoked by the current MainActivity Timeout handler. Inspect all registration/call sites before removal. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/MainActivity.kt` | Ignores individual timeout events for UI purposes; handles device network loss/availability, validates API health on reconnect, then refreshes session and Playlist; applies Playlist changes only to HomeFragment. |
 
 ## 3.3 Data, local cache and synchronization
 
 | File / area | Responsibility |
 |---|---|
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/AppDatabase.kt` | Room database schema and current database version (38 in the inspected source). |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/DatabaseProvider.kt` | Room construction and registered schema migrations, including Live media-type migration 37→38. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/DatabaseUpdater.kt` | Maps/merges received DTO data into local Room entities. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/auth/AuthSessionManager.kt` | Account/session restoration used by MainActivity during startup/recovery. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/playlist/PlaylistRepository.kt` | Playlist refresh and synchronization used by the current reconnect flow. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/` | Content DTOs, repositories, Room entities and DAOs; inspect the specific repository before changing a content type's offline behavior. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/` | Live DTO/domain models, repository, Room mapper and latest/search/resolve data flow. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/local/AppDatabase.kt` | Room database schema and current database version (38 in the inspected source). |
+| `android/core/src/main/java/ir/hamrahang/tv/data/local/DatabaseProvider.kt` | Room construction and registered schema migrations, including Live media-type migration 37→38. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/local/DatabaseUpdater.kt` | Maps/merges received DTO data into local Room entities. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/auth/AuthSessionManager.kt` | Account/session restoration used by MainActivity during startup/recovery. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/playlist/PlaylistRepository.kt` | Playlist refresh and synchronization used by the current reconnect flow. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/data/` | Content DTOs, repositories, Room entities and DAOs; inspect the specific repository before changing a content type's offline behavior. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/data/live/` | Live DTO/domain models, repository, Room mapper and latest/search/resolve data flow. |
 
 ## 3.4 Images and playback
 
 | File | Responsibility |
 |---|---|
-| `android-tv/app/src/main/res/drawable/card_bg.xml` | Transparent outer rectangular focus frame; red border only when selected. |
-| `android-tv/app/src/main/res/drawable/art_focus_border.xml` | Transparent outer circular artist focus frame; red border only when selected. |
-| `android-tv/app/src/main/res/layout/item_content.xml` | Shared square content card image area and centered fallback display. |
-| `android-tv/app/src/main/res/layout/item_musicvideo.xml` | Shared landscape Video/MusicVideo image area and centered fallback display. |
-| `android-tv/app/src/main/res/layout/item_live_video.xml` | Landscape 16:9 card layout used by Live video items. |
-| `android-tv/app/src/main/res/layout/item_artist.xml` | Circular artist image card layout. |
-| `android-tv/app/src/main/res/drawable/card_thumbnail_surface.xml` | Dark rounded background directly behind square/landscape thumbnail content. |
-| `android-tv/app/src/main/res/drawable/artist_thumbnail_surface.xml` | Dark circular background directly behind artist artwork/fallback. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt` | Artwork-key priority, thumbnail URL construction, Hero/owner resolution, shared Glide request helper. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveFragment.kt` | Live page loading/search, owner and media-type grouping, and Audio/Video playback entry points. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveRowsAdapter.kt` | Owner/system section headers and horizontal Live card rows. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveAdapter.kt` | Live card binding, thumbnail fallback, D-pad focus and square/landscape layout selection. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | ExoPlayer ownership, current media/source, playback position and player controls. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerState.kt` | Shared player UI/playback state (verify exact path before editing if the source is moved). |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/channel/HomeChannelPublisher.kt` | Publishes Android TV Home Channel content; currently called during app initialization and reconnect. |
+| `android/app-tv/src/main/res/drawable/card_bg.xml` | Transparent outer rectangular focus frame; red border only when selected. |
+| `android/app-tv/src/main/res/drawable/art_focus_border.xml` | Transparent outer circular artist focus frame; red border only when selected. |
+| `android/app-tv/src/main/res/layout/item_content.xml` | Shared square content card image area and centered fallback display. |
+| `android/app-tv/src/main/res/layout/item_musicvideo.xml` | Shared landscape Video/MusicVideo image area and centered fallback display. |
+| `android/app-tv/src/main/res/layout/item_live_video.xml` | Landscape 16:9 card layout used by Live video items. |
+| `android/app-tv/src/main/res/layout/item_artist.xml` | Circular artist image card layout. |
+| `android/app-tv/src/main/res/drawable/card_thumbnail_surface.xml` | Dark rounded background directly behind square/landscape thumbnail content. |
+| `android/app-tv/src/main/res/drawable/artist_thumbnail_surface.xml` | Dark circular background directly behind artist artwork/fallback. |
+| `android/core/src/main/java/ir/hamrahang/tv/util/ImageResolver.kt` | Artwork-key priority, thumbnail URL construction, Hero/owner resolution, shared Glide request helper. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/ui/LiveFragment.kt` | Live page loading/search, owner and media-type grouping, and Audio/Video playback entry points. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/ui/LiveRowsAdapter.kt` | Owner/system section headers and horizontal Live card rows. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/ui/LiveAdapter.kt` | Live card binding, thumbnail fallback, D-pad focus and square/landscape layout selection. |
+| `android/core/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | ExoPlayer ownership, current media/source, playback position and player controls. |
+| `android/core/src/main/java/ir/hamrahang/tv/player/PlayerState.kt` | Shared player UI/playback state (verify exact path before editing if the source is moved). |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/channel/HomeChannelPublisher.kt` | Publishes Android TV Home Channel content; currently called during app initialization and reconnect. |
 
 ## 3.5 Web reference
 
@@ -715,21 +715,21 @@ The following implementation was re-opened on the `main` branch while this secti
 
 | File | Responsibility |
 |---|---|
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/LiveDto.kt` | Deserializes Live API cards, including top-level `media_type`. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/LiveItem.kt` | Live domain model, audio/video classification and thumbnail priority. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/LiveRepository.kt` | Latest list, search, resolve, owner synchronization and offline fallback. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/live/LiveEntityMapper.kt` | Converts and merges Live DTOs and Room entities without replacing complete cached cards with partial responses. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/entity/LiveEntity.kt` | Persists Live metadata, owner, sources and media type. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/AppDatabase.kt` | Room schema version 38 and Live entity registration. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/data/local/DatabaseProvider.kt` | Live schema migrations, including 37→38. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveFragment.kt` | Loads and groups Live cards, handles search and starts type-specific Live sessions. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveRowsAdapter.kt` | Renders owner/system headers and horizontal rows. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/LiveAdapter.kt` | Renders Live cards, selects the card layout and handles D-pad focus/clicks. |
-| `android-tv/app/src/main/res/layout/item_live_video.xml` | Landscape Live Video card layout. |
-| `android-tv/app/src/main/res/layout/item_content.xml` | Square Live Audio card layout. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/playback/PlaybackManager.kt` | Shared playback manager; selects the media type for Live playback. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | Shared ExoPlayer ownership and player controls. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerFragment.kt` | Main fullscreen player UI, including the Live duration label and seek-bar presentation. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/live/LiveDto.kt` | Deserializes Live API cards, including top-level `media_type`. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/live/LiveItem.kt` | Live domain model, audio/video classification and thumbnail priority. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/live/LiveRepository.kt` | Latest list, search, resolve, owner synchronization and offline fallback. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/live/LiveEntityMapper.kt` | Converts and merges Live DTOs and Room entities without replacing complete cached cards with partial responses. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/local/entity/LiveEntity.kt` | Persists Live metadata, owner, sources and media type. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/local/AppDatabase.kt` | Room schema version 38 and Live entity registration. |
+| `android/core/src/main/java/ir/hamrahang/tv/data/local/DatabaseProvider.kt` | Live schema migrations, including 37→38. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/ui/LiveFragment.kt` | Loads and groups Live cards, handles search and starts type-specific Live sessions. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/ui/LiveRowsAdapter.kt` | Renders owner/system headers and horizontal rows. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/ui/LiveAdapter.kt` | Renders Live cards, selects the card layout and handles D-pad focus/clicks. |
+| `android/app-tv/src/main/res/layout/item_live_video.xml` | Landscape Live Video card layout. |
+| `android/app-tv/src/main/res/layout/item_content.xml` | Square Live Audio card layout. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/playback/PlaybackManager.kt` | Shared playback manager; selects the media type for Live playback. |
+| `android/core/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | Shared ExoPlayer ownership and player controls. |
+| `android/app-tv/src/main/java/ir/hamrahang/tv/player/PlayerFragment.kt` | Main fullscreen player UI, including the Live duration label and seek-bar presentation. |
 
 ## 4.5 State preservation and regression risks
 
