@@ -6828,6 +6828,7 @@ if (!empty($_SESSION['loggedin'])) {
 
     async function openLiveDetail(id, callback) {
         LoadLiveCache();
+        let loadFailed = false;
 
         try {
             let item = SN.live && SN.live[id] ? SN.live[id] : null;
@@ -6846,10 +6847,12 @@ if (!empty($_SESSION['loggedin'])) {
                 return;
             }
         } catch (err) {
+            loadFailed = true;
             console.warn('Live detail dispatch failed:', err && err.message ? err.message : err);
         }
 
-        await CRLVDetail(id, callback);
+        CRNF(loadFailed ? 'Unable to load Live channel' : 'Live channel not found');
+        if (callback) callback();
     }
 
     function CRLV(P, QS, callback) {
@@ -6957,207 +6960,6 @@ if (!empty($_SESSION['loggedin'])) {
             console.warn('Live initial load failed:', err && err.message ? err.message : err);
             if (callback) callback();
         });
-    }
-
-    async function CRLVDetail(id, callback) {
-        LoadLiveCache();
-        const cached = SN.live && SN.live[id] ? SN.live[id] : null;
-        let callbackDone = false;
-
-        const isCurrentRoute = () => {
-            let path = window.location.pathname || '';
-            while (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
-            const livePath = HLV + id;
-			return path === livePath.replace(/\/+$/, '') || path.indexOf(livePath) === 0;
-        };
-
-        function finish() {
-            if (callbackDone) return;
-            callbackDone = true;
-            if (callback) callback();
-        }
-
-        function draw() {
-            if (!isCurrentRoute()) return;
-            const item = SN.live && SN.live[id] ? SN.live[id] : null;
-            if (!item) {
-                CRNF('Live channel not found.');
-                finish();
-                return;
-            }
-
-            const isVideo = liveMediaType(item) === 'video';
-            const owner = item.owner && typeof item.owner === 'object' ? item.owner : null;
-            const thumb = item.meta
-                ? (isVideo ? (item.meta.tmv || item.meta.tmb) : item.meta.tmb)
-                : null;
-
-            MCNT.innerHTML = '';
-            document.title = (item.name || 'Live') + ' | Hamrahang';
-
-            const header = OA(document.createElement('div'), {
-                className: 'page-detail-header-container' + (isVideo ? ' video-page-header' : '')
-            });
-
-            let stage = null;
-            let thumbWrap = null;
-            let videoSlot = null;
-            let inlineBar = null;
-
-            if (isVideo) {
-                stage = OA(document.createElement('div'), { className: 'video-stage ratio ratio-16x9' });
-                thumbWrap = OA(document.createElement('div'), { className: 'video-stage-thumb' });
-                if (thumb) {
-                    thumbWrap.append(OA(document.createElement('img'), {
-                        className: 'video-poster',
-                        src: UT + thumb + '.jpg',
-                        alt: item.name || 'Live'
-                    }));
-                }
-                videoSlot = OA(document.createElement('div'), { className: 'video-stage-slot' });
-                inlineBar = OA(document.createElement('div'), { className: 'video-inline-controls vis-none' });
-
-                // Live controls intentionally omit elapsed time and seek until their behavior is specified.
-                const row = OA(document.createElement('div'), { className: 'video-inline-row' });
-                const inlineActions = OA(document.createElement('div'), { className: 'video-inline-actions' });
-                const fsBtn = OA(document.createElement('div'), {
-                    className: 'video-inline-fs',
-                    title: 'Fullscreen',
-                    innerHTML: svg_fsc
-                });
-                fsBtn.addEventListener('click', openPlayerShell);
-                inlineActions.append(fsBtn);
-                row.append(inlineActions);
-                inlineBar.append(row);
-                stage.append(thumbWrap, videoSlot, inlineBar);
-                header.append(stage);
-            } else {
-                const artwork = OA(document.createElement('div'), { className: 'thumbail' });
-                artwork.append(OA(document.createElement('span'), {
-                    className: 'placeholder',
-                    innerHTML: typeof svg_liv !== 'undefined' ? svg_liv : ''
-                }));
-                if (thumb) {
-                    artwork.append(OA(document.createElement('img'), {
-                        src: UT + thumb + '.jpg',
-                        alt: item.name || 'Live'
-                    }));
-                }
-                header.append(artwork);
-            }
-
-            const content = OA(document.createElement('div'), { className: 'content' });
-            const titleWrap = OA(document.createElement('div'), { className: 'title' });
-            titleWrap.append(OA(document.createElement('h1'), {
-                title: item.name_fa || '',
-                innerHTML: item.name || 'Live'
-            }));
-            const ownerLine = OA(document.createElement('div'), {
-                className: 'artists',
-                textContent: owner && owner.name ? 'Live by ' + owner.name : 'Live stream'
-            });
-            const details = OA(document.createElement('div'), { className: 'detailes' });
-            if (item.meta && item.meta.ncp != null && item.meta.ncp !== '') {
-                details.append(OA(document.createElement('div'), {
-                    className: 'detaile',
-                    innerHTML: svg_playc + ' ' + item.meta.ncp
-                }));
-            }
-            content.append(titleWrap, ownerLine, details);
-            header.append(content);
-            applyPageBackdrop(item, header);
-            MCNT.append(header);
-
-            const actionBar = OA(document.createElement('div'), { className: 'page-detail-actions' });
-            const play = OA(document.createElement('div'), {
-                className: 'play-pause',
-                innerHTML: svg_plys
-            });
-            play.setAttribute('data-item-id', String(item.id));
-            play.addEventListener('click', async (ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                try {
-                    await setPlayQueue([{ id: item.id, type: 'live' }], item.id, 'live');
-                    const P = ensurePlayer();
-                    if (isVideo && P.nowPlaying &&
-                        P.nowPlaying.type === 'live' &&
-                        Number(P.nowPlaying.id) === Number(item.id) &&
-                        P.nowPlaying.player === 'video') {
-                        enterInlineVideoStage(stage, thumbWrap, videoSlot, inlineBar);
-                    }
-                } catch (err) {
-                    console.warn('Live playback failed:', err && err.message ? err.message : err);
-                    CRTM('Unable to start Live playback');
-                }
-            });
-
-            const isFav = IsFavorite('live', item.id);
-            const bookmark = OA(document.createElement('div'), {
-                className: 'btn btn-model-1 focusable',
-                innerHTML: isFav ? svg_fav2 : svg_fav
-            });
-            bookmark.addEventListener('click', () => {
-                const now = ToggleFavorite('live', item.id);
-                bookmark.innerHTML = now ? svg_fav2 : svg_fav;
-            });
-
-            const share = OA(document.createElement('div'), {
-                className: 'btn btn-model-1',
-                innerHTML: svg_sha
-            });
-            share.addEventListener('click', () => copyText(window.location.href, 'Link copied'));
-
-            const more = OA(document.createElement('div'), {
-                className: 'btn btn-model-1',
-                innerHTML: svg_dot
-            });
-            more.addEventListener('click', () => CRBW(item.id, 'live'));
-
-            actionBar.append(play, bookmark, share, more);
-            MCNT.append(actionBar);
-
-            if (item.meta && (item.meta.des || item.meta.rls || item.meta.ncp != null || item.meta.dur != null)) {
-                MCNT.append(
-                    OA(document.createElement('div'), {
-                        className: 'section-header m-top-3',
-                        innerHTML: '<h2 class="title">About Live</h2>'
-                    }),
-                    CRAB(item.meta)
-                );
-            }
-
-            if (isVideo) {
-                const P = ensurePlayer();
-                if (P.nowPlaying && P.nowPlaying.type === 'live' &&
-                    Number(P.nowPlaying.id) === Number(item.id) &&
-                    P.nowPlaying.player === 'video') {
-                    enterInlineVideoStage(stage, thumbWrap, videoSlot, inlineBar);
-                }
-            }
-
-            try { ADE(); } catch (e) {}
-            finish();
-        }
-
-        if (cached && cached.full) {
-            draw();
-            return;
-        }
-
-        if (cached) draw();
-
-        try {
-            const ready = await EnsureItems('live', [id]);
-            if (ready.length && isCurrentRoute()) {
-                draw();
-            } else if (!cached && isCurrentRoute()) {
-                draw();
-            }
-        } catch (err) {
-            console.warn('Live detail resolve failed:', err && err.message ? err.message : err);
-            if (!cached && isCurrentRoute()) draw();
-        }
     }
 
     async function CRHP(P, QS) {
