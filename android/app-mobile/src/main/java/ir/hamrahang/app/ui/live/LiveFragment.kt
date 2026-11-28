@@ -92,13 +92,19 @@ class LiveFragment : Fragment(R.layout.fragment_live_mobile) {
 
     private fun render(items: List<LiveItem>) {
         val rows = mutableListOf<LiveOwnerRow>()
-        val systemItems = items.filter { it.owner == null || it.owner.id == 0L }
-        appendOwnerRows(rows, "system", getString(R.string.live_hamrahang), null, systemItems)
-
+        val systemItems = mutableListOf<LiveItem>()
         val owners = LinkedHashMap<Long, MutableList<LiveItem>>()
-        items.filter { it.owner != null && it.owner.id != 0L }.forEach { item ->
-            owners.getOrPut(item.owner!!.id) { mutableListOf() }.add(item)
+
+        items.forEach { item ->
+            val owner = item.owner
+            if (owner == null || owner.id == 0L) {
+                systemItems += item
+            } else {
+                owners.getOrPut(owner.id) { mutableListOf() }.add(item)
+            }
         }
+
+        appendOwnerRows(rows, "system", getString(R.string.live_hamrahang), null, systemItems)
         owners.values.forEach { ownerItems ->
             val owner = ownerItems.firstOrNull()?.owner
             appendOwnerRows(
