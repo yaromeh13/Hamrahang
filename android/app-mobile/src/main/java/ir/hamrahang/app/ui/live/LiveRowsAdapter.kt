@@ -11,6 +11,8 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.app.R
+import ir.hamrahang.app.ui.home.CardMetrics
+import ir.hamrahang.app.ui.home.CardStyle
 import ir.hamrahang.tv.data.live.LiveItem
 import ir.hamrahang.tv.player.MediaType
 
@@ -43,18 +45,35 @@ class LiveRowsAdapter(
         holder.mediaLabel.setText(
             if (row.mediaType == MediaType.VIDEO) R.string.live_video else R.string.live_audio
         )
-        Glide.with(holder.ownerArtwork)
-            .load(row.ownerArtwork?.takeIf { it.isNotBlank() })
-            .placeholder(R.drawable.bg_artwork_placeholder)
-            .error(R.drawable.bg_artwork_placeholder)
-            .circleCrop()
-            .into(holder.ownerArtwork)
 
-        val cardWidth = if (row.mediaType == MediaType.VIDEO) {
-            (196 * holder.itemView.resources.displayMetrics.density).toInt()
+        if (row.isSystem) {
+            holder.ownerArtwork.setImageResource(R.drawable.ic_nav_live)
+            holder.ownerArtwork.imageTintList = android.content.res.ColorStateList.valueOf(
+                holder.itemView.context.getColor(android.R.color.white)
+            )
+            holder.ownerArtwork.background = null
+            holder.ownerArtwork.scaleType = ImageView.ScaleType.FIT_CENTER
         } else {
-            (148 * holder.itemView.resources.displayMetrics.density).toInt()
+            holder.ownerArtwork.imageTintList = null
+            holder.ownerArtwork.background = holder.itemView.context.getDrawable(R.drawable.bg_artwork_placeholder)
+            holder.ownerArtwork.scaleType = ImageView.ScaleType.CENTER_CROP
+            Glide.with(holder.ownerArtwork)
+                .load(row.ownerArtwork?.takeIf { it.isNotBlank() })
+                .placeholder(R.drawable.bg_artwork_placeholder)
+                .error(R.drawable.bg_artwork_placeholder)
+                .fallback(R.drawable.bg_artwork_placeholder)
+                .circleCrop()
+                .into(holder.ownerArtwork)
         }
+
+        val resources = holder.itemView.resources
+        val style = if (row.mediaType == MediaType.VIDEO) CardStyle.WIDE else CardStyle.SQUARE
+        val screenWidth = holder.cards.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+        val availableWidth = screenWidth - holder.cards.paddingLeft - holder.cards.paddingRight
+        val cardWidth = (
+            availableWidth / CardMetrics.visibleCards(resources.configuration, style)
+        ).toInt()
+
         holder.cards.layoutManager = LinearLayoutManager(
             holder.itemView.context, RecyclerView.HORIZONTAL, false
         )
@@ -80,9 +99,13 @@ class LiveRowsAdapter(
             view.layoutParams = RecyclerView.LayoutParams(
                 cardWidth,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                marginEnd = (12 * parent.resources.displayMetrics.density).toInt()
-            }
+            )
+            val imageWidth = cardWidth - view.paddingLeft - view.paddingRight
+            val ratio = if (row.mediaType == MediaType.VIDEO) 9f / 16f else 1f
+            view.findViewById<ImageView>(R.id.liveCardArtwork).layoutParams =
+                view.findViewById<ImageView>(R.id.liveCardArtwork).layoutParams.apply {
+                    height = (imageWidth * ratio).toInt()
+                }
             return CardHolder(view)
         }
 
@@ -91,19 +114,12 @@ class LiveRowsAdapter(
         override fun onBindViewHolder(holder: CardHolder, position: Int) {
             val item = row.items[position]
             holder.title.text = item.title
-            val imageHeight = if (row.mediaType == MediaType.VIDEO) {
-                (cardWidth * 9f / 16f).toInt()
-            } else {
-                cardWidth
-            }
-            holder.artwork.layoutParams = holder.artwork.layoutParams.apply {
-                height = imageHeight
-            }
-            val radius = (10 * holder.itemView.resources.displayMetrics.density).toInt()
+            val radius = (8 * holder.itemView.resources.displayMetrics.density).toInt()
             Glide.with(holder.artwork)
                 .load(item.thumb.takeIf { it.isNotBlank() })
                 .placeholder(R.drawable.bg_artwork_placeholder)
                 .error(R.drawable.bg_artwork_placeholder)
+                .fallback(R.drawable.bg_artwork_placeholder)
                 .transform(CenterCrop(), RoundedCorners(radius))
                 .into(holder.artwork)
             holder.itemView.setOnClickListener {
