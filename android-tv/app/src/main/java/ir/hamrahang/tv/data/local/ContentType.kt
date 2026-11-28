@@ -9,7 +9,8 @@ enum class ContentType(
     VIDEO(3),
     ARTIST(4),
     ALBUM(5),
-    PLAYLIST(6);
+    PLAYLIST(6),
+    LIVE(7);
 
     val apiKey: String
         get() = when (this) {
@@ -20,5 +21,6 @@ enum class ContentType(
             ARTIST -> "artist"
             ALBUM -> "album"
             PLAYLIST -> "playlist"
+            LIVE -> "live"
         }
 }
