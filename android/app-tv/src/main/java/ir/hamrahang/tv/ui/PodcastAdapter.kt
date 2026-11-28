@@ -8,7 +8,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
-import ir.hamrahang.tv.util.ImageResolver
+import ir.hamrahang.tv.util.TvImageLoader
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.R
@@ -45,7 +45,7 @@ class PodcastAdapter(
             it.displayTitle()
         }
 
-        ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_song)
+        TvImageLoader.request(holder.cover, item.thumb, R.drawable.ic_song)
             .transform(CenterCrop(), RoundedCorners(7))
             .into(holder.cover)
 

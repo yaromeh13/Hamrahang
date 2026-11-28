@@ -1,9 +1,5 @@
 package ir.hamrahang.tv.util
 
-import android.graphics.drawable.Drawable
-import android.widget.ImageView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestBuilder
 import ir.hamrahang.tv.data.MediaMeta
 import ir.hamrahang.tv.data.SourceOwner
 import ir.hamrahang.tv.data.artist.ArtistMeta
@@ -99,15 +95,4 @@ object ImageResolver {
         return THUMB_BASE + key + ".jpg"
     }
 
-    /** Shared non-blocking Glide request with a type-specific placeholder/error. */
-    fun request(
-        imageView: ImageView,
-        url: String?,
-        fallbackDrawable: Int
-    ): RequestBuilder<Drawable> =
-        Glide.with(imageView)
-            .load(clean(url))
-            .placeholder(fallbackDrawable)
-            .error(fallbackDrawable)
-            .fallback(fallbackDrawable)
 }

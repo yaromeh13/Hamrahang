@@ -18,6 +18,7 @@ import ir.hamrahang.tv.hero.HeroManager
 import ir.hamrahang.tv.hero.HeroStyle
 import ir.hamrahang.tv.ui.widget.FadeImageView
 import ir.hamrahang.tv.util.ImageResolver
+import ir.hamrahang.tv.util.TvImageLoader
 import ir.hamrahang.tv.util.displayTitle
 import kotlinx.coroutines.launch
 
@@ -97,7 +98,7 @@ class HeroWidget(
 
                         bindItemTitle(song.displayTitle(), song.name)
                         bindHeroArt(ImageResolver.hero(song.meta), R.drawable.ic_song)
-                        ImageResolver.request(
+                        TvImageLoader.request(
                             itemCover,
                             song.thumb,
                             R.drawable.ic_song
@@ -117,7 +118,7 @@ class HeroWidget(
                         val playlist = state.playlist ?: return@collect
                         showItem()
                         bindItemTitle(playlist.name, "${playlist.itemCount} items")
-                        ImageResolver.request(
+                        TvImageLoader.request(
                             itemCover,
                             playlist.thumbnail,
                             R.drawable.ic_playlist
@@ -135,7 +136,7 @@ class HeroWidget(
 
                         bindItemTitle(podcast.displayTitle(), podcast.name)
                         bindHeroArt(ImageResolver.hero(podcast.meta), R.drawable.ic_song)
-                        ImageResolver.request(
+                        TvImageLoader.request(
                             itemCover,
                             podcast.thumb,
                             R.drawable.ic_song
@@ -157,7 +158,7 @@ class HeroWidget(
 
                         bindItemTitle(album.displayTitle(), album.name)
                         bindHeroArt(ImageResolver.hero(album.meta), R.drawable.ic_album_disk)
-                        ImageResolver.request(
+                        TvImageLoader.request(
                             itemCover,
                             album.thumb,
                             R.drawable.ic_album_disk
@@ -211,7 +212,7 @@ class HeroWidget(
 
                         bindHeroArt(ImageResolver.hero(artist.meta), R.drawable.ic_artist)
 
-                        ImageResolver.request(
+                        TvImageLoader.request(
                             artistCover,
                             artist.thumb,
                             R.drawable.ic_artist
@@ -251,7 +252,7 @@ class HeroWidget(
 
         heroArt.visibility = View.VISIBLE
         heroArt.fadeStart = 0.4f
-        ImageResolver.request(heroArt, url, fallbackDrawable).into(heroArt)
+        TvImageLoader.request(heroArt, url, fallbackDrawable).into(heroArt)
     }
 
     private fun hideAll() {

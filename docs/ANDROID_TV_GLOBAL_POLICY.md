@@ -52,7 +52,9 @@ This document governs `:app-tv`, and the shared behavior of `:core` as the TV ap
 
 ### Module rules
 
-- `:core` must not depend on `:app-tv` or `:app-mobile`, or on their screens, widgets or resources. The apps depend on `:core`.
+- `:core` must not depend on `:app-tv` or `:app-mobile`, or on their screens, widgets, Android Views, image-loading adapters or resources. The apps depend on `:core`.
+- Shared image code in `:core` resolves artwork metadata to URLs only. Loading images into `ImageView` (or another UI component) and choosing UI placeholders belongs to the consuming app.
+- Shared repositories return domain/data models, never app-specific presentation models. Home-feed content groups belong in `:core`; TV row/adapter models such as `ContentRow` belong in `:app-tv`, and mobile maps the shared feed to its own presentation model.
 - Leanback, Hero and D-pad/remote navigation stay in `:app-tv`; the mobile application does not use them.
 - A change in `:core` affects both applications. Build both, and preserve existing TV behavior.
 - `:core` reaches app UI only through app-provided hooks: `PlayerManager.notifier` (`PlayerNotifier`) for player messages and `PlaybackArtwork.listener` for current artwork. `App.kt` in `:app-tv` connects them to `MessageManager` and `BackgroundManager` before `PlaybackManager.init()`.

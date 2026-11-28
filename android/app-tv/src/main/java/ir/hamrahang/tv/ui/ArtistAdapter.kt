@@ -7,7 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
-import ir.hamrahang.tv.util.ImageResolver
+import ir.hamrahang.tv.util.TvImageLoader
 import ir.hamrahang.tv.domain.artist.Artist
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.util.displayTitle
@@ -43,7 +43,7 @@ class ArtistAdapter(
         holder.name.text = item.displayTitle()
         //holder.subname.text = item.title
 
-        ImageResolver.request(holder.image, item.thumb, R.drawable.ic_artist)
+        TvImageLoader.request(holder.image, item.thumb, R.drawable.ic_artist)
             .circleCrop()
             .into(holder.image)
 

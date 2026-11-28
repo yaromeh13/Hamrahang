@@ -31,7 +31,6 @@ dependencies {
     api(libs.retrofit)
     api(libs.retrofit.gson)
     api(libs.okhttp.logging)
-    api(libs.glide)
     api(libs.androidx.media3.exoplayer)
     api(libs.androidx.media3.exoplayer.hls)
 

@@ -12,7 +12,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.MainActivity
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.live.LiveItem
-import ir.hamrahang.tv.util.ImageResolver
+import ir.hamrahang.tv.util.TvImageLoader
 
 class LiveAdapter(
     private var items: List<LiveItem>,
@@ -42,7 +42,7 @@ class LiveAdapter(
         holder.title.text = item.title
         holder.subtitle.text = ""
 
-        ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_live)
+        TvImageLoader.request(holder.cover, item.thumb, R.drawable.ic_live)
             .transform(CenterCrop(), RoundedCorners(7))
             .into(holder.cover)
 

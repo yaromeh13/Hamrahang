@@ -12,7 +12,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.domain.musicvideo.MusicVideo
-import ir.hamrahang.tv.util.ImageResolver
+import ir.hamrahang.tv.util.TvImageLoader
 import ir.hamrahang.tv.util.displayTitle
 
 class MusicVideoAdapter(
@@ -41,7 +41,7 @@ class MusicVideoAdapter(
         val item = items[position]
         holder.title.text = item.displayTitle()
 
-        ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_video)
+        TvImageLoader.request(holder.cover, item.thumb, R.drawable.ic_video)
             .transform(CenterCrop(), RoundedCorners(7))
             .into(holder.cover)
 

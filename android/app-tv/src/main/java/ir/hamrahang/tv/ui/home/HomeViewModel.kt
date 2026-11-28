@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import ir.hamrahang.tv.data.home.HomeRepository
+import ir.hamrahang.tv.domain.home.HomeFeedSection
 import ir.hamrahang.tv.data.local.entity.PlaylistEntity
 import ir.hamrahang.tv.data.local.ContentType
 import ir.hamrahang.tv.favorite.FavoriteManager
@@ -58,37 +59,37 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         rowsJob?.cancel()
         rowsJob = viewModelScope.launch {
             val mainRows = buildList {
-                repo.buildVideoRow()?.let(::add)
-                repo.buildMusicVideoRow()?.let(::add)
-                repo.buildTopSongsRow()?.let(::add)
-                repo.buildArtistRow()?.let(::add)
+                repo.buildVideoRow()?.let { add(it.toContentRow()) }
+                repo.buildMusicVideoRow()?.let { add(it.toContentRow()) }
+                repo.buildTopSongsRow()?.let { add(it.toContentRow()) }
+                repo.buildArtistRow()?.let { add(it.toContentRow()) }
             }
 
             val historyRows = combine(
-                repo.observePlaybackHistorySongsRow(),
-                repo.observePlaybackHistoryMusicVideosRow(),
-                repo.observePlaybackHistoryVideosRow()
+                repo.observePlaybackHistorySongsRow().map { it?.toContentRow() },
+                repo.observePlaybackHistoryMusicVideosRow().map { it?.toContentRow() },
+                repo.observePlaybackHistoryVideosRow().map { it?.toContentRow() }
             ) { songs, musicVideos, videos ->
                 listOfNotNull(songs, musicVideos, videos)
             }
 
             val favoriteMusicAndSongs = combine(
-                repo.observeFavoriteMusicVideosRow(),
-                repo.observeFavoriteSongsRow()
+                repo.observeFavoriteMusicVideosRow().map { it?.toContentRow() },
+                repo.observeFavoriteSongsRow().map { it?.toContentRow() }
             ) { musicVideos, songs ->
                 listOfNotNull(musicVideos, songs)
             }
 
             val favoritePodcastsAndArtists = combine(
-                repo.observeFavoritePodcastsRow(),
-                repo.observeFavoriteArtistsRow()
+                repo.observeFavoritePodcastsRow().map { it?.toContentRow() },
+                repo.observeFavoriteArtistsRow().map { it?.toContentRow() }
             ) { podcasts, artists ->
                 listOfNotNull(podcasts, artists)
             }
 
             val favoriteVideosAndAlbums = combine(
-                repo.observeFavoriteVideosRow(),
-                repo.observeFavoriteAlbumsRow()
+                repo.observeFavoriteVideosRow().map { it?.toContentRow() },
+                repo.observeFavoriteAlbumsRow().map { it?.toContentRow() }
             ) { videos, albums ->
                 listOfNotNull(videos, albums)
             }
@@ -143,4 +144,50 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+}
+
+
+private fun HomeFeedSection.toContentRow(): ContentRow = when (this) {
+    is HomeFeedSection.MusicVideos -> ContentRow.MusicVideos(
+        title = title,
+        items = items,
+        sessionId = sessionId,
+        sessionTitle = sessionTitle,
+        sessionSource = sessionSource
+    )
+    is HomeFeedSection.Songs -> ContentRow.Songs(
+        title = title,
+        items = items,
+        sessionId = sessionId,
+        sessionTitle = sessionTitle,
+        sessionSource = sessionSource
+    )
+    is HomeFeedSection.Artists -> ContentRow.Artists(
+        title = title,
+        items = items,
+        sessionId = sessionId,
+        sessionTitle = sessionTitle,
+        sessionSource = sessionSource
+    )
+    is HomeFeedSection.Albums -> ContentRow.Albums(
+        title = title,
+        items = items,
+        sessionId = sessionId,
+        sessionTitle = sessionTitle,
+        sessionSource = sessionSource
+    )
+    is HomeFeedSection.Podcasts -> ContentRow.Podcasts(
+        title = title,
+        items = items,
+        sessionId = sessionId,
+        sessionTitle = sessionTitle,
+        sessionSource = sessionSource
+    )
+    is HomeFeedSection.Videos -> ContentRow.Videos(
+        title = title,
+        items = items,
+        sessionId = sessionId,
+        sessionTitle = sessionTitle,
+        sessionSource = sessionSource
+    )
 }

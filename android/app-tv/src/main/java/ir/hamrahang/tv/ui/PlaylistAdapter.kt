@@ -12,7 +12,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import ir.hamrahang.tv.R
 import ir.hamrahang.tv.data.local.entity.PlaylistEntity
 import ir.hamrahang.tv.data.playlist.PlaylistMedia
-import ir.hamrahang.tv.util.ImageResolver
+import ir.hamrahang.tv.util.TvImageLoader
 import ir.hamrahang.tv.util.displayTitle
 
 class PlaylistAdapter(
@@ -41,7 +41,7 @@ class PlaylistAdapter(
         holder.title.text = playlist.name
         holder.subtitle.visibility = View.VISIBLE
         holder.subtitle.text = "${playlist.itemCount} items"
-        ImageResolver.request(holder.cover, playlist.thumbnail, R.drawable.ic_playlist)
+        TvImageLoader.request(holder.cover, playlist.thumbnail, R.drawable.ic_playlist)
             .transform(CenterCrop(), RoundedCorners(7))
             .into(holder.cover)
 
@@ -113,7 +113,7 @@ class PlaylistMediaAdapter(
         holder.title.text = title
         holder.subtitle.text = subtitle
         holder.subtitle.visibility = if (subtitle.isBlank()) View.GONE else View.VISIBLE
-        ImageResolver.request(holder.cover, image, fallback)
+        TvImageLoader.request(holder.cover, image, fallback)
             .transform(CenterCrop(), RoundedCorners(7))
             .into(holder.cover)
 

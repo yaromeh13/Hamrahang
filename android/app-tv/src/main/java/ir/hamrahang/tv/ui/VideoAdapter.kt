@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import ir.hamrahang.tv.util.ImageResolver
+import ir.hamrahang.tv.util.TvImageLoader
 import android.widget.TextView
 import androidx.annotation.LayoutRes
 import androidx.recyclerview.widget.RecyclerView
@@ -43,7 +43,7 @@ class VideoAdapter(
 
         holder.title.text = item.displayTitle()
 
-        ImageResolver.request(holder.cover, item.thumb, R.drawable.ic_video)
+        TvImageLoader.request(holder.cover, item.thumb, R.drawable.ic_video)
             .transform(CenterCrop(), RoundedCorners(7))
             .into(holder.cover)
 

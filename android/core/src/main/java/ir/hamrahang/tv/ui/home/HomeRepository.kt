@@ -11,7 +11,7 @@ import ir.hamrahang.tv.data.video.VideoRepository
 import ir.hamrahang.tv.data.musicvideo.MusicVideoRepository
 import ir.hamrahang.tv.data.song.SongRepository
 import ir.hamrahang.tv.playback.PlaybackSource
-import ir.hamrahang.tv.ui.rows.ContentRow
+import ir.hamrahang.tv.domain.home.HomeFeedSection
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -40,7 +40,7 @@ class HomeRepository(
 // PLAYBACK HISTORY - SONGS
     //==================================================
 
-    fun observePlaybackHistorySongsRow(): Flow<ContentRow?> {
+    fun observePlaybackHistorySongsRow(): Flow<HomeFeedSection?> {
 
         return playbackHistoryRepository
             .observeLastPlayed(
@@ -65,7 +65,7 @@ class HomeRepository(
                     return@map null
                 }
 
-                ContentRow.Songs(
+                HomeFeedSection.Songs(
 
                     title = "Recently Played",
 
@@ -87,7 +87,7 @@ class HomeRepository(
     // PLAYBACK HISTORY - MUSIC VIDEOS
     //==================================================
 
-    fun observePlaybackHistoryMusicVideosRow(): Flow<ContentRow?> {
+    fun observePlaybackHistoryMusicVideosRow(): Flow<HomeFeedSection?> {
 
         return playbackHistoryRepository
             .observeLastPlayed(
@@ -110,7 +110,7 @@ class HomeRepository(
                     return@map null
                 }
 
-                ContentRow.MusicVideos(
+                HomeFeedSection.MusicVideos(
                     title = "Recently Played Music Videos",
                     items = musicVideos,
                     sessionId = "home_history_musicvideo",
@@ -120,7 +120,7 @@ class HomeRepository(
             }
     }
 
-    fun observePlaybackHistoryVideosRow(): Flow<ContentRow?> {
+    fun observePlaybackHistoryVideosRow(): Flow<HomeFeedSection?> {
         return playbackHistoryRepository
             .observeLastPlayed(
                 type = ContentType.VIDEO.value,
@@ -136,7 +136,7 @@ class HomeRepository(
 
                 if (videos.isEmpty()) return@map null
 
-                ContentRow.Videos(
+                HomeFeedSection.Videos(
                     title = "Recently Played Videos",
                     items = videos,
                     sessionId = "home_history_videos",
@@ -148,7 +148,7 @@ class HomeRepository(
 
     // Top Songs
     //==================================================
-    suspend fun buildTopSongsRow(): ContentRow? {
+    suspend fun buildTopSongsRow(): HomeFeedSection? {
 
         return try {
             val songs = songRepository.getTopSongs()
@@ -156,7 +156,7 @@ class HomeRepository(
                 null
             else
 
-                ContentRow.Songs(
+                HomeFeedSection.Songs(
 
                     title = "Top Songs",
 
@@ -178,7 +178,7 @@ class HomeRepository(
 
     }
 
-    suspend fun buildMusicVideoRow(): ContentRow? {
+    suspend fun buildMusicVideoRow(): HomeFeedSection? {
 
         return try {
 
@@ -189,7 +189,7 @@ class HomeRepository(
                 null
             else
 
-                ContentRow.MusicVideos(
+                HomeFeedSection.MusicVideos(
 
                     title = null,
 
@@ -211,11 +211,11 @@ class HomeRepository(
 
     }
 
-    suspend fun buildVideoRow(): ContentRow? {
+    suspend fun buildVideoRow(): HomeFeedSection? {
         return try {
             val videos = videoRepository.getLatestRegularVideos()
             if (videos.isEmpty()) null
-            else ContentRow.Videos(
+            else HomeFeedSection.Videos(
                 title = "Videos",
                 items = videos,
                 sessionId = "home_videos",
@@ -227,7 +227,7 @@ class HomeRepository(
         }
     }
 
-    suspend fun buildArtistRow(): ContentRow? {
+    suspend fun buildArtistRow(): HomeFeedSection? {
 
         return try {
 
@@ -237,7 +237,7 @@ class HomeRepository(
                 null
             else
 
-                ContentRow.Artists(
+                HomeFeedSection.Artists(
 
                     title = null,
 
@@ -259,7 +259,7 @@ class HomeRepository(
 
     }
 /*
-    suspend fun buildTrendingRow(): ContentRow? {
+    suspend fun buildTrendingRow(): HomeFeedSection? {
 
         return try {
 
@@ -270,7 +270,7 @@ class HomeRepository(
                 null
             else
 
-                ContentRow.Videos(
+                HomeFeedSection.Videos(
 
                     title = "Trending",
 
@@ -297,10 +297,10 @@ class HomeRepository(
     // FAVORITES - HOME ROWS
     //==================================================
 
-    fun observeFavoriteMusicVideosRow(): Flow<ContentRow?> =
+    fun observeFavoriteMusicVideosRow(): Flow<HomeFeedSection?> =
         FavoriteManager.observeFavorites(ContentType.MUSICVIDEO).mapLatest { favorites ->
             val items = musicVideoRepository.getByIds(favorites.map { it.mediaId.toString() })
-            if (items.isEmpty()) null else ContentRow.MusicVideos(
+            if (items.isEmpty()) null else HomeFeedSection.MusicVideos(
                 title = "Favorite Music Videos",
                 items = items,
                 sessionId = "home_favorite_musicvideos",
@@ -309,10 +309,10 @@ class HomeRepository(
             )
         }
 
-    fun observeFavoriteSongsRow(): Flow<ContentRow?> =
+    fun observeFavoriteSongsRow(): Flow<HomeFeedSection?> =
         FavoriteManager.observeFavorites(ContentType.SONG).mapLatest { favorites ->
             val items = songRepository.getByIds(favorites.map { it.mediaId.toString() })
-            if (items.isEmpty()) null else ContentRow.Songs(
+            if (items.isEmpty()) null else HomeFeedSection.Songs(
                 title = "Favorite Songs",
                 items = items,
                 sessionId = "home_favorite_songs",
@@ -321,10 +321,10 @@ class HomeRepository(
             )
         }
 
-    fun observeFavoritePodcastsRow(): Flow<ContentRow?> =
+    fun observeFavoritePodcastsRow(): Flow<HomeFeedSection?> =
         FavoriteManager.observeFavorites(ContentType.PODCAST).mapLatest { favorites ->
             val items = podcastRepository.getByIds(favorites.map { it.mediaId.toString() })
-            if (items.isEmpty()) null else ContentRow.Podcasts(
+            if (items.isEmpty()) null else HomeFeedSection.Podcasts(
                 title = "Bookmarked Podcasts",
                 items = items,
                 sessionId = "home_favorite_podcasts",
@@ -333,10 +333,10 @@ class HomeRepository(
             )
         }
 
-    fun observeFavoriteArtistsRow(): Flow<ContentRow?> =
+    fun observeFavoriteArtistsRow(): Flow<HomeFeedSection?> =
         FavoriteManager.observeFavorites(ContentType.ARTIST).mapLatest { favorites ->
             val items = artistRepository.getByIds(favorites.map { it.mediaId.toString() })
-            if (items.isEmpty()) null else ContentRow.Artists(
+            if (items.isEmpty()) null else HomeFeedSection.Artists(
                 title = "Followed Artists",
                 items = items,
                 sessionId = "home_favorite_artists",
@@ -345,11 +345,11 @@ class HomeRepository(
             )
         }
 
-    fun observeFavoriteVideosRow(): Flow<ContentRow?> =
+    fun observeFavoriteVideosRow(): Flow<HomeFeedSection?> =
         FavoriteManager.observeFavorites(ContentType.VIDEO).mapLatest { favorites ->
             val items = videoRepository.getByIds(favorites.map { it.mediaId.toString() })
                 .filterNot { it.isMusicVideo }
-            if (items.isEmpty()) null else ContentRow.Videos(
+            if (items.isEmpty()) null else HomeFeedSection.Videos(
                 title = "Bookmarked Videos",
                 items = items,
                 sessionId = "home_favorite_videos",
@@ -358,10 +358,10 @@ class HomeRepository(
             )
         }
 
-    fun observeFavoriteAlbumsRow(): Flow<ContentRow?> =
+    fun observeFavoriteAlbumsRow(): Flow<HomeFeedSection?> =
         FavoriteManager.observeFavorites(ContentType.ALBUM).mapLatest { favorites ->
             val items = albumRepository.getByIds(favorites.map { it.mediaId.toString() })
-            if (items.isEmpty()) null else ContentRow.Albums(
+            if (items.isEmpty()) null else HomeFeedSection.Albums(
                 title = "Bookmarked Albums",
                 items = items,
                 sessionId = "home_favorite_albums",
