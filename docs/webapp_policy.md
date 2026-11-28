@@ -69,7 +69,8 @@ Live is a first-class route in the Web App, separate from the on-demand catalog 
 
 - `/live` is rendered by `CRLV()`.
 - `/live/{id}/{slug}` is rendered by `CRLVDetail(id)`. The numeric ID is the record key; the slug is descriptive.
-- `liveRoute(item)` builds the channel route and URL-encodes the ID and slug.
+- `HLV` (`"/live/"`) is the single canonical base-path constant for Live directory links and channel routes. Do not hardcode `/live/` in new Web App links; use `HLV` for the directory and `liveRoute(item)` for a channel.
+- `liveRoute(item)` builds `HLV + encodeURIComponent(id) + '/' + encodeURIComponent(slug)`. The slug is `item.url`, then `item.slug`, then the ID as fallback. If the item or its ID is missing, it returns `HLV`.
 - `liveMediaType(item)` reads the top-level `media_type`. Only `video` is classified as video; missing or other values default to audio. Do not infer this from `meta.type`.
 
 #### Data loading and cache
@@ -84,10 +85,12 @@ Live is a first-class route in the Web App, separate from the on-demand catalog 
 
 - Ownerless/system channels are displayed first. Their fixed sections are video (**پخش زنده تصویری**) followed by audio (**پخش زنده صوتی**).
 - Owned channels are grouped by owner. Each owner retains a name and, when available, an avatar thumbnail. If an owner has both media types, separate video and audio rows are rendered under that owner.
-- `CRLVCards(ids, mediaType)` uses the existing horizontal carousel pattern (`CCRL`) when the row contains more than two cards.
-- Video cards use a `16:9` artwork ratio and prefer `meta.tmv`, then `meta.tmb`. Audio cards use a square `1:1` ratio and `meta.tmb`.
-- A Live SVG placeholder remains underneath the artwork so the card has a deliberate fallback when no thumbnail is available.
-- Listing callbacks guard against a route change before redrawing the page, preventing a delayed Live response from replacing a different page.
+- Live directory rows are rendered by the shared `CRSC(ids, 'live', ...)` card builder; there is no separate `CRLVCards` renderer. `CRSC` supplies the same card structure and controls used by the rest of the Web App.
+- Video rows pass `{ aspectRatio: '16:9' }`; audio rows use the default square `1:1` ratio. Live video thumbnails prefer `meta.tmv`, then `meta.tmb`; Live audio thumbnails use `meta.tmb`.
+- The Live SVG placeholder remains underneath the artwork when no thumbnail is available.
+- `CRLV()` renders ownerless/system channels first (video, then audio), followed by owner groups. Each owner can have separate video and audio rows.
+- The Library's Live favorites use the same `splitLiveMediaIds()` grouping and `CRSC(ids, 'live', null, { aspectRatio })` renderer, with separate TV Live (`16:9`) and Radio Live (`1:1`) rows. The `See All` link remains `/library/favorite/live`.
+- `CRLV()` guards its initial and background redraws against route changes so a delayed Live response cannot replace another page.
 
 #### Detail and player integration
 
@@ -191,7 +194,9 @@ Add a row when a helper’s job changes. Do not document a guess.
 | `CRHP` / `CREP` / `CRVP` / `CRAP` / `CRPP` | Home, song/album, video, artist, playlist pages. |
 | `CRNF()` | Not-found content and a control back to home. |
 | `CRGC` / `CRSC` / `CRGL` | Grid, carousel card, track line. |
-| `CRLV` / `CRLVDetail` / `CRLVCards` | Live directory, channel detail, and Live carousel cards. |
+| `HLV` / `liveRoute` | Canonical Live base path and encoded channel URL builder. |
+| `CRLV` / `CRLVDetail` | Live directory and channel detail. |
+| `liveMediaType` / `splitLiveMediaIds` | Live media classification and audio/video grouping. |
 | `liveMediaType` / `liveRoute` / `splitLiveMediaIds` | Live media classification, canonical channel route, and audio/video grouping. |
 | `LoadLiveCache` / `SaveLiveCache` | Restore and persist lightweight Live metadata without expiring stream sources. |
 | `resolveThumb` / `resolveThumbUrl` | Artwork key and URL. |
@@ -216,7 +221,7 @@ Cards are built by `CRSC` (carousel), `CRGC` (grid), and `CRGL` (track line). Af
 
 ### 7.1 Open the item page
 
-**Cards:** song, podcast, album, playlist, music video, video, artist.  
+**Cards:** song, podcast, album, playlist, music video, video, artist, and Live.  
 **Hit area:** artwork link and title link. Artist cards have no play button, so the whole card uses this path. A name under a card (`artists-inline` / `CRAL`) is the same path with an artist URL.
 
 ```text
@@ -237,6 +242,10 @@ click on card <a>
                       │    └─ CRAP(id)
                       ├─ /playlist/{id}
                       │    └─ CRPP(id, 'playlist')
+                      ├─ /live/{id}/{slug}
+                      │    └─ CRLVDetail(id)
+                      ├─ /live or /live/ (directory)
+                      │    └─ CRLV()
                       ├─ list URLs such as /song/top (See all on a section header)
                       │    └─ CRHP(section, query)
                       └─ unknown id / unknown list key
@@ -254,7 +263,7 @@ click on card <a>
 
 **Hit area:** the play control on `CRSC`, `CRGC`, and `CRGL`. The handler calls `stopPropagation()`, so `ADE()` does not also open the page. Artist cards do not render this control.
 
-**Playable cards:** song, podcast, music video, video.
+**Playable cards:** song, podcast, music video, video, and Live.
 
 ```text
 click .play
@@ -291,7 +300,7 @@ click .play
 
 ### 7.3 More menu on the card
 
-**Cards:** every non-artist card from `CRSC`, `CRGC`, and `CRGL` (the dot control).
+**Cards:** every non-artist card from `CRSC`, `CRGC`, and `CRGL` (the dot control), including Live cards.
 
 ```text
 click .menu / .more
@@ -311,21 +320,35 @@ click .menu / .more
 
 ### 7.4 Live cards
 
-**Cards:** live video and live audio rows from `CRLVCards`. These cards have no play control and no more control. The link handler calls `chp` itself. `ADE()` may also see the same `.item-box a`; both calls use `liveRoute(item)`, which is the same URL.
+Live directory cards and Library Live-favorite cards are both built by `CRSC(ids, 'live', ...)`; the removed `CRLVCards` function must not be reintroduced as a parallel renderer. `CRSC` creates the artwork and title anchors with `href: liveRoute(item)`. The normal `ADE()` handler intercepts those anchors, calls `preventDefault()`, and routes through `chp(href)`—there is no separate Live-card click listener.
+
+Each Live card has the shared `.play` and `.menu` controls:
 
 ```text
-click live card <a>
-  └─ CRLVCards click listener
-       └─ chp(liveRoute(item))     /live/{id}/{slug}
-            └─ chp() case 'live'
-                 ├─ second segment is a number → CRLVDetail(id)
-                 │    └─ use SN.live[id] if full, otherwise resolve, then draw
-                 │         missing record → CRNF()
-                 └─ otherwise → CRLV()
-                      └─ directory (section 2.5)
+click Live card artwork or title <a>
+  └─ ADE() click listener
+       └─ preventDefault() → chp(liveRoute(item))
+            └─ /live/{id}/{slug} → CRLVDetail(id)
+                 └─ use SN.live[id] if full; otherwise resolve, then draw
+                      missing record → CRNF()
+
+click Live card .play
+  └─ preventDefault() + stopPropagation()
+       └─ setPlayQueue(rowIds, item.id, 'live')
+            └─ normal queue loading / player flow
+
+click Live card .menu
+  └─ CRBW(item.id, 'live')
+       └─ renderItemSheetMenu(...)
+            ├─ Like / Unlike
+            ├─ Add to Queue
+            ├─ Go to Live → chp(liveRoute(item))
+            └─ Share / Report (where available)
 ```
 
-**Result:** the live detail page opens. The card click does not call `setPlayQueue`. Playback starts only from the controls on that detail page. Stream URLs are not read from `ha_live_cache_v1`; a cached card still resolves before full playback data is required.
+Live is queueable and can be added to the queue, but the Live menu deliberately does not offer **Add to Playlist**. The `Go to Live` action uses `liveRoute(item)`, not a separately assembled URL.
+
+**Result:** artwork/title opens the channel detail page; `.play` starts the selected Live item using the current row's IDs as the queue; `.menu` opens the standard item sheet. Stream URLs are runtime data and are not read from `ha_live_cache_v1`; cached records still need resolving before full playback data is used.
 
 ---
 
@@ -333,11 +356,12 @@ click live card <a>
 
 1. Name the page, helper, or API action.
 2. Read the current function in `ha.php` and its callers.
-3. If data is involved, read `h_api.php` and one real JSON body first.
-4. Keep playback on `getPlayableSources` indexes.
-5. Keep page lyrics bound to their item; do not let the player overwrite them.
-6. Persist only through the keys in section 5. Do not write the catalog into `localStorage`.
-7. Update this file when a route, storage key, player/lyric rule, or card click path changes.
+3. For Live links, use `HLV` for the directory base and `liveRoute(item)` for a channel; do not hand-build `/live/{id}/{slug}`.
+4. If data is involved, read `h_api.php` and one real JSON body first.
+5. Keep playback on `getPlayableSources` indexes.
+6. Keep page lyrics bound to their item; do not let the player overwrite them.
+7. Persist only through the keys in section 5. Do not write the catalog into `localStorage`.
+8. Update this file when a route, storage key, player/lyric rule, or card click path changes.
 
 ---
 
