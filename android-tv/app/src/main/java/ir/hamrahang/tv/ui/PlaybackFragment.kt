@@ -138,7 +138,7 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
                 fromUser: Boolean
             ) {
 
-                if (fromUser && currentPlaybackItem()?.liveMedia == null) {
+                if (fromUser) {
                     PlayerManager.seekTo(progress.toLong())
                 }
             }
@@ -227,13 +227,16 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
 
                 val isLive = currentPlaybackItem()?.liveMedia != null
                 if (isLive) {
-                    // Live has no finite timeline: keep the bar visible,
-                    // but clear any progress/time left by the previous item.
-                    seekBar.max = 1
+                    // Keep the current ExoPlayer seek window; only label duration as LIVE.
+                    seekBar.max = ui.duration.coerceAtLeast(1L)
+                        .coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
                     if (!seekBar.isPressed) {
-                        seekBar.progress = 0
+                        seekBar.progress = ui.position.coerceIn(
+                            0L,
+                            seekBar.max.toLong()
+                        ).toInt()
                     }
-                    txtTime.text = "LIVE"
+                    txtTime.text = "${format(ui.position)} / LIVE"
                 } else if (ui.duration > 0L) {
                     seekBar.max = ui.duration.toInt()
                     if (!seekBar.isPressed) {
