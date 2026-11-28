@@ -24,7 +24,7 @@ import ir.hamrahang.tv.playback.PlaybackSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
-internal data class LiveOwnerRow(
+data class LiveOwnerRow(
     val id: String,
     val ownerName: String,
     val ownerArtwork: String?,
