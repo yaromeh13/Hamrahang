@@ -523,14 +523,31 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 applyOverlayVisibility(ui)
                 bindLyrics(PlayerState.playbackInfo.value, ui.position)
 
-                // Progress
-                if (ui.duration > 0) {
+                // Live has no finite duration: keep the seek bar visible,
+                // but never carry over the previous media's time/progress.
+                val isLive = PlaybackManager.currentItem.value?.liveMedia != null
+                if (isLive) {
+                    txtCurrentTime.text = ""
+                    txtDuration.text = "LIVE"
+                    if (!seekBar.isPressed) {
+                        seekBar.max = 1
+                        seekBar.progress = 0
+                    }
+                } else if (ui.duration > 0L) {
                     txtCurrentTime.text = format(ui.position)
                     txtDuration.text = format(ui.duration)
 
                     if (!seekBar.isPressed) {
                         seekBar.max = ui.duration.toInt()
                         seekBar.progress = ui.position.toInt()
+                    }
+                } else {
+                    // Clear stale values while the next finite item is loading.
+                    txtCurrentTime.text = "00:00"
+                    txtDuration.text = "--:--"
+                    if (!seekBar.isPressed) {
+                        seekBar.max = 1
+                        seekBar.progress = 0
                     }
                 }
 
