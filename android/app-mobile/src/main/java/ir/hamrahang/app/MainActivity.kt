@@ -78,13 +78,13 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         val token = SessionToken(this, ComponentName(this, MobilePlaybackService::class.java))
-        controllerFuture = MediaController.Builder(this, token).buildAsync().also { future ->
-            future.addListener({
-                if (controllerFuture === future) {
-                    runCatching { future.get() }.onSuccess { mediaController = it }
-                }
-            }, directExecutor)
-        }
+        val future = MediaController.Builder(this, token).buildAsync()
+        controllerFuture = future
+        future.addListener({
+            if (controllerFuture === future) {
+                runCatching { future.get() }.onSuccess { mediaController = it }
+            }
+        }, directExecutor)
     }
 
     override fun onStop() {
