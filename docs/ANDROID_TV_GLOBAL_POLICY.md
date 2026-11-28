@@ -632,7 +632,7 @@ Paths below are repository-relative and were checked against the current `main` 
 
 This section defines the Android TV behavior for Live audio and Live video. The Web TV implementation in the current `index.html` is the product-scenario reference; Android must reproduce the user-visible scenario through native Fragments, Leanback rows, D-pad navigation and the existing playback architecture.
 
-This policy covers Live card data, grouping, artwork, card presentation, incomplete-card resolution, and the playback entry point. It does **not** define the Live player's LIVE indicator, elapsed-time/duration display, or seek-bar behavior. Those player controls are intentionally deferred until the user specifies their expected behavior.
+This policy covers Live card data, grouping, artwork, card presentation, incomplete-card resolution, playback entry points, and Live player controls, including the `LIVE` duration label and preservation of the active ExoPlayer timeline/seek window.
 
 ### Core rules
 
@@ -709,7 +709,7 @@ The following implementation was re-opened on the `main` branch while this secti
 | Section header | `ui/LiveRowsAdapter.kt` displays fixed Live Video/Live Audio headings for system rows and owner name/artwork for other rows. | Implemented in source. |
 | Card layout | `ui/LiveAdapter.kt` selects `item_live_video.xml` for video and `item_content.xml` for audio. | Implemented in source; visual sizing should be checked on TV. |
 | Playback routing | `ui/LiveFragment.kt` creates type-specific Live queue items, opens the fullscreen player for video and the internal playback screen for audio. `playback/PlaybackManager.kt` uses the Live media type when preparing playback. | Implemented in source; playback and minimize behavior need device testing. |
-| Player LIVE controls | `player/PlayerFragment.kt` keeps the seek bar visible; when the current queue item is Live, the duration label displays `LIVE`, stale elapsed/duration values are cleared, and stale seek progress is reset. | Implemented in source; verify on TV. |
+| Player LIVE controls | `player/PlayerFragment.kt` keeps the seek bar visible, preserves the current ExoPlayer timeline/seek window and reported elapsed position, and replaces only the duration label with `LIVE`. `ui/PlaybackFragment.kt` follows the same display behavior and forwards seek requests to `PlayerManager`. | Implemented in source; actual seekability depends on the active stream timeline and still requires TV/device testing. |
 
 ## 4.4 Relevant Android source paths
 
@@ -729,7 +729,7 @@ The following implementation was re-opened on the `main` branch while this secti
 | `android-tv/app/src/main/res/layout/item_content.xml` | Square Live Audio card layout. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/playback/PlaybackManager.kt` | Shared playback manager; selects the media type for Live playback. |
 | `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerManager.kt` | Shared ExoPlayer ownership and player controls. |
-| `android-tv/app/src/main/java/ir/hamrahang/tv/ui/PlayerFragment.kt` | Main player UI. Do not change its LIVE indicator/time/seek behavior until the user provides the remaining requirements. |
+| `android-tv/app/src/main/java/ir/hamrahang/tv/player/PlayerFragment.kt` | Main fullscreen player UI, including the Live duration label and seek-bar presentation. |
 
 ## 4.5 State preservation and regression risks
 
