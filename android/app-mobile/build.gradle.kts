@@ -52,6 +52,10 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.media3.ui)
+    // Mobile playback stack: keep every Media3 artifact on the same stable version.
+    implementation(libs.androidx.media3.exoplayer.mobile)
+    implementation(libs.androidx.media3.exoplayer.hls.mobile)
+    implementation(libs.androidx.media3.ui.mobile)
+    implementation(libs.androidx.media3.session.mobile)
     implementation(libs.glide)
 }
