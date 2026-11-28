@@ -24,6 +24,7 @@ import ir.hamrahang.app.databinding.ActivityMainBinding
 import ir.hamrahang.app.ui.PlaceholderFragments
 import ir.hamrahang.app.ui.SettingsFragment
 import ir.hamrahang.app.ui.home.HomeFragment
+import ir.hamrahang.app.ui.live.LiveFragment
 import ir.hamrahang.app.ui.home.SeeAllFragment
 import ir.hamrahang.app.ui.player.VideoActivity
 import ir.hamrahang.tv.player.MediaType
@@ -111,7 +112,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun createTab(itemId: Int): Fragment = when (itemId) {
-        R.id.nav_live -> PlaceholderFragments.LiveFragment()
+        R.id.nav_live -> LiveFragment()
         R.id.nav_search -> PlaceholderFragments.SearchFragment()
         R.id.nav_library -> PlaceholderFragments.LibraryFragment()
         R.id.nav_settings -> SettingsFragment()
