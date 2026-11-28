@@ -156,7 +156,7 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         btnFullscreen.setOnClickListener {UiNavigator.openFullscreenPlayer()}
         btnBookmark.setOnClickListener {
             val item = currentPlaybackItem()
-            val mediaId = item?.id?.toLongOrNull()
+            val mediaId = item?.let { (it.publicId ?: it.id).toLongOrNull() }
             if (item == null || mediaId == null) {
                 MessageManager.info("This item cannot be bookmarked")
             } else {
@@ -302,7 +302,7 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
         }
 
     private fun bindBookmarkState(item: PlaybackItem) {
-        val mediaId = item.id.toLongOrNull()
+        val mediaId = (item.publicId ?: item.id).toLongOrNull()
         if (mediaId == null) {
             btnBookmark.isEnabled = false
             btnBookmark.alpha = 0.35f
