@@ -1,3 +1,6 @@
 .grok/
 *.log
 .DS_Store
+
+# Leftover build/IDE files in the old project folder (renamed to android/)
+android-tv/
