@@ -225,15 +225,29 @@ class PlaybackFragment : Fragment(R.layout.fragment_playback) {
 
 
 
-                if (ui.duration > 0L) {
+                val isLive = currentPlaybackItem()?.liveMedia != null
+                if (isLive) {
+                    // Live has no finite timeline: keep the bar visible,
+                    // but clear any progress/time left by the previous item.
+                    seekBar.max = 1
+                    if (!seekBar.isPressed) {
+                        seekBar.progress = 0
+                    }
+                    txtTime.text = "LIVE"
+                } else if (ui.duration > 0L) {
                     seekBar.max = ui.duration.toInt()
                     if (!seekBar.isPressed) {
-                        seekBar.progress =
-                            ui.position.toInt()
+                        seekBar.progress = ui.position.toInt()
                     }
+                    txtTime.text = "${format(ui.position)} / ${format(ui.duration)}"
+                } else {
+                    // Avoid showing stale values while finite media is loading.
+                    seekBar.max = 1
+                    if (!seekBar.isPressed) {
+                        seekBar.progress = 0
+                    }
+                    txtTime.text = "00:00 / --:--"
                 }
-
-                txtTime.text = "${format(ui.position)} / ${format(ui.duration)}"
 
                 btnShuffle.alpha =
                     if (ui.shuffle)
