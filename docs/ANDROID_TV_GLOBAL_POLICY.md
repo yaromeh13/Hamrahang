@@ -755,15 +755,16 @@ The following implementation was re-opened on the `main` branch while this secti
 9. Existing Room data survives migration to version 38.
 10. D-pad focus, row navigation, back navigation and the existing shared player/minimize behavior work on the target TV.
 11. The app builds with the established project toolchain and is tested on an Android TV device/emulator.
-12. During Live playback, the seek bar remains visible, the duration label reads `LIVE`, the previous finite-media duration/elapsed values are cleared, and stale seek progress is reset.
+12. During Live playback, the seek bar remains visible, the duration label reads `LIVE`, the current ExoPlayer timeline/seek window is preserved, and seek requests are not blocked merely because the item is Live.
 
 ### 4.8 Live duration label and seek-bar presentation
 
 - Keep the seek bar visible during Live playback; do not hide the seek-bar container.
-- Replace the finite-media duration label with the literal text `LIVE`.
-- Clear the elapsed-time label and reset stale seek-bar progress when switching from finite media to Live, so no previous track/video time is shown as Live progress.
+- Preserve the active ExoPlayer timeline and its actual seek window. When the current Live timeline exposes a seekable window, retain its duration/progress range and allow seek requests through the existing player controls.
+- Replace only the finite-media duration label with the literal text `LIVE`; keep the current elapsed position visible where ExoPlayer reports one.
+- Do not force every Live item to `max = 1), reset its seek progress, or block seek requests solely because the item is Live. ExoPlayer/the active timeline remains authoritative for whether a seek can take effect.
 - For finite media, preserve the existing elapsed/duration formatting and seek-bar progress behavior.
-- Do not infer a finite duration for Live streams.
+- Do not invent a finite duration when the Live timeline reports no duration.
 
 ### 4.7 Live bookmarks and More menu
 
