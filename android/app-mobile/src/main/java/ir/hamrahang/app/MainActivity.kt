@@ -8,6 +8,8 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.widget.ImageButton
 import androidx.activity.enableEdgeToEdge
@@ -311,31 +313,40 @@ class MainActivity : AppCompatActivity() {
 
     private fun setMiniPlayerVisible(show: Boolean, animate: Boolean) {
         val view = binding.miniPlayer
-        view.animate().cancel()
+        val distance = 56f * resources.displayMetrics.density
         if (!animate) {
+            view.animate().cancel()
             view.isVisible = show
             view.alpha = 1f
             view.translationY = 0f
             return
         }
         if (show) {
-            if (view.isVisible && view.alpha >= 0.99f) return
+            // Already fully shown.
+            if (view.isVisible && view.alpha >= 0.99f && view.translationY == 0f) return
+            view.animate().cancel()
             view.isVisible = true
-            val distance = if (view.height > 0) view.height.toFloat() else 56f * resources.displayMetrics.density
-            view.alpha = 0f
-            view.translationY = distance
+            // Start from below and faded, then rise in.
+            if (view.alpha >= 0.99f && view.translationY == 0f) {
+                view.alpha = 0f
+                view.translationY = distance
+            }
             view.animate()
                 .alpha(1f)
                 .translationY(0f)
-                .setDuration(220L)
+                .setDuration(360L)
+                .setInterpolator(DecelerateInterpolator())
+                .withEndAction(null)
                 .start()
         } else {
+            // Already hidden or hiding.
             if (!view.isVisible) return
-            val distance = if (view.height > 0) view.height.toFloat() else 56f * resources.displayMetrics.density
+            view.animate().cancel()
             view.animate()
                 .alpha(0f)
                 .translationY(distance)
-                .setDuration(220L)
+                .setDuration(320L)
+                .setInterpolator(AccelerateInterpolator())
                 .withEndAction {
                     view.isVisible = false
                     view.alpha = 1f
