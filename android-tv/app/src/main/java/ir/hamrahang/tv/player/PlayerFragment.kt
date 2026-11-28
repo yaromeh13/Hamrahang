@@ -523,15 +523,19 @@ class PlayerFragment : Fragment(R.layout.fragment_player) {
                 applyOverlayVisibility(ui)
                 bindLyrics(PlayerState.playbackInfo.value, ui.position)
 
-                // Live has no finite duration: keep the seek bar visible,
-                // but never carry over the previous media's time/progress.
+                // Live keeps the ExoPlayer timeline and seek window.
+                // Only replace the finite duration label with LIVE.
                 val isLive = PlaybackManager.currentItem.value?.liveMedia != null
                 if (isLive) {
-                    txtCurrentTime.text = ""
+                    txtCurrentTime.text = format(ui.position)
                     txtDuration.text = "LIVE"
                     if (!seekBar.isPressed) {
-                        seekBar.max = 1
-                        seekBar.progress = 0
+                        seekBar.max = ui.duration.coerceAtLeast(1L)
+                            .coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+                        seekBar.progress = ui.position.coerceIn(
+                            0L,
+                            seekBar.max.toLong()
+                        ).toInt()
                     }
                 } else if (ui.duration > 0L) {
                     txtCurrentTime.text = format(ui.position)
