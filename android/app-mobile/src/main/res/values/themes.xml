@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.HamrahangMobile" parent="Theme.Material3.Dark.NoActionBar" />
+
+    <!-- Selected tab is icon color only; no pill behind the icon. -->
+    <style name="Widget.Hamrahang.BottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@android:color/transparent</item>
+        <item name="android:width">0dp</item>
+        <item name="android:height">0dp</item>
+    </style>
 </resources>
