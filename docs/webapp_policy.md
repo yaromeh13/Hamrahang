@@ -65,10 +65,13 @@ Playlist hover must not invent an artist prefix on the URL. Playlist thumbs use 
 
 ### 2.5 Live
 
-Live is a first-class route in the Web App, separate from the on-demand catalog routes. The router handles the `live` path explicitly:
+Live is a first-class route in the Web App, separate from the on-demand catalog routes. The top-level router dispatches the `live` path to `CRLV` and passes the remaining path segments through; it does not decide which Live subpage should render:
 
-- `/live` is rendered by `CRLV()`.
-- `/live/{id}/{slug}` is rendered by `CRLVDetail(id)`. The numeric ID is the record key; the slug is descriptive.
+- The router calls `CRLV(LPS[2], LPS[3], done)` for every `/live...` URL. Keep Live subroute selection inside `CRLV`, not in the top-level `chp` switch.
+- `CRLV(P, QS, callback)` owns a `routeMap` for Live directory routes. It resolves the first segment (`P`) against that map and uses the route configuration for its path, data request, and ID source.
+- The current `latest` route is configured in `routeMap` with `fetch: ['live', 'latest']` and `SN.latest_live` as its ID list. Both `/live` and `/live/latest` render this route; `/live` is the root alias.
+- A numeric `P` is treated as a channel ID and delegated by `CRLV` to `CRLVDetail(P, callback)`. The optional following segment is the descriptive slug; the numeric ID remains the record key.
+- Unknown nonnumeric route keys are sent to `CRNF`. Add future Live directory pages such as `trending` or `popular` as entries in `CRLV`'s `routeMap`, rather than adding more branches to `chp`.
 - `HLV` (`"/live/"`) is the single canonical base-path constant for Live directory links and channel routes. Do not hardcode `/live/` in new Web App links; use `HLV` for the directory and `liveRoute(item)` for a channel.
 - `liveRoute(item)` builds `HLV + encodeURIComponent(id) + '/' + encodeURIComponent(slug)`. The slug is `item.url`, then `item.slug`, then the ID as fallback. If the item or its ID is missing, it returns `HLV`.
 - `liveMediaType(item)` reads the top-level `media_type`. Only `video` is classified as video; missing or other values default to audio. Do not infer this from `meta.type`.
@@ -76,8 +79,8 @@ Live is a first-class route in the Web App, separate from the on-demand catalog 
 #### Data loading and cache
 
 - `SN.live` is the in-memory map of Live records keyed by ID. `SN.latest_live` is the ordered list of latest Live IDs.
-- `CRLV()` calls `LoadLiveCache()` and paints cached records first when available. It then refreshes the listing with `gjs(['live', 'latest'])`; the refresh redraws the page only while the current route is still `/live`.
-- When no cached IDs are available, the page shows its loading state and requests the latest list before rendering. Failed initial loading displays the Live-specific error state.
+- `CRLV` loads the Live cache and reads cached IDs through the selected route's `getIds()` function. It uses the route's `fetch` configuration for both initial loading and background refresh; do not hardcode the Latest endpoint or `SN.latest_live` into shared route-loading logic.
+- Cached records are painted first when available. Background refresh redraws only while the browser is still on the selected Live route. With no cached IDs, the page shows its loading state and requests the selected route before rendering. Failed initial loading displays the Live-specific error state.
 - Records that are not fully resolved are loaded through the existing `EnsureItems('live', ids)` / `gjs(['live', 'resolve'], ...)` flow. `mergeResolvedItems` stores resolved Live records with `full: true`.
 - The localStorage cache is `ha_live_cache_v1`. It stores up to 100 latest IDs and lightweight record metadata. `SaveLiveCache()` deliberately removes `sources` and resets `full` to `false`, because stream URLs may expire and must be resolved again when required. `LoadLiveCache()` restores the cached records into `SN.live` and restores the available IDs into `SN.latest_live`.
 
