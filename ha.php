@@ -16503,6 +16503,8 @@ const PROFILE_KEY = 'ha_profile';
         const P = ensurePlayer();
         const current = media.currentTime || 0;
         const duration = media.duration || 0;
+        const isLive = !!(P.nowPlaying && P.nowPlaying.type === 'live');
+        const durationLabel = isLive ? 'Live' : FormatTime(duration);
         const percent = duration > 0 ? (current / duration) * 100 : 0;
     
         // موقع درگ seekbar مقدار را بازنویسی نکن (مخصوصاً موبایل)
@@ -16515,9 +16517,9 @@ const PROFILE_KEY = 'ha_profile';
         }
         if (MinSkb && !P._seeking) MinSkb.style.width = percent + '%';
         if (MaxTim && MaxTim.length >= 1) MaxTim[0].innerHTML = FormatTime(current);
-        if (MaxTim && MaxTim.length >= 2) MaxTim[1].innerHTML = FormatTime(duration);
+        if (MaxTim && MaxTim.length >= 2) MaxTim[1].innerHTML = durationLabel;
         document.querySelectorAll('.video-inline-times .t-cur').forEach((el) => { el.innerHTML = FormatTime(current); });
-        document.querySelectorAll('.video-inline-times .t-dur').forEach((el) => { el.innerHTML = FormatTime(duration); });
+        document.querySelectorAll('.video-inline-times .t-dur').forEach((el) => { el.textContent = durationLabel; });
         // فقط زمان‌های خود پلیر — نه ستون Length/duration لیست ترک‌ها
         document.querySelectorAll('.current-time').forEach((el) => {
             if (el.closest('.track-line') || el.closest('.meta')) return;
@@ -16525,7 +16527,7 @@ const PROFILE_KEY = 'ha_profile';
         });
         document.querySelectorAll('.duration').forEach((el) => {
             if (el.closest('.track-line') || el.closest('.meta')) return;
-            el.innerHTML = FormatTime(duration);
+            el.textContent = durationLabel;
         });
         // سینک لیریک با زمان پخش
         try { LyricsEngine.sync(current); } catch (e) {}
