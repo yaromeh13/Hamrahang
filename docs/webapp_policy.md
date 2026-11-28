@@ -98,7 +98,7 @@ Live is a first-class route in the Web App, separate from the on-demand catalog 
 #### Detail and player integration
 
 - `openLiveDetail(id, callback)` resolves the selected channel when needed and dispatches by `liveMediaType(item)`: audio channels use `CREP(id, 'live', callback)`, while video channels use `CRLVDetail(id, callback)`. Missing records use the normal not-found flow.
-- `CREP(id, 'live', callback)` reads the channel from `SN.live`, renders the audio Live detail with the shared audio-page layout, and keeps playback/favorites/menu actions typed as `live`. It does not render catalog lyrics, songs, or related videos for a Live channel.
+- `CREP(id, 'live', callback)` reads the channel from `SN.live`, sets the Live document title, renders the audio Live detail with the shared audio-page layout, and keeps playback/favorites/menu actions typed as `live`. It does not render catalog lyrics, songs, or related videos for a Live channel.
 - `CRLVDetail(id)` is retained for video Live channels and keeps the inline video-stage behavior.
 - Live is integrated into the app's existing queue and player infrastructure. Keep its media type distinction intact and reuse the current player / queue functions rather than creating a separate playback pipeline.
 - Stream source URLs are runtime data. Do not persist them in `ha_live_cache_v1`; resolve the channel again when a cached card is opened or needs full playback data.
