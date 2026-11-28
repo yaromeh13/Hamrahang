@@ -32,7 +32,7 @@ Do not copy Web TV rules into this app: there is no ES5 requirement, no D-pad / 
 | `/search/...` | `CRSR` | Search |
 | `/library/...` | `CRLP` | Library views |
 | `/live` | `CRLV` | Live channel directory |
-| `/live/{id}/{slug}` | `openLiveDetail` via `CRLV` | Audio Live → `CREP(id, 'live')`; video Live → `CRLVDetail(id)` |
+| `/live/{id}/{slug}` | `openLiveDetail` via `CRLV` | Audio Live → `CREP(id, 'live')`; video Live → `CRVP(id, 'live')`; unresolved records fall back to `CRLVDetail` / not-found handling |
 | `/setting/...` | `CRSA` | Account, history, favorites, playlists, settings |
 | `/pair/{token}` | `CRPair` | Device pairing |
 | `/verify`, `/verify-email`, `/link-email` | `CRVerify` | Email confirm / link |
@@ -70,7 +70,7 @@ Live is a first-class route in the Web App, separate from the on-demand catalog 
 - The router calls `CRLV(LPS[2], LPS[3], done)` for every `/live...` URL. Keep Live subroute selection inside `CRLV`, not in the top-level `chp` switch.
 - `CRLV(P, QS, callback)` owns a `routeMap` for Live directory routes. It resolves the first segment (`P`) against that map and uses the route configuration for its path, data request, and ID source.
 - The current `latest` route is configured in `routeMap` with `fetch: ['live', 'latest']` and `SN.latest_live` as its ID list. Both `/live` and `/live/latest` render this route; `/live` is the root alias.
-- A numeric `P` is treated as a channel ID and delegated by `CRLV` to `openLiveDetail(P, callback)`. That helper resolves the record when needed, then sends audio Live to `CREP(P, 'live', callback)` and video Live to `CRLVDetail(P, callback)`. The optional following segment is the descriptive slug; the numeric ID remains the record key.
+- A numeric `P` is treated as a channel ID and delegated by `CRLV` to `openLiveDetail(P, callback)`. That helper resolves the record when needed, then sends audio Live to `CREP(P, 'live', callback)` and video Live to `CRVP(P, 'live')`. If the record cannot be resolved, it uses `CRLVDetail` for the fallback/not-found path. The optional following segment is the descriptive slug; the numeric ID remains the record key.
 - Unknown nonnumeric route keys are sent to `CRNF`. Add future Live directory pages such as `trending` or `popular` as entries in `CRLV`'s `routeMap`, rather than adding more branches to `chp`.
 - `HLV` (`"/live/"`) is the single canonical base-path constant for Live directory links and channel routes. Do not hardcode `/live/` in new Web App links; use `HLV` for the directory and `liveRoute(item)` for a channel.
 - `liveRoute(item)` builds `HLV + encodeURIComponent(id) + '/' + encodeURIComponent(slug)`. The slug is `item.url`, then `item.slug`, then the ID as fallback. If the item or its ID is missing, it returns `HLV`.
@@ -97,9 +97,10 @@ Live is a first-class route in the Web App, separate from the on-demand catalog 
 
 #### Detail and player integration
 
-- `openLiveDetail(id, callback)` resolves the selected channel when needed and dispatches by `liveMediaType(item)`: audio channels use `CREP(id, 'live', callback)`, while video channels use `CRLVDetail(id, callback)`. Missing records use the normal not-found flow.
-- `CREP(id, 'live', callback)` reads the channel from `SN.live`, sets the Live document title, renders the audio Live detail with the shared audio-page layout, and keeps playback/favorites/menu actions typed as `live`. It does not render catalog lyrics, songs, or related videos for a Live channel.
-- `CRLVDetail(id)` is retained for video Live channels and keeps the inline video-stage behavior.
+- `openLiveDetail(id, callback)` resolves the selected channel when needed and owns the media-type dispatch: audio channels use `CREP(id, 'live', callback)`, while video channels use `CRVP(id, 'live')`. If the record cannot be resolved (or loading fails), it delegates to `CRLVDetail` for fallback/not-found handling.
+- `CREP(id, 'live', callback)` is the audio Live detail renderer. It reads the resolved channel from `SN.live`, sets the Live document title, renders the shared audio-page layout, and keeps playback/favorites/menu actions typed as `live`. It does not render catalog lyrics, songs, or related videos for a Live channel. Route validation and audio/video dispatch do not belong in `CREP`; those responsibilities stay in `openLiveDetail`.
+- `CRVP(id, 'live')` is the primary video Live detail renderer and provides the video-stage layout.
+- `CRLVDetail(id)` remains the fallback/not-found renderer used when `openLiveDetail` cannot resolve a usable channel record; it is not the normal video Live dispatch path.
 - Live is integrated into the app's existing queue and player infrastructure. Keep its media type distinction intact and reuse the current player / queue functions rather than creating a separate playback pipeline.
 - Stream source URLs are runtime data. Do not persist them in `ha_live_cache_v1`; resolve the channel again when a cached card is opened or needs full playback data.
 
@@ -200,7 +201,7 @@ Add a row when a helper’s job changes. Do not document a guess.
 | `CRNF()` | Not-found content and a control back to home. |
 | `CRGC` / `CRSC` / `CRGL` | Grid, carousel card, track line. |
 | `HLV` / `liveRoute` | Canonical Live base path and encoded channel URL builder. |
-| `CRLV` / `openLiveDetail` / `CRLVDetail` | Live directory and media-aware channel dispatch; video Live detail. |
+| `CRLV` / `openLiveDetail` / `CRVP` / `CRLVDetail` | Live directory, audio/video dispatch, primary video detail, and unresolved-record fallback. |
 | `liveMediaType` / `splitLiveMediaIds` | Live media classification and audio/video grouping. |
 | `liveMediaType` / `liveRoute` / `splitLiveMediaIds` | Live media classification, canonical channel route, and audio/video grouping. |
 | `LoadLiveCache` / `SaveLiveCache` | Restore and persist lightweight Live metadata without expiring stream sources. |
