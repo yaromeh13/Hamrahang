@@ -7842,7 +7842,10 @@ if (!empty($_SESSION['loggedin'])) {
         if (isLive) {
             const path = (window.location.pathname || '').replace(/\/+$/, '');
             const livePath = (HLV + q).replace(/\/+$/, '');
-            if (path !== livePath && path.indexOf(livePath + '/') !== 0) return;
+            if (path !== livePath && path.indexOf(livePath + '/') !== 0) {
+                if (callback) callback();
+                return;
+            }
             if (liveMediaType(e) !== 'audio') {
                 await CRLVDetail(q, callback);
                 return;
@@ -8008,9 +8011,9 @@ if (!empty($_SESSION['loggedin'])) {
         
         dbs.addEventListener('click', () => {
             copyText(
-                    window.location.href,
-                    'Artist link copied to clipboard'
-                );
+                window.location.href,
+                isLive ? 'Live link copied to clipboard' : 'Artist link copied to clipboard'
+            );
         });
         
         const mor = OA(document.createElement('div'), { className: 'btn btn-model-1', innerHTML: svg_dot });
