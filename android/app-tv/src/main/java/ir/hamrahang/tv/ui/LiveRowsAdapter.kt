@@ -13,6 +13,7 @@ import ir.hamrahang.tv.data.SourceOwner
 import ir.hamrahang.tv.data.live.LiveItem
 import ir.hamrahang.tv.player.MediaType
 import ir.hamrahang.tv.util.ImageResolver
+import ir.hamrahang.tv.util.TvImageLoader
 
 data class LiveOwnerRow(
     val owner: SourceOwner?,
@@ -44,7 +45,7 @@ class LiveRowsAdapter(
             } else {
                 ownerName.text = row.owner?.name?.takeIf { it.isNotBlank() } ?: "Unknown Owner"
                 ownerIcon.scaleType = ImageView.ScaleType.CENTER_CROP
-                ImageResolver.request(
+                TvImageLoader.request(
                     ownerIcon,
                     ImageResolver.owner(row.owner),
                     R.drawable.ic_live
