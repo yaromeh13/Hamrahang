@@ -1,6 +1,7 @@
 package ir.hamrahang.app
 
 import android.content.Intent
+import android.content.ComponentName
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -15,6 +16,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
+import ir.hamrahang.app.playback.MobilePlaybackService
 import ir.hamrahang.app.databinding.ActivityMainBinding
 import ir.hamrahang.app.ui.PlaceholderFragments
 import ir.hamrahang.app.ui.SettingsFragment
@@ -29,10 +34,14 @@ import ir.hamrahang.tv.utils.AppState
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.util.concurrent.Executor
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private var controllerFuture: ListenableFuture<MediaController>? = null
+    private var mediaController: MediaController? = null
+    private val directExecutor = Executor { command -> command.run() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -64,6 +73,23 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) showTab(R.id.nav_home)
 
         bindMiniPlayer()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val token = SessionToken(this, ComponentName(this, MobilePlaybackService::class.java))
+        controllerFuture = MediaController.Builder(this, token).buildAsync().also { future ->
+            future.addListener({
+                runCatching { future.get() }.onSuccess { mediaController = it }
+            }, directExecutor)
+        }
+    }
+
+    override fun onStop() {
+        controllerFuture?.let { MediaController.releaseFuture(it) }
+        controllerFuture = null
+        mediaController = null
+        super.onStop()
     }
 
     /** Tabs are hidden rather than replaced, so each keeps its scroll position. */
