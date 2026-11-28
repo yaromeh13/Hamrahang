@@ -6933,11 +6933,11 @@ if (!empty($_SESSION['loggedin'])) {
                 const split = splitLiveMediaIds(system.ids);
                 if (split.video.length) {
                     appendLiveTypeHeader('پخش زنده تصویری');
-                    CRLVCards(split.video, 'video');
+                    CRSC(split.video, 'live', null, { aspectRatio: '16:9' });
                 }
                 if (split.audio.length) {
                     appendLiveTypeHeader('پخش زنده صوتی');
-                    CRLVCards(split.audio, 'audio');
+                    CRSC(split.audio, 'live');
                 }
             }
 
@@ -6945,8 +6945,8 @@ if (!empty($_SESSION['loggedin'])) {
                 if (ownerId === '0') continue;
                 appendLiveOwnerHeader(group.owner || { name: 'Hamrahang' });
                 const split = splitLiveMediaIds(group.ids);
-                if (split.video.length) CRLVCards(split.video, 'video');
-                if (split.audio.length) CRLVCards(split.audio, 'audio');
+                if (split.video.length) CRSC(split.video, 'live', null, { aspectRatio: '16:9' });
+                if (split.audio.length) CRSC(split.audio, 'live');
             }
 
             try { ADE(); } catch (e) {}
@@ -12221,10 +12221,12 @@ const PROFILE_KEY = 'ha_profile';
     }
 
 
-    function CRSC(ar, T, ART) {
+    function CRSC(ar, T, ART, options) {
+        options = options || {};
+        const aspectRatio = options.aspectRatio || ((T === 'musicvideo' || T === 'video') ? '16:9' : '1:1');
     
         const sec = OA(document.createElement("section"), {className: "section-carousel-container m-top-1"});
-        const isVideoish = (T === 'musicvideo' || T === 'video');
+        const isVideoish = aspectRatio === '16:9';
         const sec_div = OA(document.createElement("div"), {className: "carousel-container " + (isVideoish ? "video" : "")});
         ar.forEach((id) => {
             // id ممکن است object با id باشد
@@ -12241,7 +12243,7 @@ const PROFILE_KEY = 'ha_profile';
             if (T == 'podcast') {e = SN.podcast ? SN.podcast[id] : null; url = HS; }
             if (T == 'playlist') {e = SN.playlist ? SN.playlist[id] : null; url = HPL; TPS = svg_pls; }
             if (T == 'musicvideo') {e = SN.musicvideo ? SN.musicvideo[id] : null; url = HV; }
-			if (T == 'live') {e = SN.live ? SN.live[id] : null; url = HLV; }
+			if (T == 'live') {e = SN.live ? SN.live[id] : null; url = HLV; TPS = typeof svg_liv !== 'undefined' ? svg_liv : svg_sng; }
 
             if (!e) {console.log("CRSC: " + T + " not found:", id);return;}
 
@@ -12280,15 +12282,20 @@ const PROFILE_KEY = 'ha_profile';
             });
 
             const itemSlug = e.url || String(e.id);
-            const itemHref = (T === 'playlist' || T === 'artist')
-                ? (url + e.id + '/' + itemSlug)
-                : (url + e.id + '/' + (primaryArtistUrl ? primaryArtistUrl + '-' : '') + itemSlug);
+            const itemHref = T === 'live'
+                ? liveRoute(e)
+                : ((T === 'playlist' || T === 'artist')
+                    ? (url + e.id + '/' + itemSlug)
+                    : (url + e.id + '/' + (primaryArtistUrl ? primaryArtistUrl + '-' : '') + itemSlug));
             const ela = OA(document.createElement("a"), {href: itemHref});
             const art = OA(document.createElement("div"), {className: "artwork ratio " + (isVideoish ? "ratio-16x9" : "ratio-1x1")});
             const sep = OA(document.createElement("span"), {className: "placeholder " + (T === "artist" ? "rounded-circle" : ""), innerHTML: TPS });
             art.append(sep);
             
-            const srcThumb = resolveThumbUrl(e, ART);
+            const liveThumb = T === 'live' && e.meta
+                ? (liveMediaType(e) === 'video' ? (e.meta.tmv || e.meta.tmb) : e.meta.tmb)
+                : null;
+            const srcThumb = liveThumb ? UT + liveThumb + '.jpg' : resolveThumbUrl(e, ART);
             if (srcThumb) art.append(OA(document.createElement('img'), { src: srcThumb }));
 
             ela.append(art);
@@ -12308,6 +12315,8 @@ const PROFILE_KEY = 'ha_profile';
             
                     if (T === 'song' || T === 'podcast' || T === 'musicvideo' || T === 'video') {
                         setPlayQueue(ar, e.id, T);
+                    } else if (T === 'live') {
+                        setPlayQueue(ar, e.id, 'live');
                     } else if (T === 'album' || T === 'playlist') {
                         playCollectionFromCard(e.id, T);
                     }
