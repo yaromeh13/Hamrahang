@@ -245,10 +245,10 @@ click on card <a>
                       │    └─ CRAP(id)
                       ├─ /playlist/{id}
                       │    └─ CRPP(id, 'playlist')
-                      ├─ /live/{id}/{slug}
-                      │    └─ CRLVDetail(id)
-                      ├─ /live or /live/ (directory)
-                      │    └─ CRLV()
+                      ├─ /live... (all Live routes)
+                      │    └─ CRLV(LPS[2], LPS[3], done)
+                      │         ├─ numeric ID → CRLVDetail(id)
+                      │         └─ route key → CRLV routeMap (e.g. latest)
                       ├─ list URLs such as /song/top (See all on a section header)
                       │    └─ CRHP(section, query)
                       └─ unknown id / unknown list key
