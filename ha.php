@@ -17200,7 +17200,7 @@ const PROFILE_KEY = 'ha_profile';
             P.nowPlaying.playGen !== P.playGen
         );
     
-        if (!isPendingLoad && media && media.currentTime > 3) {
+        if (!isPendingLoad && P.nowPlaying.type !== 'live' && media && media.currentTime > 3) {
             media.currentTime = 0;
             const p = media.play();
             if (p) p.catch(() => {});
