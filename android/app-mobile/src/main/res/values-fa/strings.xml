@@ -6,6 +6,17 @@
     <string name="nav_search">جستجو</string>
     <string name="nav_library">کتابخانه</string>
     <string name="nav_settings">تنظیمات</string>
+    <string name="nav_device">روی دستگاه</string>
+    <string name="nav_player">کنترل پخش</string>
+    <string name="nav_repeat">تکرار</string>
+    <string name="nav_previous">قبلی</string>
+    <string name="nav_next">بعدی</string>
+    <string name="nav_shuffle">تصادفی</string>
+    <string name="device_music">موسیقی</string>
+    <string name="device_videos">ویدیوها</string>
+    <string name="device_empty">موسیقی یا ویدیویی روی این دستگاه پیدا نشد.</string>
+    <string name="device_permission">برای نمایش موسیقی و ویدیوهای داخل دستگاه اجازه دسترسی بدهید.</string>
+    <string name="device_allow">اجازه</string>
     <string name="see_all">مشاهده همه</string>
     <string name="coming_soon">به‌زودی</string>
     <string name="retry">تلاش دوباره</string>
