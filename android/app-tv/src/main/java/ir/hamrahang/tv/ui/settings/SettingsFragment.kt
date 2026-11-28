@@ -413,12 +413,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), ir.hamrahang.tv.c
                 val request = ApiClient.api.authAction(body = AuthRequest(a = "request_code"))
                 val pairCode = request.pair_url?.substringAfterLast("/")
                 val actualCode = pairCode?.takeIf { it.matches(Regex("\\d{6}")) }
-                val qr = request.qr_base64
-                if (qr.isNullOrBlank() || actualCode == null) {
+                val qrBase64 = request.qr_base64
+                if (qrBase64.isNullOrBlank() || actualCode == null) {
                     status.setText(R.string.auth_qr_failed)
                     return@launch
                 }
-                val encoded = qr.substringAfter("base64,", qr)
+                val encoded = qrBase64.substringAfter("base64,", qrBase64)
                 val imageBytes = Base64.decode(encoded, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 qr.setImageBitmap(bitmap)
