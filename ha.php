@@ -6918,7 +6918,8 @@ if (!empty($_SESSION['loggedin'])) {
         const isCurrentRoute = () => {
             let path = window.location.pathname || '';
             while (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
-            const livePath = HLV + id;\n            return path === livePath.replace(/\/+$/, '') || path.indexOf(livePath) === 0;
+            const livePath = HLV + id;
+			return path === livePath.replace(/\/+$/, '') || path.indexOf(livePath) === 0;
         };
 
         function finish() {
