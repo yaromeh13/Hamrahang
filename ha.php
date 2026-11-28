@@ -6766,9 +6766,9 @@ if (!empty($_SESSION['loggedin'])) {
     }
 
     function liveRoute(item) {
-        if (!item || item.id == null) return '/live';
+        if (!item || item.id == null) return HLV;
         const slug = item.url || item.slug || String(item.id);
-        return '/live/' + encodeURIComponent(item.id) + '/' + encodeURIComponent(slug);
+        return HLV + encodeURIComponent(item.id) + '/' + encodeURIComponent(slug);
     }
 
     function splitLiveMediaIds(ids) {
@@ -6833,7 +6833,7 @@ if (!empty($_SESSION['loggedin'])) {
     function CRLV(callback) {
         LoadLiveCache();
         const cachedIds = Array.isArray(SN.latest_live) ? SN.latest_live.slice() : [];
-        const isLiveRoute = () => (window.location.pathname || '').replace(/\/+$/, '') === '/live';
+        const isLiveRoute = () => (window.location.pathname || '').replace(/\/+$/, '') === HLV.replace(/\/+$/, '');
 
         function draw(ids) {
             if (!isLiveRoute()) return;
@@ -6918,7 +6918,7 @@ if (!empty($_SESSION['loggedin'])) {
         const isCurrentRoute = () => {
             let path = window.location.pathname || '';
             while (path.length > 1 && path.charAt(path.length - 1) === '/') path = path.slice(0, -1);
-            return path === '/live/' + id || path.indexOf('/live/' + id + '/') === 0;
+            const livePath = HLV + id;\n            return path === livePath.replace(/\/+$/, '') || path.indexOf(livePath) === 0;
         };
 
         function finish() {
@@ -10899,7 +10899,7 @@ const PROFILE_KEY = 'ha_profile';
         const nav = OA(document.createElement('nav'), { className: 'menu' });
         const items = [
             { href: '/', label: 'Home', icon: typeof svg_home !== 'undefined' ? svg_home : '', labeled: true },
-            { href: '/live', label: 'Live', icon: typeof svg_liv !== 'undefined' ? svg_liv : '', labeled: true },
+            { href: HLV, label: 'Live', icon: typeof svg_liv !== 'undefined' ? svg_liv : '', labeled: true },
             { href: '/search', label: 'Search', icon: typeof svg_srh !== 'undefined' ? svg_srh : '', labeled: true },
             { href: '/library', label: 'Library', icon: typeof svg_lib !== 'undefined' ? svg_lib : '', labeled: false },
             { href: '/setting/account', label: 'Account', icon: typeof svg_acc !== 'undefined' ? svg_acc : '', labeled: true }
@@ -11249,7 +11249,7 @@ const PROFILE_KEY = 'ha_profile';
         const nav = OA(document.createElement('nav'), { className: 'menu' });
         const items = [
             { href: '/', label: 'Home', icon: typeof svg_home !== 'undefined' ? svg_home : '' },
-            { href: '/live', label: 'Live', icon: typeof svg_liv !== 'undefined' ? svg_liv : '' },
+            { href: HLV, label: 'Live', icon: typeof svg_liv !== 'undefined' ? svg_liv : '' },
             { href: '/search', label: 'Search', icon: typeof svg_srh !== 'undefined' ? svg_srh : '' },
             { href: '/events', label: 'Events', icon: typeof svg_evt !== 'undefined' ? svg_evt : '' },
             { href: '/library', label: 'Library', icon: typeof svg_lib !== 'undefined' ? svg_lib : '' },
@@ -14133,7 +14133,7 @@ const PROFILE_KEY = 'ha_profile';
         else if (T === 'artist') url = HA;
         else if (T === 'playlist') url = HPL;
         else if (T === 'video' || T === 'musicvideo') url = HV;
-        else if (T === 'live') url = '/live/';
+        else if (T === 'live') url = HLV;
     
         const artistList = [];
         let primaryArtistUrl = '';
