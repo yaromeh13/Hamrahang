@@ -6840,6 +6840,11 @@ if (!empty($_SESSION['loggedin'])) {
                 await CREP(id, 'live', callback);
                 return;
             }
+            if (item && liveMediaType(item) === 'video') {
+                await CRVP(id, 'live');
+                if (callback) callback();
+                return;
+            }
         } catch (err) {
             console.warn('Live detail dispatch failed:', err && err.message ? err.message : err);
         }
@@ -8299,14 +8304,26 @@ if (!empty($_SESSION['loggedin'])) {
         rehomeVideoToPlayer();
     }
     
-    async function CRVP(q) {
-        const e = await resolveVideoItem(q);
+    async function CRVP(q, T) {
+        const isLive = T === 'live';
+        let e = null;
+        if (isLive) {
+            LoadLiveCache();
+            e = SN.live && SN.live[q] ? SN.live[q] : null;
+            if (!e || !e.full) {
+                await EnsureItems('live', [q]);
+                e = SN.live && SN.live[q] ? SN.live[q] : null;
+            }
+        } else {
+            e = await resolveVideoItem(q);
+        }
         if (!e) {
-            CRNF('Video not found');
+            CRNF(isLive ? 'Live channel not found' : 'Video not found');
             return;
         }
     
-        const actualType = (e.meta && e.meta.type === 'video') ? 'video' : 'musicvideo';
+        const actualType = isLive ? 'live' : ((e.meta && e.meta.type === 'video') ? 'video' : 'musicvideo');
+        if (isLive) document.title = (e.name || 'Live') + ' | Hamrahang';
         const dhc = OA(document.createElement('div'), {className: 'page-detail-header-container video-page-header'});
         const stage = OA(document.createElement('div'), {className: 'video-stage ratio ratio-16x9'});
         const thumbWrap = OA(document.createElement('div'), {className: 'video-stage-thumb'});
@@ -8379,8 +8396,11 @@ if (!empty($_SESSION['loggedin'])) {
             })
         );
 
-        const art = OA(document.createElement('div'), { className: 'artists', innerHTML: 'By ' });
-        if (e.artists && e.artists.length > 0) {
+        const art = OA(document.createElement('div'), { className: 'artists', innerHTML: isLive ? '' : 'By ' });
+        if (isLive) {
+            const owner = e.owner && typeof e.owner === 'object' ? e.owner : null;
+            art.textContent = owner && owner.name ? 'Live by ' + owner.name : 'Live stream';
+        } else if (e.artists && e.artists.length > 0) {
             const firstArtistId = typeof e.artists[0] === 'object' ? e.artists[0].id : e.artists[0];
             const artist = SN.artist?.[firstArtistId];
             if (artist) {
@@ -8393,8 +8413,10 @@ if (!empty($_SESSION['loggedin'])) {
         }
     
         const dtl = OA(document.createElement('div'), { className: 'detailes' });
-        const artl = CRAL(e.artists);
-        dtl.appendChild(artl);
+        if (!isLive) {
+            const artl = CRAL(e.artists);
+            dtl.appendChild(artl);
+        }
         
         dct.append(tlt, art, dtl);
 
@@ -8433,13 +8455,16 @@ if (!empty($_SESSION['loggedin'])) {
             dbf.innerHTML = now ? svg_fav2 : svg_fav;
         });
     
-        const dbd = OA(document.createElement('div'), {
-            className: 'btn btn-model-1',
-            innerHTML: svg_dons
-        });
-        dbd.addEventListener('click', () => {
-            CRBW(e.id, actualType, 'don', { fresh: true });
-        });
+        let dbd = null;
+        if (!isLive) {
+            dbd = OA(document.createElement('div'), {
+                className: 'btn btn-model-1',
+                innerHTML: svg_dons
+            });
+            dbd.addEventListener('click', () => {
+                CRBW(e.id, actualType, 'don', { fresh: true });
+            });
+        }
 
         const dbs = OA(document.createElement('div'), {
             className: 'btn btn-model-1',
@@ -8457,11 +8482,12 @@ if (!empty($_SESSION['loggedin'])) {
             CRBW(e.id, actualType);
         });
     
-        dac.append(dbp, dbf, dbd, dbs, mor);
+        if (dbd) dac.append(dbp, dbf, dbd, dbs, mor);
+        else dac.append(dbp, dbf, dbs, mor);
         MCNT.append(dac);
 
         // song2video → آهنگ‌های مرتبط
-        const relSongs = Array.isArray(e.songs) ? e.songs : [];
+        const relSongs = !isLive && Array.isArray(e.songs) ? e.songs : [];
         if (relSongs.length) {
             const shdS = OA(document.createElement('div'), {
                 className: 'section-header m-top-3',
@@ -8471,7 +8497,7 @@ if (!empty($_SESSION['loggedin'])) {
             CRGL(relSongs, 'song');
         }
 
-        if (Array.isArray(e.artists) && e.artists.length) {
+        if (!isLive && Array.isArray(e.artists) && e.artists.length) {
             const grid = CRGC(e.artists, 'artist');
             if (grid) {
                 const dal = OA(document.createElement('div'), { className: 'page-artists-list' });
