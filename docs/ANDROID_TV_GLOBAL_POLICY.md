@@ -757,6 +757,14 @@ The following implementation was re-opened on the `main` branch while this secti
 11. The app builds with the established project toolchain and is tested on an Android TV device/emulator.
 12. The player's LIVE indicator, time/duration and seek bar remain unchanged until their behavior is separately specified and approved.
 
+### 4.7 Live bookmarks and More menu
+
+- A Live station is a distinct `LIVE` content type for account actions. Do not represent Live audio as `SONG` or Live video as `VIDEO` when bookmarking.
+- Preserve the public Live API ID separately from the namespaced playback queue ID (for example, `live_...`). Queue identity and account identity serve different purposes and must not be parsed interchangeably.
+- Bookmark operations use the public Live ID and the `live` API type. Local favorites use the dedicated Live content-type value; account pull/push synchronization must retain Live entries.
+- Do not show Add to Playlist, Add to Queue, or catalog-detail navigation for Live until those operations have an explicit Live contract. The Bookmark action remains available.
+- Do not change the existing song, podcast, video, music-video, artist, album or playlist bookmark identifiers or behavior.
+
 ---
 
 # 5. Future Policy Sections
