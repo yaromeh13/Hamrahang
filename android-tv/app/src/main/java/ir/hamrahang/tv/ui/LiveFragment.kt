@@ -412,7 +412,7 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
 
     private fun playLive(selected: LiveItem, ownerItems: List<LiveItem>) {
         val mediaType = if (selected.isVideo) MediaType.VIDEO else MediaType.AUDIO
-        val contentType = if (selected.isVideo) ContentType.VIDEO else ContentType.SONG
+        val contentType = ContentType.LIVE
 
         val queueItems = ownerItems
             .filter { it.isVideo == selected.isVideo }
@@ -436,7 +436,8 @@ class LiveFragment : Fragment(R.layout.fragment_live), Focusable {
                     artwork = artwork,
                     artists = emptyList(),
                     contentType = contentType,
-                    liveMedia = media
+                    liveMedia = media,
+                    publicId = live.id
                 )
             }
         if (queueItems.isEmpty()) return
