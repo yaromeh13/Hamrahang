@@ -379,8 +379,13 @@ object PlaybackManager {
         val currentItem = session.items.getOrNull(session.currentIndex) ?: return
         val isPendingLoad = PlayerManager.isMediaPending()
 
-        // Match web PlayPrevious(): after 3 seconds restart this item instead of skipping.
-        if (!isPendingLoad && PlayerManager.getCurrentPosition() > 3_000L) {
+        // Live has no meaningful restart point: Previous must navigate the queue.
+        // For finite media, preserve the usual 3-second restart behavior.
+        if (
+            currentItem.liveMedia == null &&
+            !isPendingLoad &&
+            PlayerManager.getCurrentPosition() > 3_000L
+        ) {
             PlayerManager.restartCurrent()
             return
         }
