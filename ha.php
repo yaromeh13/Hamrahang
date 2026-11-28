@@ -6830,74 +6830,6 @@ if (!empty($_SESSION['loggedin'])) {
         MCNT.append(head);
     }
 
-    function CRLVCards(ids, mediaType) {
-        const isVideo = mediaType === 'video';
-        const section = OA(document.createElement("section"), {
-            className: "section-carousel-container m-top-1 live-cards-section"
-        });
-        const carousel = OA(document.createElement("div"), {
-            className: "carousel-container" + (isVideo ? " video" : "")
-        });
-        let count = 0;
-
-        (Array.isArray(ids) ? ids : []).forEach((value) => {
-            const id = value && typeof value === 'object' ? value.id : value;
-            const item = SN.live && SN.live[id] ? SN.live[id] : null;
-            if (!item || liveMediaType(item) !== mediaType) return;
-
-            const card = OA(document.createElement("div"), { className: "item-box live-card" });
-            const box = OA(document.createElement("div"), { className: "box" });
-            const link = OA(document.createElement("a"), {
-                href: liveRoute(item),
-                title: item.name || 'Live'
-            });
-            const artwork = OA(document.createElement("div"), {
-                className: "artwork ratio " + (isVideo ? "ratio-16x9" : "ratio-1x1")
-            });
-            const placeholder = OA(document.createElement("span"), {
-                className: "placeholder",
-                innerHTML: typeof svg_liv !== 'undefined' ? svg_liv : ''
-            });
-
-            artwork.append(placeholder);
-
-            const thumb = item.meta
-                ? (isVideo ? (item.meta.tmv || item.meta.tmb) : item.meta.tmb)
-                : null;
-            if (thumb) {
-                artwork.append(OA(document.createElement('img'), {
-                    src: UT + thumb + '.jpg',
-                    alt: item.name || 'Live'
-                }));
-            }
-
-            link.append(artwork);
-            link.addEventListener('click', function (ev) {
-                if (ev && ev.preventDefault) ev.preventDefault();
-                if (ev && ev.stopPropagation) ev.stopPropagation();
-                chp(liveRoute(item));
-            });
-
-            box.append(link);
-            card.append(box);
-            card.append(OA(document.createElement('div'), {
-                className: 'text1',
-                innerHTML: item.name || 'Live'
-            }));
-            carousel.append(card);
-            count++;
-        });
-
-        if (!count) return 0;
-        section.append(carousel);
-
-        // Same horizontal carousel controller used by Home cards.
-        if (count > 2) CCRL(section);
-
-        MCNT.append(section);
-        return count;
-    }
-
     function CRLV(callback) {
         LoadLiveCache();
         const cachedIds = Array.isArray(SN.latest_live) ? SN.latest_live.slice() : [];
@@ -7655,7 +7587,7 @@ if (!empty($_SESSION['loggedin'])) {
                 }
 
                 MCNT.append(hed);
-                CRLVCards(row.ids, row.mediaType);
+                CRSC(row.ids, 'live', null, { aspectRatio: row.mediaType === 'video' ? '16:9' : '1:1' });
             });
         }
 
